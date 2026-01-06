@@ -80,26 +80,31 @@ class SplashScreen extends StatelessWidget {
                 ),
               ),
               // Centered logo and text
-              Center(
-                child: ClipRect(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Image.asset(
-                        'assets/icons/logo.png',
-                        width: screenWidth * 0.12,
-                        height: screenWidth * 0.12,
-                      ),
-                      SizedBox(width: screenWidth * 0.04),
-                      Text(
-                        'Helper',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: screenWidth * 0.07,
-                          fontWeight: FontWeight.bold,
+              Positioned(
+                top: screenHeight * 0.52,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: ClipRect(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Image.asset(
+                          'assets/icons/logo.png',
+                          width: screenWidth * 0.12,
+                          height: screenWidth * 0.12,
                         ),
-                      ),
-                    ],
+                        SizedBox(width: screenWidth * 0.04),
+                        Text(
+                          'Helper',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: screenWidth * 0.07,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -130,7 +135,7 @@ class SplashScreen extends StatelessWidget {
                     height: screenWidth * 0.08,
                     child: CircularProgressIndicator(
                       valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                      strokeWidth: 3,
+                      strokeWidth: 5,
                     ),
                   ),
                 ),
