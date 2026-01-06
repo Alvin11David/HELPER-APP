@@ -105,7 +105,7 @@ class SplashScreen extends StatelessWidget {
               ),
               // Bottom center text
               Positioned(
-                bottom: screenHeight * 0.05,
+                bottom: screenHeight * 0.1,
                 left: 0,
                 right: 0,
                 child: Center(
@@ -115,6 +115,22 @@ class SplashScreen extends StatelessWidget {
                       color: Colors.white,
                       fontSize: screenWidth * 0.05,
                       fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+              // Circular progress indicator
+              Positioned(
+                bottom: screenHeight * 0.04,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: SizedBox(
+                    width: screenWidth * 0.08,
+                    height: screenWidth * 0.08,
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      strokeWidth: 3,
                     ),
                   ),
                 ),
