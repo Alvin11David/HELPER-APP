@@ -1,7 +1,53 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 
-class SplashScreen extends StatelessWidget {
+class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
+
+  @override
+  State<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen> {
+  String _displayedText = '';
+  final String _fullText = 'Helper';
+  Timer? _timer;
+  int _currentIndex = 0;
+  bool _isTyping = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _startTypewriterEffect();
+  }
+
+  void _startTypewriterEffect() {
+    _timer = Timer.periodic(const Duration(milliseconds: 200), (timer) {
+      setState(() {
+        if (_isTyping) {
+          if (_currentIndex < _fullText.length) {
+            _displayedText = _fullText.substring(0, _currentIndex + 1);
+            _currentIndex++;
+          } else {
+            _isTyping = false;
+          }
+        } else {
+          if (_currentIndex > 0) {
+            _currentIndex--;
+            _displayedText = _fullText.substring(0, _currentIndex);
+          } else {
+            _isTyping = true;
+          }
+        }
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -96,7 +142,7 @@ class SplashScreen extends StatelessWidget {
                         ),
                         SizedBox(width: screenWidth * 0.04),
                         Text(
-                          'Helper',
+                          _displayedText,
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: screenWidth * 0.07,
