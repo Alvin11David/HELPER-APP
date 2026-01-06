@@ -18,9 +18,10 @@ class RoleSelectionScreen extends StatelessWidget {
               fit: BoxFit.cover,
             ),
           ),
-          child: Column(
-            children: [
-              SizedBox(height: screenHeight * 0.05),
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                SizedBox(height: screenHeight * 0.05),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -311,7 +312,32 @@ class RoleSelectionScreen extends StatelessWidget {
                   ),
                 ),
               ),
+              SizedBox(height: screenHeight * 0.02),
+              Center(
+                child: RichText(
+                  text: TextSpan(
+                    children: [
+                      TextSpan(
+                        text: 'Already have an account ',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: screenWidth * 0.04,
+                        ),
+                      ),
+                      TextSpan(
+                        text: 'Sign In',
+                        style: TextStyle(
+                          color: Colors.orange,
+                          fontSize: screenWidth * 0.04,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ],
+          ),
           ),
         ),
       ),
