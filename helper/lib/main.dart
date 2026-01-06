@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:helper/intro/Role_Selection_Screen.dart';
 import 'package:helper/intro/Splash_Screen.dart';
 
 void main() {
@@ -15,7 +16,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Flutter Demo',
       theme: ThemeData(colorScheme: .fromSeed(seedColor: Colors.deepPurple)),
-      home: const SplashScreen(),
+      home: const RoleSelectionScreen(),
     );
   }
 }
