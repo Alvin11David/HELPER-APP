@@ -167,6 +167,21 @@ class RoleSelectionScreen extends StatelessWidget {
                             ),
                           ),
                           Positioned(
+                            top: screenWidth * 0.12,
+                            left: screenWidth * 0.04,
+                            child: SizedBox(
+                              width: screenWidth * 0.35,
+                              child: Text(
+                                'Find near jobs\nand\nget paid securely',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: screenWidth * 0.032,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                              ),
+                            ),
+                          ),
+                          Positioned(
                             right: -screenWidth * 0.08,
                             bottom: 0,
                             child: Image.asset(
