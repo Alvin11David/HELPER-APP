@@ -152,6 +152,20 @@ class RoleSelectionScreen extends StatelessWidget {
                           ),
                         ],
                       ),
+                      child: Stack(
+                        children: [
+                          Positioned(
+                            right: -screenWidth * 0.08,
+                            bottom: 0,
+                            child: Image.asset(
+                              'assets/images/worker.png',
+                              width: screenWidth * 0.5,
+                              height: screenWidth * 0.5,
+                              fit: BoxFit.contain,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
