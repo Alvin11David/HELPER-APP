@@ -156,7 +156,7 @@ class RoleSelectionScreen extends StatelessWidget {
                         children: [
                           Positioned(
                             top: screenWidth * 0.03,
-                            left: screenWidth * 0.04,
+                            left: screenWidth * 0.05,
                             child: Text(
                               'I am a Worker',
                               style: TextStyle(
@@ -167,15 +167,16 @@ class RoleSelectionScreen extends StatelessWidget {
                             ),
                           ),
                           Positioned(
-                            top: screenWidth * 0.12,
+                            top: screenWidth * 0.13,
                             left: screenWidth * 0.04,
                             child: SizedBox(
                               width: screenWidth * 0.35,
                               child: Text(
-                                'Find near jobs\nand\nget paid securely',
+                                '"Find near jobs\nand\nget paid securely"',
+                                textAlign: TextAlign.center,
                                 style: TextStyle(
                                   color: Colors.white,
-                                  fontSize: screenWidth * 0.032,
+                                  fontSize: screenWidth * 0.040,
                                   fontWeight: FontWeight.w400,
                                 ),
                               ),
@@ -188,6 +189,83 @@ class RoleSelectionScreen extends StatelessWidget {
                               'assets/images/worker.png',
                               width: screenWidth * 0.5,
                               height: screenWidth * 0.5,
+                              fit: BoxFit.contain,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(height: screenHeight * 0.03),
+              Center(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(30),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                    child: Container(
+                      width: screenWidth * 0.9,
+                      height: screenWidth * 0.9 * (147 / 340),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Colors.white.withOpacity(0.25),
+                            Colors.white.withOpacity(0.15),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(30),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.4),
+                          width: 2,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.white.withOpacity(0.1),
+                            blurRadius: 15,
+                            spreadRadius: 2,
+                          ),
+                        ],
+                      ),
+                      child: Stack(
+                        children: [
+                          Positioned(
+                            top: screenWidth * 0.03,
+                            right: screenWidth * 0.05,
+                            child: Text(
+                              'I am an Employer',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: screenWidth * 0.055,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            top: screenWidth * 0.13,
+                            right: screenWidth * 0.1,
+                            child: SizedBox(
+                              width: screenWidth * 0.35,
+                              child: Text(
+                                '"Find verified\nworkers\naround you"',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: screenWidth * 0.042,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            left: -screenWidth * 0.01,
+                            top: 0,
+                            child: Image.asset(
+                              'assets/images/employer.png',
+                              width: screenWidth * 0.54,
+                              height: screenWidth * 0.54,
                               fit: BoxFit.contain,
                             ),
                           ),
