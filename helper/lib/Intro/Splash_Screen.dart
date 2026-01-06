@@ -99,7 +99,7 @@ class _SplashScreenState extends State<SplashScreen> {
                       fontFamily: 'Sekuya',
                       foreground: Paint()
                         ..style = PaintingStyle.stroke
-                        ..strokeWidth = 1
+                        ..strokeWidth = 0.6
                         ..color = Colors.white.withOpacity(0.6),
                     ),
                   ),
@@ -119,7 +119,7 @@ class _SplashScreenState extends State<SplashScreen> {
                       fontFamily: 'Sekuya',
                       foreground: Paint()
                         ..style = PaintingStyle.stroke
-                        ..strokeWidth = 1
+                        ..strokeWidth = 0.3
                         ..color = Colors.white.withOpacity(0.3),
                     ),
                   ),
