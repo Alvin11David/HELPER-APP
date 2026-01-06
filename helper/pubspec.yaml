@@ -108,3 +108,8 @@ flutter:
       fonts:
         - asset: assets/fonts/RobotoSlab-VariableFont_wght.ttf
           weight: 400
+    
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter-VariableFont_opsz,wght.ttf
+          weight: 400
