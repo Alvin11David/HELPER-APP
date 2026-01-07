@@ -18,10 +18,9 @@ class RoleSelectionScreen extends StatelessWidget {
               fit: BoxFit.cover,
             ),
           ),
-          child: SingleChildScrollView(
-            child: Column(
-              children: [
-                SizedBox(height: screenHeight * 0.05),
+          child: Column(
+            children: [
+              SizedBox(height: screenHeight * 0.05),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -86,7 +85,7 @@ class RoleSelectionScreen extends StatelessWidget {
                     child: Container(
                       padding: EdgeInsets.symmetric(
                         horizontal: screenWidth * 0.06,
-                        vertical: screenHeight * 0.010,
+                        vertical: screenHeight * 0.006,
                       ),
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
@@ -114,7 +113,7 @@ class RoleSelectionScreen extends StatelessWidget {
                         'Kindly select your role',
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: screenWidth * 0.045,
+                          fontSize: screenWidth * 0.04,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -337,7 +336,6 @@ class RoleSelectionScreen extends StatelessWidget {
                 ),
               ),
             ],
-          ),
           ),
         ),
       ),
