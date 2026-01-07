@@ -14,6 +14,17 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
   TextEditingController? _confirmCtrl;
   bool? _obscurePass;
   bool? _obscureConfirm;
+  bool _loading = false;
+
+  Future<void> _onContinue() async {
+    FocusScope.of(context).unfocus();
+    setState(() => _loading = true);
+    // TODO: implement actual password reset flow
+    await Future.delayed(const Duration(milliseconds: 700));
+    if (!mounted) return;
+    setState(() => _loading = false);
+  }
+
   @override
   void dispose() {
     _passwordCtrl?.dispose();
@@ -242,6 +253,85 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
                         ),
                       ],
                     ),
+                    SizedBox(height: h * 0.05),
+
+                    // Continue (white)
+                    SizedBox(
+                      width: double.infinity,
+                      height: h * 0.062,
+                      child: ElevatedButton(
+                        onPressed: _loading ? null : _onContinue,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          disabledBackgroundColor: Colors.white.withOpacity(
+                            0.6,
+                          ),
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                        ),
+                        child: _loading
+                            ? SizedBox(
+                                width: h * 0.03,
+                                height: h * 0.03,
+                                child: const CircularProgressIndicator(
+                                  strokeWidth: 3,
+                                  color: Colors.black,
+                                ),
+                              )
+                            : Center(
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      'Change Password',
+                                      style: TextStyle(
+                                        fontSize: w * 0.045,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black,
+                                        fontFamily: 'Poppins',
+                                      ),
+                                    ),
+                                    SizedBox(width: w * 0.02),
+                                    Icon(
+                                      Icons.arrow_forward_rounded,
+                                      color: Colors.black,
+                                      size: h * 0.035,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                      ),
+                    ),
+                     SizedBox(height: screenHeight * 0.06),
+                  Center(
+                    child: RichText(
+                      text: TextSpan(
+                        children: [
+                          TextSpan(
+                            text: 'Already have an account ',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: screenWidth * 0.04,
+                              fontWeight: FontWeight.w500,
+                              fontFamily: 'Poppins',
+                            ),
+                          ),
+                          TextSpan(
+                            text: 'Sign In',
+                            style: TextStyle(
+                              color: Colors.orange,
+                              fontSize: screenWidth * 0.04,
+                              fontWeight: FontWeight.bold,
+                              fontFamily: 'Montserrat',
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                   ],
                 ),
               ),

@@ -3,6 +3,7 @@
 // ✅ Glassmorphism pills + dashed OTP-style boxes (like your OTP screen)
 // ✅ AbrilFatface for headings, Poppins for body
 
+import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -40,17 +41,76 @@ class ReferralCodeScreen extends StatefulWidget {
 
 class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
   static const _brandOrange = Color(0xFFFFA10D);
+  bool _isButtonEnabled = false;
+  bool _isLoading = false;
+  int _countdown = 60;
+  final int _otpLength = 6;
 
-  final int _codeLength = 6;
   late final List<TextEditingController> _controllers;
   late final List<FocusNode> _focusNodes;
+  Timer? _timer;
 
   @override
   void initState() {
     super.initState();
-    _controllers =
-        List.generate(_codeLength, (_) => TextEditingController(text: ''));
-    _focusNodes = List.generate(_codeLength, (_) => FocusNode());
+    _controllers = List.generate(
+      _otpLength,
+      (_) => TextEditingController(text: ''),
+    );
+    _focusNodes = List.generate(_otpLength, (_) => FocusNode());
+    _startCountdown();
+  }
+
+  void _checkOTPAndNavigate() {
+    String otp = _controllers.map((controller) => controller.text).join();
+    if (otp.length == _otpLength) {
+      // TODO: Add your OTP verification logic here
+      print('OTP entered: $otp');
+    }
+  }
+
+  void _resendOTP() {
+    if (_isButtonEnabled && !_isLoading) {
+      setState(() {
+        _isLoading = true;
+      });
+
+      // TODO: Add your resend OTP logic here
+      Future.delayed(const Duration(seconds: 2), () {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+          _startCountdown();
+          // Clear OTP fields
+          for (var controller in _controllers) {
+            controller.clear();
+          }
+          _focusNodes[0].requestFocus();
+        }
+      });
+    }
+  }
+
+  void _startCountdown() {
+    setState(() {
+      _countdown = 60;
+      _isButtonEnabled = false;
+    });
+
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_countdown > 0) {
+        setState(() {
+          _countdown--;
+        });
+      } else {
+        setState(() {
+          _isButtonEnabled = true;
+        });
+        timer.cancel();
+      }
+    });
   }
 
   @override
@@ -61,6 +121,7 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
     for (final f in _focusNodes) {
       f.dispose();
     }
+    _timer?.cancel();
     super.dispose();
   }
 
@@ -133,8 +194,7 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
                     decoration: BoxDecoration(
                       color: Colors.black.withOpacity(0.35),
                       borderRadius: BorderRadius.circular(22),
-                      border:
-                          Border.all(color: Colors.white.withOpacity(0.35)),
+                      border: Border.all(color: Colors.white.withOpacity(0.35)),
                     ),
                     child: Text(
                       'Skip',
@@ -220,34 +280,89 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
                     ),
                   ),
 
-                  SizedBox(height: screenHeight * 0.03),
-
-                  // Code boxes (dashed like OTP feel)
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.06),
+                  SizedBox(height: screenHeight * 0.05),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: List.generate(_codeLength, (i) {
-                        final boxW = screenWidth * 0.11;
-                        final boxH = screenWidth * 0.15;
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(_otpLength + 1, (index) {
+                        // Add separator after 3rd box
+                        if (index == 3) {
+                          return Container(
+                            width: screenWidth * 0.015,
+                            height: screenWidth * 0.015,
+                            margin: EdgeInsets.symmetric(
+                              horizontal: screenWidth * 0.025,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                            ),
+                          );
+                        }
 
-                        return _DashedCodeBox(
-                          width: boxW,
-                          height: boxH,
-                          controller: _controllers[i],
-                          focusNode: _focusNodes[i],
-                          onChanged: (val) {
-                            final v = val.trim();
-                            if (v.isNotEmpty && i < _codeLength - 1) {
-                              _controllers[i].text = v;
-                              _focusNodes[i].unfocus();
-                              _focusNodes[i + 1].requestFocus();
-                            } else if (v.isEmpty && i > 0) {
-                              _focusNodes[i].unfocus();
-                              _focusNodes[i - 1].requestFocus();
-                            }
-                            setState(() {});
-                          },
+                        // Calculate actual OTP box index
+                        final otpIndex = index > 3 ? index - 1 : index;
+                        final otpBoxWidth = screenWidth * 0.12;
+                        final otpBoxHeight = screenWidth * 0.19;
+
+                        return Container(
+                          width: otpBoxWidth,
+                          height: otpBoxHeight,
+                          margin: EdgeInsets.symmetric(
+                            horizontal: screenWidth * 0.01,
+                          ),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.white, width: 1.5),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Stack(
+                            alignment: Alignment.bottomCenter,
+                            children: [
+                              Positioned(
+                                bottom: screenWidth * 0.035,
+                                child: Container(
+                                  width: otpBoxWidth * 0.75,
+                                  height: 1.4,
+                                  color: Colors.white.withOpacity(0.9),
+                                ),
+                              ),
+                              Center(
+                                child: SizedBox(
+                                  width: otpBoxWidth * 0.55,
+                                  child: TextField(
+                                    controller: _controllers[otpIndex],
+                                    focusNode: _focusNodes[otpIndex],
+                                    textAlign: TextAlign.center,
+                                    keyboardType: TextInputType.number,
+                                    maxLength: 1,
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: screenWidth * 0.08,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    decoration: const InputDecoration(
+                                      counterText: '',
+                                      border: InputBorder.none,
+                                    ),
+                                    onChanged: (value) {
+                                      if (value.length == 1 &&
+                                          otpIndex < _otpLength - 1) {
+                                        _focusNodes[otpIndex + 1]
+                                            .requestFocus();
+                                      } else if (value.isEmpty &&
+                                          otpIndex > 0) {
+                                        _focusNodes[otpIndex - 1]
+                                            .requestFocus();
+                                      }
+
+                                      _checkOTPAndNavigate();
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         );
                       }),
                     ),
@@ -291,7 +406,7 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
                     ),
                   ),
 
-                  SizedBox(height: screenHeight * 0.02),
+                  SizedBox(height: screenHeight * 0.05),
 
                   // How to use the code? (link)
                   GestureDetector(
@@ -301,7 +416,7 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
                       style: TextStyle(
                         color: Colors.white.withOpacity(0.9),
                         fontSize: screenWidth * 0.036,
-                        fontFamily: 'Poppins',
+                        fontFamily: 'Montserrat',
                         fontWeight: FontWeight.w700,
                         decoration: TextDecoration.underline,
                         decorationColor: Colors.white.withOpacity(0.7),
@@ -309,11 +424,11 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
                     ),
                   ),
 
-                  SizedBox(height: screenHeight * 0.018),
+                  SizedBox(height: screenHeight * 0.05),
 
                   // Glass note pill
                   _GlassPill(
-                    width: screenWidth * 0.72,
+                    width: screenWidth * 0.9,
                     radius: 30,
                     padding: EdgeInsets.symmetric(
                       horizontal: screenWidth * 0.06,
@@ -322,6 +437,9 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
                     child: Text(
                       'Your referral code can only be used once',
                       textAlign: TextAlign.center,
+                      maxLines: 1,
+                      softWrap: false,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         color: Colors.white.withOpacity(0.9),
                         fontSize: screenWidth * 0.033,
@@ -358,7 +476,7 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
                             style: TextStyle(
                               color: _brandOrange,
                               fontSize: screenWidth * 0.032,
-                              fontFamily: 'Poppins',
+                              fontFamily: 'Montserrat',
                               fontWeight: FontWeight.w800,
                             ),
                           ),
@@ -390,6 +508,8 @@ class _GlassPill extends StatelessWidget {
     required this.radius,
     required this.width,
   });
+
+  
 
   @override
   Widget build(BuildContext context) {
@@ -527,7 +647,9 @@ class _DashedBorderPainter extends CustomPainter {
     double distance = 0;
 
     while (distance < metrics.length) {
-      final len = (distance + dash < metrics.length) ? dash : metrics.length - distance;
+      final len = (distance + dash < metrics.length)
+          ? dash
+          : metrics.length - distance;
       final extract = metrics.extractPath(distance, distance + len);
       canvas.drawPath(extract, paint);
       distance += dash + gap;
