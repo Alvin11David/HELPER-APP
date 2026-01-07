@@ -37,6 +37,7 @@ class OTPVerificationScreen extends StatefulWidget {
 }
 
 class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
+  static const _brandOrange = Color(0xFFFFA10D);
   final int _otpLength = 6;
   late List<TextEditingController> _controllers;
   late List<FocusNode> _focusNodes;
@@ -125,6 +126,8 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
     double screenHeight = MediaQuery.of(context).size.height;
+    final w = MediaQuery.of(context).size.width;
+    final h = MediaQuery.of(context).size.height;
 
     return Scaffold(
       body: SafeArea(
@@ -194,73 +197,8 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
                     ),
                   ),
                   SizedBox(height: screenHeight * 0.03),
-                  // Page Indicator with Text Labels
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      // Active indicator - Phone
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: screenWidth * 0.05,
-                          vertical: screenHeight * 0.012,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Color(0xFFFFA10D),
-                          borderRadius: BorderRadius.circular(25),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Color(0xFFFFA10D).withOpacity(0.4),
-                              blurRadius: 12,
-                              spreadRadius: 2,
-                            ),
-                          ],
-                        ),
-                        child: Text(
-                          'Phone',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: screenWidth * 0.035,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ),
-                      SizedBox(width: screenWidth * 0.03),
-                      // Inactive indicator - Verify
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: screenWidth * 0.04,
-                          vertical: screenHeight * 0.012,
-                        ),
-                        child: Text(
-                          'Verify',
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.6),
-                            fontSize: screenWidth * 0.035,
-                            fontWeight: FontWeight.w500,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ),
-                      SizedBox(width: screenWidth * 0.03),
-                      // Inactive indicator - Payment
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: screenWidth * 0.04,
-                          vertical: screenHeight * 0.012,
-                        ),
-                        child: Text(
-                          'Payment',
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.6),
-                            fontSize: screenWidth * 0.035,
-                            fontWeight: FontWeight.w500,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                  // ✅ circle #1 filled orange
+                  _MiniStep123(width: w, accent: _brandOrange, activeIndex: 0),
                   SizedBox(height: screenHeight * 0.04),
                   Center(
                     child: ClipRRect(
@@ -300,6 +238,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
                               color: Colors.white,
                               fontSize: screenWidth * 0.04,
                               fontWeight: FontWeight.w500,
+                              fontFamily: 'Poppins',
                             ),
                           ),
                         ),
@@ -458,6 +397,8 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: screenWidth * 0.04,
+                              fontWeight: FontWeight.w500,
+                              fontFamily: 'Poppins',
                             ),
                           ),
                           TextSpan(
@@ -466,6 +407,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
                               color: Colors.orange,
                               fontSize: screenWidth * 0.04,
                               fontWeight: FontWeight.bold,
+                              fontFamily: 'Montserrat',
                             ),
                           ),
                         ],
@@ -478,6 +420,99 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _MiniStep123 extends StatelessWidget {
+  final double width;
+  final Color accent;
+  final int activeIndex; // 0 -> step 1 is active
+
+  const _MiniStep123({
+    required this.width,
+    required this.accent,
+    required this.activeIndex,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final dotSize = width * 0.04;
+    final lineW = width * 0.18;
+
+    Widget circle(int index) {
+      final active = index == activeIndex;
+      return Container(
+        width: dotSize,
+        height: dotSize,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: active ? accent : Colors.transparent, // ✅ fill active
+          border: Border.all(color: accent, width: 3),
+        ),
+      );
+    }
+
+    Widget dashed() {
+      return SizedBox(
+        width: lineW,
+        child: CustomPaint(painter: DashedLinePainter(color: accent)),
+      );
+    }
+
+    Widget num(String n) {
+      return Text(
+        n,
+        style: TextStyle(
+          color: accent,
+          fontSize: width * 0.03,
+          fontFamily: 'Poppins',
+          fontWeight: FontWeight.w700,
+        ),
+      );
+    }
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Column(
+          children: [
+            Transform.translate(
+              offset: Offset(0, -width * 0.01),
+              child: circle(0),
+            ),
+            SizedBox(height: width * 0.01),
+            num('Phone'),
+          ],
+        ),
+        SizedBox(width: width * 0.02),
+        Column(children: [dashed()]),
+        SizedBox(width: width * 0.02),
+        Column(
+          children: [
+            Transform.translate(
+              offset: Offset(0, -width * 0.01),
+              child: circle(1),
+            ),
+            SizedBox(height: width * 0.01),
+            num('Verify'),
+          ],
+        ),
+        SizedBox(width: width * 0.02),
+        Column(children: [dashed()]),
+        SizedBox(width: width * 0.02),
+        Column(
+          children: [
+            Transform.translate(
+              offset: Offset(0, -width * 0.01),
+              child: circle(2),
+            ),
+            SizedBox(height: width * 0.01),
+            num('Payment'),
+          ],
+        ),
+      ],
     );
   }
 }

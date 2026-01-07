@@ -141,7 +141,7 @@ class _ForgotYourPasswordScreenState extends State<ForgotYourPasswordScreen> {
                         ),
                       ),
 
-                      SizedBox(height: h * 0.02),
+                      SizedBox(height: h * 0.04),
 
                       // ✅ circle #1 filled orange
                       _MiniStep123(
@@ -271,7 +271,7 @@ class _ForgotYourPasswordScreenState extends State<ForgotYourPasswordScreen> {
                               style: TextStyle(
                                 color: _brandOrange,
                                 fontSize: w * 0.032, // smaller
-                                fontFamily: 'Poppins',
+                                fontFamily: 'Montserrat',
                                 fontWeight: FontWeight.w800,
                               ),
                             ),
@@ -307,7 +307,7 @@ class _MiniStep123 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dotSize = width * 0.03;
+    final dotSize = width * 0.04;
     final lineW = width * 0.18;
 
     Widget circle(int index) {
@@ -342,46 +342,51 @@ class _MiniStep123 extends StatelessWidget {
       );
     }
 
-    return Column(
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+        Column(
           children: [
-            circle(0),
-            SizedBox(width: width * 0.02),
-            dashed(),
-            SizedBox(width: width * 0.02),
-            circle(1),
-            SizedBox(width: width * 0.02),
-            dashed(),
-            SizedBox(width: width * 0.02),
-            circle(2),
+            Transform.translate(
+              offset: Offset(0, -width * 0.01),
+              child: circle(0),
+            ),
+            SizedBox(height: width * 0.01),
+            num('Phone'),
           ],
         ),
-        SizedBox(height: width * 0.01),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+        SizedBox(width: width * 0.02),
+        Column(children: [dashed()]),
+        SizedBox(width: width * 0.02),
+        Column(
           children: [
-            SizedBox(
-              width: dotSize,
-              child: Center(child: num('1')),
+            Transform.translate(
+              offset: Offset(0, -width * 0.01),
+              child: circle(1),
             ),
-            SizedBox(width: width * 0.02 + lineW + width * 0.02),
-            SizedBox(
-              width: dotSize,
-              child: Center(child: num('2')),
+            SizedBox(height: width * 0.01),
+            num('Verify'),
+          ],
+        ),
+        SizedBox(width: width * 0.02),
+        Column(children: [dashed()]),
+        SizedBox(width: width * 0.02),
+        Column(
+          children: [
+            Transform.translate(
+              offset: Offset(0, -width * 0.01),
+              child: circle(2),
             ),
-            SizedBox(width: width * 0.02 + lineW + width * 0.02),
-            SizedBox(
-              width: dotSize,
-              child: Center(child: num('3')),
-            ),
+            SizedBox(height: width * 0.01),
+            num('Payment'),
           ],
         ),
       ],
     );
   }
 }
+
 
 // --------------------- Input pill ---------------------
 
@@ -452,7 +457,7 @@ class _PillInput extends StatelessWidget {
               decoration: InputDecoration(
                 hintText: hint,
                 hintStyle: TextStyle(
-                  color: Colors.white.withOpacity(0.55),
+                  color: Colors.white.withOpacity(0.65),
                   fontSize: contentFontSize,
                   fontWeight: FontWeight.w600,
                   fontFamily: 'Poppins',

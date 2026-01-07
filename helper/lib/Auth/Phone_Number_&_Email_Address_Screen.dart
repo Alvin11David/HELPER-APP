@@ -96,30 +96,26 @@ class _PhoneNumberEmailAddressScreenState
     return Scaffold(
       body: SafeArea(
         child: Container(
+          constraints: const BoxConstraints.expand(),
           decoration: const BoxDecoration(
             image: DecorationImage(
               image: AssetImage('assets/background/normalscreenbg.png'),
               fit: BoxFit.cover,
             ),
           ),
-          child: SingleChildScrollView(
-            padding: EdgeInsets.symmetric(horizontal: sidePad),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                children: [
-                  SizedBox(height: h * 0.02),
-
-                  // Top bar
-                  Row(
+          child: Stack(
+            children: [
+              SingleChildScrollView(
+                padding: EdgeInsets.symmetric(horizontal: sidePad),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
                     children: [
-                      _CircleIconButton(
-                        icon: Icons.arrow_back_ios_new_rounded,
-                        onTap: () => Navigator.maybePop(context),
-                        size: w * 0.11,
-                      ),
-                      const Spacer(),
+                      SizedBox(height: h * 0.02),
+
+                      // Top bar
                       Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Image.asset(
                             'assets/icons/logo.png',
@@ -138,217 +134,255 @@ class _PhoneNumberEmailAddressScreenState
                           ),
                         ],
                       ),
-                      const Spacer(),
-                      SizedBox(width: w * 0.11),
-                    ],
-                  ),
 
-                  SizedBox(height: h * 0.03),
+                      SizedBox(height: h * 0.05),
 
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      'Get Started Now',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: w * 0.09,
-                        fontFamily: 'AbrilFatface',
-                        height: 1.05,
-                      ),
-                    ),
-                  ),
-
-                  SizedBox(height: h * 0.018),
-
-                  _StepIndicator(
-                    width: w,
-                    activeIndex: 0,
-                    labels: const ['Phone/Email', 'Verify', 'Payment Details'],
-                    accent: _brandOrange,
-                  ),
-
-                  SizedBox(height: h * 0.03),
-
-                  _GlassPill(
-                    radius: 30,
-                    padding: EdgeInsets.symmetric(
-                      horizontal: w * 0.06,
-                      vertical: h * 0.012,
-                    ),
-                    child: Text(
-                      _mode == _AuthMode.phone
-                          ? 'Enter your Phone Number'
-                          : 'Enter your Email Address',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: w * 0.04,
-                        fontWeight: FontWeight.w600,
-                        fontFamily: 'Poppins',
-                      ),
-                    ),
-                  ),
-
-                  SizedBox(height: h * 0.02),
-
-                  _SmoothAuthSwitch(
-                    height: h * 0.065,
-                    mode: _mode,
-                    onChanged: _switchMode,
-                  ),
-
-                  SizedBox(height: h * 0.02),
-
-                  // ✅ Make this "container area" transparent (no blur / no color)
-                  // so it looks exactly like the background.
-                  AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 220),
-                    switchInCurve: Curves.easeOut,
-                    switchOutCurve: Curves.easeIn,
-                    transitionBuilder: (child, anim) {
-                      final slide = Tween<Offset>(
-                        begin: const Offset(0.02, 0),
-                        end: Offset.zero,
-                      ).animate(CurvedAnimation(parent: anim, curve: Curves.easeOut));
-                      return FadeTransition(
-                        opacity: anim,
-                        child: SlideTransition(position: slide, child: child),
-                      );
-                    },
-                    child: _mode == _AuthMode.phone
-                        ? _PhoneBlock(
-                            key: const ValueKey('phoneBlock'),
-                            phoneCtrl: _phoneCtrl,
-                          )
-                        : _EmailBlock(
-                            key: const ValueKey('emailBlock'),
-                            emailCtrl: _emailCtrl,
-                            passwordCtrl: _passwordCtrl,
-                            obscure: _obscure,
-                            onToggleObscure: () =>
-                                setState(() => _obscure = !_obscure),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'Get Started Now',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: w * 0.09,
+                            fontFamily: 'AbrilFatface',
+                            height: 1.05,
                           ),
-                  ),
-
-                  SizedBox(height: h * 0.025),
-
-                  // Continue (white)
-                  SizedBox(
-                    width: double.infinity,
-                    height: h * 0.062,
-                    child: ElevatedButton(
-                      onPressed: _loading ? null : _onContinue,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _pureWhite,
-                        disabledBackgroundColor: _pureWhite.withOpacity(0.6),
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
                         ),
                       ),
-                      child: _loading
-                          ? SizedBox(
-                              width: h * 0.03,
-                              height: h * 0.03,
-                              child: const CircularProgressIndicator(
-                                strokeWidth: 3,
-                                color: Colors.black,
+
+                      SizedBox(height: h * 0.018),
+
+                      _StepIndicator(
+                        width: w,
+                        activeIndex: 0,
+                        labels: const [
+                          'Phone/Email',
+                          'Verify',
+                          'Payment Details',
+                        ],
+                        accent: _brandOrange,
+                      ),
+
+                      SizedBox(height: h * 0.03),
+
+                      _GlassPill(
+                        radius: 30,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: w * 0.05,
+                          vertical: h * 0.006,
+                        ),
+                        child: Text(
+                          _mode == _AuthMode.phone
+                              ? 'Enter your Phone Number'
+                              : 'Enter your Email Address',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: w * 0.04,
+                            fontWeight: FontWeight.w600,
+                            fontFamily: 'Poppins',
+                          ),
+                        ),
+                      ),
+
+                      SizedBox(height: h * 0.02),
+
+                      _SmoothAuthSwitch(
+                        height: h * 0.065,
+                        mode: _mode,
+                        onChanged: _switchMode,
+                      ),
+
+                      SizedBox(height: h * 0.02),
+
+                      // ✅ Make this "container area" transparent (no blur / no color)
+                      // so it looks exactly like the background.
+                      AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 220),
+                        switchInCurve: Curves.easeOut,
+                        switchOutCurve: Curves.easeIn,
+                        transitionBuilder: (child, anim) {
+                          final slide =
+                              Tween<Offset>(
+                                begin: const Offset(0.02, 0),
+                                end: Offset.zero,
+                              ).animate(
+                                CurvedAnimation(
+                                  parent: anim,
+                                  curve: Curves.easeOut,
+                                ),
+                              );
+                          return FadeTransition(
+                            opacity: anim,
+                            child: SlideTransition(
+                              position: slide,
+                              child: child,
+                            ),
+                          );
+                        },
+                        child: _mode == _AuthMode.phone
+                            ? _PhoneBlock(
+                                key: const ValueKey('phoneBlock'),
+                                phoneCtrl: _phoneCtrl,
+                              )
+                            : _EmailBlock(
+                                key: const ValueKey('emailBlock'),
+                                emailCtrl: _emailCtrl,
+                                passwordCtrl: _passwordCtrl,
+                                obscure: _obscure,
+                                onToggleObscure: () =>
+                                    setState(() => _obscure = !_obscure),
                               ),
-                            )
-                          : Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  'Continue',
-                                  style: TextStyle(
-                                    fontSize: w * 0.045,
-                                    fontWeight: FontWeight.bold,
+                      ),
+
+                      SizedBox(height: h * 0.025),
+
+                      // Continue (white)
+                      SizedBox(
+                        width: double.infinity,
+                        height: h * 0.062,
+                        child: ElevatedButton(
+                          onPressed: _loading ? null : _onContinue,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _pureWhite,
+                            disabledBackgroundColor: _pureWhite.withOpacity(
+                              0.6,
+                            ),
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                          ),
+                          child: _loading
+                              ? SizedBox(
+                                  width: h * 0.03,
+                                  height: h * 0.03,
+                                  child: const CircularProgressIndicator(
+                                    strokeWidth: 3,
                                     color: Colors.black,
-                                    fontFamily: 'Poppins',
+                                  ),
+                                )
+                              : Center(
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        'Continue',
+                                        style: TextStyle(
+                                          fontSize: w * 0.045,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.black,
+                                          fontFamily: 'Poppins',
+                                        ),
+                                      ),
+                                      SizedBox(width: w * 0.02),
+                                      Icon(
+                                        Icons.arrow_forward_rounded,
+                                        color: Colors.black,
+                                        size: h * 0.035,
+                                      ),
+                                    ],
                                   ),
                                 ),
-                                SizedBox(width: w * 0.02),
-                                Icon(
-                                  Icons.arrow_forward_rounded,
-                                  color: Colors.black,
-                                  size: h * 0.035,
+                        ),
+                      ),
+
+                      // Email mode: OR + Google button (Google button must be white fill + black text)
+                      if (_mode == _AuthMode.email) ...[
+                        SizedBox(height: h * 0.02),
+                        _OrDivider(),
+                        SizedBox(height: h * 0.02),
+
+                        SizedBox(
+                          width: double.infinity,
+                          height: h * 0.062,
+                          child: ElevatedButton(
+                            onPressed: _onGoogle,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: _pureWhite,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                _GoogleIconSlot(size: w * 0.065),
+                                SizedBox(width: w * 0.025),
+                                Text(
+                                  'Continue with Google',
+                                  style: TextStyle(
+                                    fontSize: w * 0.042,
+                                    fontWeight: FontWeight.w800,
+                                    fontFamily: 'Poppins',
+                                    color: Colors.black,
+                                  ),
                                 ),
                               ],
                             ),
-                    ),
-                  ),
-
-                  // Email mode: OR + Google button (Google button must be white fill + black text)
-                  if (_mode == _AuthMode.email) ...[
-                    SizedBox(height: h * 0.02),
-                    _OrDivider(),
-                    SizedBox(height: h * 0.02),
-
-                    SizedBox(
-                      width: double.infinity,
-                      height: h * 0.062,
-                      child: ElevatedButton(
-                        onPressed: _onGoogle,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _pureWhite,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
                           ),
                         ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            // ✅ Placeholder for Google icon (won't break if asset not ready)
-                            _GoogleIconSlot(size: w * 0.06),
-                            SizedBox(width: w * 0.02),
-                            Text(
-                              'Continue with Google',
-                              style: TextStyle(
-                                fontSize: w * 0.04,
-                                fontWeight: FontWeight.w800,
-                                fontFamily: 'Poppins',
-                                color: Colors.black,
+                      ],
+
+                      SizedBox(height: h * 0.07),
+
+                      if (_mode == _AuthMode.phone)
+                        Center(
+                          child: Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: w * 0.045,
+                              vertical: h * 0.01,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.12),
+                              borderRadius: BorderRadius.circular(22),
+                              border: Border.all(
+                                color: Colors.white.withOpacity(0.25),
                               ),
                             ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-
-                  SizedBox(height: h * 0.02),
-
-                  if (_mode == _AuthMode.phone)
-                    Center(
-                      child: Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: w * 0.045,
-                          vertical: h * 0.01,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.12),
-                          borderRadius: BorderRadius.circular(22),
-                          border: Border.all(
-                            color: Colors.white.withOpacity(0.25),
+                            child: Text(
+                              'Your phone number is safe and will not be shared',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.75),
+                                fontSize: w * 0.032,
+                                fontWeight: FontWeight.w600,
+                                fontFamily: 'Poppins', // ✅ requested
+                              ),
+                            ),
                           ),
                         ),
-                        child: Text(
-                          'Your phone number is safe and will not be shared',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.75),
-                            fontSize: w * 0.032,
-                            fontWeight: FontWeight.w600,
-                            fontFamily: 'Poppins', // ✅ requested
-                          ),
-                        ),
-                      ),
-                    ),
 
-                  SizedBox(height: h * 0.03),
-                ],
+                      SizedBox(height: h * 0.03),
+                    ],
+                  ),
+                ),
               ),
-            ),
+              Positioned(
+                top: h * 0.04,
+                left: w * 0.04,
+                child: GestureDetector(
+                  onTap: () => Navigator.of(context).maybePop(),
+                  child: Container(
+                    width: w * 0.13,
+                    height: w * 0.13,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFFFFF),
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    child: Center(
+                      child: Icon(
+                        Icons.chevron_left,
+                        color: Colors.black,
+                        size: w * 0.10,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -560,7 +594,7 @@ class _StepIndicator extends StatelessWidget {
                     color: accent.withOpacity(0.35),
                     blurRadius: 10,
                     spreadRadius: 1,
-                  )
+                  ),
                 ]
               : [],
         ),
@@ -666,29 +700,32 @@ class _SmoothAuthSwitch extends StatelessWidget {
                     child: InkWell(
                       borderRadius: BorderRadius.circular(radius),
                       onTap: () => onChanged(_AuthMode.phone),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.phone_rounded,
-                            size: w * 0.06,
-                            color: mode == _AuthMode.phone
-                                ? Colors.black
-                                : Colors.white,
-                          ),
-                          SizedBox(width: w * 0.02),
-                          Text(
-                            'Phone Number',
-                            style: TextStyle(
-                              fontSize: w * 0.044,
-                              fontWeight: FontWeight.w900,
-                              fontFamily: 'Poppins',
+                      child: Center(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.phone_rounded,
+                              size: w * 0.06,
                               color: mode == _AuthMode.phone
                                   ? Colors.black
                                   : Colors.white,
                             ),
-                          ),
-                        ],
+                            SizedBox(width: w * 0.02),
+                            Text(
+                              'Phone Number',
+                              style: TextStyle(
+                                fontSize: w * 0.044,
+                                fontWeight: FontWeight.w900,
+                                fontFamily: 'Poppins',
+                                color: mode == _AuthMode.phone
+                                    ? Colors.black
+                                    : Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -696,29 +733,32 @@ class _SmoothAuthSwitch extends StatelessWidget {
                     child: InkWell(
                       borderRadius: BorderRadius.circular(radius),
                       onTap: () => onChanged(_AuthMode.email),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.mail_rounded,
-                            size: w * 0.06,
-                            color: mode == _AuthMode.email
-                                ? Colors.black
-                                : Colors.white,
-                          ),
-                          SizedBox(width: w * 0.02),
-                          Text(
-                            'Email',
-                            style: TextStyle(
-                              fontSize: w * 0.044,
-                              fontWeight: FontWeight.w900,
-                              fontFamily: 'Poppins',
+                      child: Center(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.mail_rounded,
+                              size: w * 0.06,
                               color: mode == _AuthMode.email
                                   ? Colors.black
                                   : Colors.white,
                             ),
-                          ),
-                        ],
+                            SizedBox(width: w * 0.02),
+                            Text(
+                              'Email',
+                              style: TextStyle(
+                                fontSize: w * 0.044,
+                                fontWeight: FontWeight.w900,
+                                fontFamily: 'Poppins',
+                                color: mode == _AuthMode.email
+                                    ? Colors.black
+                                    : Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -838,10 +878,7 @@ class _OrDivider extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: Container(
-            height: 1,
-            color: Colors.white.withOpacity(0.25),
-          ),
+          child: Container(height: 1, color: Colors.white.withOpacity(0.25)),
         ),
         Padding(
           padding: EdgeInsets.symmetric(horizontal: w * 0.03),
@@ -856,10 +893,7 @@ class _OrDivider extends StatelessWidget {
           ),
         ),
         Expanded(
-          child: Container(
-            height: 1,
-            color: Colors.white.withOpacity(0.25),
-          ),
+          child: Container(height: 1, color: Colors.white.withOpacity(0.25)),
         ),
       ],
     );
@@ -877,7 +911,7 @@ class _GoogleIconSlot extends StatelessWidget {
     // This will NOT crash if the asset isn't added yet.
     // When you add the asset later, it will just start showing automatically.
     return Image.asset(
-      'assets/icons/google.png',
+      'icons/google.png',
       width: size,
       height: size,
       errorBuilder: (_, __, ___) => SizedBox(width: size, height: size),
@@ -956,11 +990,7 @@ class _CircleIconButton extends StatelessWidget {
           border: Border.all(color: Colors.white.withOpacity(0.25)),
         ),
         child: Center(
-          child: Icon(
-            icon,
-            color: Colors.white,
-            size: size * 0.45,
-          ),
+          child: Icon(icon, color: Colors.white, size: size * 0.45),
         ),
       ),
     );
