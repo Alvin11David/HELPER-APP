@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:helper/Auth/OTP_Verification_Screen.dart';
 import 'package:helper/intro/Role_Selection_Screen.dart';
 import 'package:helper/intro/Splash_Screen.dart';
+import 'package:helper/Auth/Phone_Number_&_Email_Address_Screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -16,8 +17,8 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Flutter Demo',
-      theme: ThemeData(colorScheme: .fromSeed(seedColor: Colors.deepPurple)),
-      home: const OTPVerificationScreen(),
+      theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple)),
+      home: const PhoneNumberEmailAddressScreen(),
     );
   }
 }
