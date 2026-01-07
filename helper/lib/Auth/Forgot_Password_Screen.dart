@@ -1,8 +1,3 @@
-// ✅ Only the requested edits applied:
-// 1) Bottom text: add spacing between "Already have an account?" and "Sign In"
-// 2) Make "Sign In" smaller font size
-// 3) Top step indicator: circle for number 1 should be ORANGE FILLED (others remain outlined)
-
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -73,204 +68,223 @@ class _ForgotYourPasswordScreenState extends State<ForgotYourPasswordScreen> {
     return Scaffold(
       body: SafeArea(
         child: Container(
+          constraints: const BoxConstraints.expand(),
           decoration: const BoxDecoration(
             image: DecorationImage(
               image: AssetImage('assets/background/normalscreenbg.png'),
               fit: BoxFit.cover,
             ),
           ),
-          child: SingleChildScrollView(
-            padding: EdgeInsets.symmetric(horizontal: w * 0.06),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                children: [
-                  SizedBox(height: h * 0.02),
-
-                  // Top bar
-                  Row(
-                    children: [
-                      _CircleIconButton(
-                        icon: Icons.arrow_back_ios_new_rounded,
-                        onTap: () => Navigator.maybePop(context),
-                        size: w * 0.11,
+          child: Stack(
+            children: [
+              Positioned(
+                top: h * 0.04,
+                left: w * 0.04,
+                child: GestureDetector(
+                  onTap: () => Navigator.of(context).maybePop(),
+                  child: Container(
+                    width: w * 0.13,
+                    height: w * 0.13,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFFFFF),
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    child: Center(
+                      child: Icon(
+                        Icons.chevron_left,
+                        color: Colors.black,
+                        size: w * 0.10,
                       ),
-                      const Spacer(),
+                    ),
+                  ),
+                ),
+              ),
+              SingleChildScrollView(
+                padding: EdgeInsets.symmetric(horizontal: w * 0.06),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    children: [
+                      SizedBox(height: h * 0.02),
+
                       Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Image.asset(
                             'assets/icons/logo.png',
-                            width: w * 0.09,
-                            height: w * 0.09,
+                            width: w * 0.08,
+                            height: w * 0.08,
                           ),
-                          SizedBox(width: w * 0.02),
+                          SizedBox(width: w * 0.03),
                           Text(
                             'Helper',
                             style: TextStyle(
                               color: Colors.white,
-                              fontSize: w * 0.05,
+                              fontSize: w * 0.055,
                               fontWeight: FontWeight.bold,
                               fontFamily: 'Poppins',
                             ),
                           ),
                         ],
                       ),
-                      const Spacer(),
-                      SizedBox(width: w * 0.11),
-                    ],
-                  ),
-
-                  SizedBox(height: h * 0.04),
-
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      'Forgot Your Password',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: w * 0.085,
-                        fontFamily: 'AbrilFatface',
-                        height: 1.05,
-                      ),
-                    ),
-                  ),
-
-                  SizedBox(height: h * 0.02),
-
-                  // ✅ circle #1 filled orange
-                  _MiniStep123(width: w, accent: _brandOrange, activeIndex: 0),
-
-                  SizedBox(height: h * 0.02),
-
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: w * 0.06),
-                    child: Text(
-                      'Please enter your email address or\nphone number below to receive an OTP\ncode.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.9),
-                        fontSize: w * 0.04,
-                        fontWeight: FontWeight.w500,
-                        fontFamily: 'Poppins',
-                        height: 1.35,
-                      ),
-                    ),
-                  ),
-
-                  SizedBox(height: h * 0.04),
-
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      'Email',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: w * 0.04,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'Poppins',
-                      ),
-                    ),
-                  ),
-
-                  SizedBox(height: h * 0.012),
-
-                  _PillInput(
-                    controller: _identifierCtrl,
-                    hint: 'Enter Your Email Address',
-                    icon: Icons.mail_rounded,
-                    keyboardType: TextInputType.emailAddress,
-                    contentFontSize: w * 0.038,
-                    validator: (v) {
-                      final t = (v ?? '').trim();
-                      if (t.isEmpty) return 'Email or phone is required';
-                      return null;
-                    },
-                  ),
-
-                  SizedBox(height: h * 0.05),
-
-                  SizedBox(
-                    width: double.infinity,
-                    height: h * 0.062,
-                    child: ElevatedButton(
-                      onPressed: _loading ? null : _onSubmit,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        disabledBackgroundColor: Colors.white.withOpacity(0.6),
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                      ),
-                      child: _loading
-                          ? SizedBox(
-                              width: h * 0.03,
-                              height: h * 0.03,
-                              child: const CircularProgressIndicator(
-                                strokeWidth: 3,
-                                color: Colors.black,
-                              ),
-                            )
-                          : Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  'Submit',
-                                  style: TextStyle(
-                                    fontSize: w * 0.045,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black,
-                                    fontFamily: 'Poppins',
-                                  ),
-                                ),
-                                SizedBox(width: w * 0.02),
-                                Icon(
-                                  Icons.arrow_forward_rounded,
-                                  color: Colors.black,
-                                  size: h * 0.035,
-                                ),
-                              ],
-                            ),
-                    ),
-                  ),
-
-                  SizedBox(height: h * 0.12),
-
-                  // ✅ spaced & Sign In smaller
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        'Already have an account?',
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.9),
-                          fontSize: w * 0.037,
-                          fontFamily: 'Poppins',
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      SizedBox(width: w * 0.02), // spacing
-                      GestureDetector(
-                        onTap: () {
-                          // TODO: navigate to sign in
-                        },
+                      SizedBox(height: h * 0.05),
+                      Align(
+                        alignment: Alignment.centerLeft,
                         child: Text(
-                          'Sign In',
+                          'Forgot Your Password',
                           style: TextStyle(
-                            color: _brandOrange,
-                            fontSize: w * 0.032, // smaller
-                            fontFamily: 'Poppins',
-                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                            fontSize: w * 0.085,
+                            fontFamily: 'AbrilFatface',
+                            height: 1.05,
                           ),
                         ),
                       ),
+
+                      SizedBox(height: h * 0.04),
+
+                      // ✅ circle #1 filled orange
+                      _MiniStep123(
+                        width: w,
+                        accent: _brandOrange,
+                        activeIndex: 0,
+                      ),
+
+                      SizedBox(height: h * 0.02),
+
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: w * 0.06),
+                        child: Text(
+                          'Please enter your email address or\nphone number below to receive an OTP\ncode.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.9),
+                            fontSize: w * 0.04,
+                            fontWeight: FontWeight.w500,
+                            fontFamily: 'Poppins',
+                            height: 1.35,
+                          ),
+                        ),
+                      ),
+
+                      SizedBox(height: h * 0.04),
+
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'Email',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: w * 0.04,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'Poppins',
+                          ),
+                        ),
+                      ),
+
+                      SizedBox(height: h * 0.012),
+
+                      _PillInput(
+                        controller: _identifierCtrl,
+                        hint: 'Enter Your Email Address',
+                        icon: Icons.mail_rounded,
+                        keyboardType: TextInputType.emailAddress,
+                        contentFontSize: w * 0.038,
+                        validator: (v) {
+                          final t = (v ?? '').trim();
+                          if (t.isEmpty) return 'Email or phone is required';
+                          return null;
+                        },
+                      ),
+
+                      SizedBox(height: h * 0.05),
+
+                      SizedBox(
+                        width: double.infinity,
+                        height: h * 0.062,
+                        child: ElevatedButton(
+                          onPressed: _loading ? null : _onSubmit,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            disabledBackgroundColor: Colors.white.withOpacity(
+                              0.6,
+                            ),
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                          ),
+                          child: _loading
+                              ? SizedBox(
+                                  width: h * 0.03,
+                                  height: h * 0.03,
+                                  child: const CircularProgressIndicator(
+                                    strokeWidth: 3,
+                                    color: Colors.black,
+                                  ),
+                                )
+                              : Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      'Submit',
+                                      style: TextStyle(
+                                        fontSize: w * 0.045,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black,
+                                        fontFamily: 'Poppins',
+                                      ),
+                                    ),
+                                    SizedBox(width: w * 0.02),
+                                    Icon(
+                                      Icons.arrow_forward_rounded,
+                                      color: Colors.black,
+                                      size: h * 0.035,
+                                    ),
+                                  ],
+                                ),
+                        ),
+                      ),
+
+                      SizedBox(height: h * 0.12),
+
+                      // ✅ spaced & Sign In smaller
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'Already have an account?',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.9),
+                              fontSize: w * 0.037,
+                              fontFamily: 'Poppins',
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          SizedBox(width: w * 0.02), // spacing
+                          GestureDetector(
+                            onTap: () {
+                              // TODO: navigate to sign in
+                            },
+                            child: Text(
+                              'Sign In',
+                              style: TextStyle(
+                                color: _brandOrange,
+                                fontSize: w * 0.032, // smaller
+                                fontFamily: 'Montserrat',
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      SizedBox(height: h * 0.03),
                     ],
                   ),
-
-                  SizedBox(height: h * 0.03),
-                ],
+                ),
               ),
-            ),
+            ],
           ),
         ),
       ),
@@ -293,7 +307,7 @@ class _MiniStep123 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dotSize = width * 0.03;
+    final dotSize = width * 0.04;
     final lineW = width * 0.18;
 
     Widget circle(int index) {
@@ -328,37 +342,51 @@ class _MiniStep123 extends StatelessWidget {
       );
     }
 
-    return Column(
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+        Column(
           children: [
-            circle(0),
-            SizedBox(width: width * 0.02),
-            dashed(),
-            SizedBox(width: width * 0.02),
-            circle(1),
-            SizedBox(width: width * 0.02),
-            dashed(),
-            SizedBox(width: width * 0.02),
-            circle(2),
+            Transform.translate(
+              offset: Offset(0, -width * 0.01),
+              child: circle(0),
+            ),
+            SizedBox(height: width * 0.01),
+            num('Phone'),
           ],
         ),
-        SizedBox(height: width * 0.01),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+        SizedBox(width: width * 0.02),
+        Column(children: [dashed()]),
+        SizedBox(width: width * 0.02),
+        Column(
           children: [
-            SizedBox(width: dotSize, child: Center(child: num('1'))),
-            SizedBox(width: width * 0.02 + lineW + width * 0.02),
-            SizedBox(width: dotSize, child: Center(child: num('2'))),
-            SizedBox(width: width * 0.02 + lineW + width * 0.02),
-            SizedBox(width: dotSize, child: Center(child: num('3'))),
+            Transform.translate(
+              offset: Offset(0, -width * 0.01),
+              child: circle(1),
+            ),
+            SizedBox(height: width * 0.01),
+            num('Verify'),
+          ],
+        ),
+        SizedBox(width: width * 0.02),
+        Column(children: [dashed()]),
+        SizedBox(width: width * 0.02),
+        Column(
+          children: [
+            Transform.translate(
+              offset: Offset(0, -width * 0.01),
+              child: circle(2),
+            ),
+            SizedBox(height: width * 0.01),
+            num('Payment'),
           ],
         ),
       ],
     );
   }
 }
+
 
 // --------------------- Input pill ---------------------
 
@@ -429,7 +457,7 @@ class _PillInput extends StatelessWidget {
               decoration: InputDecoration(
                 hintText: hint,
                 hintStyle: TextStyle(
-                  color: Colors.white.withOpacity(0.55),
+                  color: Colors.white.withOpacity(0.65),
                   fontSize: contentFontSize,
                   fontWeight: FontWeight.w600,
                   fontFamily: 'Poppins',
@@ -482,11 +510,7 @@ class _CircleIconButton extends StatelessWidget {
           border: Border.all(color: Colors.white.withOpacity(0.25)),
         ),
         child: Center(
-          child: Icon(
-            icon,
-            color: Colors.white,
-            size: size * 0.45,
-          ),
+          child: Icon(icon, color: Colors.white, size: size * 0.45),
         ),
       ),
     );
