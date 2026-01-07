@@ -23,36 +23,42 @@ class RegistrationPaymentScreen extends StatelessWidget {
               Positioned(
                 top: screenHeight * 0.04,
                 left: screenWidth * 0.04,
-                child: Row(
+                child: Column(
                   mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    GestureDetector(
-                      onTap: () => Navigator.of(context).maybePop(),
-                      child: Container(
-                        width: screenWidth * 0.13,
-                        height: screenWidth * 0.13,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFFFFFF),
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                        child: Center(
-                          child: Icon(
-                            Icons.chevron_left,
-                            color: Colors.black,
-                            size: screenWidth * 0.10,
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        GestureDetector(
+                          onTap: () => Navigator.of(context).maybePop(),
+                          child: Container(
+                            width: screenWidth * 0.13,
+                            height: screenWidth * 0.13,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFFFFFF),
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                            child: Center(
+                              child: Icon(
+                                Icons.chevron_left,
+                                color: Colors.black,
+                                size: screenWidth * 0.10,
+                              ),
+                            ),
                           ),
                         ),
-                      ),
-                    ),
-                    SizedBox(width: screenWidth * 0.06),
-                    Text(
-                      'Payment',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: screenWidth * 0.08,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'Montserrat',
-                      ),
+                        SizedBox(width: screenWidth * 0.06),
+                        Text(
+                          'Payment',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: screenWidth * 0.08,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'Montserrat',
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -174,6 +180,57 @@ class RegistrationPaymentScreen extends StatelessWidget {
                       ),
                     ),
                   ],
+                ),
+              ),
+              Positioned(
+                top: screenHeight * 0.34,
+                left: screenWidth * 0.04,
+                child: Text(
+                  'Choose Method',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: screenWidth * 0.045,
+                    fontWeight: FontWeight.w900,
+                    fontFamily: 'Montserrat',
+                  ),
+                ),
+              ),
+              Positioned(
+                top: screenHeight * 0.39,
+                left: screenWidth * 0.04,
+                child: Container(
+                  width: screenWidth * 0.91,
+                  height: screenHeight * 0.091,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: screenWidth * 0.05,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Image.asset(
+                          'assets/images/mastercard.png',
+                          width: screenWidth * 0.12,
+                          height: screenWidth * 0.12,
+                        ),
+                        SizedBox(width: screenWidth * 0.04),
+                        Text(
+                          'Master Card',
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontSize: screenWidth * 0.045,
+                            fontWeight: FontWeight.w600,
+                            fontFamily: 'Poppins',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ],
