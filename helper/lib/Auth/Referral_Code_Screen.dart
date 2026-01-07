@@ -4,6 +4,7 @@
 // ✅ AbrilFatface for headings, Poppins for body
 
 import 'dart:async';
+import 'dart:math' as math;
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -45,6 +46,8 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
   bool _isLoading = false;
   int _countdown = 60;
   final int _otpLength = 6;
+  bool _showOverlay = false;
+  final Duration _overlayAnimDuration = const Duration(milliseconds: 360);
 
   late final List<TextEditingController> _controllers;
   late final List<FocusNode> _focusNodes;
@@ -63,9 +66,12 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
 
   void _checkOTPAndNavigate() {
     String otp = _controllers.map((controller) => controller.text).join();
-    if (otp.length == _otpLength) {
+    if (otp.length == _otpLength && !_showOverlay) {
+      setState(() {
+        _showOverlay = true;
+      });
       // TODO: Add your OTP verification logic here
-      print('OTP entered: $otp');
+      // print('OTP entered: $otp');
     }
   }
 
@@ -144,6 +150,13 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
+    final bottomInset = MediaQuery.of(context).padding.bottom;
+    final double baseHorizontalPadding = 16;
+    final double sheetWidth = math.min(
+      359,
+      screenWidth - (baseHorizontalPadding * 2),
+    );
+    final double sheetHeight = math.min(502, screenHeight * 0.75);
 
     return Scaffold(
       body: Container(
@@ -486,6 +499,186 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
                   ),
                 ],
               ),
+
+              // Dim background overlay
+              IgnorePointer(
+                ignoring: !_showOverlay,
+                child: AnimatedOpacity(
+                  duration: _overlayAnimDuration,
+                  curve: Curves.easeInOut,
+                  opacity: _showOverlay ? 0.55 : 0.0,
+                  child: Container(color: Colors.black),
+                ),
+              ),
+
+              // Sliding white rectangle
+              AnimatedPositioned(
+                duration: _overlayAnimDuration,
+                curve: Curves.easeOutCubic,
+                left: baseHorizontalPadding,
+                right: baseHorizontalPadding,
+                bottom: _showOverlay
+                    ? (baseHorizontalPadding + bottomInset)
+                    : -(sheetHeight + 40),
+                child: AnimatedOpacity(
+                  duration: _overlayAnimDuration,
+                  curve: Curves.easeInOut,
+                  opacity: _showOverlay ? 1.0 : 0.0,
+                  child: Align(
+                    alignment: Alignment.bottomCenter,
+                    child: Container(
+                      width: sheetWidth,
+                      height: sheetHeight,
+                      padding: EdgeInsets.fromLTRB(
+                        baseHorizontalPadding,
+                        0,
+                        baseHorizontalPadding,
+                        baseHorizontalPadding + bottomInset,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(30),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.15),
+                            blurRadius: 18,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          SizedBox(height: screenHeight * 0.0),
+                          Stack(
+                            alignment: Alignment.topCenter,
+                            clipBehavior: Clip.none,
+                            children: [
+                              Image.asset(
+                                'assets/images/pop.png',
+                                width: screenWidth * 1.1,
+                                fit: BoxFit.contain,
+                              ),
+                              Positioned(
+                                top: 0,
+                                child: Image.asset(
+                                  'assets/images/celebration.png',
+                                  width: screenWidth * 0.4,
+                                  fit: BoxFit.contain,
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: screenHeight * 0.0),
+                          Text(
+                            'Congratulations',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontSize: screenWidth * 0.065,
+                              fontFamily: 'Montserrat',
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            'you have earned',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontSize: screenWidth * 0.045,
+                              fontFamily: 'Montserrat',
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          SizedBox(height: screenHeight * 0.01),
+                          Text(
+                            'UGX 2,500/ & 0.5',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: const Color(0xFFDF8800),
+                              fontSize: screenWidth * 0.055,
+                              fontFamily: 'Montserrat',
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          SizedBox(height: screenHeight * 0.02),
+                          Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: screenWidth * 0.08,
+                            ),
+                            child: Text(
+                              'You have earned yourself a prize of\nUGX 1,000 approximate to \$ 0.5 for using\nthe referral code',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontSize: screenWidth * 0.035,
+                                fontFamily: 'Montserrat',
+                                fontWeight: FontWeight.w500,
+                                height: 1.4,
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: screenHeight * 0.07),
+                          SizedBox(
+                            width: double.infinity,
+                            height: screenHeight * 0.062,
+                            child: ElevatedButton(
+                              onPressed: _isLoading
+                                  ? null
+                                  : () {
+                                      // TODO: Handle continue action
+                                    },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFFDF8800),
+                                disabledBackgroundColor: const Color(
+                                  0xFFDF8800,
+                                ).withOpacity(0.6),
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
+                              ),
+                              child: _isLoading
+                                  ? SizedBox(
+                                      width: screenHeight * 0.03,
+                                      height: screenHeight * 0.03,
+                                      child: const CircularProgressIndicator(
+                                        strokeWidth: 3,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  : Center(
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text(
+                                            'Continue',
+                                            style: TextStyle(
+                                              fontSize: screenWidth * 0.045,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.white,
+                                              fontFamily: 'Poppins',
+                                            ),
+                                          ),
+                                          SizedBox(width: screenWidth * 0.02),
+                                          Icon(
+                                            Icons.arrow_forward_rounded,
+                                            color: Colors.white,
+                                            size: screenHeight * 0.035,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                            ),
+                          ),
+                          // Add more content here as needed
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
         ),
@@ -508,8 +701,6 @@ class _GlassPill extends StatelessWidget {
     required this.radius,
     required this.width,
   });
-
-  
 
   @override
   Widget build(BuildContext context) {
