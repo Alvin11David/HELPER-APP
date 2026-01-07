@@ -525,6 +525,62 @@ class _RegistrationPaymentScreenState extends State<RegistrationPaymentScreen> {
                   ],
                 ),
               ),
+              Positioned(
+                bottom: screenHeight * 0.01,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(30),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: screenWidth * 0.06,
+                          vertical: screenHeight * 0.015,
+                        ),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Colors.white.withOpacity(0.25),
+                              Colors.white.withOpacity(0.15),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(30),
+                          border: Border.all(
+                            color: Colors.white.withOpacity(0.4),
+                            width: 2,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.white.withOpacity(0.1),
+                              blurRadius: 15,
+                              spreadRadius: 2,
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            SizedBox(width: screenWidth * 0.02),
+                            Text(
+                              'Secure payment. Refundable if verification fails',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: screenWidth * 0.03,
+                                fontWeight: FontWeight.w500,
+                                fontFamily: 'Poppins',
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
         ),
