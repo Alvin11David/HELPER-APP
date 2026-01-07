@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -40,6 +41,11 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
   late List<TextEditingController> _controllers;
   late List<FocusNode> _focusNodes;
 
+  int _countdown = 60;
+  bool _isButtonEnabled = false;
+  bool _isLoading = false;
+  Timer? _timer;
+
   @override
   void initState() {
     super.initState();
@@ -48,10 +54,56 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
       (index) => TextEditingController(),
     );
     _focusNodes = List.generate(_otpLength, (index) => FocusNode());
+    _startCountdown();
+  }
+
+  void _startCountdown() {
+    setState(() {
+      _countdown = 60;
+      _isButtonEnabled = false;
+    });
+
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_countdown > 0) {
+        setState(() {
+          _countdown--;
+        });
+      } else {
+        setState(() {
+          _isButtonEnabled = true;
+        });
+        timer.cancel();
+      }
+    });
+  }
+
+  void _resendOTP() {
+    if (_isButtonEnabled && !_isLoading) {
+      setState(() {
+        _isLoading = true;
+      });
+
+      // TODO: Add your resend OTP logic here
+      Future.delayed(const Duration(seconds: 2), () {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+          _startCountdown();
+          // Clear OTP fields
+          for (var controller in _controllers) {
+            controller.clear();
+          }
+          _focusNodes[0].requestFocus();
+        }
+      });
+    }
   }
 
   @override
   void dispose() {
+    _timer?.cancel();
     for (var controller in _controllers) {
       controller.dispose();
     }
@@ -323,6 +375,73 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
                       ),
                     );
                   }),
+                ),
+              ),
+              SizedBox(height: screenHeight * 0.09),
+              GestureDetector(
+                onTap: (_isButtonEnabled && !_isLoading) ? _resendOTP : null,
+                child: Container(
+                  width: screenWidth * 0.8,
+                  height: screenHeight * 0.06,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: _isButtonEnabled && !_isLoading
+                          ? [Colors.white, const Color(0xFFD59A00)]
+                          : [
+                              Colors.white.withOpacity(0.1),
+                              Colors.white.withOpacity(0.05),
+                            ],
+                      stops: [0.0, 0.47],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    border: Border.all(color: Color(0xFFFFFFFF), width: 1),
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.refresh,
+                        color: Colors.white,
+                        size: screenWidth * 0.06,
+                      ),
+                      SizedBox(width: screenWidth * 0.03),
+                      Text(
+                        _countdown > 0 ? '$_countdown' : 'Resend',
+                        style: TextStyle(
+                          fontSize: screenWidth * 0.05,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          fontFamily: 'AbrilFatface',
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              SizedBox(height: screenHeight * 0.06),
+              Center(
+                child: RichText(
+                  text: TextSpan(
+                    children: [
+                      TextSpan(
+                        text: 'Already have an account ',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: screenWidth * 0.04,
+                        ),
+                      ),
+                      TextSpan(
+                        text: 'Sign In',
+                        style: TextStyle(
+                          color: Colors.orange,
+                          fontSize: screenWidth * 0.04,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
