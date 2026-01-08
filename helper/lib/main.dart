@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:helper/Auth/OTP_Verification_Screen.dart';
 import 'package:helper/Auth/Password_Reset_Screen.dart';
 import 'package:helper/Auth/Referral_Code_Screen.dart';
+import 'package:helper/Document%20Upload/Document_Upload_screen.dart';
 import 'package:helper/Document%20Upload/Verification_Information_Screen.dart';
 import 'package:helper/Payments/Airtel_Payment_Method_Screen.dart';
 import 'package:helper/Payments/Mastercard_Payment_Method_Screen.dart';
@@ -29,7 +30,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: const VerificationInformationScreen(),
+      home: const DocumentUploadScreen(),
     );
   }
 }
