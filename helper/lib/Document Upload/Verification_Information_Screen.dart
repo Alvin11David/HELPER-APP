@@ -266,12 +266,12 @@ class _VerificationInformationScreenState
                                   top: screenWidth * 0.03,
                                   right: screenWidth * 0.05,
                                   child: Text(
-                                    'I am an Employer',
+                                    'Non-Professional Worker',
                                     style: TextStyle(
                                       color: Colors.white,
-                                      fontSize: screenWidth * 0.035,
-                                      fontWeight: FontWeight.w200,
-                                      fontFamily: 'AbrilFatface',
+                                      fontSize: screenWidth * 0.05,
+                                      fontWeight: FontWeight.w600,
+                                      fontFamily: 'Montserrat',
                                     ),
                                   ),
                                 ),
@@ -281,12 +281,12 @@ class _VerificationInformationScreenState
                                   child: SizedBox(
                                     width: screenWidth * 0.35,
                                     child: Text(
-                                      '"Find verified\nworkers\naround you"',
+                                      '"General Labour,\ncleaning,\nloading, delivery etc"',
                                       textAlign: TextAlign.center,
                                       style: TextStyle(
                                         color: Colors.white,
-                                        fontSize: screenWidth * 0.042,
-                                        fontWeight: FontWeight.w400,
+                                        fontSize: screenWidth * 0.036,
+                                        fontWeight: FontWeight.w200,
                                         fontFamily: 'Poppins',
                                       ),
                                     ),
@@ -294,9 +294,9 @@ class _VerificationInformationScreenState
                                 ),
                                 Positioned(
                                   left: -screenWidth * 0.01,
-                                  top: 0,
+                                  top: -screenWidth * 0.02,
                                   child: Image.asset(
-                                    'assets/images/employer.png',
+                                    'assets/images/nonprofessional.png',
                                     width: screenWidth * 0.54,
                                     height: screenWidth * 0.54,
                                     fit: BoxFit.contain,
