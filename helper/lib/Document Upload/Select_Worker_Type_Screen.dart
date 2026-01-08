@@ -2,16 +2,16 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
-class VerificationInformationScreen extends StatefulWidget {
-  const VerificationInformationScreen({super.key});
+class SelectWorkerTypeScreen extends StatefulWidget {
+  const SelectWorkerTypeScreen({super.key});
 
   @override
-  State<VerificationInformationScreen> createState() =>
-      _VerificationInformationScreenState();
+  State<SelectWorkerTypeScreen> createState() =>
+      _SelectWorkerTypeScreenState();
 }
 
-class _VerificationInformationScreenState
-    extends State<VerificationInformationScreen> {
+class _SelectWorkerTypeScreenState
+    extends State<SelectWorkerTypeScreen> {
   @override
   Widget build(BuildContext context) {
     final double w = MediaQuery.of(context).size.width;
@@ -84,7 +84,7 @@ class _VerificationInformationScreenState
                     Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
-                        'Verify Your Account',
+                        'What type of worker\nare you?',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: w * 0.085,
@@ -135,11 +135,10 @@ class _VerificationInformationScreenState
                               ],
                             ),
                             child: Text(
-                              'Let\'s get your account verified\nto get the benefits below',
-                              maxLines: 2,
+                              'Kindly select your role',
+                              maxLines: 1,
                               softWrap: false,
                               overflow: TextOverflow.ellipsis,
-                              textAlign: TextAlign.center,
                               style: TextStyle(
                                 color: const Color.fromRGBO(255, 255, 255, 1),
                                 fontSize: screenWidth * 0.04,
@@ -151,42 +150,212 @@ class _VerificationInformationScreenState
                         ),
                       ),
                     ),
-                    SizedBox(height: screenHeight * 0.05),
+                    SizedBox(height: screenHeight * 0.03),
                     Center(
-                      child: SizedBox(
-                        width: screenWidth * 0.9,
-                        height: screenHeight * 0.07,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(30),
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                          child: Container(
+                            width: screenWidth * 0.9,
+                            height: screenWidth * 0.9 * (147 / 340),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  Colors.white.withOpacity(0.25),
+                                  Colors.white.withOpacity(0.15),
+                                ],
+                              ),
                               borderRadius: BorderRadius.circular(30),
-                            ),
-                          ),
-                          onPressed: () {},
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                'Continue',
-                                style: TextStyle(
-                                  color: Colors.black,
-                                  fontSize: screenWidth * 0.045,
-                                  fontWeight: FontWeight.bold,
-                                  fontFamily: "Poppins",
+                              border: Border.all(
+                                color: Colors.white.withOpacity(0.4),
+                                width: 2,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.white.withOpacity(0.1),
+                                  blurRadius: 15,
+                                  spreadRadius: 2,
                                 ),
-                              ),
-                              SizedBox(width: screenWidth * 0.03),
-                              Icon(
-                                Icons.arrow_forward,
-                                color: Colors.black,
-                                size: screenWidth * 0.05,
-                              ),
-                            ],
+                              ],
+                            ),
+                            child: Stack(
+                              children: [
+                                Positioned(
+                                  top: screenWidth * 0.03,
+                                  left: screenWidth * 0.05,
+                                  child: Text(
+                                    'Professional Worker',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: screenWidth * 0.055,
+                                      fontWeight: FontWeight.w600,
+                                      fontFamily: 'Montserrat',
+                                    ),
+                                  ),
+                                ),
+                                Positioned(
+                                  top: screenWidth * 0.11,
+                                  left: screenWidth * 0.04,
+                                  child: SizedBox(
+                                    width: screenWidth * 0.35,
+                                    child: Text(
+                                      '"Skilled and licensed\nprofessionals e.g Drivers, Electricians, Nurses etc"',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: screenWidth * 0.035,
+                                        fontWeight: FontWeight.w200,
+                                        fontFamily: 'AbrilFatface',
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                Positioned(
+                                  right: -screenWidth * 0.0,
+                                  top: 0,
+                                  child: Image.asset(
+                                    'assets/images/professional.png',
+                                    width: screenWidth * 0.5,
+                                    height: screenWidth * 0.5,
+                                    fit: BoxFit.contain,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
                     ),
+                    SizedBox(height: screenHeight * 0.03),
+                    Center(
+                      child: Text(
+                        'OR',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: screenWidth * 0.05,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'Poppins',
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: screenHeight * 0.03),
+                    Center(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(30),
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                          child: Container(
+                            width: screenWidth * 0.9,
+                            height: screenWidth * 0.9 * (147 / 340),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  Colors.white.withOpacity(0.25),
+                                  Colors.white.withOpacity(0.15),
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(30),
+                              border: Border.all(
+                                color: Colors.white.withOpacity(0.4),
+                                width: 2,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.white.withOpacity(0.1),
+                                  blurRadius: 15,
+                                  spreadRadius: 2,
+                                ),
+                              ],
+                            ),
+                            child: Stack(
+                              children: [
+                                Positioned(
+                                  top: screenWidth * 0.03,
+                                  right: screenWidth * 0.05,
+                                  child: Text(
+                                    'Non-Professional Worker',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: screenWidth * 0.05,
+                                      fontWeight: FontWeight.w600,
+                                      fontFamily: 'Montserrat',
+                                    ),
+                                  ),
+                                ),
+                                Positioned(
+                                  top: screenWidth * 0.13,
+                                  right: screenWidth * 0.1,
+                                  child: SizedBox(
+                                    width: screenWidth * 0.35,
+                                    child: Text(
+                                      '"General Labour,\ncleaning,\nloading, delivery etc"',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: screenWidth * 0.036,
+                                        fontWeight: FontWeight.w200,
+                                        fontFamily: 'Poppins',
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                Positioned(
+                                  left: -screenWidth * 0.01,
+                                  top: -screenWidth * 0.02,
+                                  child: Image.asset(
+                                    'assets/images/nonprofessional.png',
+                                    width: screenWidth * 0.54,
+                                    height: screenWidth * 0.54,
+                                    fit: BoxFit.contain,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: screenHeight * 0.05),
+                Center(
+                  child: SizedBox(
+                    width: screenWidth * 0.9,
+                    height: screenHeight * 0.07,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                      ),
+                      onPressed: () {},
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'Continue',
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontSize: screenWidth * 0.045,
+                              fontWeight: FontWeight.bold,
+                              fontFamily: "Poppins",
+                            ),
+                          ),
+                          SizedBox(width: screenWidth * 0.03),
+                          Icon(
+                            Icons.arrow_forward,
+                            color: Colors.black,
+                            size: screenWidth * 0.05,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
                   ],
                 ),
               ),
