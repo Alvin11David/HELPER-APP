@@ -684,7 +684,7 @@ class _MasterCardPaymentMethodScreenState
             curve: Curves.easeOutCubic,
             left: screenWidth * 0.05,
             right: screenWidth * 0.05,
-            bottom: _showOverlay ? 0 : -(screenHeight * 0.4 + 40),
+            bottom: _showOverlay ? screenHeight * 0.02 : -screenHeight,
             child: AnimatedOpacity(
               duration: _overlayAnimDuration,
               curve: Curves.easeInOut,
@@ -774,7 +774,7 @@ class _MasterCardPaymentMethodScreenState
                             ),
                           ),
                         ),
-                         SizedBox(height: screenHeight * 0.04),
+                        SizedBox(height: screenHeight * 0.04),
                         Text(
                           'Welcome to Helper!',
                           textAlign: TextAlign.center,
