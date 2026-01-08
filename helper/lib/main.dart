@@ -7,6 +7,7 @@ import 'package:helper/intro/Role_Selection_Screen.dart';
 import 'package:helper/intro/Splash_Screen.dart';
 import 'package:helper/Auth/Phone_Number_&_Email_Address_Screen.dart';
 import 'package:helper/Auth/Forgot_Password_Screen.dart';
+import 'package:helper/Payments/MTN_Payment_Method_Screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -20,9 +21,11 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Flutter Demo',
-      theme: ThemeData(colorScheme: .fromSeed(seedColor: Colors.deepPurple)),
-      home: const RegistrationPaymentScreen(),
+      title: 'Helper MTN Demo',
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+      ),
+      home: const MtnPaymentMethodScreen(),
     );
   }
 }
