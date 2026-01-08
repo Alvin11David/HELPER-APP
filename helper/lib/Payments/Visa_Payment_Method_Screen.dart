@@ -47,12 +47,42 @@ class VisaPaymentMethodScreen extends StatelessWidget {
                       'Payment Method',
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: screenWidth * 0.08,
+                        fontSize: screenWidth * 0.07,
                         fontWeight: FontWeight.bold,
                         fontFamily: 'Montserrat',
                       ),
                     ),
                   ],
+                ),
+              ),
+              Positioned(
+                top: screenHeight * 0.14,
+                left: screenWidth * 0.04,
+                child: Container(
+                  width: screenWidth * 0.92,
+                  height: screenWidth * 0.92 * (148 / 340),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(30),
+                    gradient: const LinearGradient(
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                      colors: [Color(0xFF1534CC), Color(0xFFFFFFFF)],
+                      stops: [0.73, 1.2],
+                    ),
+                  ),
+                  child: Stack(
+                    children: [
+                      Positioned(
+                        top: screenWidth * 0.03,
+                        left: screenWidth * 0.04,
+                        child: Image.asset(
+                          'assets/images/visa.png',
+                          width: screenWidth * 0.20,
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
