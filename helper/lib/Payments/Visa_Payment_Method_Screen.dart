@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class VisaPaymentMethodScreen extends StatefulWidget {
   const VisaPaymentMethodScreen({super.key});
@@ -237,6 +238,32 @@ class _VisaPaymentMethodScreenState extends State<VisaPaymentMethodScreen> {
                               ),
                               cursorColor: Colors.black,
                               keyboardType: TextInputType.number,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly,
+                                TextInputFormatter.withFunction((
+                                  oldValue,
+                                  newValue,
+                                ) {
+                                  final text = newValue.text.replaceAll(
+                                    ' ',
+                                    '',
+                                  );
+                                  final buffer = StringBuffer();
+                                  for (int i = 0; i < text.length; i++) {
+                                    buffer.write(text[i]);
+                                    if ((i + 1) % 4 == 0 &&
+                                        i + 1 != text.length) {
+                                      buffer.write(' ');
+                                    }
+                                  }
+                                  return TextEditingValue(
+                                    text: buffer.toString(),
+                                    selection: TextSelection.collapsed(
+                                      offset: buffer.length,
+                                    ),
+                                  );
+                                }),
+                              ],
                             ),
                           ),
                           SizedBox(width: screenWidth * 0.03),
@@ -481,6 +508,40 @@ class _VisaPaymentMethodScreenState extends State<VisaPaymentMethodScreen> {
                           ),
                         ),
                       ],
+                    ),
+                    SizedBox(height: screenHeight * 0.05),
+                    GestureDetector(
+                      onTap: () {
+                        // Add your payment logic here
+                      },
+                      child: Container(
+                        width: screenWidth * 0.93,
+                        height: screenHeight * 0.07,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Pay',
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontSize: screenWidth * 0.06,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'PlayfairDisplay',
+                              ),
+                            ),
+                            SizedBox(width: screenWidth * 0.02),
+                            Icon(
+                              Icons.account_balance_wallet,
+                              color: Colors.black,
+                              size: screenWidth * 0.06,
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ],
                 ),
