@@ -444,7 +444,7 @@ class _RegistrationPaymentScreenState extends State<RegistrationPaymentScreen> {
                                 height: screenWidth * 0.065,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: _isMtnCardSelected
+                                  color: _isPaypalSelected
                                       ? Colors.orange
                                       : Colors.transparent,
                                   border: Border.all(
