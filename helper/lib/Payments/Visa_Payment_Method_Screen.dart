@@ -120,7 +120,7 @@ class _VisaPaymentMethodScreenState extends State<VisaPaymentMethodScreen> {
                                   fontFamily: 'Montserrat',
                                 ),
                               ),
-                              SizedBox(height: screenHeight * 0.008),
+                              SizedBox(height: screenHeight * 0.002),
                               Text(
                                 'Amount',
                                 style: TextStyle(
@@ -135,7 +135,7 @@ class _VisaPaymentMethodScreenState extends State<VisaPaymentMethodScreen> {
                                 'UGX 25,000',
                                 style: TextStyle(
                                   color: Colors.white,
-                                  fontSize: screenWidth * 0.06,
+                                  fontSize: screenWidth * 0.07,
                                   fontWeight: FontWeight.w500,
                                   fontFamily: 'AbrilFatface',
                                 ),
@@ -218,19 +218,23 @@ class _VisaPaymentMethodScreenState extends State<VisaPaymentMethodScreen> {
                               controller: _cardNumberController,
                               style: TextStyle(
                                 color: Colors.black,
-                                fontFamily: 'Poppins',
+                                fontSize: screenWidth * 0.045,
+                                  fontFamily: 'Inter',
+                                  fontWeight: FontWeight.w900,
                               ),
                               decoration: InputDecoration(
                                 hintText: 'Enter Your Card Number',
                                 hintStyle: TextStyle(
                                   color: Colors.black54,
-                                  fontFamily: 'Poppins',
+                                  fontSize: screenWidth * 0.045,
+                                  fontFamily: 'Inter',
+                                  fontWeight: FontWeight.w900,
                                 ),
                                 border: InputBorder.none,
                                 isCollapsed: true,
                                 contentPadding: EdgeInsets.zero,
                               ),
-                              cursorColor: Colors.white,
+                              cursorColor: Colors.black,
                               keyboardType: TextInputType.number,
                             ),
                           ),
@@ -241,6 +245,62 @@ class _VisaPaymentMethodScreenState extends State<VisaPaymentMethodScreen> {
                             height: 28,
                             fit: BoxFit.contain,
                           ),
+                        ],
+                      ),
+                    ),
+                    // Add Card Holder Name input section below the Card Number field
+                    SizedBox(height: screenHeight * 0.02),
+                    Text(
+                      'Card Holder Name',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontFamily: 'Poppins',
+                        fontSize: screenWidth * 0.045,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    SizedBox(height: screenHeight * 0.012),
+                    Container(
+                      width: screenWidth * (347 / 375),
+                      height: 35,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: screenWidth * 0.04,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(30),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.4),
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontSize: screenWidth * 0.045,
+                                  fontFamily: 'Inter',
+                                  fontWeight: FontWeight.w900,
+                              ),
+                              decoration: InputDecoration(
+                                hintText: 'Enter Your Card Holder Name',
+                                hintStyle: TextStyle(
+                                  color: Colors.black54,
+                                  fontSize: screenWidth * 0.045,
+                                  fontFamily: 'Inter',
+                                  fontWeight: FontWeight.w900,
+                                ),
+                                border: InputBorder.none,
+                                isCollapsed: true,
+                                contentPadding: EdgeInsets.zero,
+                              ),
+                              cursorColor: Colors.black,
+                            ),
+                          ),
+                          SizedBox(width: screenWidth * 0.02),
+                          Icon(Icons.person, color: Colors.black, size: 24),
                         ],
                       ),
                     ),
