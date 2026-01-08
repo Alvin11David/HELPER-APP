@@ -70,51 +70,53 @@ class VisaPaymentMethodScreen extends StatelessWidget {
                       stops: [0.73, 1.2],
                     ),
                   ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  child: Stack(
                     children: [
-                      Container(
-                        decoration: BoxDecoration(
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.25),
-                              blurRadius: 12,
-                              spreadRadius: 1,
-                              offset: Offset(0, 6),
-                            ),
-                          ],
-                        ),
-                        child: Image.asset(
-                          'assets/images/visa.png',
-                          width: screenWidth * 0.15,
-                          fit: BoxFit.contain,
-                        ),
-                      ),
-                      SizedBox(width: screenWidth * 0.05),
-                      Column(
+                      Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          SizedBox(height: screenHeight * 0.002),
-                          Text(
-                            'VISA',
-                            style: TextStyle(
-                              color: Colors.black,
-                              fontSize: screenWidth * 0.05,
-                              fontWeight: FontWeight.bold,
-                              fontFamily: 'Montserrat',
+                          Container(
+                            decoration: BoxDecoration(
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.25),
+                                  blurRadius: 12,
+                                  spreadRadius: 1,
+                                  offset: Offset(0, 6),
+                                ),
+                              ],
+                            ),
+                            child: Image.asset(
+                              'assets/images/visa.png',
+                              width: screenWidth * 0.15,
+                              fit: BoxFit.contain,
                             ),
                           ),
-                          SizedBox(height: screenHeight * 0.005),
-                          Text(
-                            'Amount',
-                            style: TextStyle(
-                              color: Colors.black,
-                              fontSize: screenWidth * 0.045,
-                              fontWeight: FontWeight.w200,
-                              fontFamily: 'Montserrat',
-                            ),
-                          ),
-                           SizedBox(height: screenHeight * 0.005),
+                          SizedBox(width: screenWidth * 0.04),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              SizedBox(height: screenHeight * 0.002),
+                              Text(
+                                'VISA',
+                                style: TextStyle(
+                                  color: Colors.black,
+                                  fontSize: screenWidth * 0.05,
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: 'Montserrat',
+                                ),
+                              ),
+                              SizedBox(height: screenHeight * 0.008),
+                              Text(
+                                'Amount',
+                                style: TextStyle(
+                                  color: Colors.black,
+                                  fontSize: screenWidth * 0.045,
+                                  fontWeight: FontWeight.w500,
+                                  fontFamily: 'Montserrat',
+                                ),
+                              ),
+                              SizedBox(height: screenHeight * 0.005),
                           Text(
                             'UGX 25,000',
                             style: TextStyle(
@@ -124,7 +126,38 @@ class VisaPaymentMethodScreen extends StatelessWidget {
                               fontFamily: 'AbrilFatface',
                             ),
                           ),
+                            ],
+                          ),
                         ],
+                      ),
+                      Positioned(
+                        bottom: screenWidth * 0.04,
+                        right: screenWidth * 0.04,
+                        child: Container(
+                          width: screenWidth * (94 / 340),
+                          height: screenWidth * (28 / 340),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(30),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.10),
+                                blurRadius: 6,
+                                spreadRadius: 1,
+                                offset: Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            'Not Paid', // Change this to 'Not Paid', 'Pending', etc. as needed
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontSize: screenWidth * 0.04,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
                       ),
                     ],
                   ),
