@@ -1,9 +1,3 @@
-// mtn_payment_method_screen.dart
-// ✅ Same layout style as your Visa/Mastercard code (Stack + Positioned)
-// ✅ AbrilFatface for heading-style amount, Poppins for body
-// ✅ Glassmorphism "Instant Confirmation"
-// ✅ Uses your image: assets/images/mtn.png
-// ✅ Responsive ratios like your sample
 
 import 'dart:ui';
 import 'package:flutter/material.dart';
