@@ -10,7 +10,7 @@ class VisaPaymentMethodScreen extends StatefulWidget {
 
 class _VisaPaymentMethodScreenState extends State<VisaPaymentMethodScreen> {
   final TextEditingController _cardNumberController = TextEditingController();
-
+  bool isChecked = false;
   @override
   void dispose() {
     _cardNumberController.dispose();
@@ -144,6 +144,7 @@ class _VisaPaymentMethodScreenState extends State<VisaPaymentMethodScreen> {
                           ),
                         ],
                       ),
+
                       Positioned(
                         bottom: screenWidth * 0.04,
                         right: screenWidth * 0.04,
@@ -388,7 +389,7 @@ class _VisaPaymentMethodScreenState extends State<VisaPaymentMethodScreen> {
                             ),
                             SizedBox(height: screenHeight * 0.012),
                             Container(
-                              width: screenWidth * (200 / 375),
+                              width: screenWidth * (211 / 375),
                               height: 35,
                               padding: EdgeInsets.symmetric(
                                 horizontal: screenWidth * 0.04,
@@ -405,6 +406,7 @@ class _VisaPaymentMethodScreenState extends State<VisaPaymentMethodScreen> {
                                 children: [
                                   Expanded(
                                     child: TextField(
+                                      obscureText: true, // Enable CVV masking
                                       style: TextStyle(
                                         color: Colors.black,
                                         fontSize: screenWidth * 0.04,
@@ -443,22 +445,29 @@ class _VisaPaymentMethodScreenState extends State<VisaPaymentMethodScreen> {
                     SizedBox(height: screenHeight * 0.02),
                     Row(
                       children: [
-                        Container(
-                          width: screenWidth * 0.05,
-                          height: screenWidth * 0.05,
-                          decoration: BoxDecoration(
-                            color: Colors.transparent,
-                            border: Border.all(color: Colors.white, width: 2),
-                            borderRadius: BorderRadius.circular(5),
-                          ),
-                          child: Checkbox(
-                            value: false,
-                            onChanged: (bool? value) {},
-                            activeColor: Colors.white,
-                            checkColor: Colors.black,
-                            shape: RoundedRectangleBorder(
+                        GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              isChecked = !isChecked;
+                            });
+                          },
+                          child: Container(
+                            width: screenWidth * 0.05,
+                            height: screenWidth * 0.05,
+                            decoration: BoxDecoration(
+                              color: isChecked
+                                  ? Colors.white
+                                  : Colors.transparent,
+                              border: Border.all(color: Colors.white, width: 2),
                               borderRadius: BorderRadius.circular(5),
                             ),
+                            child: isChecked
+                                ? Icon(
+                                    Icons.check,
+                                    color: Colors.black,
+                                    size: screenWidth * 0.03,
+                                  )
+                                : null,
                           ),
                         ),
                         SizedBox(width: screenWidth * 0.03),
