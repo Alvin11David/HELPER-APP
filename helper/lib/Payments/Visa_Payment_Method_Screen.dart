@@ -42,6 +42,12 @@ class _VisaPaymentMethodScreenState extends State<VisaPaymentMethodScreen> {
     return Scaffold(
       body: Stack(
         children: [
+          // Dim overlay (moved to top to cover entire screen)
+          if (_isDimming)
+            Container(
+              color: Colors.black.withOpacity(0.5), // Semi-transparent black overlay
+            ),
+
           SafeArea(
             child: Container(
               decoration: const BoxDecoration(
@@ -672,14 +678,6 @@ class _VisaPaymentMethodScreenState extends State<VisaPaymentMethodScreen> {
               ),
             ),
           ),
-
-          // Dim overlay
-          if (_isDimming)
-            Container(
-              color: Colors.black.withOpacity(
-                0.5,
-              ), // Semi-transparent black overlay
-            ),
 
           // Sliding white rectangle for confirmation
           AnimatedPositioned(
