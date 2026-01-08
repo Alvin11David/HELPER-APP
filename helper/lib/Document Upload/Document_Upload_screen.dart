@@ -11,6 +11,7 @@ class DocumentUploadScreen extends StatefulWidget {
 
 class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
   bool _loading = false;
+  int _selectedIndex = -1;
   final _formKey = GlobalKey<FormState>();
 
   Future<void> _onContinue() async {
@@ -195,14 +196,17 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                       child: SingleChildScrollView(
                         child: Column(
                           children: [
-                            ClipRect(
+                            GestureDetector(
+                              onTap: () => setState(() => _selectedIndex = 0),
                               child: Row(
                                 children: [
                                   Container(
                                     width: 36,
                                     height: 36,
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFFD9D9D9),
+                                      color: _selectedIndex == 0
+                                          ? const Color(0xFFFBBC04)
+                                          : const Color(0xFFD9D9D9),
                                       shape: BoxShape.circle,
                                     ),
                                     child: Center(
@@ -217,7 +221,9 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                                   Text(
                                     'National ID/Passport',
                                     style: TextStyle(
-                                      color: Colors.black,
+                                      color: _selectedIndex == 0
+                                          ? const Color(0xFFFBBC04)
+                                          : Colors.black,
                                       fontSize: screenWidth * 0.032,
                                       fontWeight: FontWeight.w800,
                                     ),
@@ -231,22 +237,27 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                                     ),
                                   ),
                                   SizedBox(width: w * 0.0),
-                                  const Icon(
+                                  Icon(
                                     Icons.chevron_right,
-                                    color: Colors.black54,
+                                    color: _selectedIndex == 0
+                                        ? const Color(0xFFFBBC04)
+                                        : Colors.black54,
                                   ),
                                 ],
                               ),
                             ),
                             SizedBox(height: h * 0.03),
-                            ClipRect(
+                            GestureDetector(
+                              onTap: () => setState(() => _selectedIndex = 1),
                               child: Row(
                                 children: [
                                   Container(
                                     width: 36,
                                     height: 36,
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFFD9D9D9),
+                                      color: _selectedIndex == 1
+                                          ? const Color(0xFFFBBC04)
+                                          : const Color(0xFFD9D9D9),
                                       shape: BoxShape.circle,
                                     ),
                                     child: Center(
@@ -261,7 +272,9 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                                   Text(
                                     'Academic Certificates',
                                     style: TextStyle(
-                                      color: Colors.black,
+                                      color: _selectedIndex == 1
+                                          ? const Color(0xFFFBBC04)
+                                          : Colors.black,
                                       fontSize: screenWidth * 0.032,
                                       fontWeight: FontWeight.w800,
                                     ),
@@ -275,22 +288,27 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                                     ),
                                   ),
                                   SizedBox(width: w * 0.0),
-                                  const Icon(
+                                  Icon(
                                     Icons.chevron_right,
-                                    color: Colors.black54,
+                                    color: _selectedIndex == 1
+                                        ? const Color(0xFFFBBC04)
+                                        : Colors.black54,
                                   ),
                                 ],
                               ),
                             ),
                             SizedBox(height: h * 0.03),
-                            ClipRect(
+                            GestureDetector(
+                              onTap: () => setState(() => _selectedIndex = 2),
                               child: Row(
                                 children: [
                                   Container(
                                     width: 36,
                                     height: 36,
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFFD9D9D9),
+                                      color: _selectedIndex == 2
+                                          ? const Color(0xFFFBBC04)
+                                          : const Color(0xFFD9D9D9),
                                       shape: BoxShape.circle,
                                     ),
                                     child: Center(
@@ -305,7 +323,9 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                                   Text(
                                     'Professional Licenses',
                                     style: TextStyle(
-                                      color: Colors.black,
+                                      color: _selectedIndex == 2
+                                          ? const Color(0xFFFBBC04)
+                                          : Colors.black,
                                       fontSize: screenWidth * 0.032,
                                       fontWeight: FontWeight.w800,
                                     ),
@@ -319,22 +339,27 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                                     ),
                                   ),
                                   SizedBox(width: w * 0.0),
-                                  const Icon(
+                                  Icon(
                                     Icons.chevron_right,
-                                    color: Colors.black54,
+                                    color: _selectedIndex == 2
+                                        ? const Color(0xFFFBBC04)
+                                        : Colors.black54,
                                   ),
                                 ],
                               ),
                             ),
                             SizedBox(height: h * 0.03),
-                            ClipRect(
+                            GestureDetector(
+                              onTap: () => setState(() => _selectedIndex = 3),
                               child: Row(
                                 children: [
                                   Container(
                                     width: 36,
                                     height: 36,
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFFD9D9D9),
+                                      color: _selectedIndex == 3
+                                          ? const Color(0xFFFBBC04)
+                                          : const Color(0xFFD9D9D9),
                                       shape: BoxShape.circle,
                                     ),
                                     child: Center(
@@ -349,7 +374,9 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                                   Text(
                                     'Current Photo(Selfie)',
                                     style: TextStyle(
-                                      color: Colors.black,
+                                      color: _selectedIndex == 3
+                                          ? const Color(0xFFFBBC04)
+                                          : Colors.black,
                                       fontSize: screenWidth * 0.032,
                                       fontWeight: FontWeight.w800,
                                     ),
@@ -363,9 +390,11 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                                     ),
                                   ),
                                   SizedBox(width: w * 0.0),
-                                  const Icon(
+                                  Icon(
                                     Icons.chevron_right,
-                                    color: Colors.black54,
+                                    color: _selectedIndex == 3
+                                        ? const Color(0xFFFBBC04)
+                                        : Colors.black54,
                                   ),
                                 ],
                               ),
