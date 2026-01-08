@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:helper/Auth/OTP_Verification_Screen.dart';
 import 'package:helper/Auth/Password_Reset_Screen.dart';
-import 'package:helper/Auth/Referral_Code_Screen.dart';
+
 import 'package:helper/Payments/Registration_Payment_Screen.dart';
-import 'package:helper/Payments/Visa_Payment_Method_Screen.dart';
 import 'package:helper/intro/Role_Selection_Screen.dart';
 import 'package:helper/intro/Splash_Screen.dart';
 import 'package:helper/Auth/Phone_Number_&_Email_Address_Screen.dart';
@@ -23,7 +22,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Flutter Demo',
       theme: ThemeData(colorScheme: .fromSeed(seedColor: Colors.deepPurple)),
-      home: const VisaPaymentMethodScreen(),
+      home: const RegistrationPaymentScreen(),
     );
   }
 }
