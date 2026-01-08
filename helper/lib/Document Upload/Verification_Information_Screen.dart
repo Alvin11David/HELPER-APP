@@ -99,6 +99,63 @@ class _VerificationInformationScreenState
                   ),
                 ),
               ),
+              Positioned(
+                bottom: screenHeight * 0.03,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(30),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: screenWidth * 0.06,
+                          vertical: screenHeight * 0.011,
+                        ),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Colors.white.withOpacity(0.25),
+                              Colors.white.withOpacity(0.15),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(30),
+                          border: Border.all(
+                            color: Colors.white.withOpacity(0.4),
+                            width: 2,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.white.withOpacity(0.1),
+                              blurRadius: 15,
+                              spreadRadius: 2,
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            SizedBox(width: screenWidth * 0.02),
+                            Text(
+                              'Verification builds trust and opens up more\nopportunities from employers',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: screenWidth * 0.03,
+                                fontWeight: FontWeight.w500,
+                                fontFamily: 'Poppins',
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
               SingleChildScrollView(
                 padding: EdgeInsets.symmetric(horizontal: w * 0.06),
                 child: Column(
@@ -176,7 +233,7 @@ class _VerificationInformationScreenState
                         },
                       ),
                     ),
-                    SizedBox(height: screenHeight * 0.05),
+                    SizedBox(height: screenHeight * 0.09),
                     Center(
                       child: SizedBox(
                         width: screenWidth * 0.9,
@@ -202,10 +259,10 @@ class _VerificationInformationScreenState
                                 ),
                               ),
                               SizedBox(width: screenWidth * 0.03),
-                              Icon(
-                                Icons.face_unlock_sharp,
-                                color: Colors.black,
-                                size: screenWidth * 0.05,
+                              Image.asset(
+                                'assets/icons/verify.png',
+                                width: screenWidth * 0.05,
+                                height: screenWidth * 0.05,
                               ),
                             ],
                           ),
@@ -256,7 +313,7 @@ Widget _buildGlassyRectangle(
     'You will achieve\nmore job visibility.',
     'Secure Payments.',
     'Higher trust\nfrom Employers.',
-    '',
+    'Referral Bonuses.',
   ];
 
   return Container(
