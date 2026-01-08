@@ -191,97 +191,10 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Card Number',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontFamily: 'PlayfairDisplay',
-                        fontSize: screenWidth * 0.04,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    SizedBox(height: screenHeight * 0.012),
-                    Container(
-                      width: screenWidth * (347 / 375),
-                      height: 35,
-                      padding: EdgeInsets.symmetric(
-                        horizontal: screenWidth * 0.04,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(30),
-                        border: Border.all(
-                          color: Colors.white.withOpacity(0.4),
-                          width: 1,
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: TextField(
-                              controller: _cardNumberController,
-                              style: TextStyle(
-                                color: Colors.black,
-                                fontSize: screenWidth * 0.04,
-                                fontFamily: 'Inter',
-                                fontWeight: FontWeight.w900,
-                              ),
-                              decoration: InputDecoration(
-                                hintText: 'Enter Your Card Number',
-                                hintStyle: TextStyle(
-                                  color: Colors.black54,
-                                  fontSize: screenWidth * 0.04,
-                                  fontFamily: 'Inter',
-                                  fontWeight: FontWeight.w900,
-                                ),
-                                border: InputBorder.none,
-                                isCollapsed: true,
-                                contentPadding: EdgeInsets.zero,
-                              ),
-                              cursorColor: Colors.black,
-                              keyboardType: TextInputType.number,
-                              inputFormatters: [
-                                FilteringTextInputFormatter.digitsOnly,
-                                TextInputFormatter.withFunction((
-                                  oldValue,
-                                  newValue,
-                                ) {
-                                  final text = newValue.text.replaceAll(
-                                    ' ',
-                                    '',
-                                  );
-                                  final buffer = StringBuffer();
-                                  for (int i = 0; i < text.length; i++) {
-                                    buffer.write(text[i]);
-                                    if ((i + 1) % 4 == 0 &&
-                                        i + 1 != text.length) {
-                                      buffer.write(' ');
-                                    }
-                                  }
-                                  return TextEditingValue(
-                                    text: buffer.toString(),
-                                    selection: TextSelection.collapsed(
-                                      offset: buffer.length,
-                                    ),
-                                  );
-                                }),
-                              ],
-                            ),
-                          ),
-                          SizedBox(width: screenWidth * 0.03),
-                          Image.asset(
-                            'assets/images/visa.png',
-                            width: 28,
-                            height: 28,
-                            fit: BoxFit.contain,
-                          ),
-                        ],
-                      ),
-                    ),
                     // Add Card Holder Name input section below the Card Number field
                     SizedBox(height: screenHeight * 0.02),
                     Text(
-                      'Card Holder Name',
+                      'Phone Number',
                       style: TextStyle(
                         color: Colors.white,
                         fontFamily: 'PlayfairDisplay',
@@ -315,7 +228,7 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
                                 fontWeight: FontWeight.w900,
                               ),
                               decoration: InputDecoration(
-                                hintText: 'Enter Your Card Holder Name',
+                                hintText: 'Enter Your Airtel Number',
                                 hintStyle: TextStyle(
                                   color: Colors.black54,
                                   fontSize: screenWidth * 0.04,
@@ -330,148 +243,12 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
                             ),
                           ),
                           SizedBox(width: screenWidth * 0.02),
-                          Icon(Icons.person, color: Colors.black, size: 24),
+                          Icon(Icons.phone, color: Colors.red, size: 24),
                         ],
                       ),
                     ),
-                    // Add Expiration Date and CVV input fields in a Row
-                    SizedBox(height: screenHeight * 0.02),
-                    Row(
-                      children: [
-                        // Expiration Date Field
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Expires on',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontFamily: 'PlayfairDisplay',
-                                fontSize: screenWidth * 0.04,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            SizedBox(height: screenHeight * 0.012),
-                            Container(
-                              width: screenWidth * (122 / 375),
-                              height: 35,
-                              padding: EdgeInsets.symmetric(
-                                horizontal: screenWidth * 0.04,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(30),
-                                border: Border.all(
-                                  color: Colors.white.withOpacity(0.4),
-                                  width: 1,
-                                ),
-                              ),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: TextField(
-                                      style: TextStyle(
-                                        color: Colors.black,
-                                        fontSize: screenWidth * 0.04,
-                                        fontFamily: 'Inter',
-                                        fontWeight: FontWeight.w900,
-                                      ),
-                                      decoration: InputDecoration(
-                                        hintText: '**/**',
-                                        hintStyle: TextStyle(
-                                          color: Colors.black54,
-                                          fontSize: screenWidth * 0.04,
-                                          fontFamily: 'Inter',
-                                          fontWeight: FontWeight.w900,
-                                        ),
-                                        border: InputBorder.none,
-                                        isCollapsed: true,
-                                        contentPadding: EdgeInsets.zero,
-                                      ),
-                                      cursorColor: Colors.black,
-                                    ),
-                                  ),
-                                  SizedBox(width: screenWidth * 0.02),
-                                  Icon(
-                                    Icons.calendar_today,
-                                    color: Colors.black,
-                                    size: 24,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        SizedBox(width: screenWidth * 0.04),
-                        // CVV Field
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '3-Digit CVV',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontFamily: 'PlayfairDisplay',
-                                fontSize: screenWidth * 0.04,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            SizedBox(height: screenHeight * 0.012),
-                            Container(
-                              width: screenWidth * (211 / 375),
-                              height: 35,
-                              padding: EdgeInsets.symmetric(
-                                horizontal: screenWidth * 0.04,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(30),
-                                border: Border.all(
-                                  color: Colors.white.withOpacity(0.4),
-                                  width: 1,
-                                ),
-                              ),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: TextField(
-                                      obscureText: true, // Enable CVV masking
-                                      style: TextStyle(
-                                        color: Colors.black,
-                                        fontSize: screenWidth * 0.04,
-                                        fontFamily: 'Inter',
-                                        fontWeight: FontWeight.w900,
-                                      ),
-                                      decoration: InputDecoration(
-                                        hintText: 'Enter CVV',
-                                        hintStyle: TextStyle(
-                                          color: Colors.black54,
-                                          fontSize: screenWidth * 0.04,
-                                          fontFamily: 'Inter',
-                                          fontWeight: FontWeight.w900,
-                                        ),
-                                        border: InputBorder.none,
-                                        isCollapsed: true,
-                                        contentPadding: EdgeInsets.zero,
-                                      ),
-                                      cursorColor: Colors.black,
-                                    ),
-                                  ),
-                                  SizedBox(width: screenWidth * 0.02),
-                                  Icon(
-                                    Icons.lock,
-                                    color: Colors.black,
-                                    size: 24,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
                     // Add Save Card for Future checkbox below the Expires On row
-                    SizedBox(height: screenHeight * 0.02),
+                    SizedBox(height: screenHeight * 0.04),
                     Row(
                       children: [
                         GestureDetector(
