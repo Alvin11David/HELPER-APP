@@ -39,6 +39,14 @@ class _MasterCardPaymentMethodScreenState
     return Scaffold(
       body: Stack(
         children: [
+          // Dim overlay (moved to top to cover entire screen)
+          if (_isDimming)
+            Container(
+              color: Colors.black.withOpacity(
+                0.5,
+              ), // Semi-transparent black overlay
+            ),
+
           SafeArea(
             child: Container(
               decoration: const BoxDecoration(
@@ -670,21 +678,13 @@ class _MasterCardPaymentMethodScreenState
             ),
           ),
 
-          // Dim overlay
-          if (_isDimming)
-            Container(
-              color: Colors.black.withOpacity(
-                0.5,
-              ), // Semi-transparent black overlay
-            ),
-
           // Sliding white rectangle for confirmation
           AnimatedPositioned(
             duration: _overlayAnimDuration,
             curve: Curves.easeOutCubic,
             left: screenWidth * 0.05,
             right: screenWidth * 0.05,
-            bottom: _showOverlay ? 0 : -(screenHeight * 0.4 + 40),
+            bottom: _showOverlay ? screenHeight * 0.02 : -screenHeight,
             child: AnimatedOpacity(
               duration: _overlayAnimDuration,
               curve: Curves.easeInOut,
@@ -774,7 +774,7 @@ class _MasterCardPaymentMethodScreenState
                             ),
                           ),
                         ),
-                         SizedBox(height: screenHeight * 0.04),
+                        SizedBox(height: screenHeight * 0.04),
                         Text(
                           'Welcome to Helper!',
                           textAlign: TextAlign.center,

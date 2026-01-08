@@ -35,9 +35,7 @@ class _VisaPaymentMethodScreenState extends State<VisaPaymentMethodScreen> {
     final double screenWidth = MediaQuery.of(context).size.width;
     final double screenHeight = MediaQuery.of(context).size.height;
 
-    print(
-      'Building Visa screen with _showOverlay: $_showOverlay, _isDimming: $_isDimming',
-    ); // Debug print
+    
 
     return Scaffold(
       body: Stack(
@@ -45,7 +43,9 @@ class _VisaPaymentMethodScreenState extends State<VisaPaymentMethodScreen> {
           // Dim overlay (moved to top to cover entire screen)
           if (_isDimming)
             Container(
-              color: Colors.black.withOpacity(0.5), // Semi-transparent black overlay
+              color: Colors.black.withOpacity(
+                0.5,
+              ), // Semi-transparent black overlay
             ),
 
           SafeArea(
@@ -685,7 +685,7 @@ class _VisaPaymentMethodScreenState extends State<VisaPaymentMethodScreen> {
             curve: Curves.easeOutCubic,
             left: screenWidth * 0.05,
             right: screenWidth * 0.05,
-            bottom: _showOverlay ? 0 : -(screenHeight * 0.4 + 40),
+            bottom: _showOverlay ? screenHeight * 0.02 : -screenHeight,
             child: AnimatedOpacity(
               duration: _overlayAnimDuration,
               curve: Curves.easeInOut,

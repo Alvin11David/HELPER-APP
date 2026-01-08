@@ -24,11 +24,11 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Helper MTN Demo',
+      title: 'Helper App',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: const MtnPaymentMethodScreen(),
+      home: const MasterCardPaymentMethodScreen(),
     );
   }
 }
