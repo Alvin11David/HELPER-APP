@@ -1,7 +1,21 @@
 import 'package:flutter/material.dart';
 
-class VisaPaymentMethodScreen extends StatelessWidget {
+class VisaPaymentMethodScreen extends StatefulWidget {
   const VisaPaymentMethodScreen({super.key});
+
+  @override
+  State<VisaPaymentMethodScreen> createState() =>
+      _VisaPaymentMethodScreenState();
+}
+
+class _VisaPaymentMethodScreenState extends State<VisaPaymentMethodScreen> {
+  final TextEditingController _cardNumberController = TextEditingController();
+
+  @override
+  void dispose() {
+    _cardNumberController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -117,15 +131,15 @@ class VisaPaymentMethodScreen extends StatelessWidget {
                                 ),
                               ),
                               SizedBox(height: screenHeight * 0.005),
-                          Text(
-                            'UGX 25,000',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: screenWidth * 0.06,
-                              fontWeight: FontWeight.w500,
-                              fontFamily: 'AbrilFatface',
-                            ),
-                          ),
+                              Text(
+                                'UGX 25,000',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: screenWidth * 0.06,
+                                  fontWeight: FontWeight.w500,
+                                  fontFamily: 'AbrilFatface',
+                                ),
+                              ),
                             ],
                           ),
                         ],
@@ -161,6 +175,76 @@ class VisaPaymentMethodScreen extends StatelessWidget {
                       ),
                     ],
                   ),
+                ),
+              ),
+              // Add Card Number input section below the rectangle
+              Positioned(
+                top:
+                    screenHeight * 0.14 +
+                    screenWidth * 0.92 * (148 / 340) +
+                    screenHeight * 0.03,
+                left: screenWidth * 0.04,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Card Number',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontFamily: 'Poppins',
+                        fontSize: screenWidth * 0.045,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    SizedBox(height: screenHeight * 0.012),
+                    Container(
+                      width: screenWidth * (347 / 375),
+                      height: 35,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: screenWidth * 0.04,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(30),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.4),
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _cardNumberController,
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontFamily: 'Poppins',
+                              ),
+                              decoration: InputDecoration(
+                                hintText: 'Enter Your Card Number',
+                                hintStyle: TextStyle(
+                                  color: Colors.black54,
+                                  fontFamily: 'Poppins',
+                                ),
+                                border: InputBorder.none,
+                                isCollapsed: true,
+                                contentPadding: EdgeInsets.zero,
+                              ),
+                              cursorColor: Colors.white,
+                              keyboardType: TextInputType.number,
+                            ),
+                          ),
+                          SizedBox(width: screenWidth * 0.02),
+                          Image.asset(
+                            'assets/images/visa.png',
+                            width: 28,
+                            height: 28,
+                            fit: BoxFit.contain,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
