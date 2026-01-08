@@ -28,7 +28,9 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
     final double screenWidth = MediaQuery.of(context).size.width;
     final double screenHeight = MediaQuery.of(context).size.height;
 
-    print('Building Airtel screen with _showOverlay: $_showOverlay, _isDimming: $_isDimming');
+    print(
+      'Building Airtel screen with _showOverlay: $_showOverlay, _isDimming: $_isDimming',
+    );
 
     return Scaffold(
       body: Stack(
@@ -131,7 +133,7 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
                                 children: [
                                   SizedBox(height: screenHeight * 0.002),
                                   Text(
-                                    'VISA',
+                                    'AIRTEL',
                                     style: TextStyle(
                                       color: Colors.black,
                                       fontSize: screenWidth * 0.055,
@@ -409,6 +411,13 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
               ),
             ),
           ),
+          // Dim overlay
+          if (_isDimming)
+            Container(
+              color: Colors.black.withOpacity(
+                0.5,
+              ), // Semi-transparent black overlay
+            ),
 
           // Sliding white rectangle for confirmation
           AnimatedPositioned(

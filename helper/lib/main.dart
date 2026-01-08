@@ -28,7 +28,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: const VisaPaymentMethodScreen(),
+      home: const MasterCardPaymentMethodScreen(),
     );
   }
 }
