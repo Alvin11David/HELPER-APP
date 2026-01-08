@@ -75,10 +75,22 @@ class VisaPaymentMethodScreen extends StatelessWidget {
                       Positioned(
                         top: screenWidth * 0.03,
                         left: screenWidth * 0.04,
-                        child: Image.asset(
-                          'assets/images/visa.png',
-                          width: screenWidth * 0.20,
-                          fit: BoxFit.contain,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.25),
+                                blurRadius: 12,
+                                spreadRadius: 1,
+                                offset: Offset(0, 6),
+                              ),
+                            ],
+                          ),
+                          child: Image.asset(
+                            'assets/images/visa.png',
+                            width: screenWidth * 0.15,
+                            fit: BoxFit.contain,
+                          ),
                         ),
                       ),
                     ],
