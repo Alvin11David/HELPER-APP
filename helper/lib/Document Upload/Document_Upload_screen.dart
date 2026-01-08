@@ -369,10 +369,10 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                                       shape: BoxShape.circle,
                                     ),
                                     child: Center(
-                                      child: Image.asset(
-                                        'assets/icons/nationalid.png',
-                                        width: 20,
-                                        height: 20,
+                                      child: Icon(
+                                        Icons.camera,
+                                        color: Colors.black,
+                                        size: 20,
                                       ),
                                     ),
                                   ),
