@@ -70,28 +70,61 @@ class VisaPaymentMethodScreen extends StatelessWidget {
                       stops: [0.73, 1.2],
                     ),
                   ),
-                  child: Stack(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Positioned(
-                        top: screenWidth * 0.03,
-                        left: screenWidth * 0.04,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.25),
-                                blurRadius: 12,
-                                spreadRadius: 1,
-                                offset: Offset(0, 6),
-                              ),
-                            ],
-                          ),
-                          child: Image.asset(
-                            'assets/images/visa.png',
-                            width: screenWidth * 0.15,
-                            fit: BoxFit.contain,
-                          ),
+                      Container(
+                        decoration: BoxDecoration(
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.25),
+                              blurRadius: 12,
+                              spreadRadius: 1,
+                              offset: Offset(0, 6),
+                            ),
+                          ],
                         ),
+                        child: Image.asset(
+                          'assets/images/visa.png',
+                          width: screenWidth * 0.15,
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                      SizedBox(width: screenWidth * 0.05),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SizedBox(height: screenHeight * 0.002),
+                          Text(
+                            'VISA',
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontSize: screenWidth * 0.05,
+                              fontWeight: FontWeight.bold,
+                              fontFamily: 'Montserrat',
+                            ),
+                          ),
+                          SizedBox(height: screenHeight * 0.005),
+                          Text(
+                            'Amount',
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontSize: screenWidth * 0.045,
+                              fontWeight: FontWeight.w200,
+                              fontFamily: 'Montserrat',
+                            ),
+                          ),
+                           SizedBox(height: screenHeight * 0.005),
+                          Text(
+                            'UGX 25,000',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: screenWidth * 0.06,
+                              fontWeight: FontWeight.w500,
+                              fontFamily: 'AbrilFatface',
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
