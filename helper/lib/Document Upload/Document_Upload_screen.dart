@@ -232,7 +232,9 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                                   Text(
                                     'Not Verified',
                                     style: TextStyle(
-                                      color: Colors.black54,
+                                      color: _selectedIndex == 0
+                                          ? const Color(0xFFFBBC04)
+                                          : Colors.black54,
                                       fontSize: screenWidth * 0.035,
                                     ),
                                   ),
@@ -283,7 +285,9 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                                   Text(
                                     'Not Verified',
                                     style: TextStyle(
-                                      color: Colors.black54,
+                                      color: _selectedIndex == 1
+                                          ? const Color(0xFFFBBC04)
+                                          : Colors.black54,
                                       fontSize: screenWidth * 0.035,
                                     ),
                                   ),
@@ -334,7 +338,9 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                                   Text(
                                     'Not Verified',
                                     style: TextStyle(
-                                      color: Colors.black54,
+                                      color: _selectedIndex == 2
+                                          ? const Color(0xFFFBBC04)
+                                          : Colors.black54,
                                       fontSize: screenWidth * 0.035,
                                     ),
                                   ),
@@ -385,7 +391,9 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                                   Text(
                                     'Not Verified',
                                     style: TextStyle(
-                                      color: Colors.black54,
+                                      color: _selectedIndex == 3
+                                          ? const Color(0xFFFBBC04)
+                                          : Colors.black54,
                                       fontSize: screenWidth * 0.035,
                                     ),
                                   ),
