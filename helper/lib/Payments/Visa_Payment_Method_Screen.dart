@@ -115,12 +115,12 @@ class _VisaPaymentMethodScreenState extends State<VisaPaymentMethodScreen> {
                                 'VISA',
                                 style: TextStyle(
                                   color: Colors.black,
-                                  fontSize: screenWidth * 0.05,
+                                  fontSize: screenWidth * 0.055,
                                   fontWeight: FontWeight.bold,
                                   fontFamily: 'Montserrat',
                                 ),
                               ),
-                              SizedBox(height: screenHeight * 0.002),
+                              SizedBox(height: screenHeight * 0.00),
                               Text(
                                 'Amount',
                                 style: TextStyle(
@@ -191,7 +191,7 @@ class _VisaPaymentMethodScreenState extends State<VisaPaymentMethodScreen> {
                       'Card Number',
                       style: TextStyle(
                         color: Colors.white,
-                        fontFamily: 'Poppins',
+                        fontFamily: 'PlayfairDisplay',
                         fontSize: screenWidth * 0.045,
                         fontWeight: FontWeight.w600,
                       ),
@@ -219,8 +219,8 @@ class _VisaPaymentMethodScreenState extends State<VisaPaymentMethodScreen> {
                               style: TextStyle(
                                 color: Colors.black,
                                 fontSize: screenWidth * 0.045,
-                                  fontFamily: 'Inter',
-                                  fontWeight: FontWeight.w900,
+                                fontFamily: 'Inter',
+                                fontWeight: FontWeight.w900,
                               ),
                               decoration: InputDecoration(
                                 hintText: 'Enter Your Card Number',
@@ -238,7 +238,7 @@ class _VisaPaymentMethodScreenState extends State<VisaPaymentMethodScreen> {
                               keyboardType: TextInputType.number,
                             ),
                           ),
-                          SizedBox(width: screenWidth * 0.02),
+                          SizedBox(width: screenWidth * 0.03),
                           Image.asset(
                             'assets/images/visa.png',
                             width: 28,
@@ -254,7 +254,7 @@ class _VisaPaymentMethodScreenState extends State<VisaPaymentMethodScreen> {
                       'Card Holder Name',
                       style: TextStyle(
                         color: Colors.white,
-                        fontFamily: 'Poppins',
+                        fontFamily: 'PlayfairDisplay',
                         fontSize: screenWidth * 0.045,
                         fontWeight: FontWeight.w600,
                       ),
@@ -281,8 +281,8 @@ class _VisaPaymentMethodScreenState extends State<VisaPaymentMethodScreen> {
                               style: TextStyle(
                                 color: Colors.black,
                                 fontSize: screenWidth * 0.045,
-                                  fontFamily: 'Inter',
-                                  fontWeight: FontWeight.w900,
+                                fontFamily: 'Inter',
+                                fontWeight: FontWeight.w900,
                               ),
                               decoration: InputDecoration(
                                 hintText: 'Enter Your Card Holder Name',
@@ -303,6 +303,141 @@ class _VisaPaymentMethodScreenState extends State<VisaPaymentMethodScreen> {
                           Icon(Icons.person, color: Colors.black, size: 24),
                         ],
                       ),
+                    ),
+                    // Add Expiration Date and CVV input fields in a Row
+                    SizedBox(height: screenHeight * 0.02),
+                    Row(
+                      children: [
+                        // Expiration Date Field
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Expires on',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontFamily: 'PlayfairDisplay',
+                                fontSize: screenWidth * 0.045,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            SizedBox(height: screenHeight * 0.012),
+                            Container(
+                              width: screenWidth * (122 / 375),
+                              height: 35,
+                              padding: EdgeInsets.symmetric(
+                                horizontal: screenWidth * 0.04,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(30),
+                                border: Border.all(
+                                  color: Colors.white.withOpacity(0.4),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: TextField(
+                                      style: TextStyle(
+                                        color: Colors.black,
+                                        fontSize: screenWidth * 0.045,
+                                        fontFamily: 'Inter',
+                                        fontWeight: FontWeight.w900,
+                                      ),
+                                      decoration: InputDecoration(
+                                        hintText: '**/**',
+                                        hintStyle: TextStyle(
+                                          color: Colors.black54,
+                                          fontSize: screenWidth * 0.045,
+                                          fontFamily: 'Inter',
+                                          fontWeight: FontWeight.w900,
+                                        ),
+                                        border: InputBorder.none,
+                                        isCollapsed: true,
+                                        contentPadding: EdgeInsets.zero,
+                                      ),
+                                      cursorColor: Colors.black,
+                                    ),
+                                  ),
+                                  SizedBox(width: screenWidth * 0.02),
+                                  Icon(
+                                    Icons.calendar_today,
+                                    color: Colors.black,
+                                    size: 24,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(width: screenWidth * 0.04),
+                        // CVV Field
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '3-Digit CVV',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontFamily: 'PlayfairDisplay',
+                                fontSize: screenWidth * 0.045,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            SizedBox(height: screenHeight * 0.012),
+                            Container(
+                              width: screenWidth * (200 / 375),
+                              height: 35,
+                              padding: EdgeInsets.symmetric(
+                                horizontal: screenWidth * 0.04,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(30),
+                                border: Border.all(
+                                  color: Colors.white.withOpacity(0.4),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: TextField(
+                                      style: TextStyle(
+                                        color: Colors.black,
+                                        fontSize: screenWidth * 0.045,
+                                        fontFamily: 'Inter',
+                                        fontWeight: FontWeight.w900,
+                                      ),
+                                      decoration: InputDecoration(
+                                        hintText: 'Enter CVV',
+                                        hintStyle: TextStyle(
+                                          color: Colors.black54,
+                                          fontSize: screenWidth * 0.045,
+                                          fontFamily: 'Inter',
+                                          fontWeight: FontWeight.w900,
+                                        ),
+                                        border: InputBorder.none,
+                                        isCollapsed: true,
+                                        contentPadding: EdgeInsets.zero,
+                                      ),
+                                      cursorColor: Colors.black,
+                                    ),
+                                  ),
+                                  SizedBox(width: screenWidth * 0.02),
+                                  Icon(
+                                    Icons.lock,
+                                    color: Colors.black,
+                                    size: 24,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ],
                 ),
