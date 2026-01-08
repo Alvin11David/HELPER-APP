@@ -693,12 +693,14 @@ class _MasterCardPaymentMethodScreenState
                 alignment: Alignment.bottomCenter,
                 child: Container(
                   width: screenWidth * 0.9,
-                  height: screenHeight * 0.6,
+                  height:
+                      screenHeight *
+                      0.7, // Increased height to fit content better
                   padding: EdgeInsets.fromLTRB(
                     screenWidth * 0.05,
                     0,
                     screenWidth * 0.05,
-                    screenWidth * 0.05 + 40,
+                    15, // Reduced bottom padding to prevent clipping the button
                   ),
                   decoration: BoxDecoration(
                     color: Colors.white,
@@ -772,6 +774,17 @@ class _MasterCardPaymentMethodScreenState
                             ),
                           ),
                         ),
+                         SizedBox(height: screenHeight * 0.04),
+                        Text(
+                          'Welcome to Helper!',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontSize: screenWidth * 0.06,
+                            fontFamily: 'AbrilFatface',
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
                         SizedBox(height: screenHeight * 0.07),
                         SizedBox(
                           width: double.infinity,
@@ -801,7 +814,7 @@ class _MasterCardPaymentMethodScreenState
                                       fontSize: screenWidth * 0.045,
                                       fontWeight: FontWeight.bold,
                                       color: Colors.white,
-                                      fontFamily: 'Poppins',
+                                      fontFamily: 'AbrilFatface',
                                     ),
                                   ),
                                   SizedBox(width: screenWidth * 0.02),
