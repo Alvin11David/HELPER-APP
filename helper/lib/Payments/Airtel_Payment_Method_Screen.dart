@@ -27,6 +27,9 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
   Widget build(BuildContext context) {
     final double screenWidth = MediaQuery.of(context).size.width;
     final double screenHeight = MediaQuery.of(context).size.height;
+
+    print('Building Airtel screen with _showOverlay: $_showOverlay, _isDimming: $_isDimming');
+
     return Scaffold(
       body: Stack(
         children: [
@@ -413,7 +416,7 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
             curve: Curves.easeOutCubic,
             left: screenWidth * 0.05,
             right: screenWidth * 0.05,
-            bottom: _showOverlay ? 0 : -(screenHeight * 0.4 + 40),
+            bottom: _showOverlay ? screenHeight * 0.02 : -screenHeight,
             child: AnimatedOpacity(
               duration: _overlayAnimDuration,
               curve: Curves.easeInOut,
@@ -422,12 +425,14 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
                 alignment: Alignment.bottomCenter,
                 child: Container(
                   width: screenWidth * 0.9,
-                  height: screenHeight * 0.7,
+                  height:
+                      screenHeight *
+                      0.7, // Increased height to fit content better
                   padding: EdgeInsets.fromLTRB(
                     screenWidth * 0.05,
                     0,
                     screenWidth * 0.05,
-                    15,
+                    15, // Reduced bottom padding to prevent clipping the button
                   ),
                   decoration: BoxDecoration(
                     color: Colors.white,
@@ -443,61 +448,119 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
                   child: SingleChildScrollView(
                     child: Column(
                       children: [
-                        SizedBox(height: screenHeight * 0.03),
-                        Text(
-                          'Payment Successful!',
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontSize: screenWidth * 0.06,
-                            fontWeight: FontWeight.bold,
-                            fontFamily: 'Poppins',
-                          ),
+                        SizedBox(height: screenHeight * 0.0),
+                        Stack(
+                          alignment: Alignment.topCenter,
+                          clipBehavior: Clip.none,
+                          children: [
+                            Image.asset(
+                              'assets/images/pop.png',
+                              width: screenWidth * 1.1,
+                              fit: BoxFit.contain,
+                            ),
+                            Positioned(
+                              top: 0,
+                              child: Image.asset(
+                                'assets/images/celebration.png',
+                                width: screenWidth * 0.4,
+                                fit: BoxFit.contain,
+                              ),
+                            ),
+                          ],
                         ),
-                        SizedBox(height: screenHeight * 0.02),
-                        Icon(
-                          Icons.check_circle,
-                          color: Colors.green,
-                          size: screenWidth * 0.15,
-                        ),
-                        SizedBox(height: screenHeight * 0.02),
+                        SizedBox(height: screenHeight * 0.0),
                         Text(
-                          'Your payment of UGX 25,000\nhas been successfully\nreceived.',
+                          'Account Created',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: Colors.black,
-                            fontSize: screenWidth * 0.045,
-                            fontWeight: FontWeight.w500,
-                            fontFamily: 'Poppins',
+                            fontSize: screenWidth * 0.065,
+                            fontFamily: 'Montserrat',
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                        SizedBox(height: screenHeight * 0.03),
-                        GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              _isDimming = false;
-                              _showOverlay = false;
-                            });
-                          },
-                          child: Container(
-                            width: screenWidth * 0.8,
-                            height: screenHeight * 0.06,
-                            decoration: BoxDecoration(
+                        Text(
+                          'Successfully',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontSize: screenWidth * 0.065,
+                            fontFamily: 'Montserrat',
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        SizedBox(height: screenHeight * 0.02),
+                        Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: screenWidth * 0.08,
+                          ),
+                          child: Text(
+                            'Your payment of UGX 25,000\nhas been successfully\nreceived.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
                               color: Colors.black,
-                              borderRadius: BorderRadius.circular(30),
+                              fontSize: screenWidth * 0.035,
+                              fontFamily: 'Montserrat',
+                              fontWeight: FontWeight.w500,
+                              height: 1.4,
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: screenHeight * 0.04),
+                        Text(
+                          'Welcome to Helper!',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontSize: screenWidth * 0.06,
+                            fontFamily: 'AbrilFatface',
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        SizedBox(height: screenHeight * 0.07),
+                        SizedBox(
+                          width: double.infinity,
+                          height: screenHeight * 0.062,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              // TODO: Handle continue action
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFDF8800),
+                              disabledBackgroundColor: const Color(
+                                0xFFDF8800,
+                              ).withOpacity(0.6),
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
                             ),
                             child: Center(
-                              child: Text(
-                                'Continue',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: screenWidth * 0.045,
-                                  fontWeight: FontWeight.bold,
-                                  fontFamily: 'Poppins',
-                                ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    'Go To Dashboard',
+                                    style: TextStyle(
+                                      fontSize: screenWidth * 0.045,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                      fontFamily: 'AbrilFatface',
+                                    ),
+                                  ),
+                                  SizedBox(width: screenWidth * 0.02),
+                                  Icon(
+                                    Icons.arrow_forward_rounded,
+                                    color: Colors.white,
+                                    size: screenHeight * 0.035,
+                                  ),
+                                ],
                               ),
                             ),
                           ),
                         ),
+                        // Add more content here as needed
                       ],
                     ),
                   ),
