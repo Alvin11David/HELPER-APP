@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -11,7 +12,50 @@ class VerificationInformationScreen extends StatefulWidget {
 }
 
 class _VerificationInformationScreenState
-    extends State<VerificationInformationScreen> {
+    extends State<VerificationInformationScreen>
+    with TickerProviderStateMixin {
+  final PageController _pageController = PageController(initialPage: 0);
+  int _currentPage = 0;
+  late Timer _timer;
+  late AnimationController _rippleController;
+  Animation<double>? _rippleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Auto-slide every 3 seconds
+    _timer = Timer.periodic(const Duration(seconds: 3), (timer) {
+      if (_pageController.hasClients) {
+        _currentPage = (_currentPage + 1) % 4;
+        _pageController.animateToPage(
+          _currentPage,
+          duration: const Duration(milliseconds: 700),
+          curve: Curves.easeInOut,
+        );
+      }
+    });
+
+    // Ripple animation
+    _rippleController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat(reverse: true);
+    _rippleAnimation =
+        Tween<double>(begin: 0.0, end: 1.0).animate(
+          CurvedAnimation(parent: _rippleController, curve: Curves.easeInOut),
+        )..addListener(() {
+          setState(() {});
+        });
+  }
+
+  @override
+  void dispose() {
+    _timer.cancel();
+    _rippleController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final double w = MediaQuery.of(context).size.width;
@@ -94,7 +138,7 @@ class _VerificationInformationScreenState
                       ),
                     ),
 
-                    SizedBox(height: h * 0.023),
+                    SizedBox(height: h * 0.039),
                     _StepIndicator(
                       width: w,
                       activeIndex: 0,
@@ -103,52 +147,33 @@ class _VerificationInformationScreenState
                     ),
                     SizedBox(height: screenHeight * 0.03),
                     Center(
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(30),
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                          child: Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: screenWidth * 0.06,
-                              vertical: screenHeight * 0.004,
-                            ),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                colors: [
-                                  Colors.white.withOpacity(0.25),
-                                  Colors.white.withOpacity(0.15),
-                                ],
-                              ),
-                              borderRadius: BorderRadius.circular(30),
-                              border: Border.all(
-                                color: Colors.white.withOpacity(0.4),
-                                width: 2,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.white.withOpacity(0.1),
-                                  blurRadius: 15,
-                                  spreadRadius: 2,
-                                ),
-                              ],
-                            ),
-                            child: Text(
-                              'Let\'s get your account verified\nto get the benefits below',
-                              maxLines: 2,
-                              softWrap: false,
-                              overflow: TextOverflow.ellipsis,
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: const Color.fromRGBO(255, 255, 255, 1),
-                                fontSize: screenWidth * 0.04,
-                                fontWeight: FontWeight.w500,
-                                fontFamily: 'Poppins',
-                              ),
-                            ),
-                          ),
+                      child: Text(
+                        'Let\'s get your account verified\nto get the benefits below',
+                        maxLines: 2,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: const Color.fromRGBO(255, 255, 255, 1),
+                          fontSize: screenWidth * 0.06,
+                          fontWeight: FontWeight.w100,
+                          fontFamily: 'AbrilFatface',
                         ),
+                      ),
+                    ),
+                    SizedBox(height: screenHeight * 0.03),
+                    // Carousel
+                    SizedBox(
+                      height: screenHeight * 0.25,
+                      child: PageView.builder(
+                        controller: _pageController,
+                        itemCount: 4,
+                        itemBuilder: (context, index) {
+                          return _buildGlassyRectangle(
+                            screenWidth,
+                            screenHeight,
+                            index,
+                            _rippleAnimation?.value ?? 0.0,
+                          );
+                        },
                       ),
                     ),
                     SizedBox(height: screenHeight * 0.05),
@@ -168,7 +193,7 @@ class _VerificationInformationScreenState
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
-                                'Continue',
+                                'Start Verification',
                                 style: TextStyle(
                                   color: Colors.black,
                                   fontSize: screenWidth * 0.045,
@@ -178,7 +203,7 @@ class _VerificationInformationScreenState
                               ),
                               SizedBox(width: screenWidth * 0.03),
                               Icon(
-                                Icons.arrow_forward,
+                                Icons.face_unlock_sharp,
                                 color: Colors.black,
                                 size: screenWidth * 0.05,
                               ),
@@ -196,6 +221,122 @@ class _VerificationInformationScreenState
       ),
     );
   }
+}
+
+// --------------------- Carousel Item ---------------------
+
+Widget _buildContactCircle(
+  IconData icon,
+  VoidCallback onTap,
+  double screenWidth,
+) {
+  return GestureDetector(
+    onTap: onTap,
+    child: Container(
+      width: screenWidth * 0.15,
+      height: screenWidth * 0.15,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        shape: BoxShape.circle,
+      ),
+      child: Center(
+        child: Icon(icon, color: Colors.black, size: screenWidth * 0.08),
+      ),
+    ),
+  );
+}
+
+Widget _buildGlassyRectangle(
+  double screenWidth,
+  double screenHeight,
+  int index,
+  double rippleValue,
+) {
+  final contents = [
+    'You will achieve\nmore job visibility.',
+    'Secure Payments.',
+    'Higher trust\nfrom Employers.',
+    '',
+  ];
+
+  return Container(
+    width: screenWidth,
+    margin: EdgeInsets.symmetric(horizontal: screenWidth * 0.05),
+    child: CustomPaint(
+      painter: RipplePainter(rippleValue),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: CustomPaint(
+          painter: WaterWavePainter(rippleValue),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Container(
+              height: screenHeight * 0.2,
+              width: screenWidth * 0.8,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.3),
+                  width: 1,
+                ),
+              ),
+              child: Stack(
+                children: [
+                  Positioned(
+                    top: 5,
+                    left: 0,
+                    right: 0,
+                    child: Center(
+                      child: Text(
+                        '"',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: screenWidth * 0.2,
+                          fontFamily: 'Epunda Slab',
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    top: screenHeight * 0.09,
+                    left: 0,
+                    right: 0,
+                    child: Center(
+                      child: Text(
+                        contents[index % contents.length],
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: screenWidth * 0.05,
+                          fontFamily: 'AbrilFatface',
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: 8,
+                    left: 0,
+                    right: 0,
+                    child: Center(
+                      child: Text(
+                        'Helper App',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: screenWidth * 0.05,
+                          fontFamily: 'Epunda Slab',
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
 }
 
 // --------------------- Indicator / Switch ---------------------
@@ -348,4 +489,54 @@ class DashedLinePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(DashedLinePainter oldDelegate) => false;
+}
+
+class RipplePainter extends CustomPainter {
+  final double animationValue;
+
+  RipplePainter(this.animationValue);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white.withOpacity(0.3 * animationValue)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
+
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.width / 2 * animationValue;
+
+    canvas.drawCircle(center, radius, paint);
+  }
+
+  @override
+  bool shouldRepaint(RipplePainter oldDelegate) => true;
+}
+
+class WaterWavePainter extends CustomPainter {
+  final double animationValue;
+
+  WaterWavePainter(this.animationValue);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.blue.withOpacity(0.2 * animationValue)
+      ..style = PaintingStyle.fill;
+
+    final path = Path();
+    path.moveTo(0, size.height);
+    for (double x = 0; x <= size.width; x += 5) {
+      final y =
+          size.height / 2 + 10 * animationValue * (x / size.width - 0.5).abs();
+      path.lineTo(x, y);
+    }
+    path.lineTo(size.width, size.height);
+    path.close();
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(WaterWavePainter oldDelegate) => true;
 }
