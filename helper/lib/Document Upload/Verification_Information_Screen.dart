@@ -231,6 +231,18 @@ class _VerificationInformationScreenState
                     ),
                     SizedBox(height: screenHeight * 0.03),
                     Center(
+                      child: Text(
+                        'OR',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: screenWidth * 0.05,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'Poppins',
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: screenHeight * 0.03),
+                    Center(
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(30),
                         child: BackdropFilter(
@@ -308,6 +320,42 @@ class _VerificationInformationScreenState
                         ),
                       ),
                     ),
+                    SizedBox(height: screenHeight * 0.05),
+                Center(
+                  child: SizedBox(
+                    width: screenWidth * 0.9,
+                    height: screenHeight * 0.07,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                      ),
+                      onPressed: () {},
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'Continue',
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontSize: screenWidth * 0.045,
+                              fontWeight: FontWeight.bold,
+                              fontFamily: "Poppins",
+                            ),
+                          ),
+                          SizedBox(width: screenWidth * 0.03),
+                          Icon(
+                            Icons.arrow_forward,
+                            color: Colors.black,
+                            size: screenWidth * 0.05,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
                   ],
                 ),
               ),

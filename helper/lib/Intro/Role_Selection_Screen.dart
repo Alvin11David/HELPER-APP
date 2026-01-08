@@ -203,6 +203,18 @@ class RoleSelectionScreen extends StatelessWidget {
                 ),
                 SizedBox(height: screenHeight * 0.03),
                 Center(
+                  child: Text(
+                    'OR',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: screenWidth * 0.05,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Poppins',
+                    ),
+                  ),
+                ),
+                SizedBox(height: screenHeight * 0.03),
+                Center(
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(30),
                     child: BackdropFilter(
