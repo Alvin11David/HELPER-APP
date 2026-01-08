@@ -192,7 +192,7 @@ class _VisaPaymentMethodScreenState extends State<VisaPaymentMethodScreen> {
                       style: TextStyle(
                         color: Colors.white,
                         fontFamily: 'PlayfairDisplay',
-                        fontSize: screenWidth * 0.045,
+                        fontSize: screenWidth * 0.04,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -218,7 +218,7 @@ class _VisaPaymentMethodScreenState extends State<VisaPaymentMethodScreen> {
                               controller: _cardNumberController,
                               style: TextStyle(
                                 color: Colors.black,
-                                fontSize: screenWidth * 0.045,
+                                fontSize: screenWidth * 0.04,
                                 fontFamily: 'Inter',
                                 fontWeight: FontWeight.w900,
                               ),
@@ -226,7 +226,7 @@ class _VisaPaymentMethodScreenState extends State<VisaPaymentMethodScreen> {
                                 hintText: 'Enter Your Card Number',
                                 hintStyle: TextStyle(
                                   color: Colors.black54,
-                                  fontSize: screenWidth * 0.045,
+                                  fontSize: screenWidth * 0.04,
                                   fontFamily: 'Inter',
                                   fontWeight: FontWeight.w900,
                                 ),
@@ -255,7 +255,7 @@ class _VisaPaymentMethodScreenState extends State<VisaPaymentMethodScreen> {
                       style: TextStyle(
                         color: Colors.white,
                         fontFamily: 'PlayfairDisplay',
-                        fontSize: screenWidth * 0.045,
+                        fontSize: screenWidth * 0.04,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -280,7 +280,7 @@ class _VisaPaymentMethodScreenState extends State<VisaPaymentMethodScreen> {
                             child: TextField(
                               style: TextStyle(
                                 color: Colors.black,
-                                fontSize: screenWidth * 0.045,
+                                fontSize: screenWidth * 0.04,
                                 fontFamily: 'Inter',
                                 fontWeight: FontWeight.w900,
                               ),
@@ -288,7 +288,7 @@ class _VisaPaymentMethodScreenState extends State<VisaPaymentMethodScreen> {
                                 hintText: 'Enter Your Card Holder Name',
                                 hintStyle: TextStyle(
                                   color: Colors.black54,
-                                  fontSize: screenWidth * 0.045,
+                                  fontSize: screenWidth * 0.04,
                                   fontFamily: 'Inter',
                                   fontWeight: FontWeight.w900,
                                 ),
@@ -317,7 +317,7 @@ class _VisaPaymentMethodScreenState extends State<VisaPaymentMethodScreen> {
                               style: TextStyle(
                                 color: Colors.white,
                                 fontFamily: 'PlayfairDisplay',
-                                fontSize: screenWidth * 0.045,
+                                fontSize: screenWidth * 0.04,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -342,7 +342,7 @@ class _VisaPaymentMethodScreenState extends State<VisaPaymentMethodScreen> {
                                     child: TextField(
                                       style: TextStyle(
                                         color: Colors.black,
-                                        fontSize: screenWidth * 0.045,
+                                        fontSize: screenWidth * 0.04,
                                         fontFamily: 'Inter',
                                         fontWeight: FontWeight.w900,
                                       ),
@@ -350,7 +350,7 @@ class _VisaPaymentMethodScreenState extends State<VisaPaymentMethodScreen> {
                                         hintText: '**/**',
                                         hintStyle: TextStyle(
                                           color: Colors.black54,
-                                          fontSize: screenWidth * 0.045,
+                                          fontSize: screenWidth * 0.04,
                                           fontFamily: 'Inter',
                                           fontWeight: FontWeight.w900,
                                         ),
@@ -382,7 +382,7 @@ class _VisaPaymentMethodScreenState extends State<VisaPaymentMethodScreen> {
                               style: TextStyle(
                                 color: Colors.white,
                                 fontFamily: 'PlayfairDisplay',
-                                fontSize: screenWidth * 0.045,
+                                fontSize: screenWidth * 0.04,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -407,7 +407,7 @@ class _VisaPaymentMethodScreenState extends State<VisaPaymentMethodScreen> {
                                     child: TextField(
                                       style: TextStyle(
                                         color: Colors.black,
-                                        fontSize: screenWidth * 0.045,
+                                        fontSize: screenWidth * 0.04,
                                         fontFamily: 'Inter',
                                         fontWeight: FontWeight.w900,
                                       ),
@@ -415,7 +415,7 @@ class _VisaPaymentMethodScreenState extends State<VisaPaymentMethodScreen> {
                                         hintText: 'Enter CVV',
                                         hintStyle: TextStyle(
                                           color: Colors.black54,
-                                          fontSize: screenWidth * 0.045,
+                                          fontSize: screenWidth * 0.04,
                                           fontFamily: 'Inter',
                                           fontWeight: FontWeight.w900,
                                         ),
@@ -436,6 +436,40 @@ class _VisaPaymentMethodScreenState extends State<VisaPaymentMethodScreen> {
                               ),
                             ),
                           ],
+                        ),
+                      ],
+                    ),
+                    // Add Save Card for Future checkbox below the Expires On row
+                    SizedBox(height: screenHeight * 0.02),
+                    Row(
+                      children: [
+                        Container(
+                          width: screenWidth * 0.05,
+                          height: screenWidth * 0.05,
+                          decoration: BoxDecoration(
+                            color: Colors.transparent,
+                            border: Border.all(color: Colors.white, width: 2),
+                            borderRadius: BorderRadius.circular(5),
+                          ),
+                          child: Checkbox(
+                            value: false,
+                            onChanged: (bool? value) {},
+                            activeColor: Colors.white,
+                            checkColor: Colors.black,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(5),
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: screenWidth * 0.03),
+                        Text(
+                          'Save card for future',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontFamily: 'PlayfairDisplay',
+                            fontSize: screenWidth * 0.04,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ],
                     ),
