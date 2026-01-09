@@ -5,6 +5,107 @@ import 'package:flutter/material.dart';
 class AcademicCertificateUploadScreen extends StatelessWidget {
   const AcademicCertificateUploadScreen({Key? key}) : super(key: key);
 
+  static const List<String> professions = [
+    'Accountant',
+    'Actor',
+    'Actuary',
+    'Architect',
+    'Astronomer',
+    'Author',
+    'Baker',
+    'Banker',
+    'Barber',
+    'Bartender',
+    'Biologist',
+    'Bookkeeper',
+    'Builder',
+    'Business Analyst',
+    'Butcher',
+    'Carpenter',
+    'Cashier',
+    'Chef',
+    'Chemist',
+    'Civil Engineer',
+    'Cleaner',
+    'Clerk',
+    'Coach',
+    'Computer Programmer',
+    'Consultant',
+    'Cook',
+    'Counselor',
+    'Dentist',
+    'Designer',
+    'Developer',
+    'Dietitian',
+    'Doctor',
+    'Driver',
+    'Economist',
+    'Editor',
+    'Electrician',
+    'Engineer',
+    'Farmer',
+    'Firefighter',
+    'Fisherman',
+    'Florist',
+    'Gardener',
+    'Graphic Designer',
+    'Hairdresser',
+    'Historian',
+    'Housekeeper',
+    'Inspector',
+    'Instructor',
+    'Interpreter',
+    'Janitor',
+    'Journalist',
+    'Judge',
+    'Lawyer',
+    'Librarian',
+    'Machinist',
+    'Manager',
+    'Marketing Specialist',
+    'Mathematician',
+    'Mechanic',
+    'Model',
+    'Musician',
+    'Nurse',
+    'Nutritionist',
+    'Optometrist',
+    'Painter',
+    'Pharmacist',
+    'Photographer',
+    'Physician',
+    'Physicist',
+    'Pilot',
+    'Plumber',
+    'Police Officer',
+    'Politician',
+    'Professor',
+    'Programmer',
+    'Psychologist',
+    'Receptionist',
+    'Researcher',
+    'Salesperson',
+    'Scientist',
+    'Secretary',
+    'Singer',
+    'Social Worker',
+    'Software Engineer',
+    'Soldier',
+    'Statistician',
+    'Student',
+    'Surgeon',
+    'Teacher',
+    'Technician',
+    'Therapist',
+    'Translator',
+    'Veterinarian',
+    'Waiter',
+    'Waitress',
+    'Web Designer',
+    'Welder',
+    'Writer',
+  ];
+
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -124,13 +225,72 @@ class AcademicCertificateUploadScreen extends StatelessWidget {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(30),
               ),
-              child: TextField(
-                decoration: InputDecoration(
-                  prefixIcon: Icon(Icons.search, color: Colors.black),
-                  hintText: 'Search your Profession here',
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(vertical: 10),
-                ),
+              child: Autocomplete<String>(
+                optionsBuilder: (TextEditingValue textEditingValue) {
+                  if (textEditingValue.text.isEmpty) {
+                    return const Iterable<String>.empty();
+                  }
+                  return professions.where((String option) {
+                    return option.toLowerCase().contains(
+                      textEditingValue.text.toLowerCase(),
+                    );
+                  });
+                },
+                fieldViewBuilder:
+                    (
+                      BuildContext context,
+                      TextEditingController textEditingController,
+                      FocusNode focusNode,
+                      VoidCallback onFieldSubmitted,
+                    ) {
+                      return TextField(
+                        controller: textEditingController,
+                        focusNode: focusNode,
+                        decoration: InputDecoration(
+                          prefixIcon: Icon(Icons.search, color: Colors.black),
+                          hintText: 'Search your Profession here',
+                          hintStyle: TextStyle(
+                            color: Colors.grey,
+                            fontSize: screenWidth * 0.05,
+                            fontFamily: 'Inter',
+                            fontWeight: FontWeight.w600
+                          ),
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.symmetric(vertical: 10),
+                        ),
+                      );
+                    },
+                optionsViewBuilder:
+                    (
+                      BuildContext context,
+                      AutocompleteOnSelected<String> onSelected,
+                      Iterable<String> options,
+                    ) {
+                      return Align(
+                        alignment: Alignment.topLeft,
+                        child: Material(
+                          elevation: 4.0,
+                          child: Container(
+                            width: 290,
+                            constraints: BoxConstraints(maxHeight: 200),
+                            child: ListView.builder(
+                              padding: EdgeInsets.zero,
+                              shrinkWrap: true,
+                              itemCount: options.length,
+                              itemBuilder: (BuildContext context, int index) {
+                                final String option = options.elementAt(index);
+                                return ListTile(
+                                  title: Text(option),
+                                  onTap: () {
+                                    onSelected(option);
+                                  },
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                      );
+                    },
               ),
             ),
           ),
