@@ -461,7 +461,10 @@ class AcademicCertificateUploadScreen extends StatelessWidget {
                                       Icons.search,
                                       color: Colors.black,
                                     ),
-                                    title: Text(option),
+                                    title: Text(
+                                      option,
+                                      style: TextStyle(fontSize: 14),
+                                    ),
                                     onTap: () {
                                       onSelected(option);
                                     },
