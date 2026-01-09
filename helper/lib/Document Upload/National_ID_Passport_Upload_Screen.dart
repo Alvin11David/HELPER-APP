@@ -51,6 +51,9 @@ class _NationalIdPassportUploadScreenState
   Widget build(BuildContext context) {
     final w = MediaQuery.of(context).size.width;
     final h = MediaQuery.of(context).size.height;
+    
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final double screenHeight = MediaQuery.of(context).size.height;
 
     final titleSize = w * 0.048;
     final pillText = w * 0.028;
@@ -68,47 +71,42 @@ class _NationalIdPassportUploadScreenState
             children: [
               // Header row (back + title)
               Positioned(
-                top: h * 0.035,
-                left: w * 0.04,
-                right: w * 0.04,
-                child: Row(
-                  children: [
-                    GestureDetector(
-                      onTap: () => Navigator.of(context).maybePop(),
-                      child: Container(
-                        width: w * 0.13,
-                        height: w * 0.13,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFFFFFF),
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                        child: Center(
-                          child: Icon(
-                            Icons.chevron_left,
-                            color: Colors.black,
-                            size: w * 0.10,
+                    top: screenHeight * 0.04,
+                    left: screenWidth * 0.04,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        GestureDetector(
+                          onTap: () => Navigator.of(context).maybePop(),
+                          child: Container(
+                            width: screenWidth * 0.13,
+                            height: screenWidth * 0.13,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFFFFFF),
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                            child: Center(
+                              child: Icon(
+                                Icons.chevron_left,
+                                color: Colors.black,
+                                size: screenWidth * 0.10,
+                              ),
+                            ),
                           ),
                         ),
-                      ),
-                    ),
-                    SizedBox(width: w * 0.04),
-                    Expanded(
-                      child: Text(
-                        'National ID/Passport',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: titleSize,
-                          fontFamily: 'AbrilFatface',
-                          height: 1.0,
+                        SizedBox(width: screenWidth * 0.06),
+                        Text(
+                          'National ID/Passport',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: screenWidth * 0.06,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'Montserrat',
+                          ),
                         ),
-                      ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
-
+                  ),
               // Main content
               Positioned(
                 top: h * 0.16,

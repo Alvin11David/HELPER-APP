@@ -28,9 +28,6 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
     final double screenWidth = MediaQuery.of(context).size.width;
     final double screenHeight = MediaQuery.of(context).size.height;
 
-    print(
-      'Building Airtel screen with _showOverlay: $_showOverlay, _isDimming: $_isDimming',
-    );
 
     return Scaffold(
       body: Stack(
