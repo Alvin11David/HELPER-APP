@@ -245,7 +245,7 @@ class _NationalIdPassportBackUploadScreenState
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Image.asset(
-                      'assets/images/front.png',
+                      'assets/images/back.png',
                       fit: BoxFit.contain,
                       width: screenWidth * 0.7,
                     ),
@@ -253,7 +253,7 @@ class _NationalIdPassportBackUploadScreenState
                     Opacity(
                       opacity: 0.5,
                       child: Image.asset(
-                        'assets/images/back.png',
+                        'assets/images/front.png',
                         fit: BoxFit.contain,
                         width: screenWidth * 0.7,
                       ),
@@ -272,7 +272,7 @@ class _NationalIdPassportBackUploadScreenState
                 left: 0,
                 right: 0,
                 child: Text(
-                  'Front Side',
+                  'Back Side',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: Colors.white,
