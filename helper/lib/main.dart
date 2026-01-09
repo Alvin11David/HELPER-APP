@@ -13,7 +13,7 @@ import 'package:helper/intro/Splash_Screen.dart';
 import 'package:helper/Auth/Phone_Number_&_Email_Address_Screen.dart';
 import 'package:helper/Auth/Forgot_Password_Screen.dart';
 import 'package:helper/Payments/MTN_Payment_Method_Screen.dart';
-
+import 'package:helper/Document Upload/National_ID_Passport_Upload_Screen.dart';
 void main() {
   runApp(const MyApp());
 }
