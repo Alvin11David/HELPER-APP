@@ -110,7 +110,7 @@ class _NationalIdPassportBackUploadScreenState
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            'Upload the front part of your ID',
+                            'Upload the back part of your ID',
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: screenWidth * 0.04,
