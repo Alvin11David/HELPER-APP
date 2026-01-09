@@ -253,7 +253,7 @@ class AcademicCertificateUploadScreen extends StatelessWidget {
                             color: Colors.grey,
                             fontSize: screenWidth * 0.05,
                             fontFamily: 'Inter',
-                            fontWeight: FontWeight.w600
+                            fontWeight: FontWeight.w600,
                           ),
                           border: InputBorder.none,
                           contentPadding: EdgeInsets.symmetric(vertical: 10),
@@ -268,24 +268,33 @@ class AcademicCertificateUploadScreen extends StatelessWidget {
                     ) {
                       return Align(
                         alignment: Alignment.topLeft,
-                        child: Material(
-                          elevation: 4.0,
-                          child: Container(
-                            width: 290,
-                            constraints: BoxConstraints(maxHeight: 200),
-                            child: ListView.builder(
-                              padding: EdgeInsets.zero,
-                              shrinkWrap: true,
-                              itemCount: options.length,
-                              itemBuilder: (BuildContext context, int index) {
-                                final String option = options.elementAt(index);
-                                return ListTile(
-                                  title: Text(option),
-                                  onTap: () {
-                                    onSelected(option);
-                                  },
-                                );
-                              },
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: Material(
+                            elevation: 4.0,
+                            child: Container(
+                              width: 290,
+                              constraints: BoxConstraints(maxHeight: 200),
+                              child: ListView.builder(
+                                padding: EdgeInsets.zero,
+                                shrinkWrap: true,
+                                itemCount: options.length,
+                                itemBuilder: (BuildContext context, int index) {
+                                  final String option = options.elementAt(
+                                    index,
+                                  );
+                                  return ListTile(
+                                    leading: Icon(
+                                      Icons.search,
+                                      color: Colors.black,
+                                    ),
+                                    title: Text(option),
+                                    onTap: () {
+                                      onSelected(option);
+                                    },
+                                  );
+                                },
+                              ),
                             ),
                           ),
                         ),
