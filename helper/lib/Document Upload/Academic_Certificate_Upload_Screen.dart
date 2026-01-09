@@ -2,8 +2,25 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
-class AcademicCertificateUploadScreen extends StatelessWidget {
+class AcademicCertificateUploadScreen extends StatefulWidget {
   const AcademicCertificateUploadScreen({Key? key}) : super(key: key);
+
+  @override
+  State<AcademicCertificateUploadScreen> createState() =>
+      _AcademicCertificateUploadScreenState();
+}
+
+class _AcademicCertificateUploadScreenState
+    extends State<AcademicCertificateUploadScreen> {
+  late List<String> searchHistory;
+  late List<String> selectedProfessions;
+
+  @override
+  void initState() {
+    super.initState();
+    searchHistory = [];
+    selectedProfessions = [];
+  }
 
   static const List<String> professions = [
     'Accountant',
@@ -373,10 +390,10 @@ class AcademicCertificateUploadScreen extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        'Search or add your professiona/Job',
+                        'Search or add your profession/Job',
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: screenWidth * 0.04,
+                          fontSize: screenWidth * 0.038,
                           fontWeight: FontWeight.w500,
                           fontFamily: 'Poppins',
                         ),
@@ -388,6 +405,7 @@ class AcademicCertificateUploadScreen extends StatelessWidget {
               ),
             ),
           ),
+
           Positioned(
             top: screenHeight * 0.14 + 53,
             left: (screenWidth - 290) / 2,
@@ -409,6 +427,17 @@ class AcademicCertificateUploadScreen extends StatelessWidget {
                     );
                   });
                 },
+                onSelected: (String selection) {
+                  setState(() {
+                    if (!searchHistory.contains(selection)) {
+                      searchHistory.insert(0, selection);
+                      if (searchHistory.length > 5) searchHistory.removeLast();
+                    }
+                    if (!selectedProfessions.contains(selection)) {
+                      selectedProfessions.add(selection);
+                    }
+                  });
+                },
                 fieldViewBuilder:
                     (
                       BuildContext context,
@@ -424,7 +453,7 @@ class AcademicCertificateUploadScreen extends StatelessWidget {
                           hintText: 'Search your Profession here',
                           hintStyle: TextStyle(
                             color: Colors.grey,
-                            fontSize: screenWidth * 0.05,
+                            fontSize: screenWidth * 0.048,
                             fontFamily: 'Inter',
                             fontWeight: FontWeight.w600,
                           ),
@@ -476,6 +505,82 @@ class AcademicCertificateUploadScreen extends StatelessWidget {
                         ),
                       );
                     },
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: screenHeight * 0.13,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: Text(
+                'OR',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Poppins',
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: screenHeight * 0.18,
+            left: (screenWidth - 290) / 2,
+            child: Container(
+              width: 290,
+              height: 38,
+              decoration: BoxDecoration(
+                color: const Color(0xFFFBBC04),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Image.asset(
+                    'assets/icons/academic.png',
+                    width: 24,
+                    height: 24,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    selectedProfessions.isEmpty
+                        ? 'Selected Professions will appear here'
+                        : selectedProfessions.join(', '),
+                    style: TextStyle(
+                      fontSize: screenWidth * 0.04,
+                      fontWeight: FontWeight.w500,
+                      fontFamily: 'Poppins',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: screenHeight * 0.05,
+            left: (screenWidth - 290) / 2,
+            child: Container(
+              width: 290,
+              height: 38,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.add, color: Colors.black),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Add Your Profession',
+                    style: TextStyle(
+                      fontSize: screenWidth * 0.04,
+                      fontWeight: FontWeight.w500,
+                      fontFamily: 'Poppins',
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
