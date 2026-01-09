@@ -3,6 +3,7 @@ import 'package:helper/Auth/OTP_Verification_Screen.dart';
 import 'package:helper/Auth/Password_Reset_Screen.dart';
 import 'package:helper/Auth/Referral_Code_Screen.dart';
 import 'package:helper/Document%20Upload/Document_Upload_screen.dart';
+import 'package:helper/Document%20Upload/National_ID_Passport_Back_Upload_Screen.dart';
 import 'package:helper/Document%20Upload/Verification_Information_Screen.dart';
 import 'package:helper/Payments/Airtel_Payment_Method_Screen.dart';
 import 'package:helper/Payments/Mastercard_Payment_Method_Screen.dart';
@@ -13,7 +14,7 @@ import 'package:helper/intro/Splash_Screen.dart';
 import 'package:helper/Auth/Phone_Number_&_Email_Address_Screen.dart';
 import 'package:helper/Auth/Forgot_Password_Screen.dart';
 import 'package:helper/Payments/MTN_Payment_Method_Screen.dart';
-import 'package:helper/Document Upload/National_ID_Passport_Upload_Screen.dart';
+import 'package:helper/Document%20Upload/National_ID_Passport_Front_Upload_Screen.dart';
 void main() {
   runApp(const MyApp());
 }
@@ -30,7 +31,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: const DocumentUploadScreen(),
+      home: const NationalIdPassportBackUploadScreen(),
     );
   }
 }
