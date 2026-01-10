@@ -1,7 +1,9 @@
+import 'dart:io';
 import 'dart:ui';
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:google_ml_kit/google_ml_kit.dart';
 
 class NationalIdPassportFrontScanScreen extends StatefulWidget {
   const NationalIdPassportFrontScanScreen({super.key});
@@ -15,6 +17,9 @@ class _NationalIdPassportFrontScanScreenState
     extends State<NationalIdPassportFrontScanScreen> {
   late CameraController _controller;
   Future<void>? _initializeControllerFuture;
+  XFile? _capturedImage;
+  bool _isAnalyzing = false;
+  final TextRecognizer _textRecognizer = GoogleMlKit.vision.textRecognizer();
 
   @override
   void initState() {
@@ -28,12 +33,163 @@ class _NationalIdPassportFrontScanScreenState
 
     _controller = CameraController(firstCamera, ResolutionPreset.high);
 
-    return _controller.initialize();
+    await _controller.initialize();
+    _controller.startImageStream(_processImage);
+  }
+
+  void _processImage(CameraImage image) async {
+    if (_isAnalyzing || _capturedImage != null) return;
+
+    _isAnalyzing = true;
+
+    final inputImage = _getInputImageFromCameraImage(image);
+    if (inputImage == null) {
+      print('InputImage is null');
+      _isAnalyzing = false;
+      return;
+    }
+
+    final brightness = _calculateBrightness(image);
+    print('Brightness: $brightness');
+    if (brightness < 0.1) {
+      // Lowered threshold for testing
+      _isAnalyzing = false;
+      return;
+    }
+
+    // final recognizedText = await _textRecognizer.processImage(inputImage);
+    // print('Recognized text: ${recognizedText.text}');
+    // if (recognizedText.text.isNotEmpty) {
+    print('Brightness sufficient, capturing image');
+    _captureImage();
+    // }
+
+    _isAnalyzing = false;
+  }
+
+  double _calculateBrightness(CameraImage image) {
+    final plane = image.planes[0];
+    final bytes = plane.bytes;
+    double sum = 0;
+    int count = 0;
+    for (int i = 0; i < bytes.length; i += 100) {
+      // Sample every 100th pixel
+      sum += bytes[i];
+      count++;
+    }
+    return count > 0 ? sum / count / 255.0 : 0.0;
+  }
+
+  InputImage? _getInputImageFromCameraImage(CameraImage image) {
+    final camera = _controller.description;
+    final sensorOrientation = camera.sensorOrientation;
+    InputImageRotation? rotation;
+    switch (sensorOrientation) {
+      case 0:
+        rotation = InputImageRotation.rotation0deg;
+        break;
+      case 90:
+        rotation = InputImageRotation.rotation90deg;
+        break;
+      case 180:
+        rotation = InputImageRotation.rotation180deg;
+        break;
+      case 270:
+        rotation = InputImageRotation.rotation270deg;
+        break;
+      default:
+        return null;
+    }
+
+    final format = _getInputImageFormat(image.format.group);
+    if (format == null) return null;
+
+    return InputImage.fromBytes(
+      bytes: image.planes[0].bytes,
+      metadata: InputImageMetadata(
+        size: Size(image.width.toDouble(), image.height.toDouble()),
+        rotation: rotation,
+        format: format,
+        bytesPerRow: image
+            .planes[0]
+            .bytesPerRow, // Added for completeness, as InputImageMetadata may require it
+      ),
+    );
+  }
+
+  InputImageFormat? _getInputImageFormat(ImageFormatGroup group) {
+    switch (group) {
+      case ImageFormatGroup.yuv420:
+        return InputImageFormat.yuv420;
+      case ImageFormatGroup.bgra8888:
+        return InputImageFormat.bgra8888;
+      default:
+        return null;
+    }
+  }
+
+  void _captureImage() async {
+    try {
+      final image = await _controller.takePicture();
+      setState(() {
+        _capturedImage = image;
+      });
+      _controller.stopImageStream();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: ClipRRect(
+            borderRadius: BorderRadius.circular(30),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Colors.white.withOpacity(0.25),
+                      Colors.white.withOpacity(0.15),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(30),
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.4),
+                    width: 2,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.white.withOpacity(0.1),
+                      blurRadius: 15,
+                      spreadRadius: 2,
+                    ),
+                  ],
+                ),
+                child: const Text(
+                  'Image captured!',
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+            ),
+          ),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } catch (e) {
+      // Handle error
+    }
   }
 
   @override
   void dispose() {
+    _controller.stopImageStream();
     _controller.dispose();
+    _textRecognizer.close();
     super.dispose();
   }
 
@@ -169,10 +325,21 @@ class _NationalIdPassportFrontScanScreenState
                   child: Container(
                     width: 296,
                     height: 489,
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.white, width: 2),
-                      borderRadius: BorderRadius.circular(30),
-                    ),
+                    child: _capturedImage != null
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(30),
+                            child: Image.file(
+                              File(_capturedImage!.path),
+                              fit: BoxFit.cover,
+                            ),
+                          )
+                        : Container(
+                            decoration: BoxDecoration(
+                              color: Colors.transparent,
+                              border: Border.all(color: Colors.white, width: 2),
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                          ),
                   ),
                 ),
                 Positioned(
