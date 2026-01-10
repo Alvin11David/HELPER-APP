@@ -268,7 +268,7 @@ class EmployerDashboardScreen extends StatelessWidget {
                     Stack(
                       children: [
                         ClipRRect(
-                          borderRadius: BorderRadius.circular(15),
+                          borderRadius: BorderRadius.circular(20),
                           child: Image.asset(
                             'assets/images/driver.png',
                             width: 211,
@@ -278,10 +278,19 @@ class EmployerDashboardScreen extends StatelessWidget {
                         ),
                         Positioned(
                           bottom: 0,
-                          left: 0,
-                          right: 0,
+                          left:
+                              2, // Centers the 200-wide rectangle on the 230-wide image: (230 - 200) / 2 = 15
+                          width: 206,
                           height: 83,
-                          child: Container(color: Colors.white),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.only(
+                                bottomLeft: Radius.circular(20),
+                                bottomRight: Radius.circular(20),
+                              ),
+                            ),
+                          ),
                         ),
                       ],
                     ),
@@ -289,7 +298,7 @@ class EmployerDashboardScreen extends StatelessWidget {
                     Stack(
                       children: [
                         ClipRRect(
-                          borderRadius: BorderRadius.circular(15),
+                          borderRadius: BorderRadius.circular(20),
                           child: Image.asset(
                             'assets/images/engineer.png',
                             width: 211,
@@ -302,7 +311,15 @@ class EmployerDashboardScreen extends StatelessWidget {
                           left: 0,
                           right: 0,
                           height: 83,
-                          child: Container(color: Colors.white),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.only(
+                                bottomLeft: Radius.circular(20),
+                                bottomRight: Radius.circular(20),
+                              ),
+                            ),
+                          ),
                         ),
                       ],
                     ),
