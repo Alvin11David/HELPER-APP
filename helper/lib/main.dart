@@ -19,6 +19,7 @@ import 'package:helper/Auth/Phone_Number_&_Email_Address_Screen.dart';
 import 'package:helper/Auth/Forgot_Password_Screen.dart';
 import 'package:helper/Payments/MTN_Payment_Method_Screen.dart';
 import 'package:helper/Document%20Upload/National_ID_Passport_Front_Upload_Screen.dart';
+import 'package:helper/Document%20Upload/Professional_License_Upload.dart';
 
 void main() {
   runApp(const MyApp());
@@ -36,7 +37,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: const NationalIdPassportBackScanScreen(),
+      home: const ProfessionalLicenseUploadScreen(),
     );
   }
 }
