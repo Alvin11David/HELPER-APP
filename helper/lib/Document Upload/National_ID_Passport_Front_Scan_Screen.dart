@@ -1,9 +1,44 @@
 import 'dart:ui';
 
+import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 
-class NationalIdPassportFrontScanScreen extends StatelessWidget {
+class NationalIdPassportFrontScanScreen extends StatefulWidget {
   const NationalIdPassportFrontScanScreen({super.key});
+
+  @override
+  State<NationalIdPassportFrontScanScreen> createState() =>
+      _NationalIdPassportFrontScanScreenState();
+}
+
+class _NationalIdPassportFrontScanScreenState
+    extends State<NationalIdPassportFrontScanScreen> {
+  late CameraController _controller;
+  late Future<void> _initializeControllerFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeCamera();
+  }
+
+  Future<void> _initializeCamera() async {
+    final cameras = await availableCameras();
+    final firstCamera = cameras.first;
+
+    _controller = CameraController(
+      firstCamera,
+      ResolutionPreset.high,
+    );
+
+    _initializeControllerFuture = _controller.initialize();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -11,10 +46,27 @@ class NationalIdPassportFrontScanScreen extends StatelessWidget {
     final double screenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
-      backgroundColor: Colors.black,
-      body: SafeArea(
-        child: Stack(
-          children: [
+      body: FutureBuilder<void>(
+        future: _initializeControllerFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.done) {
+            final double rectLeft = (screenWidth - 296) / 2;
+            final double rectTop = (screenHeight - 489) / 2 + 20;
+
+            return Stack(
+              children: [
+                CameraPreview(_controller),
+                ClipPath(
+                  clipper: InvertedRectangleClipper(
+                    rect: Rect.fromLTWH(rectLeft, rectTop, 296, 489),
+                  ),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                    child: Container(
+                      color: Colors.black.withOpacity(0.5),
+                    ),
+                  ),
+                ),
             Positioned(
               top: screenHeight * 0.04,
               left: screenWidth * 0.04,
@@ -116,6 +168,63 @@ class NationalIdPassportFrontScanScreen extends StatelessWidget {
                 decoration: BoxDecoration(
                   border: Border.all(color: Colors.white, width: 2),
                   borderRadius: BorderRadius.circular(30),
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: screenHeight * 0.03,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(30),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: screenWidth * 0.06,
+                        vertical: screenHeight * 0.011,
+                      ),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Colors.white.withOpacity(0.25),
+                            Colors.white.withOpacity(0.15),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(30),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.4),
+                          width: 2,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.white.withOpacity(0.1),
+                            blurRadius: 15,
+                            spreadRadius: 2,
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          SizedBox(width: screenWidth * 0.02),
+                          Text(
+                            'Make sure text is readable before submitting',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: screenWidth * 0.03,
+                              fontWeight: FontWeight.w500,
+                              fontFamily: 'Poppins',
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),
