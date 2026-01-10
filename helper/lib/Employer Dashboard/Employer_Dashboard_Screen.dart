@@ -290,43 +290,58 @@ class EmployerDashboardScreen extends StatelessWidget {
                               ),
                             ),
                             child: Padding(
-                              padding: EdgeInsets.only(bottom: w * 0.18, left: w * 0.020),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
+                              padding: EdgeInsets.only(
+                                top: w * 0.025,
+                                left: w * 0.020,
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        "Provider's Name",
+                                        style: TextStyle(
+                                          color: Colors.black,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      Row(
+                                        children: [
+                                          Icon(
+                                            Icons.star,
+                                            color: Colors.black,
+                                            size: 16,
+                                          ),
+                                          SizedBox(width: 4),
+                                          Text(
+                                            "4.6",
+                                            style: TextStyle(
+                                              color: Colors.black,
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                          SizedBox(width: 4),
+                                          Text(
+                                            "(200)",
+                                            style: TextStyle(
+                                              color: Colors.black,
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
                                   Text(
-                                    "Provider's Name",
+                                    "Profession",
                                     style: TextStyle(
                                       color: Colors.black,
                                       fontSize: 14,
-                                      fontWeight: FontWeight.bold,
                                     ),
-                                  ),
-                                  Row(
-                                    children: [
-                                      Icon(
-                                        Icons.star,
-                                        color: Colors.black,
-                                        size: 16,
-                                      ),
-                                      SizedBox(width: 4),
-                                      Text(
-                                        "4.6",
-                                        style: TextStyle(
-                                          color: Colors.black,
-                                          fontSize: 14,
-                                        ),
-                                      ),
-                                      SizedBox(width: 4),
-                                      Text(
-                                        "(200)",
-                                        style: TextStyle(
-                                          color: Colors.black,
-                                          fontSize: 14,
-                                        ),
-                                      ),
-                                    ],
                                   ),
                                 ],
                               ),
@@ -361,43 +376,58 @@ class EmployerDashboardScreen extends StatelessWidget {
                               ),
                             ),
                             child: Padding(
-                              padding: EdgeInsets.only(bottom: w * 0.18, left: w * 0.020),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
+                              padding: EdgeInsets.only(
+                                top: w * 0.025,
+                                left: w * 0.020,
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        "Provider's Name",
+                                        style: TextStyle(
+                                          color: Colors.black,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      Row(
+                                        children: [
+                                          Icon(
+                                            Icons.star,
+                                            color: Colors.black,
+                                            size: 16,
+                                          ),
+                                          SizedBox(width: 4),
+                                          Text(
+                                            "4.6",
+                                            style: TextStyle(
+                                              color: Colors.black,
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                          SizedBox(width: 4),
+                                          Text(
+                                            "(200)",
+                                            style: TextStyle(
+                                              color: Colors.black,
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
                                   Text(
-                                    "Provider's Name",
+                                    "Profession",
                                     style: TextStyle(
                                       color: Colors.black,
                                       fontSize: 14,
-                                      fontWeight: FontWeight.bold
                                     ),
-                                  ),
-                                  Row(
-                                    children: [
-                                      Icon(
-                                        Icons.star,
-                                        color: Colors.black,
-                                        size: 16,
-                                      ),
-                                      SizedBox(width: 4),
-                                      Text(
-                                        "4.6",
-                                        style: TextStyle(
-                                          color: Colors.black,
-                                          fontSize: 14,
-                                        ),
-                                      ),
-                                      SizedBox(width: 4),
-                                      Text(
-                                        "(200)",
-                                        style: TextStyle(
-                                          color: Colors.black,
-                                          fontSize: 14,
-                                        ),
-                                      ),
-                                    ],
                                   ),
                                 ],
                               ),
