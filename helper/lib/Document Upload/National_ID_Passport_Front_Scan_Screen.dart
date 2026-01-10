@@ -233,7 +233,16 @@ class _NationalIdPassportFrontScanScreenState
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       GestureDetector(
-                        onTap: () => Navigator.of(context).maybePop(),
+                        onTap: () {
+                          if (_capturedImage != null) {
+                            setState(() {
+                              _capturedImage = null;
+                            });
+                            _controller.startImageStream(_processImage);
+                          } else {
+                            Navigator.of(context).maybePop();
+                          }
+                        },
                         child: Container(
                           width: screenWidth * 0.13,
                           height: screenWidth * 0.13,
@@ -375,8 +384,9 @@ class _NationalIdPassportFrontScanScreenState
                                           // TODO: Handle continue action
                                         },
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor:  Colors.white,
-                                    disabledBackgroundColor: Colors.white.withOpacity(0.6),
+                                    backgroundColor: Colors.white,
+                                    disabledBackgroundColor: Colors.white
+                                        .withOpacity(0.6),
                                     elevation: 0,
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(30),
