@@ -19,6 +19,7 @@ class _NationalIdPassportFrontScanScreenState
   Future<void>? _initializeControllerFuture;
   XFile? _capturedImage;
   bool _isAnalyzing = false;
+  bool _isVerifying = false;
   final TextRecognizer _textRecognizer = GoogleMlKit.vision.textRecognizer();
 
   @override
@@ -306,7 +307,9 @@ class _NationalIdPassportFrontScanScreenState
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              'Place the front part of your ID in the frame',
+                              _capturedImage != null
+                                  ? 'Preview the front of the ID'
+                                  : 'Place the front part of your ID in the frame',
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: screenWidth * 0.034,
@@ -352,47 +355,70 @@ class _NationalIdPassportFrontScanScreenState
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(30),
                       child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                        filter: ImageFilter.blur(sigmaX: 0, sigmaY: 0),
                         child: Container(
                           padding: EdgeInsets.symmetric(
                             horizontal: screenWidth * 0.06,
                             vertical: screenHeight * 0.011,
                           ),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [
-                                Colors.white.withOpacity(0.25),
-                                Colors.white.withOpacity(0.15),
-                              ],
-                            ),
-                            borderRadius: BorderRadius.circular(30),
-                            border: Border.all(
-                              color: Colors.white.withOpacity(0.4),
-                              width: 2,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.white.withOpacity(0.1),
-                                blurRadius: 15,
-                                spreadRadius: 2,
-                              ),
-                            ],
-                          ),
-                          child: Row(
+                          child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              SizedBox(width: screenWidth * 0.02),
-                              Text(
-                                'Make sure text is readable before submitting',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: screenWidth * 0.03,
-                                  fontWeight: FontWeight.w500,
-                                  fontFamily: 'Poppins',
+                              SizedBox(height: screenHeight * 0.07),
+                              SizedBox(
+                                width: double.infinity,
+                                height: screenHeight * 0.062,
+                                child: ElevatedButton(
+                                  onPressed: _isVerifying
+                                      ? null
+                                      : () {
+                                          // TODO: Handle continue action
+                                        },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor:  Colors.white,
+                                    disabledBackgroundColor: Colors.white.withOpacity(0.6),
+                                    elevation: 0,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(30),
+                                    ),
+                                  ),
+                                  child: _isVerifying
+                                      ? SizedBox(
+                                          width: screenHeight * 0.03,
+                                          height: screenHeight * 0.03,
+                                          child:
+                                              const CircularProgressIndicator(
+                                                strokeWidth: 3,
+                                                color: Colors.white,
+                                              ),
+                                        )
+                                      : Center(
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Text(
+                                                'Continue',
+                                                style: TextStyle(
+                                                  fontSize: screenWidth * 0.045,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.black,
+                                                  fontFamily: 'Poppins',
+                                                ),
+                                              ),
+                                              SizedBox(
+                                                width: screenWidth * 0.02,
+                                              ),
+                                              Icon(
+                                                Icons.arrow_forward_rounded,
+                                                color: Colors.black,
+                                                size: screenHeight * 0.035,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
                                 ),
-                                textAlign: TextAlign.center,
                               ),
                             ],
                           ),
