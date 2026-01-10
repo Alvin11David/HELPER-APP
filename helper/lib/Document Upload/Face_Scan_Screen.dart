@@ -26,7 +26,11 @@ class _FaceScanScreenState extends State<FaceScanScreen> {
   Future<void> _initializeCamera() async {
     _cameras = await availableCameras();
     if (_cameras != null && _cameras!.isNotEmpty) {
-      _controller = CameraController(_cameras!.first, ResolutionPreset.medium);
+      final frontCamera = _cameras!.firstWhere(
+        (camera) => camera.lensDirection == CameraLensDirection.front,
+        orElse: () => _cameras!.first,
+      );
+      _controller = CameraController(frontCamera, ResolutionPreset.medium);
       await _controller!.initialize();
       setState(() {});
     }
@@ -50,6 +54,26 @@ class _FaceScanScreenState extends State<FaceScanScreen> {
       backgroundColor: Colors.black,
       body: Stack(
         children: [
+          if (_controller != null && _controller!.value.isInitialized)
+            CameraPreview(_controller!)
+          else
+            Container(color: Colors.black),
+          Positioned.fill(
+            child: ClipPath(
+              clipper: InvertedRectangleClipper(
+                Rect.fromLTWH(
+                  (screenWidth - screenWidth * 0.8) / 2,
+                  screenHeight * 0.25,
+                  screenWidth * 0.8,
+                  screenHeight * 0.42,
+                ),
+              ),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                child: Container(color: Colors.black.withOpacity(0.3)),
+              ),
+            ),
+          ),
           Positioned(
             top: screenHeight * 0.05,
             left: screenWidth * 0.04,
@@ -227,4 +251,22 @@ class _FaceScanScreenState extends State<FaceScanScreen> {
       ),
     );
   }
+}
+
+class InvertedRectangleClipper extends CustomClipper<Path> {
+  final Rect rect;
+
+  InvertedRectangleClipper(this.rect);
+
+  @override
+  Path getClip(Size size) {
+    Path path = Path();
+    path.addRect(Rect.fromLTWH(0, 0, size.width, size.height));
+    path.addRect(rect);
+    path.fillType = PathFillType.evenOdd;
+    return path;
+  }
+
+  @override
+  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
 }
