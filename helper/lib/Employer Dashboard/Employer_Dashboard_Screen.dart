@@ -290,11 +290,7 @@ class EmployerDashboardScreen extends StatelessWidget {
                               ),
                             ),
                             child: Padding(
-                              padding: EdgeInsets.only(
-                                bottom: 35,
-                                left: 10,
-                                right: 10,
-                              ),
+                              padding: EdgeInsets.only(bottom: w * 0.18, left: w * 0.020),
                               child: Row(
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
@@ -304,6 +300,7 @@ class EmployerDashboardScreen extends StatelessWidget {
                                     style: TextStyle(
                                       color: Colors.black,
                                       fontSize: 14,
+                                      fontWeight: FontWeight.bold,
                                     ),
                                   ),
                                   Row(
@@ -364,11 +361,7 @@ class EmployerDashboardScreen extends StatelessWidget {
                               ),
                             ),
                             child: Padding(
-                              padding: EdgeInsets.only(
-                                top: w * 0.025,
-                                left: w * 0.025,
-                                right: w * 0.025,
-                              ),
+                              padding: EdgeInsets.only(bottom: w * 0.18, left: w * 0.020),
                               child: Row(
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
@@ -378,6 +371,7 @@ class EmployerDashboardScreen extends StatelessWidget {
                                     style: TextStyle(
                                       color: Colors.black,
                                       fontSize: 14,
+                                      fontWeight: FontWeight.bold
                                     ),
                                   ),
                                   Row(
