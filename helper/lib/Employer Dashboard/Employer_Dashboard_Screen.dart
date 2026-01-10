@@ -271,17 +271,16 @@ class EmployerDashboardScreen extends StatelessWidget {
                           borderRadius: BorderRadius.circular(20),
                           child: Image.asset(
                             'assets/images/driver.png',
-                            width: 211,
-                            height: 230,
+                            width: w * 0.6,
+                            height: w * 0.8,
                             fit: BoxFit.cover,
                           ),
                         ),
                         Positioned(
                           bottom: 0,
-                          left:
-                              2, // Centers the 200-wide rectangle on the 230-wide image: (230 - 200) / 2 = 15
-                          width: 206,
-                          height: 83,
+                          left: 0,
+                          right: 0,
+                          height: w * 0.26,
                           child: Container(
                             decoration: BoxDecoration(
                               color: Colors.white,
@@ -290,19 +289,64 @@ class EmployerDashboardScreen extends StatelessWidget {
                                 bottomRight: Radius.circular(20),
                               ),
                             ),
+                            child: Padding(
+                              padding: EdgeInsets.only(
+                                bottom: 35,
+                                left: 10,
+                                right: 10,
+                              ),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    "Provider's Name",
+                                    style: TextStyle(
+                                      color: Colors.black,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.star,
+                                        color: Colors.black,
+                                        size: 16,
+                                      ),
+                                      SizedBox(width: 4),
+                                      Text(
+                                        "4.6",
+                                        style: TextStyle(
+                                          color: Colors.black,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                      SizedBox(width: 4),
+                                      Text(
+                                        "(200)",
+                                        style: TextStyle(
+                                          color: Colors.black,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
                         ),
                       ],
                     ),
-                    SizedBox(width: 20),
+                    SizedBox(width: w * 0.05),
                     Stack(
                       children: [
                         ClipRRect(
                           borderRadius: BorderRadius.circular(20),
                           child: Image.asset(
                             'assets/images/engineer.png',
-                            width: 211,
-                            height: 230,
+                            width: w * 0.6,
+                            height: w * 0.8,
                             fit: BoxFit.cover,
                           ),
                         ),
@@ -310,13 +354,58 @@ class EmployerDashboardScreen extends StatelessWidget {
                           bottom: 0,
                           left: 0,
                           right: 0,
-                          height: 83,
+                          height: w * 0.26,
                           child: Container(
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.only(
                                 bottomLeft: Radius.circular(20),
                                 bottomRight: Radius.circular(20),
+                              ),
+                            ),
+                            child: Padding(
+                              padding: EdgeInsets.only(
+                                top: w * 0.025,
+                                left: w * 0.025,
+                                right: w * 0.025,
+                              ),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    "Provider's Name",
+                                    style: TextStyle(
+                                      color: Colors.black,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.star,
+                                        color: Colors.black,
+                                        size: 16,
+                                      ),
+                                      SizedBox(width: 4),
+                                      Text(
+                                        "4.6",
+                                        style: TextStyle(
+                                          color: Colors.black,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                      SizedBox(width: 4),
+                                      Text(
+                                        "(200)",
+                                        style: TextStyle(
+                                          color: Colors.black,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
                               ),
                             ),
                           ),
