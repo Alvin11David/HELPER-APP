@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 class AcademicCertificateUploadScreen extends StatefulWidget {
   const AcademicCertificateUploadScreen({Key? key}) : super(key: key);
+  static List<String> professions = [];
 
   @override
   State<AcademicCertificateUploadScreen> createState() =>
@@ -22,7 +23,7 @@ class _AcademicCertificateUploadScreenState
     selectedProfessions = [];
   }
 
-  static const List<String> professions = [
+  static List<String> professions = [
     'Accountant',
     'Actor',
     'Actress',
@@ -337,7 +338,7 @@ class _AcademicCertificateUploadScreenState
                     ),
                     SizedBox(width: screenWidth * 0.06),
                     Text(
-                      'Academic Certificates',
+                      'Academic Profession',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: screenWidth * 0.055,
