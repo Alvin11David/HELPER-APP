@@ -45,6 +45,19 @@ class EmployerDashboardScreen extends StatelessWidget {
                 ],
               ),
             ),
+            Positioned(
+              top: 20,
+              left: w * 0.04,
+              child: Container(
+                width: 40,
+                height: 40,
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.menu, color: Colors.black),
+              ),
+            ),
           ],
         ),
       ),
