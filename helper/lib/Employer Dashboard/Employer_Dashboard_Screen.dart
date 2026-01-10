@@ -63,7 +63,7 @@ class EmployerDashboardScreen extends StatelessWidget {
                   color: Colors.white,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.filter_list, color: Colors.black),
+                child: const Icon(Icons.tune, color: Colors.black),
               ),
             ),
             Positioned(
