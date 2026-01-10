@@ -287,6 +287,185 @@ class _ProfessionalLicenseUploadScreenState
                                       value: 'Podiatry License',
                                       child: Text('Podiatry License'),
                                     ),
+                                    DropdownMenuItem(
+                                      value: 'Psychologist License',
+                                      child: Text('Psychologist License'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'Social Worker License',
+                                      child: Text('Social Worker License'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'Counselor License',
+                                      child: Text('Counselor License'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value:
+                                          'Marriage and Family Therapist License',
+                                      child: Text(
+                                        'Marriage and Family Therapist License',
+                                      ),
+                                    ),
+                                    DropdownMenuItem(
+                                      value:
+                                          'Speech-Language Pathologist License',
+                                      child: Text(
+                                        'Speech-Language Pathologist License',
+                                      ),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'Audiologist License',
+                                      child: Text('Audiologist License'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'Dietitian License',
+                                      child: Text('Dietitian License'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'Physician Assistant License',
+                                      child: Text(
+                                        'Physician Assistant License',
+                                      ),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'Nurse Practitioner License',
+                                      child: Text('Nurse Practitioner License'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'Registered Nurse License',
+                                      child: Text('Registered Nurse License'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'Licensed Practical Nurse License',
+                                      child: Text(
+                                        'Licensed Practical Nurse License',
+                                      ),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'Respiratory Therapist License',
+                                      child: Text(
+                                        'Respiratory Therapist License',
+                                      ),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'Radiologic Technologist License',
+                                      child: Text(
+                                        'Radiologic Technologist License',
+                                      ),
+                                    ),
+                                    DropdownMenuItem(
+                                      value:
+                                          'Medical Laboratory Scientist License',
+                                      child: Text(
+                                        'Medical Laboratory Scientist License',
+                                      ),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'Paramedic License',
+                                      child: Text('Paramedic License'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'EMT License',
+                                      child: Text('EMT License'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'Firefighter License',
+                                      child: Text('Firefighter License'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'Police Officer License',
+                                      child: Text('Police Officer License'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'Private Investigator License',
+                                      child: Text(
+                                        'Private Investigator License',
+                                      ),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'Notary Public License',
+                                      child: Text('Notary Public License'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'Auctioneer License',
+                                      child: Text('Auctioneer License'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'Appraiser License',
+                                      child: Text('Appraiser License'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'Surveyor License',
+                                      child: Text('Surveyor License'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'Geologist License',
+                                      child: Text('Geologist License'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'Chemist License',
+                                      child: Text('Chemist License'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'Biologist License',
+                                      child: Text('Biologist License'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'Actuary License',
+                                      child: Text('Actuary License'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'Financial Planner License',
+                                      child: Text('Financial Planner License'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'Mortgage Broker License',
+                                      child: Text('Mortgage Broker License'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'Barber License',
+                                      child: Text('Barber License'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'Massage Therapist License',
+                                      child: Text('Massage Therapist License'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'Acupuncturist License',
+                                      child: Text('Acupuncturist License'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'Naturopathic Physician License',
+                                      child: Text(
+                                        'Naturopathic Physician License',
+                                      ),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'Midwife License',
+                                      child: Text('Midwife License'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'Funeral Director License',
+                                      child: Text('Funeral Director License'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'Landscape Architect License',
+                                      child: Text(
+                                        'Landscape Architect License',
+                                      ),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'Pilot License',
+                                      child: Text('Pilot License'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'Maritime License',
+                                      child: Text('Maritime License'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'Truck Driver License',
+                                      child: Text('Truck Driver License'),
+                                    ),
                                   ],
                                   onChanged: (val) {
                                     setState(() => _selectedType = val);
