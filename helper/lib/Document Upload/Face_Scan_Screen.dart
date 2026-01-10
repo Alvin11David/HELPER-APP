@@ -326,6 +326,38 @@ class _FaceScanScreenState extends State<FaceScanScreen> {
               ),
             ),
           ),
+          if (_capturedImage != null)
+            Positioned(
+              top: screenHeight * 0.8,
+              left: (screenWidth - screenWidth * 0.9) / 2,
+              child: Container(
+                width: screenWidth * 0.9,
+                height: screenHeight * 0.08,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Continue',
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: screenWidth * 0.04,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(width: screenWidth * 0.02),
+                    Icon(
+                      Icons.arrow_forward_rounded,
+                      color: Colors.black,
+                      size: screenWidth * 0.06,
+                    ),
+                  ],
+                ),
+              ),
+            ),
           Positioned(
             bottom: screenHeight * 0.06,
             left: 0,
