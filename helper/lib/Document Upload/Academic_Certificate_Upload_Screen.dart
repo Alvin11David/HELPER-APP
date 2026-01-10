@@ -351,7 +351,7 @@ class _AcademicCertificateUploadScreenState
             ),
           ),
           Positioned(
-            top: screenHeight * 0.14, // Adjusted to reduce space from header
+            top: screenHeight * 0.16, // Adjusted to reduce space from header
             left: screenWidth * 0.12,
             right: screenWidth * 0.12,
             child: ClipRRect(
@@ -407,7 +407,7 @@ class _AcademicCertificateUploadScreenState
           ),
 
           Positioned(
-            top: screenHeight * 0.14 + 53,
+            top: screenHeight * 0.17 + 53,
             left: (screenWidth - 290) / 2,
             child: Container(
               width: 290,
@@ -453,7 +453,7 @@ class _AcademicCertificateUploadScreenState
                           hintText: 'Search your Profession here',
                           hintStyle: TextStyle(
                             color: Colors.grey,
-                            fontSize: screenWidth * 0.048,
+                            fontSize: screenWidth * 0.045,
                             fontFamily: 'Inter',
                             fontWeight: FontWeight.w600,
                           ),
