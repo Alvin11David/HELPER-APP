@@ -54,7 +54,7 @@ class EmployerDashboardScreen extends StatelessWidget {
               ),
             ),
             Positioned(
-              top: 70,
+              top: 75,
               right: w * 0.04,
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -91,6 +91,18 @@ class EmployerDashboardScreen extends StatelessWidget {
                     child: const Icon(Icons.tune, color: Colors.black),
                   ),
                 ],
+              ),
+            ),
+            Positioned(
+              top: 125,
+              left: w * 0.04,
+              child: Text(
+                'Categories',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: w * 0.045,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
             Positioned(
