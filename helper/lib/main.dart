@@ -5,6 +5,8 @@ import 'package:helper/Auth/Referral_Code_Screen.dart';
 import 'package:helper/Document%20Upload/Academic_Certificate_Upload_Screen.dart';
 import 'package:helper/Document%20Upload/Document_Upload_screen.dart';
 import 'package:helper/Document%20Upload/National_ID_Passport_Back_Upload_Screen.dart';
+import 'package:helper/Document%20Upload/National_ID_Passport_Front_Scan_Screen.dart';
+import 'package:helper/Document%20Upload/Select_Worker_Type_Screen.dart';
 import 'package:helper/Document%20Upload/Verification_Information_Screen.dart';
 import 'package:helper/Payments/Airtel_Payment_Method_Screen.dart';
 import 'package:helper/Payments/Mastercard_Payment_Method_Screen.dart';
@@ -32,7 +34,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: const AcademicCertificateUploadScreen(),
+      home: const NationalIdPassportFrontScanScreen(),
     );
   }
 }
