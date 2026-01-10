@@ -3,6 +3,14 @@ import 'package:flutter/material.dart';
 class EmployerDashboardScreen extends StatelessWidget {
   const EmployerDashboardScreen({super.key});
 
+  String _getGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) return 'Good Morning';
+    if (hour < 17) return 'Good Afternoon';
+    if (hour < 21) return 'Good Evening';
+    return 'Good Night';
+  }
+
   @override
   Widget build(BuildContext context) {
     final w = MediaQuery.of(context).size.width;
@@ -46,8 +54,8 @@ class EmployerDashboardScreen extends StatelessWidget {
               ),
             ),
             Positioned(
-              top: 20,
-              left: w * 0.04,
+              top: 70,
+              right: w * 0.04,
               child: Container(
                 width: 40,
                 height: 40,
@@ -55,7 +63,43 @@ class EmployerDashboardScreen extends StatelessWidget {
                   color: Colors.white,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.menu, color: Colors.black),
+                child: const Icon(Icons.filter_list, color: Colors.black),
+              ),
+            ),
+            Positioned(
+              top: 20,
+              left: w * 0.04,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.menu, color: Colors.black),
+                  ),
+                  const SizedBox(width: 10),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _getGreeting(),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const Text(
+                        'User',
+                        style: TextStyle(color: Colors.white, fontSize: 14),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
           ],
