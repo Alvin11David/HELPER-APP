@@ -1,10 +1,3 @@
-// selfie_capture_screen.dart
-// ✅ Uses assets/background/normalscreenbg.png
-// ✅ Uses assets/images/person.png
-// ✅ AbrilFatface for heading, Poppins for body
-// ✅ Glass pill instruction + framed preview + yellow/white buttons
-// ✅ Responsive + scroll-safe (won't overflow on small phones)
-
 import 'dart:ui';
 import 'package:flutter/material.dart';
 
@@ -131,19 +124,7 @@ class SelfieCaptureScreen extends StatelessWidget {
                                           textAlign: TextAlign.center,
                                           style: TextStyle(
                                             color: Colors.white,
-                                            fontFamily: 'Poppins',
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w600,
-                                            height: 1.15,
-                                          ),
-                                        ),
-                                        SizedBox(height: 2),
-                                        Text(
-                                          'Look Straight at the camera.',
-                                          textAlign: TextAlign.center,
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontFamily: 'Poppins',
+                                            fontFamily: 'AbrilFatface',
                                             fontSize: 13,
                                             fontWeight: FontWeight.w600,
                                             height: 1.15,
