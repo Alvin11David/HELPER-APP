@@ -258,6 +258,59 @@ class EmployerDashboardScreen extends StatelessWidget {
               ),
             ),
             Positioned(
+              top: 280,
+              left: w * 0.04,
+              height: 233,
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    Stack(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(15),
+                          child: Image.asset(
+                            'assets/images/driver.png',
+                            width: 211,
+                            height: 230,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                        Positioned(
+                          bottom: 0,
+                          left: 0,
+                          right: 0,
+                          height: 83,
+                          child: Container(color: Colors.white),
+                        ),
+                      ],
+                    ),
+                    SizedBox(width: 20),
+                    Stack(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(15),
+                          child: Image.asset(
+                            'assets/images/engineer.png',
+                            width: 211,
+                            height: 230,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                        Positioned(
+                          bottom: 0,
+                          left: 0,
+                          right: 0,
+                          height: 83,
+                          child: Container(color: Colors.white),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Positioned(
               top: 20,
               left: w * 0.04,
               child: Row(
