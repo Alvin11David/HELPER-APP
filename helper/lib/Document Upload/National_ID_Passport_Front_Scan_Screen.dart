@@ -226,7 +226,7 @@ class _NationalIdPassportFrontScanScreenState
                   ),
                 ),
                 Positioned(
-                  top: screenHeight * 0.04,
+                  top: screenHeight * 0.05,
                   left: screenWidth * 0.04,
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -251,7 +251,9 @@ class _NationalIdPassportFrontScanScreenState
                       ),
                       SizedBox(width: screenWidth * 0.06),
                       Text(
-                        'ID Front',
+                        _capturedImage != null
+                            ? 'ID Front Preview'
+                            : 'ID Front',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: screenWidth * 0.06,
