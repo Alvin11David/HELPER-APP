@@ -186,7 +186,7 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                     SizedBox(height: h * 0.05),
                     Container(
                       width: 361,
-                      height: 240,
+                      height: 244,
                       padding: EdgeInsets.all(w * 0.04),
                       alignment: Alignment.topCenter,
                       decoration: BoxDecoration(
