@@ -183,39 +183,115 @@ class _ProfessionalLicenseUploadScreenState
                             padding: const EdgeInsets.symmetric(horizontal: 14),
                             decoration: BoxDecoration(
                               color: Colors.white,
-                              borderRadius: BorderRadius.circular(30),
+                              borderRadius: BorderRadius.circular(20),
                             ),
-                            child: DropdownButtonHideUnderline(
-                              child: DropdownButton<String>(
-                                value: _selectedType,
-                                icon: const Icon(Icons.keyboard_arrow_down),
-                                isExpanded: true,
-                                hint: Text(
-                                  'Select Your License Type',
-                                  style: TextStyle(
-                                    fontFamily: 'Poppins',
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: (w * 0.034).clamp(12, 14),
-                                    color: Colors.black,
+                            child: Theme(
+                              data: Theme.of(context).copyWith(
+                                dropdownMenuTheme: DropdownMenuThemeData(
+                                  menuStyle: MenuStyle(
+                                    shape: MaterialStateProperty.all(
+                                      RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                    ),
                                   ),
                                 ),
-                                items: const [
-                                  DropdownMenuItem(
-                                    value: 'Medical License',
-                                    child: Text('Medical License'),
+                              ),
+                              child: DropdownButtonHideUnderline(
+                                child: DropdownButton<String>(
+                                  value: _selectedType,
+                                  icon: const Icon(Icons.keyboard_arrow_down),
+                                  isExpanded: true,
+                                  borderRadius: BorderRadius.circular(20),
+                                  hint: Text(
+                                    'Select Your License Type',
+                                    style: TextStyle(
+                                      fontFamily: 'Poppins',
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: (w * 0.034).clamp(12, 14),
+                                      color: Colors.black,
+                                    ),
                                   ),
-                                  DropdownMenuItem(
-                                    value: 'Engineering License',
-                                    child: Text('Engineering License'),
-                                  ),
-                                  DropdownMenuItem(
-                                    value: 'Teaching License',
-                                    child: Text('Teaching License'),
-                                  ),
-                                ],
-                                onChanged: (val) {
-                                  setState(() => _selectedType = val);
-                                },
+                                  items: const [
+                                    DropdownMenuItem(
+                                      value: 'Medical License',
+                                      child: Text('Medical License'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'Engineering License',
+                                      child: Text('Engineering License'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'Teaching License',
+                                      child: Text('Teaching License'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'Nursing License',
+                                      child: Text('Nursing License'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'Pharmacy License',
+                                      child: Text('Pharmacy License'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'Dental License',
+                                      child: Text('Dental License'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'Veterinary License',
+                                      child: Text('Veterinary License'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'Law License',
+                                      child: Text('Law License'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'Accounting License',
+                                      child: Text('Accounting License'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'Architecture License',
+                                      child: Text('Architecture License'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'Real Estate License',
+                                      child: Text('Real Estate License'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'Insurance License',
+                                      child: Text('Insurance License'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'Cosmetology License',
+                                      child: Text('Cosmetology License'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'Physical Therapy License',
+                                      child: Text('Physical Therapy License'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'Occupational Therapy License',
+                                      child: Text(
+                                        'Occupational Therapy License',
+                                      ),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'Chiropractic License',
+                                      child: Text('Chiropractic License'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'Optometry License',
+                                      child: Text('Optometry License'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'Podiatry License',
+                                      child: Text('Podiatry License'),
+                                    ),
+                                  ],
+                                  onChanged: (val) {
+                                    setState(() => _selectedType = val);
+                                  },
+                                ),
                               ),
                             ),
                           ),
@@ -227,9 +303,7 @@ class _ProfessionalLicenseUploadScreenState
                             height: (h * 0.26).clamp(180, 240),
                             onTap: _uploadFile,
                           ),
-
                           const SizedBox(height: 16),
-
                           Text(
                             'License Verification Rules',
                             style: TextStyle(
