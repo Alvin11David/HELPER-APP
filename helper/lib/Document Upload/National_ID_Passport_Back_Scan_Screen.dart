@@ -1,9 +1,3 @@
-// national_id_passport_back_scan_screen.dart
-// ✅ Back-scan version of your front scan screen
-// ✅ Same structure (CameraPreview + blur outside frame + header + top glass pill + frame + bottom glass hint)
-// ✅ Text updated to "ID Back" + "Place the back part..." + "Show the back..." style
-// ✅ Fonts: AbrilFatface for headings if you want; Poppins for body (kept Poppins like your original)
-
 import 'dart:ui';
 
 import 'package:camera/camera.dart';
@@ -25,7 +19,7 @@ class _NationalIdPassportBackScanScreenState
   @override
   void initState() {
     super.initState();
-    _initializeCamera();
+    _initializeControllerFuture = _initializeCamera();
   }
 
   Future<void> _initializeCamera() async {
@@ -33,7 +27,7 @@ class _NationalIdPassportBackScanScreenState
     final firstCamera = cameras.first;
 
     _controller = CameraController(firstCamera, ResolutionPreset.high);
-    _initializeControllerFuture = _controller.initialize();
+    return _controller.initialize();
   }
 
   @override
@@ -73,7 +67,7 @@ class _NationalIdPassportBackScanScreenState
 
                 // header (back + title)
                 Positioned(
-                  top: screenHeight * 0.04,
+                  top: screenHeight * 0.05,
                   left: screenWidth * 0.04,
                   child: Row(
                     mainAxisSize: MainAxisSize.min,

@@ -3,6 +3,7 @@ import 'package:helper/Auth/OTP_Verification_Screen.dart';
 import 'package:helper/Auth/Password_Reset_Screen.dart';
 import 'package:helper/Auth/Referral_Code_Screen.dart';
 import 'package:helper/Document%20Upload/Academic_Certificate_Upload_Screen.dart';
+import 'package:helper/Document%20Upload/Add_Profession_Screen.dart';
 import 'package:helper/Document%20Upload/Document_Upload_screen.dart';
 import 'package:helper/Document%20Upload/National_ID_Passport_Back_Upload_Screen.dart';
 import 'package:helper/Document%20Upload/National_ID_Passport_Back_Scan_Screen.dart';
