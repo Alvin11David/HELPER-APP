@@ -96,13 +96,30 @@ class EmployerDashboardScreen extends StatelessWidget {
             Positioned(
               top: 125,
               left: w * 0.04,
-              child: Text(
-                'Categories',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: w * 0.045,
-                  fontWeight: FontWeight.bold,
-                ),
+              right: w * 0.04,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Categories',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: w * 0.045,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    child: Text(
+                      'View All',
+                      style: TextStyle(
+                        color: Color(0xFFF79F1A),
+                        fontSize: w * 0.04,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
             Positioned(
