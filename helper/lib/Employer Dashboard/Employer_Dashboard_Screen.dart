@@ -127,7 +127,7 @@ class EmployerDashboardScreen extends StatelessWidget {
               left: w * 0.04,
               right: w * 0.04,
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
                   Column(
                     children: [
