@@ -14,12 +14,12 @@ class NationalIdPassportFrontScanScreen extends StatefulWidget {
 class _NationalIdPassportFrontScanScreenState
     extends State<NationalIdPassportFrontScanScreen> {
   late CameraController _controller;
-  late Future<void> _initializeControllerFuture;
+  Future<void>? _initializeControllerFuture;
 
   @override
   void initState() {
     super.initState();
-    _initializeCamera();
+    _initializeControllerFuture = _initializeCamera();
   }
 
   Future<void> _initializeCamera() async {
@@ -28,7 +28,7 @@ class _NationalIdPassportFrontScanScreenState
 
     _controller = CameraController(firstCamera, ResolutionPreset.high);
 
-    _initializeControllerFuture = _controller.initialize();
+    return _controller.initialize();
   }
 
   @override
@@ -42,11 +42,18 @@ class _NationalIdPassportFrontScanScreenState
     final double screenWidth = MediaQuery.of(context).size.width;
     final double screenHeight = MediaQuery.of(context).size.height;
 
+    if (_initializeControllerFuture == null) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
     return Scaffold(
       body: FutureBuilder<void>(
         future: _initializeControllerFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.done) {
+            if (snapshot.hasError) {
+              return Center(child: Text('Camera error: ${snapshot.error}'));
+            }
             final double rectLeft = (screenWidth - 296) / 2;
             final double rectTop = (screenHeight - 489) / 2 + 20;
 
