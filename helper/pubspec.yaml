@@ -36,6 +36,10 @@ dependencies:
   cupertino_icons: ^1.0.8
   # Camera for taking images
   camera: ^0.10.5
+  # For text recognition
+  google_ml_kit: ^0.18.0
+  # For image cropping
+  image: ^4.7.2
 
 dev_dependencies:
   flutter_test:
