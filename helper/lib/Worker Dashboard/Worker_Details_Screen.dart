@@ -33,15 +33,22 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
               left: 0,
               right: 0,
               height: h * 0.4,
-              child: ClipRRect(
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(40),
-                  bottomRight: Radius.circular(40),
-                ),
-                child: Image.asset(
-                  'assets/images/plumber.png',
-                  fit: BoxFit.cover,
-                ),
+              child: Stack(
+                children: [
+                  Image.asset('assets/images/water.png', fit: BoxFit.cover),
+                  Positioned(
+                    bottom: 10,
+                    right: 10,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(20),
+                      child: Image.asset(
+                        'assets/images/plumber.png',
+                        width: 82,
+                        height: 82,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
             Center(child: Text('Worker Details Screen')),
