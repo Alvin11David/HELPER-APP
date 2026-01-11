@@ -522,7 +522,7 @@ class EmployerDashboardScreen extends StatelessWidget {
                   ),
                 ),
                 Positioned(
-                  top: 530,
+                  top: 536,
                   left: w * 0.04,
                   right: w * 0.04,
                   child: Row(
