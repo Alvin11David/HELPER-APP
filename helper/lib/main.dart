@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'package:helper/Auth/OTP_Verification_Screen.dart';
 import 'package:helper/Auth/Password_Reset_Screen.dart';
 import 'package:helper/Auth/Referral_Code_Screen.dart';
@@ -11,6 +13,7 @@ import 'package:helper/Document Upload/National_ID_Passport_Back_Scan_Screen.dar
 import 'package:helper/Document Upload/National_ID_Passport_Front_Scan_Screen.dart';
 import 'package:helper/Document Upload/Select_Worker_Type_Screen.dart';
 import 'package:helper/Document Upload/Verification_Information_Screen.dart';
+import 'package:helper/Employer%20Dashboard/Employer_Dashboard_Screen.dart';
 import 'package:helper/Payments/Airtel_Payment_Method_Screen.dart';
 import 'package:helper/Payments/Mastercard_Payment_Method_Screen.dart';
 import 'package:helper/Payments/Registration_Payment_Screen.dart';
@@ -24,7 +27,9 @@ import 'package:helper/Document Upload/National_ID_Passport_Front_Upload_Screen.
 import 'package:helper/Document Upload/Professional_License_Upload.dart';
 import 'package:helper/Document Upload/Selfie_Verification_Upload.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(const MyApp());
 }
 
@@ -39,7 +44,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: const ProfessionalLicenseUploadScreen(),
+      home: const EmployerDashboardScreen(),
     );
   }
 }
