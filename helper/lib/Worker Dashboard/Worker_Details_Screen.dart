@@ -44,8 +44,8 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                         onTap: () => setState(() => _isExpanded = false),
                         child: ClipRRect(
                           borderRadius: BorderRadius.only(
-                            bottomLeft: Radius.circular(_isExpanded ? 0 : 30),
-                            bottomRight: Radius.circular(_isExpanded ? 0 : 30),
+                            bottomLeft: Radius.circular(30),
+                            bottomRight: Radius.circular(30),
                           ),
                           child: Image.asset(
                             _isExpanded
