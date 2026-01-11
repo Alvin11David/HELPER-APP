@@ -110,6 +110,18 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                 ],
               ),
             ),
+            Positioned(
+              top: h * 0.4 + 10,
+              left: w * 0.04,
+              child: const Text(
+                'Business Name',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
             Center(child: Text('Worker Details Screen')),
             Positioned(
               top: 20,
