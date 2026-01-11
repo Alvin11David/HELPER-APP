@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 
 class WorkerDetailsScreen extends StatefulWidget {
   @override
@@ -15,6 +16,7 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
   }
 
   bool _isExpanded = false;
+  bool _isDescriptionExpanded = false;
 
   @override
   Widget build(BuildContext context) {
@@ -194,18 +196,22 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
               left: w * 0.04,
               right: w * 0.04,
               child: RichText(
-                text: const TextSpan(
+                text: TextSpan(
                   text:
                       'Worker’s Profession Description appears here like what the profession is all about, the location, the specialities and many more ',
-                  style: TextStyle(color: Colors.white, fontSize: 14),
+                  style: const TextStyle(color: Colors.white, fontSize: 14),
                   children: [
+                    if (_isDescriptionExpanded)
+                      const TextSpan(text: 'additional words here '),
                     TextSpan(
-                      text: 'Read more...',
-                      style: TextStyle(
+                      text: _isDescriptionExpanded ? 'Read less' : 'Read more...',
+                      style: const TextStyle(
                         color: Color(0xFFFFA10D),
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
                       ),
+                      recognizer: TapGestureRecognizer()
+                        ..onTap = () => setState(() => _isDescriptionExpanded = !_isDescriptionExpanded),
                     ),
                   ],
                 ),
