@@ -313,6 +313,29 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
               ),
             ),
             Positioned(
+              top: h * 0.4 + 380,
+              left: w * 0.04,
+              child: RichText(
+                text: const TextSpan(
+                  text: 'Business Name prefers Pricing Type which is\n ',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                  ),
+                  children: [
+                    TextSpan(
+                      text: 'Amount',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Positioned(
               top: h * 0.4 + 10,
               right: w * 0.04,
               child: Row(
