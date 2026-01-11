@@ -861,8 +861,8 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                               children: [
                                 Container(
-                                  width: 50,
-                                  height: 20,
+                                  width: 70,
+                                  height: 25,
                                   decoration: BoxDecoration(
                                     border: Border.all(
                                       color: const Color(0xFFF79F1A),
@@ -874,15 +874,15 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                                     child: Text(
                                       'Location',
                                       style: TextStyle(
-                                        fontSize: 7,
+                                        fontSize: 8,
                                         color: Colors.black,
                                       ),
                                     ),
                                   ),
                                 ),
                                 Container(
-                                  width: 50,
-                                  height: 20,
+                                  width: 70,
+                                  height: 25,
                                   decoration: BoxDecoration(
                                     border: Border.all(
                                       color: const Color(0xFFF79F1A),
@@ -894,15 +894,15 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                                     child: Text(
                                       'Search Jobs',
                                       style: TextStyle(
-                                        fontSize: 6,
+                                        fontSize: 7,
                                         color: Colors.black,
                                       ),
                                     ),
                                   ),
                                 ),
                                 Container(
-                                  width: 50,
-                                  height: 20,
+                                  width: 70,
+                                  height: 25,
                                   decoration: BoxDecoration(
                                     border: Border.all(
                                       color: const Color(0xFFF79F1A),
