@@ -283,6 +283,29 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                     ],
                   ),
                 ),
+                if (_focusNode.hasFocus)
+                  Positioned(
+                    top: 115,
+                    left: w * 0.04,
+                    right: w * 0.04,
+                    child: Container(
+                      height: 400,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: ListView.builder(
+                        itemCount: suggestions.length,
+                        itemBuilder: (context, index) => ListTile(
+                          title: Text(suggestions[index]),
+                          onTap: () {
+                            _controller.text = suggestions[index];
+                            _focusNode.unfocus();
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
                 Positioned(
                   top: 240,
                   left: w * 0.04,
