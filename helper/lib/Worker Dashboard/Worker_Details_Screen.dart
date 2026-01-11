@@ -35,7 +35,18 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
               height: h * 0.4,
               child: Stack(
                 children: [
-                  Image.asset('assets/images/water.png', fit: BoxFit.cover),
+                  Positioned.fill(
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.only(
+                        bottomLeft: Radius.circular(30),
+                        bottomRight: Radius.circular(30),
+                      ),
+                      child: Image.asset(
+                        'assets/images/water.png',
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
                   Positioned(
                     bottom: 10,
                     right: 10,
