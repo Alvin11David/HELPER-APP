@@ -348,6 +348,29 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                 ),
               ),
               Positioned(
+                top: h * 0.4 + 450,
+                left: w * 0.04,
+                child: RichText(
+                  text: const TextSpan(
+                    text: 'Work Place: ',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                    ),
+                    children: [
+                      TextSpan(
+                        text: 'Location',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Positioned(
                 top: h * 0.4 + 10,
                 right: w * 0.04,
                 child: Row(
