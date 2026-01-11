@@ -136,16 +136,27 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
               child: Row(
                 children: [
                   Container(
-                    width: 150,
+                    width: 148,
                     height: 30,
                     decoration: const BoxDecoration(
                       color: Color(0xFFFFA10D),
                       borderRadius: BorderRadius.all(Radius.circular(20)),
                     ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.phone, color: Colors.white, size: 16),
+                        const SizedBox(width: 4),
+                        const Text(
+                          'Call Now',
+                          style: TextStyle(color: Colors.white, fontSize: 12),
+                        ),
+                      ],
+                    ),
                   ),
                   const SizedBox(width: 10),
                   Container(
-                    width: 150,
+                    width: 148,
                     height: 30,
                     decoration: const BoxDecoration(
                       color: Color(0xFFFFA10D),
