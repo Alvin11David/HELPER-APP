@@ -23,17 +23,19 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
     double w = MediaQuery.of(context).size.width;
     double h = MediaQuery.of(context).size.height;
     return Scaffold(
-      body: SingleChildScrollView(
-        child: Container(
-          height: h * 2,
-          decoration: BoxDecoration(
-            image: DecorationImage(
-              image: AssetImage('assets/background/normalscreenbg.png'),
-              fit: BoxFit.cover,
-            ),
-          ),
-          child: Stack(
-            children: [
+      body: Stack(
+        children: [
+          SingleChildScrollView(
+            child: Container(
+              height: h * 2,
+              decoration: BoxDecoration(
+                image: DecorationImage(
+                  image: AssetImage('assets/background/normalscreenbg.png'),
+                  fit: BoxFit.cover,
+                ),
+              ),
+              child: Stack(
+                children: [
               Positioned(
                 top: 0,
                 left: 0,
