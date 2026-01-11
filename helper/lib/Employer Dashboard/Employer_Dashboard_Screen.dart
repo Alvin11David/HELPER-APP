@@ -78,8 +78,12 @@ class EmployerDashboardScreen extends StatelessWidget {
                             Icon(Icons.search, color: Colors.black),
                             SizedBox(width: 10),
                             Expanded(
-                              child: Text(
-                                'Search for services here...',
+                              child: TextField(
+                                decoration: InputDecoration(
+                                  hintText: 'Search for services here...',
+                                  border: InputBorder.none,
+                                  hintStyle: TextStyle(color: Colors.black),
+                                ),
                                 style: TextStyle(color: Colors.black),
                               ),
                             ),
