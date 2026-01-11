@@ -138,13 +138,19 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                   Container(
                     width: 150,
                     height: 30,
-                    color: const Color(0xFFFFA10D),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFFFA10D),
+                      borderRadius: BorderRadius.all(Radius.circular(20)),
+                    ),
                   ),
                   const SizedBox(width: 10),
                   Container(
                     width: 150,
                     height: 30,
-                    color: const Color(0xFFFFA10D),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFFFA10D),
+                      borderRadius: BorderRadius.all(Radius.circular(20)),
+                    ),
                   ),
                 ],
               ),
