@@ -14,6 +14,8 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
     return 'Good Night';
   }
 
+  bool _isExpanded = false;
+
   @override
   Widget build(BuildContext context) {
     double w = MediaQuery.of(context).size.width;
@@ -36,26 +38,40 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
               child: Stack(
                 children: [
                   Positioned.fill(
-                    child: ClipRRect(
-                      borderRadius: const BorderRadius.only(
-                        bottomLeft: Radius.circular(30),
-                        bottomRight: Radius.circular(30),
-                      ),
-                      child: Image.asset(
-                        'assets/images/water.png',
-                        fit: BoxFit.cover,
+                    child: IgnorePointer(
+                      ignoring: !_isExpanded,
+                      child: GestureDetector(
+                        onTap: () => setState(() => _isExpanded = false),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.only(
+                            bottomLeft: Radius.circular(_isExpanded ? 0 : 30),
+                            bottomRight: Radius.circular(_isExpanded ? 0 : 30),
+                          ),
+                          child: Image.asset(
+                            _isExpanded
+                                ? 'assets/images/plumber.png'
+                                : 'assets/images/water.png',
+                            fit: BoxFit.cover,
+                          ),
+                        ),
                       ),
                     ),
                   ),
                   Positioned(
                     bottom: 10,
                     right: 10,
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(20),
-                      child: Image.asset(
-                        'assets/images/plumber.png',
-                        width: 82,
-                        height: 82,
+                    child: GestureDetector(
+                      onTap: () => setState(() => _isExpanded = !_isExpanded),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(20),
+                        child: Image.asset(
+                          _isExpanded
+                              ? 'assets/images/water.png'
+                              : 'assets/images/plumber.png',
+                          width: 82,
+                          height: 82,
+                          fit: BoxFit.cover,
+                        ),
                       ),
                     ),
                   ),
@@ -116,11 +132,28 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                           color: Colors.white,
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
+                          shadows: [
+                            Shadow(
+                              color: Colors.black54,
+                              offset: Offset(1, 1),
+                              blurRadius: 2,
+                            ),
+                          ],
                         ),
                       ),
                       const Text(
                         'User',
-                        style: TextStyle(color: Colors.white, fontSize: 14),
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          shadows: [
+                            Shadow(
+                              color: Colors.black54,
+                              offset: Offset(1, 1),
+                              blurRadius: 2,
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
