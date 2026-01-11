@@ -204,16 +204,45 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                     if (_isDescriptionExpanded)
                       const TextSpan(text: 'additional words here '),
                     TextSpan(
-                      text: _isDescriptionExpanded ? 'Read less' : 'Read more...',
+                      text: _isDescriptionExpanded
+                          ? 'Read less'
+                          : 'Read more...',
                       style: const TextStyle(
                         color: Color(0xFFFFA10D),
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
                       ),
                       recognizer: TapGestureRecognizer()
-                        ..onTap = () => setState(() => _isDescriptionExpanded = !_isDescriptionExpanded),
+                        ..onTap = () => setState(
+                          () =>
+                              _isDescriptionExpanded = !_isDescriptionExpanded,
+                        ),
                     ),
                   ],
+                ),
+              ),
+            ),
+            Positioned(
+              top: h * 0.4 + 200,
+              left: w * 0.04,
+              child: const Text(
+                'Review Section',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            Positioned(
+              top: h * 0.4 + 230,
+              left: w * 0.04,
+              right: w * 0.04,
+              child: Container(
+                height: 105,
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.white, width: 1),
+                  borderRadius: BorderRadius.circular(20),
                 ),
               ),
             ),
