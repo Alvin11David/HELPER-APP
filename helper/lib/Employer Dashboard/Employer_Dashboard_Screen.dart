@@ -278,7 +278,7 @@ class EmployerDashboardScreen extends StatelessWidget {
                 Positioned(
                   top: 280,
                   left: w * 0.04,
-                  right: w * 0.04,
+                  right: w * 0.0,
                   child: SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: Row(
