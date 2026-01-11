@@ -76,7 +76,7 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                     ),
                   ),
                   Positioned(
-                    bottom: 20,
+                    bottom: 10,
                     left: 0,
                     right: 0,
                     child: Row(
@@ -84,8 +84,8 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                       children: List.generate(
                         5,
                         (index) => Container(
-                          width: 10,
-                          height: 10,
+                          width: 9,
+                          height: 9,
                           margin: const EdgeInsets.symmetric(horizontal: 4),
                           decoration: BoxDecoration(
                             color: index == (_isExpanded ? 1 : 0)
