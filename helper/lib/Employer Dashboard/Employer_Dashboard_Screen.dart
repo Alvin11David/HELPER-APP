@@ -1,14 +1,48 @@
 import 'package:flutter/material.dart';
 
-class EmployerDashboardScreen extends StatelessWidget {
+class EmployerDashboardScreen extends StatefulWidget {
   const EmployerDashboardScreen({super.key});
 
+  @override
+  State<EmployerDashboardScreen> createState() =>
+      _EmployerDashboardScreenState();
+}
+
+class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
   String _getGreeting() {
     final hour = DateTime.now().hour;
     if (hour < 12) return 'Good Morning';
     if (hour < 17) return 'Good Afternoon';
     if (hour < 21) return 'Good Evening';
     return 'Good Night';
+  }
+
+  late FocusNode _focusNode;
+  late TextEditingController _controller;
+  List<String> suggestions = [
+    'House',
+    'Electricity',
+    'Driver',
+    'Plumbing',
+    'Cleaning',
+    'Gardening',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode = FocusNode();
+    _controller = TextEditingController();
+    _focusNode.addListener(() {
+      setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    _controller.dispose();
+    super.dispose();
   }
 
   @override
@@ -79,6 +113,8 @@ class EmployerDashboardScreen extends StatelessWidget {
                             SizedBox(width: 10),
                             Expanded(
                               child: TextField(
+                                controller: _controller,
+                                focusNode: _focusNode,
                                 decoration: InputDecoration(
                                   hintText: 'Search for services here...',
                                   border: InputBorder.none,
@@ -135,6 +171,30 @@ class EmployerDashboardScreen extends StatelessWidget {
                     ],
                   ),
                 ),
+                if (_focusNode.hasFocus)
+                  Positioned(
+                    top: 115,
+                    left: w * 0.04,
+                    right: w * 0.04,
+                    child: Container(
+                      constraints: BoxConstraints(maxHeight: 200),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: suggestions.length,
+                        itemBuilder: (context, index) => ListTile(
+                          title: Text(suggestions[index]),
+                          onTap: () {
+                            _controller.text = suggestions[index];
+                            _focusNode.unfocus();
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
                 Positioned(
                   top: 160,
                   left: w * 0.04,
