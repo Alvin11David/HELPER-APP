@@ -239,7 +239,7 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
               left: w * 0.04,
               right: w * 0.04,
               child: Container(
-                height: 105,
+                height: 110,
                 decoration: BoxDecoration(
                   border: Border.all(color: Colors.white, width: 1),
                   borderRadius: BorderRadius.circular(20),
@@ -260,6 +260,15 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                       const Text(
                         'The employer’s review about the services provided by the worker...',
                         style: TextStyle(color: Colors.white, fontSize: 14),
+                      ),
+                      const SizedBox(height: 5),
+                      const Text(
+                        'Employer\'s Name',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ],
                   ),
