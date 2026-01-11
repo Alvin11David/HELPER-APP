@@ -173,7 +173,7 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                 ),
                 if (_focusNode.hasFocus)
                   Positioned(
-                    top: 125,
+                    top: 115,
                     left: w * 0.04,
                     right: w * 0.04,
                     child: Container(
