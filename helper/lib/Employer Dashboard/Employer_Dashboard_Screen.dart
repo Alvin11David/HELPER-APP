@@ -856,7 +856,7 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                       child: Column(
                         children: [
                           Padding(
-                            padding:  EdgeInsets.symmetric(vertical: 10),
+                            padding: EdgeInsets.symmetric(vertical: 10),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                               children: [
@@ -870,6 +870,15 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                                     ),
                                     borderRadius: BorderRadius.circular(20),
                                   ),
+                                  child: Center(
+                                    child: Text(
+                                      'Location',
+                                      style: TextStyle(
+                                        fontSize: 7,
+                                        color: Colors.black,
+                                      ),
+                                    ),
+                                  ),
                                 ),
                                 Container(
                                   width: 50,
@@ -880,6 +889,15 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                                       width: 1,
                                     ),
                                     borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      'Search Jobs',
+                                      style: TextStyle(
+                                        fontSize: 6,
+                                        color: Colors.black,
+                                      ),
+                                    ),
                                   ),
                                 ),
                                 Container(
