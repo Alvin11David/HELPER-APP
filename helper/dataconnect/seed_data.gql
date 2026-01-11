@@ -1,0 +1,56 @@
+mutation CreateSeedData @transaction @auth(level: PUBLIC, insecureReason: "This operation is for seeding data and does not require authentication") {
+  user_insertMany(data: [
+    {
+      id: "550e8400-e29b-41d4-a716-446655440000",
+      email: "demouser1@example.com",
+      password: "password1",
+      userType: "employee",
+      createdAt: "2024-01-01T00:00:00Z"
+    },
+    {
+      id: "550e8400-e29b-41d4-a716-446655440001",
+      email: "demouser2@example.com",
+      password: "password2",
+      userType: "employer",
+      createdAt: "2024-01-02T00:00:00Z"
+    }
+  ])
+  employerProfile_insertMany(data: [
+    {
+      id: "650e8400-e29b-41d4-a716-446655440000",
+      userId: "550e8400-e29b-41d4-a716-446655440001",
+      companyName: "Demo Company 1",
+      companySize: "50-200",
+      industry: "Technology"
+    }
+  ])
+  employeeProfile_insertMany(data: [
+    {
+      id: "750e8400-e29b-41d4-a716-446655440000",
+      userId: "550e8400-e29b-41d4-a716-446655440000",
+      firstName: "Demo",
+      lastName: "User1",
+      resumeUrl: "http://example.com/resume1"
+    }
+  ])
+  jobPosting_insertMany(data: [
+    {
+      id: "850e8400-e29b-41d4-a716-446655440000",
+      employerProfileId: "650e8400-e29b-41d4-a716-446655440000",
+      title: "Software Engineer",
+      description: "Example job posting",
+      location: "Remote",
+      requirements: "Bachelors Degree",
+      postedAt: "2024-01-03T00:00:00Z"
+    }
+  ])
+  application_insertMany(data: [
+    {
+      id: "950e8400-e29b-41d4-a716-446655440000",
+      employeeProfileId: "750e8400-e29b-41d4-a716-446655440000",
+      jobPostingId: "850e8400-e29b-41d4-a716-446655440000",
+      appliedAt: "2024-01-04T00:00:00Z",
+      status: "pending"
+    }
+  ])
+}
