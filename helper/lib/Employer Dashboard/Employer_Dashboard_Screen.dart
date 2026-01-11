@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../Components/Bottom_Nav_Bar.dart';
 
 class EmployerDashboardScreen extends StatefulWidget {
   const EmployerDashboardScreen({super.key});
@@ -171,30 +172,6 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                     ],
                   ),
                 ),
-                if (_focusNode.hasFocus)
-                  Positioned(
-                    top: 115,
-                    left: w * 0.04,
-                    right: w * 0.04,
-                    child: Container(
-                      constraints: BoxConstraints(maxHeight: 200),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: ListView.builder(
-                        shrinkWrap: true,
-                        itemCount: suggestions.length,
-                        itemBuilder: (context, index) => ListTile(
-                          title: Text(suggestions[index]),
-                          onTap: () {
-                            _controller.text = suggestions[index];
-                            _focusNode.unfocus();
-                          },
-                        ),
-                      ),
-                    ),
-                  ),
                 Positioned(
                   top: 160,
                   left: w * 0.04,
@@ -866,6 +843,94 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                     ),
                   ),
                 ),
+                if (_focusNode.hasFocus)
+                  Positioned(
+                    top: 115,
+                    left: w * 0.04,
+                    right: w * 0.04,
+                    child: Container(
+                      height: 300,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Column(
+                        children: [
+                          Padding(
+                            padding: EdgeInsets.symmetric(vertical: 10),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                Container(
+                                  width: 80,
+                                  height: 30,
+                                  decoration: BoxDecoration(
+                                    border: Border.all(
+                                      color: const Color(0xFFF79F1A),
+                                      width: 1,
+                                    ),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      'Location',
+                                      style: TextStyle(
+                                        fontSize: 9,
+                                        color: Colors.black,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                Container(
+                                  width: 80,
+                                  height: 30,
+                                  decoration: BoxDecoration(
+                                    border: Border.all(
+                                      color: const Color(0xFFF79F1A),
+                                      width: 1,
+                                    ),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      'Search Jobs',
+                                      style: TextStyle(
+                                        fontSize: 8,
+                                        color: Colors.black,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                Container(
+                                  width: 80,
+                                  height: 30,
+                                  decoration: BoxDecoration(
+                                    border: Border.all(
+                                      color: const Color(0xFFF79F1A),
+                                      width: 1,
+                                    ),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Expanded(
+                            child: ListView.builder(
+                              itemCount: suggestions.length,
+                              itemBuilder: (context, index) => ListTile(
+                                title: Text(suggestions[index]),
+                                onTap: () {
+                                  _controller.text = suggestions[index];
+                                  _focusNode.unfocus();
+                                },
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 Positioned(
                   top: 20,
                   left: w * 0.04,
@@ -907,6 +972,7 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
           ),
         ),
       ),
+      bottomNavigationBar: BottomNavBar(),
     );
   }
 }
