@@ -190,6 +190,28 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
               ),
             ),
             Positioned(
+              top: h * 0.4 + 130,
+              left: w * 0.04,
+              right: w * 0.04,
+              child: RichText(
+                text: const TextSpan(
+                  text:
+                      'Worker’s Profession Description appears here like what the profession is all about, the location, the specialities and many more ',
+                  style: TextStyle(color: Colors.white, fontSize: 14),
+                  children: [
+                    TextSpan(
+                      text: 'Read more...',
+                      style: TextStyle(
+                        color: Color(0xFFFFA10D),
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Positioned(
               top: h * 0.4 + 10,
               right: w * 0.04,
               child: Row(
