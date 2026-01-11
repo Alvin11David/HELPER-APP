@@ -165,23 +165,28 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(
-                          Icons.chat,
-                          color: Colors.white,
-                          size: 16,
-                        ),
+                        Icon(Icons.chat, color: Colors.white, size: 16),
                         const SizedBox(width: 4),
                         const Text(
                           'Message',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                          ),
+                          style: TextStyle(color: Colors.white, fontSize: 12),
                         ),
                       ],
                     ),
                   ),
                 ],
+              ),
+            ),
+            Positioned(
+              top: h * 0.4 + 100,
+              left: w * 0.04,
+              child: const Text(
+                'About Me',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
             Positioned(
