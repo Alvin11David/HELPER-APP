@@ -972,6 +972,7 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
           ),
         ),
       ),
+      bottomNavigationBar: BottomNavBar(),
     );
   }
 }
