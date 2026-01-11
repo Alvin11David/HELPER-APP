@@ -4,7 +4,7 @@ class BottomNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 77,
+      height: 50,
       width: MediaQuery.of(context).size.width,
       color: Color(0xFFFFCB05),
       child: Row(
