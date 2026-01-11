@@ -41,52 +41,49 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyDF1HBroWYMhMqQXw71ivs-O_7RT9b34hM',
-    appId: '1:830864962380:web:0e3fd601b9a462818255e9',
-    messagingSenderId: '830864962380',
-    projectId: 'events-uganda',
-    authDomain: 'events-uganda.firebaseapp.com',
-    storageBucket: 'events-uganda.firebasestorage.app',
-    measurementId: 'G-EGRLQQ7GNJ',
+    apiKey: 'AIzaSyAgt8HLat4asluMdvS8n6Mjy40b8UJzGBU',
+    appId: '1:981126213346:web:533f326e282df03588f8bb',
+    messagingSenderId: '981126213346',
+    projectId: 'helperapp-46849',
+    authDomain: 'helperapp-46849.firebaseapp.com',
+    storageBucket: 'helperapp-46849.firebasestorage.app',
+    measurementId: 'G-LESGZ5F797',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyBpBekZrexbvQan6Uo6Sl4DZJCBDF04-7I',
-    appId: '1:830864962380:android:7146bcfe84d41e668255e9',
-    messagingSenderId: '830864962380',
-    projectId: 'events-uganda',
-    storageBucket: 'events-uganda.firebasestorage.app',
+    apiKey: 'AIzaSyA--eOmXGxQrJ52FBbcuwXHYwLOcA031gI',
+    appId: '1:981126213346:android:ef1760152ea10e7488f8bb',
+    messagingSenderId: '981126213346',
+    projectId: 'helperapp-46849',
+    storageBucket: 'helperapp-46849.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyClaDDH46bLQc_chYJ91y2PL3TLrTuag1s',
-    appId: '1:830864962380:ios:6b4558a41ee9ecad8255e9',
-    messagingSenderId: '830864962380',
-    projectId: 'events-uganda',
-    storageBucket: 'events-uganda.firebasestorage.app',
-    androidClientId: '830864962380-64roui1d04g7bhfq8jtq0l7es3adln63.apps.googleusercontent.com',
-    iosClientId: '830864962380-s0u7kfgl6cdgqrcm1ppmtqvml4rfa4se.apps.googleusercontent.com',
+    apiKey: 'AIzaSyCXVRNSsHayKcVkm4szK9HTXJC6MgH6Afc',
+    appId: '1:981126213346:ios:b8eb4ada5d228b7688f8bb',
+    messagingSenderId: '981126213346',
+    projectId: 'helperapp-46849',
+    storageBucket: 'helperapp-46849.firebasestorage.app',
     iosBundleId: 'com.example.helper',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyClaDDH46bLQc_chYJ91y2PL3TLrTuag1s',
-    appId: '1:830864962380:ios:6b4558a41ee9ecad8255e9',
-    messagingSenderId: '830864962380',
-    projectId: 'events-uganda',
-    storageBucket: 'events-uganda.firebasestorage.app',
-    androidClientId: '830864962380-64roui1d04g7bhfq8jtq0l7es3adln63.apps.googleusercontent.com',
-    iosClientId: '830864962380-s0u7kfgl6cdgqrcm1ppmtqvml4rfa4se.apps.googleusercontent.com',
+    apiKey: 'AIzaSyCXVRNSsHayKcVkm4szK9HTXJC6MgH6Afc',
+    appId: '1:981126213346:ios:b8eb4ada5d228b7688f8bb',
+    messagingSenderId: '981126213346',
+    projectId: 'helperapp-46849',
+    storageBucket: 'helperapp-46849.firebasestorage.app',
     iosBundleId: 'com.example.helper',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyDF1HBroWYMhMqQXw71ivs-O_7RT9b34hM',
-    appId: '1:830864962380:web:2dd489177c2af3d78255e9',
-    messagingSenderId: '830864962380',
-    projectId: 'events-uganda',
-    authDomain: 'events-uganda.firebaseapp.com',
-    storageBucket: 'events-uganda.firebasestorage.app',
-    measurementId: 'G-MMDE908NEY',
+    apiKey: 'AIzaSyAgt8HLat4asluMdvS8n6Mjy40b8UJzGBU',
+    appId: '1:981126213346:web:77236d44a54e06c988f8bb',
+    messagingSenderId: '981126213346',
+    projectId: 'helperapp-46849',
+    authDomain: 'helperapp-46849.firebaseapp.com',
+    storageBucket: 'helperapp-46849.firebasestorage.app',
+    measurementId: 'G-J2QDCFQ3GZ',
   );
+
 }
