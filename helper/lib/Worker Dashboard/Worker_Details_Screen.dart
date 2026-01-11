@@ -23,15 +23,17 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
     double w = MediaQuery.of(context).size.width;
     double h = MediaQuery.of(context).size.height;
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('assets/background/normalscreenbg.png'),
-            fit: BoxFit.cover,
+      body: SingleChildScrollView(
+        child: Container(
+          height: h * 2,
+          decoration: BoxDecoration(
+            image: DecorationImage(
+              image: AssetImage('assets/background/normalscreenbg.png'),
+              fit: BoxFit.cover,
+            ),
           ),
-        ),
-        child: Stack(
-          children: [
+          child: Stack(
+            children: [
             Positioned(
               top: 0,
               left: 0,
@@ -299,6 +301,18 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
               ),
             ),
             Positioned(
+              top: h * 0.4 + 350,
+              left: w * 0.04,
+              child: const Text(
+                'Pricing',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            Positioned(
               top: h * 0.4 + 10,
               right: w * 0.04,
               child: Row(
@@ -400,6 +414,7 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
             ),
           ],
         ),
+      ),
       ),
     );
   }
