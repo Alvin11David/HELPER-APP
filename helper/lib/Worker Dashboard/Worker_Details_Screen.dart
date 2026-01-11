@@ -162,6 +162,24 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                       color: Color(0xFFFFA10D),
                       borderRadius: BorderRadius.all(Radius.circular(20)),
                     ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.chat,
+                          color: Colors.white,
+                          size: 16,
+                        ),
+                        const SizedBox(width: 4),
+                        const Text(
+                          'Message',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
