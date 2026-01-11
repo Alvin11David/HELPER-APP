@@ -75,6 +75,28 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                       ),
                     ),
                   ),
+                  Positioned(
+                    bottom: 20,
+                    left: 0,
+                    right: 0,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(
+                        5,
+                        (index) => Container(
+                          width: 10,
+                          height: 10,
+                          margin: const EdgeInsets.symmetric(horizontal: 4),
+                          decoration: BoxDecoration(
+                            color: index == (_isExpanded ? 1 : 0)
+                                ? Colors.orange
+                                : const Color(0xFFD9D9D9),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
