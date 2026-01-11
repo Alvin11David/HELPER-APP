@@ -353,15 +353,12 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                 child: RichText(
                   text: const TextSpan(
                     text: 'Work Place: ',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                    ),
+                    style: TextStyle(color: Colors.white, fontSize: 14),
                     children: [
                       TextSpan(
                         text: 'Location',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: Colors.orange,
                           fontSize: 14,
                           decoration: TextDecoration.underline,
                         ),
