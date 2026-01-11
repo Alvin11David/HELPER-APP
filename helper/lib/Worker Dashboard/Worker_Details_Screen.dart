@@ -336,6 +336,18 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                 ),
               ),
               Positioned(
+                top: h * 0.4 + 420,
+                left: w * 0.04,
+                child: const Text(
+                  'Work Place Location',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              Positioned(
                 top: h * 0.4 + 10,
                 right: w * 0.04,
                 child: Row(
