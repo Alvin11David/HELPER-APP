@@ -244,6 +244,22 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                   border: Border.all(color: Colors.white, width: 1),
                   borderRadius: BorderRadius.circular(20),
                 ),
+                child: Align(
+                  alignment: Alignment.topLeft,
+                  child: Padding(
+                    padding: const EdgeInsets.all(10),
+                    child: Row(
+                      children: List.generate(
+                        5,
+                        (index) => Icon(
+                          Icons.star,
+                          color: Colors.orange,
+                          size: 16,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               ),
             ),
             Positioned(
