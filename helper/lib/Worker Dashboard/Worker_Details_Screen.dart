@@ -83,15 +83,25 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: List.generate(
                         5,
-                        (index) => Container(
-                          width: 9,
-                          height: 9,
-                          margin: const EdgeInsets.symmetric(horizontal: 4),
-                          decoration: BoxDecoration(
-                            color: index == (_isExpanded ? 1 : 0)
-                                ? Colors.orange
-                                : const Color(0xFFD9D9D9),
-                            shape: BoxShape.circle,
+                        (index) => GestureDetector(
+                          onTap: () {
+                            if (index == 0) {
+                              setState(() => _isExpanded = false);
+                            } else if (index == 1) {
+                              setState(() => _isExpanded = true);
+                            }
+                            // Others do nothing
+                          },
+                          child: Container(
+                            width: 9,
+                            height: 9,
+                            margin: const EdgeInsets.symmetric(horizontal: 4),
+                            decoration: BoxDecoration(
+                              color: index == (_isExpanded ? 1 : 0)
+                                  ? Colors.orange
+                                  : const Color(0xFFD9D9D9),
+                              shape: BoxShape.circle,
+                            ),
                           ),
                         ),
                       ),
