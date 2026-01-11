@@ -848,7 +848,7 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                     left: w * 0.04,
                     right: w * 0.04,
                     child: Container(
-                      height: 400,
+                      height: 300,
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(20),
