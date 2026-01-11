@@ -853,15 +853,62 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      child: ListView.builder(
-                        itemCount: suggestions.length,
-                        itemBuilder: (context, index) => ListTile(
-                          title: Text(suggestions[index]),
-                          onTap: () {
-                            _controller.text = suggestions[index];
-                            _focusNode.unfocus();
-                          },
-                        ),
+                      child: Column(
+                        children: [
+                          Padding(
+                            padding:  EdgeInsets.symmetric(vertical: 10),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                Container(
+                                  width: 50,
+                                  height: 20,
+                                  decoration: BoxDecoration(
+                                    border: Border.all(
+                                      color: const Color(0xFFF79F1A),
+                                      width: 1,
+                                    ),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                ),
+                                Container(
+                                  width: 50,
+                                  height: 20,
+                                  decoration: BoxDecoration(
+                                    border: Border.all(
+                                      color: const Color(0xFFF79F1A),
+                                      width: 1,
+                                    ),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                ),
+                                Container(
+                                  width: 50,
+                                  height: 20,
+                                  decoration: BoxDecoration(
+                                    border: Border.all(
+                                      color: const Color(0xFFF79F1A),
+                                      width: 1,
+                                    ),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Expanded(
+                            child: ListView.builder(
+                              itemCount: suggestions.length,
+                              itemBuilder: (context, index) => ListTile(
+                                title: Text(suggestions[index]),
+                                onTap: () {
+                                  _controller.text = suggestions[index];
+                                  _focusNode.unfocus();
+                                },
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
