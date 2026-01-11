@@ -17,6 +17,7 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     double w = MediaQuery.of(context).size.width;
+    double h = MediaQuery.of(context).size.height;
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
@@ -27,6 +28,22 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
         ),
         child: Stack(
           children: [
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              height: h * 0.3,
+              child: ClipRRect(
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(40),
+                  bottomRight: Radius.circular(40),
+                ),
+                child: Image.asset(
+                  'assets/images/plumber.png',
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
             Center(child: Text('Worker Details Screen')),
             Positioned(
               top: 20,
