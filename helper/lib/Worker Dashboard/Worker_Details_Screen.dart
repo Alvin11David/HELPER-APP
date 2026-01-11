@@ -122,6 +122,25 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                 ),
               ),
             ),
+            Positioned(
+              top: h * 0.4 + 10,
+              right: w * 0.04,
+              child: Row(
+                children: [
+                  Icon(Icons.star, color: Colors.white, size: 16),
+                  const SizedBox(width: 4),
+                  const Text(
+                    '4.6',
+                    style: TextStyle(color: Colors.white, fontSize: 14),
+                  ),
+                  const SizedBox(width: 8),
+                  const Text(
+                    '(200)',
+                    style: TextStyle(color: Colors.white, fontSize: 14),
+                  ),
+                ],
+              ),
+            ),
             Center(child: Text('Worker Details Screen')),
             Positioned(
               top: 20,
