@@ -32,7 +32,7 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
               top: 0,
               left: 0,
               right: 0,
-              height: h * 0.3,
+              height: h * 0.4,
               child: ClipRRect(
                 borderRadius: BorderRadius.only(
                   bottomLeft: Radius.circular(40),
