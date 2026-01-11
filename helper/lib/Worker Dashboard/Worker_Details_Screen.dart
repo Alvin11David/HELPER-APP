@@ -471,49 +471,51 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                     ),
                   ],
                 ),
-              ),
-              Positioned(
-                bottom: 600,
-                left: 0,
-                right: 0,
-                child: Column(
-                  children: [
-                    SizedBox(height: h * 0.05),
-                    Center(
-                      child: SizedBox(
-                        width: w * 0.9,
-                        height: h * 0.07,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.orange,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(30),
-                            ),
-                          ),
-                          onPressed: () {},
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                'Hire Business Name',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: w * 0.045,
-                                  fontWeight: FontWeight.bold,
-                                  fontFamily: "Poppins",
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
                   ],
                 ),
               ),
-            ],
+            ),
           ),
-        ),
+          Positioned(
+            bottom: 20,
+            left: 0,
+            right: 0,
+            child: Column(
+              children: [
+                SizedBox(height: h * 0.05),
+                Center(
+                  child: SizedBox(
+                    width: w * 0.9,
+                    height: h * 0.07,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.orange,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                      ),
+                      onPressed: () {},
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'Hire Business Name',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: w * 0.045,
+                              fontWeight: FontWeight.bold,
+                              fontFamily: "Poppins",
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
