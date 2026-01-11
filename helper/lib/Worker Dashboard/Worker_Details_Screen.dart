@@ -123,6 +123,33 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
               ),
             ),
             Positioned(
+              top: h * 0.4 + 35,
+              left: w * 0.04,
+              child: const Text(
+                'Profession - Years of Experience',
+                style: TextStyle(color: Colors.white, fontSize: 14),
+              ),
+            ),
+            Positioned(
+              top: h * 0.4 + 60,
+              left: w * 0.04,
+              child: Row(
+                children: [
+                  Container(
+                    width: 150,
+                    height: 30,
+                    color: const Color(0xFFFFA10D),
+                  ),
+                  const SizedBox(width: 10),
+                  Container(
+                    width: 150,
+                    height: 30,
+                    color: const Color(0xFFFFA10D),
+                  ),
+                ],
+              ),
+            ),
+            Positioned(
               top: h * 0.4 + 10,
               right: w * 0.04,
               child: Row(
@@ -141,7 +168,6 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                 ],
               ),
             ),
-            Center(child: Text('Worker Details Screen')),
             Positioned(
               top: 20,
               right: w * 0.04,
