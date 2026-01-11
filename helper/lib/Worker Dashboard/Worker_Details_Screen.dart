@@ -13,9 +13,10 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
     if (hour < 21) return 'Good Evening';
     return 'Good Night';
   }
-  
+
   @override
   Widget build(BuildContext context) {
+    double w = MediaQuery.of(context).size.width;
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
@@ -24,7 +25,39 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
             fit: BoxFit.cover,
           ),
         ),
-        child: Center(child: Text('Worker Details Screen')),
+        child: Stack(
+          children: [
+            Center(child: Text('Worker Details Screen')),
+            Positioned(
+              top: 20,
+              right: w * 0.04,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.person, color: Colors.black),
+                  ),
+                  const SizedBox(width: 10),
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.notifications, color: Colors.black),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
