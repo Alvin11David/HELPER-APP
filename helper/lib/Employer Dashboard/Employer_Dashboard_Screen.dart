@@ -62,7 +62,6 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
             height: 1500,
             child: Stack(
               children: [
-                const Center(child: Text('Employer Dashboard')),
                 Positioned(
                   top: 20,
                   right: w * 0.04,
