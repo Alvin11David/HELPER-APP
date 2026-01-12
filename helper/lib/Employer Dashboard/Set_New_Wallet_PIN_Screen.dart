@@ -243,7 +243,7 @@ class _SetNewWalletPINScreenState extends State<SetNewWalletPINScreen> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Text(
+                            Text( 
                               'Reset PIN',
                               style: TextStyle(
                                 color: Colors.black,
