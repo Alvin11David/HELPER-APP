@@ -15,8 +15,23 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
     return 'Good Night';
   }
 
+  late String _greeting;
   bool _isExpanded = false;
   bool _isDescriptionExpanded = false;
+  int _rating = 0;
+  final TextEditingController _commentController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _greeting = _getGreeting();
+  }
+
+  @override
+  void dispose() {
+    _commentController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -383,6 +398,99 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                     ),
                   ),
                   Positioned(
+                    top: h * 0.4 + 480,
+                    left: w * 0.04,
+                    child: const Text(
+                      'Reviews and Ratings',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    top: h * 0.4 + 510,
+                    left: w * 0.04,
+                    child: const Text(
+                      'Rate this service',
+                      style: TextStyle(color: Colors.white, fontSize: 14),
+                    ),
+                  ),
+                  Positioned(
+                    top: h * 0.4 + 540,
+                    left: w * 0.04,
+                    child: Row(
+                      children: List.generate(
+                        5,
+                        (index) => GestureDetector(
+                          onTap: () => setState(() => _rating = index + 1),
+                          child: Icon(
+                            index < _rating ? Icons.star : Icons.star_border,
+                            color: Colors.orange,
+                            size: 35,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    top: h * 0.4 + 580,
+                    left: w * 0.04,
+                    child: Container(
+                      width: 290,
+                      height: 110,
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.white, width: 1),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(10),
+                        child: TextField(
+                          controller: _commentController,
+                          onChanged: (value) => setState(() {}),
+                          style: const TextStyle(color: Colors.white),
+                          decoration: const InputDecoration(
+                            hintText:
+                                'Please share your ideas with us about this service',
+                            hintStyle: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 12,
+                            ),
+                            border: InputBorder.none,
+                          ),
+                          maxLines: 3,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    top: h * 0.4 + 650,
+                    left: w * 0.06 + 240,
+                    child: GestureDetector(
+                      onTap: _commentController.text.isNotEmpty
+                          ? () {
+                              /* Send comment */
+                            }
+                          : null,
+                      child: Container(
+                        width: 30,
+                        height: 30,
+                        decoration: BoxDecoration(
+                          color: _commentController.text.isNotEmpty
+                              ? Colors.orange
+                              : Colors.grey,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.send,
+                          color: Colors.black,
+                          size: 16,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned(
                     top: h * 0.4 + 10,
                     right: w * 0.04,
                     child: Row(
@@ -452,7 +560,7 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              _getGreeting(),
+                              _greeting,
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 16,
