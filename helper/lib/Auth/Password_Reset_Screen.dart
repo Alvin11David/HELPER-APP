@@ -515,7 +515,7 @@ class _PillInput extends StatelessWidget {
     required this.keyboardType,
     required this.contentFontSize,
     this.obscure = false,
-    this.suffix,
+    this.suffix, this.validator,
   });
 
   @override
