@@ -404,6 +404,23 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                     ),
                   ),
                   Positioned(
+                    top: h * 0.4 + 540,
+                    left: w * 0.04,
+                    child: Row(
+                      children: List.generate(
+                        5,
+                        (index) => GestureDetector(
+                          onTap: () => setState(() => _rating = index + 1),
+                          child: Icon(
+                            index < _rating ? Icons.star : Icons.star_border,
+                            color: Colors.orange,
+                            size: 24,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned(
                     top: h * 0.4 + 10,
                     right: w * 0.04,
                     child: Row(
