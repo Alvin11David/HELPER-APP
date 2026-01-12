@@ -43,6 +43,24 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
     'Writers',
     'Musicians',
   ];
+  List<double> ratings = [
+    4.9,
+    4.2,
+    3.8,
+    4.5,
+    2.3,
+    4.1,
+    3.9,
+    4.7,
+    4.0,
+    3.5,
+    4.3,
+    2.8,
+    4.6,
+    3.2,
+    4.4,
+    3.7,
+  ];
   List<bool> liked = List.generate(16, (index) => false);
   bool _showFilters = false;
 
