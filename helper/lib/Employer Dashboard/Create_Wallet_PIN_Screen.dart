@@ -45,7 +45,6 @@ class _CreateWalletPINScreenState extends State<CreateWalletPINScreen> {
         ),
         child: Stack(
           children: [
-            const Center(child: Text('Create Wallet PIN Screen')),
             Positioned(
               top: screenWidth * 0.1,
               left: 0,
