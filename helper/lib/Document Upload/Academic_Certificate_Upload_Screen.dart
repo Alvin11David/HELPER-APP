@@ -3,7 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 
 class AcademicCertificateUploadScreen extends StatefulWidget {
-  const AcademicCertificateUploadScreen({Key? key}) : super(key: key);
+  const AcademicCertificateUploadScreen({super.key});
   static List<String> professions = [];
 
   @override

@@ -19,7 +19,7 @@ class _NationalIdPassportFrontScanScreenState
   Future<void>? _initializeControllerFuture;
   XFile? _capturedImage;
   bool _isAnalyzing = false;
-  bool _isVerifying = false;
+  final bool _isVerifying = false;
   final TextRecognizer _textRecognizer = GoogleMlKit.vision.textRecognizer();
 
   @override
@@ -336,7 +336,7 @@ class _NationalIdPassportFrontScanScreenState
                 Positioned(
                   left: (screenWidth - 296) / 2,
                   top: (screenHeight - 489) / 2 + 20,
-                  child: Container(
+                  child: SizedBox(
                     width: 296,
                     height: 489,
                     child: _capturedImage != null

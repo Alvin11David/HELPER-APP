@@ -63,7 +63,7 @@ class _VerificationInformationScreenState
 
     double screenWidth = MediaQuery.of(context).size.width;
     double screenHeight = MediaQuery.of(context).size.height;
-    const _brandOrange = Color(0xFFFFA10D);
+    const brandOrange = Color(0xFFFFA10D);
 
     return Scaffold(
       body: SafeArea(
@@ -200,7 +200,7 @@ class _VerificationInformationScreenState
                       width: w,
                       activeIndex: 0,
                       labels: const ['1', '2', '3'],
-                      accent: _brandOrange,
+                      accent: brandOrange,
                     ),
                     SizedBox(height: screenHeight * 0.03),
                     Center(

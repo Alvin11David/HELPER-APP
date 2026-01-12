@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 
 class WorkerDetailsScreen extends StatefulWidget {
+  const WorkerDetailsScreen({super.key});
+
   @override
   State<WorkerDetailsScreen> createState() => _WorkerDetailsScreenState();
 }

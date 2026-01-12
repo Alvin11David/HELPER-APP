@@ -3,6 +3,8 @@ import 'dart:ui';
 import 'Academic_Certificate_Upload_Screen.dart';
 
 class AddProfessionScreen extends StatefulWidget {
+  const AddProfessionScreen({super.key});
+
   @override
   _AddProfessionScreenState createState() => _AddProfessionScreenState();
 }
