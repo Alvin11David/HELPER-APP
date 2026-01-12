@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'dart:ui'; // For ImageFilter
 import 'package:flutter/services.dart'; // For FilteringTextInputFormatter
 
-class CreateWalletPINScreen extends StatefulWidget {
-  const CreateWalletPINScreen({super.key});
+class SetNewWalletPINScreen extends StatefulWidget {
+  const SetNewWalletPINScreen({super.key});
 
   @override
-  State<CreateWalletPINScreen> createState() => _CreateWalletPINScreenState();
+  State<SetNewWalletPINScreen> createState() => _SetNewWalletPINScreenState();
 }
 
-class _CreateWalletPINScreenState extends State<CreateWalletPINScreen> {
+class _SetNewWalletPINScreenState extends State<SetNewWalletPINScreen> {
   late List<TextEditingController> controllers;
   late List<FocusNode> focusNodes;
 
@@ -74,7 +74,7 @@ class _CreateWalletPINScreenState extends State<CreateWalletPINScreen> {
                       ),
                       SizedBox(width: screenWidth * 0.06),
                       Text(
-                        'Create Wallet PIN',
+                        'Reset Wallet PIN',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: screenWidth * 0.055,
@@ -127,7 +127,7 @@ class _CreateWalletPINScreenState extends State<CreateWalletPINScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          'Create a 4-digit PIN',
+                          'Create a new 4-digit PIN',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: screenWidth * 0.04,
@@ -217,19 +217,7 @@ class _CreateWalletPINScreenState extends State<CreateWalletPINScreen> {
               ),
             ),
             Positioned(
-              top: screenHeight * 0.14 + 50 + screenWidth * 0.2 + 20 + 70 + 10,
-              right: screenWidth / 2 - 120,
-              child: Text(
-                'Forgot PIN?',
-                style: TextStyle(
-                  color: Colors.orange,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-            Positioned(
-              top: screenHeight * 0.14 + 50 + screenWidth * 0.2 + 20 + 70 + 40,
+              top: screenHeight * 0.1 + 50 + screenWidth * 0.2 + 20 + 70 + 40,
               left: screenWidth * 0.1,
               right: screenWidth * 0.1,
               child: Column(
@@ -239,6 +227,42 @@ class _CreateWalletPINScreenState extends State<CreateWalletPINScreen> {
                   _RuleRow('Do not share this PIN with anyone'),
                   _RuleRow('No repeating digits (1111)'),
                   _RuleRow('No sequential digits (1234, 4321)'),
+                  SizedBox(height: screenHeight * 0.05),
+                  Center(
+                    child: SizedBox(
+                      width: screenWidth * 0.9,
+                      height: screenHeight * 0.07,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                        ),
+                        onPressed: () {},
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text( 
+                              'Reset PIN',
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontSize: screenWidth * 0.045,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: "Poppins",
+                              ),
+                            ),
+                            SizedBox(width: screenWidth * 0.03),
+                            Icon(
+                              Icons.arrow_forward,
+                              color: Colors.black,
+                              size: screenWidth * 0.05,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -282,7 +306,7 @@ class _CreateWalletPINScreenState extends State<CreateWalletPINScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          'Set Your PIN Here',
+                          'Set Your New PIN Here',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: screenWidth * 0.04,
