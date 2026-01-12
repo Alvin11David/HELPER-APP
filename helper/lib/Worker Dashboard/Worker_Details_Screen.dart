@@ -421,6 +421,21 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                     ),
                   ),
                   Positioned(
+                    top: h * 0.4 + 580,
+                    left: w * 0.04,
+                    child: Container(
+                      width: 280,
+                      height: 110,
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: Colors.white,
+                          width: 1,
+                        ),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                    ),
+                  ),
+                  Positioned(
                     top: h * 0.4 + 10,
                     right: w * 0.04,
                     child: Row(
