@@ -176,14 +176,17 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                     ),
                   ),
                   SizedBox(width: 10),
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
+                  GestureDetector(
+                    onTap: () => setState(() => _showFilters = !_showFilters),
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.tune, color: Colors.black),
                     ),
-                    child: const Icon(Icons.tune, color: Colors.black),
                   ),
                 ],
               ),
