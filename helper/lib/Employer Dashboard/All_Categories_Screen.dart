@@ -196,7 +196,9 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
               curve: Curves.easeInOut,
               top: 175,
               left: _showFilters ? w * 0.04 : -400,
-              child: Row(
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
                 children: List.generate(
                   4,
                   (index) => Container(
@@ -252,24 +254,32 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                             ),
                           )
                         : index == 2
-                            ? Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 8),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(Icons.calendar_today, color: Colors.black, size: 16),
-                                    const SizedBox(width: 4),
-                                    const Text(
-                                      'Available',
-                                      style: TextStyle(color: Colors.black, fontSize: 12),
-                                    ),
-                                  ],
+                        ? Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.calendar_today,
+                                  color: Colors.black,
+                                  size: 16,
                                 ),
-                              )
-                            : null,
+                                const SizedBox(width: 4),
+                                const Text(
+                                  'Available',
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        : null,
                   ),
                 ),
               ),
+            ),
             ),
           ],
         ),
