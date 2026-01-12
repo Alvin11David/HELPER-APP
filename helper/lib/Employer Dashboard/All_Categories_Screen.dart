@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 
-class AllCategoriesScreen extends StatelessWidget {
+class AllCategoriesScreen extends StatefulWidget {
+  @override
+  State<AllCategoriesScreen> createState() => _AllCategoriesScreenState();
+}
+
+class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
