@@ -127,7 +127,7 @@ class _SetNewWalletPINScreenState extends State<SetNewWalletPINScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          'Create a 4-digit PIN',
+                          'Create a new 4-digit PIN',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: screenWidth * 0.04,
