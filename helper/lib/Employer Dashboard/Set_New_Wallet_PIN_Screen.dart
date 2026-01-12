@@ -217,18 +217,6 @@ class _SetNewWalletPINScreenState extends State<SetNewWalletPINScreen> {
               ),
             ),
             Positioned(
-              top: screenHeight * 0.14 + 50 + screenWidth * 0.2 + 20 + 70 + 10,
-              right: screenWidth / 2 - 120,
-              child: Text(
-                'Forgot PIN?',
-                style: TextStyle(
-                  color: Colors.orange,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-            Positioned(
               top: screenHeight * 0.14 + 50 + screenWidth * 0.2 + 20 + 70 + 40,
               left: screenWidth * 0.1,
               right: screenWidth * 0.1,
