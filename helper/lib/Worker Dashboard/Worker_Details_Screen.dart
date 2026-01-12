@@ -437,7 +437,7 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                           decoration: const InputDecoration(
                             hintText:
                                 'Please share your ideas with us about this service',
-                            hintStyle: TextStyle(color: Colors.white70),
+                            hintStyle: TextStyle(color: Colors.white70, fontSize: 12),
                             border: InputBorder.none,
                           ),
                           maxLines: 3,
