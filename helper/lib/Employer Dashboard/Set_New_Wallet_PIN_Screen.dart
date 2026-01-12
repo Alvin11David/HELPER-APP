@@ -217,7 +217,7 @@ class _SetNewWalletPINScreenState extends State<SetNewWalletPINScreen> {
               ),
             ),
             Positioned(
-              top: screenHeight * 0.14 + 50 + screenWidth * 0.2 + 20 + 70 + 40,
+              top: screenHeight * 0.1 + 50 + screenWidth * 0.2 + 20 + 70 + 40,
               left: screenWidth * 0.1,
               right: screenWidth * 0.1,
               child: Column(
