@@ -383,6 +383,18 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                     ),
                   ),
                   Positioned(
+                    top: h * 0.4 + 480,
+                    left: w * 0.04,
+                    child: const Text(
+                      'Reviews and Ratings',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  Positioned(
                     top: h * 0.4 + 10,
                     right: w * 0.04,
                     child: Row(
