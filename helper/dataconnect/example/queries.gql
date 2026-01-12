@@ -1,0 +1,41 @@
+mutation CreateUser @auth(level: USER) {
+  user_insert(data: {
+    email_expr: "auth.token.email",
+    password: "defaultpassword",
+    userType: "employee",
+    createdAt_expr: "request.time"
+  })
+}
+
+query GetJobPostings @auth(level: PUBLIC, insecureReason: "This operation is safe to expose to the public") {
+  jobPostings {
+    id
+    title
+    description
+    location
+    salaryRange
+  }
+}
+
+mutation ApplyForJob($jobPostingId: UUID!, $coverLetter: String!) @auth(level: USER) {
+  application_insert(data: {
+    jobPostingId: $jobPostingId,
+    employeeProfileId_expr: "auth.uid",
+    appliedAt_expr: "request.time",
+    coverLetter: $coverLetter,
+    status: "pending"
+  })
+}
+
+query GetMyApplications @auth(level: USER) {
+  applications(where: {employeeProfileId_expr: "auth.uid"}) {
+    id
+    jobPosting {
+      title
+      description
+      location
+    }
+    appliedAt
+    status
+  }
+}
