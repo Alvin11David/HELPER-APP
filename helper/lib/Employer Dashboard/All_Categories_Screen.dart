@@ -55,12 +55,16 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
         ),
         child: Stack(
           children: [
-            Center(
+            AnimatedPositioned(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+              top: _showFilters ? 225 : 175,
+              left: w * 0.04,
               child: Text(
                 'All Categories',
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 24,
+                  fontSize: w * 0.05,
                   fontWeight: FontWeight.bold,
                 ),
               ),
