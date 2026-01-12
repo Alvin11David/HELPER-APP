@@ -15,10 +15,23 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
     return 'Good Night';
   }
 
+  late String _greeting;
   bool _isExpanded = false;
   bool _isDescriptionExpanded = false;
   int _rating = 0;
   final TextEditingController _commentController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _greeting = _getGreeting();
+  }
+
+  @override
+  void dispose() {
+    _commentController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -425,7 +438,7 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                     top: h * 0.4 + 580,
                     left: w * 0.04,
                     child: Container(
-                      width: 280,
+                      width: 290,
                       height: 110,
                       decoration: BoxDecoration(
                         border: Border.all(color: Colors.white, width: 1),
@@ -453,14 +466,20 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                   ),
                   Positioned(
                     top: h * 0.4 + 650,
-                    left: w * 0.04 + 240,
+                    left: w * 0.05 + 240,
                     child: GestureDetector(
-                      onTap: _commentController.text.isNotEmpty ? () { /* Send comment */ } : null,
+                      onTap: _commentController.text.isNotEmpty
+                          ? () {
+                              /* Send comment */
+                            }
+                          : null,
                       child: Container(
                         width: 30,
                         height: 30,
                         decoration: BoxDecoration(
-                          color: _commentController.text.isNotEmpty ? Colors.orange : Colors.grey,
+                          color: _commentController.text.isNotEmpty
+                              ? Colors.orange
+                              : Colors.grey,
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
@@ -541,7 +560,7 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              _getGreeting(),
+                              _greeting,
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 16,
