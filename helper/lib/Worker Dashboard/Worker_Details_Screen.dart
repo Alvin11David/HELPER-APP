@@ -430,6 +430,19 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                         border: Border.all(color: Colors.white, width: 1),
                         borderRadius: BorderRadius.circular(20),
                       ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(10),
+                        child: TextField(
+                          style: const TextStyle(color: Colors.white),
+                          decoration: const InputDecoration(
+                            hintText:
+                                'Please share your ideas with us about this service',
+                            hintStyle: TextStyle(color: Colors.white70),
+                            border: InputBorder.none,
+                          ),
+                          maxLines: 3,
+                        ),
+                      ),
                     ),
                   ),
                   Positioned(
