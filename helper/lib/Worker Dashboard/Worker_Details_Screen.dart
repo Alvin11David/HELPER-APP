@@ -414,7 +414,7 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                           child: Icon(
                             index < _rating ? Icons.star : Icons.star_border,
                             color: Colors.orange,
-                            size: 24,
+                            size: 35,
                           ),
                         ),
                       ),
