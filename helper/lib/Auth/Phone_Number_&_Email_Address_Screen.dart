@@ -45,6 +45,9 @@ class _PhoneNumberEmailAddressScreenState
 
   final _formKey = GlobalKey<FormState>();
 
+  // ✅ Added full names controller
+  final _fullNameCtrl = TextEditingController();
+
   final _phoneCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
@@ -54,6 +57,7 @@ class _PhoneNumberEmailAddressScreenState
 
   @override
   void dispose() {
+    _fullNameCtrl.dispose(); // ✅ added
     _phoneCtrl.dispose();
     _emailCtrl.dispose();
     _passwordCtrl.dispose();
@@ -90,7 +94,6 @@ class _PhoneNumberEmailAddressScreenState
     final w = MediaQuery.of(context).size.width;
     final h = MediaQuery.of(context).size.height;
 
-    // Slightly tighter so pills feel closer to edge (less "separate widget" look)
     final sidePad = w * 0.045;
 
     return Scaffold(
@@ -194,8 +197,6 @@ class _PhoneNumberEmailAddressScreenState
 
                       SizedBox(height: h * 0.02),
 
-                      // ✅ Make this "container area" transparent (no blur / no color)
-                      // so it looks exactly like the background.
                       AnimatedSwitcher(
                         duration: const Duration(milliseconds: 220),
                         switchInCurve: Curves.easeOut,
@@ -213,19 +214,18 @@ class _PhoneNumberEmailAddressScreenState
                               );
                           return FadeTransition(
                             opacity: anim,
-                            child: SlideTransition(
-                              position: slide,
-                              child: child,
-                            ),
+                            child: SlideTransition(position: slide, child: child),
                           );
                         },
                         child: _mode == _AuthMode.phone
                             ? _PhoneBlock(
                                 key: const ValueKey('phoneBlock'),
+                                fullNameCtrl: _fullNameCtrl,
                                 phoneCtrl: _phoneCtrl,
                               )
                             : _EmailBlock(
                                 key: const ValueKey('emailBlock'),
+                                fullNameCtrl: _fullNameCtrl,
                                 emailCtrl: _emailCtrl,
                                 passwordCtrl: _passwordCtrl,
                                 obscure: _obscure,
@@ -244,9 +244,7 @@ class _PhoneNumberEmailAddressScreenState
                           onPressed: _loading ? null : _onContinue,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: _pureWhite,
-                            disabledBackgroundColor: _pureWhite.withOpacity(
-                              0.6,
-                            ),
+                            disabledBackgroundColor: _pureWhite.withOpacity(0.6),
                             elevation: 0,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(30),
@@ -287,7 +285,6 @@ class _PhoneNumberEmailAddressScreenState
                         ),
                       ),
 
-                      // Email mode: OR + Google button (Google button must be white fill + black text)
                       if (_mode == _AuthMode.email) ...[
                         SizedBox(height: h * 0.02),
                         _OrDivider(),
@@ -349,7 +346,7 @@ class _PhoneNumberEmailAddressScreenState
                                 color: Colors.white.withOpacity(0.75),
                                 fontSize: w * 0.032,
                                 fontWeight: FontWeight.w600,
-                                fontFamily: 'Poppins', // ✅ requested
+                                fontFamily: 'Poppins',
                               ),
                             ),
                           ),
@@ -360,6 +357,8 @@ class _PhoneNumberEmailAddressScreenState
                   ),
                 ),
               ),
+
+              // Back button overlay
               Positioned(
                 top: h * 0.04,
                 left: w * 0.04,
@@ -393,8 +392,14 @@ class _PhoneNumberEmailAddressScreenState
 // --------------------- Blocks ---------------------
 
 class _PhoneBlock extends StatelessWidget {
+  final TextEditingController fullNameCtrl;
   final TextEditingController phoneCtrl;
-  const _PhoneBlock({super.key, required this.phoneCtrl});
+
+  const _PhoneBlock({
+    super.key,
+    required this.fullNameCtrl,
+    required this.phoneCtrl,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -404,13 +409,40 @@ class _PhoneBlock extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // ✅ Full Names
+        Text(
+          'Full Names',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: w * 0.040,
+            fontWeight: FontWeight.bold,
+            fontFamily: 'Poppins',
+          ),
+        ),
+        SizedBox(height: h * 0.012),
+        _PillInput(
+          controller: fullNameCtrl,
+          hint: 'Enter Your Full Names',
+          icon: Icons.person_rounded,
+          keyboardType: TextInputType.name,
+          contentFontSize: w * 0.038,
+          validator: (v) {
+            final t = (v ?? '').trim();
+            if (t.isEmpty) return 'Full names are required';
+            if (t.length < 3) return 'Enter valid names';
+            return null;
+          },
+        ),
+        SizedBox(height: h * 0.018),
+
+        // Phone Number
         Text(
           'Phone Number',
           style: TextStyle(
             color: Colors.white,
             fontSize: w * 0.040,
             fontWeight: FontWeight.bold,
-            fontFamily: 'Poppins', // ✅ requested
+            fontFamily: 'Poppins',
           ),
         ),
         SizedBox(height: h * 0.012),
@@ -439,7 +471,7 @@ class _PhoneBlock extends StatelessWidget {
               color: Colors.white.withOpacity(0.85),
               fontSize: w * 0.035,
               fontWeight: FontWeight.w600,
-              fontFamily: 'Poppins', // ✅ requested
+              fontFamily: 'Poppins',
             ),
           ),
         ),
@@ -449,6 +481,7 @@ class _PhoneBlock extends StatelessWidget {
 }
 
 class _EmailBlock extends StatelessWidget {
+  final TextEditingController fullNameCtrl;
   final TextEditingController emailCtrl;
   final TextEditingController passwordCtrl;
   final bool obscure;
@@ -456,6 +489,7 @@ class _EmailBlock extends StatelessWidget {
 
   const _EmailBlock({
     super.key,
+    required this.fullNameCtrl,
     required this.emailCtrl,
     required this.passwordCtrl,
     required this.obscure,
@@ -470,13 +504,40 @@ class _EmailBlock extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // ✅ Full Names
+        Text(
+          'Full Names',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: w * 0.040,
+            fontWeight: FontWeight.bold,
+            fontFamily: 'Poppins',
+          ),
+        ),
+        SizedBox(height: h * 0.012),
+        _PillInput(
+          controller: fullNameCtrl,
+          hint: 'Enter Your Full Names',
+          icon: Icons.person_rounded,
+          keyboardType: TextInputType.name,
+          contentFontSize: w * 0.038,
+          validator: (v) {
+            final t = (v ?? '').trim();
+            if (t.isEmpty) return 'Full names are required';
+            if (t.length < 3) return 'Enter valid names';
+            return null;
+          },
+        ),
+        SizedBox(height: h * 0.018),
+
+        // Email
         Text(
           'Email',
           style: TextStyle(
             color: Colors.white,
             fontSize: w * 0.040,
             fontWeight: FontWeight.bold,
-            fontFamily: 'Poppins', // ✅ requested
+            fontFamily: 'Poppins',
           ),
         ),
         SizedBox(height: h * 0.012),
@@ -495,13 +556,15 @@ class _EmailBlock extends StatelessWidget {
           },
         ),
         SizedBox(height: h * 0.018),
+
+        // Password
         Text(
           'Password',
           style: TextStyle(
             color: Colors.white,
             fontSize: w * 0.040,
             fontWeight: FontWeight.bold,
-            fontFamily: 'Poppins', // ✅ requested
+            fontFamily: 'Poppins',
           ),
         ),
         SizedBox(height: h * 0.012),
@@ -526,6 +589,7 @@ class _EmailBlock extends StatelessWidget {
             return null;
           },
         ),
+
         SizedBox(height: h * 0.014),
         Row(
           children: [
@@ -535,7 +599,7 @@ class _EmailBlock extends StatelessWidget {
                 color: Colors.white.withOpacity(0.85),
                 fontSize: w * 0.035,
                 fontWeight: FontWeight.w600,
-                fontFamily: 'Poppins', // ✅ requested
+                fontFamily: 'Poppins',
               ),
             ),
             const Spacer(),
@@ -549,7 +613,7 @@ class _EmailBlock extends StatelessWidget {
                   color: Colors.white.withOpacity(0.85),
                   fontSize: w * 0.035,
                   fontWeight: FontWeight.w600,
-                  fontFamily: 'Poppins', // ✅ requested
+                  fontFamily: 'Poppins',
                 ),
               ),
             ),
@@ -836,7 +900,7 @@ class _PillInput extends StatelessWidget {
                 color: Colors.white,
                 fontSize: contentFontSize,
                 fontWeight: FontWeight.w700,
-                fontFamily: 'Poppins', // ✅ requested
+                fontFamily: 'Poppins',
               ),
               cursorColor: const Color(0xFFFFA10D),
               decoration: InputDecoration(
@@ -845,7 +909,7 @@ class _PillInput extends StatelessWidget {
                   color: Colors.white.withOpacity(0.55),
                   fontSize: contentFontSize,
                   fontWeight: FontWeight.w600,
-                  fontFamily: 'Poppins', // ✅ requested
+                  fontFamily: 'Poppins',
                 ),
                 border: InputBorder.none,
                 isCollapsed: true,
@@ -908,8 +972,6 @@ class _GoogleIconSlot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // This will NOT crash if the asset isn't added yet.
-    // When you add the asset later, it will just start showing automatically.
     return Image.asset(
       'icons/google.png',
       width: size,
@@ -919,7 +981,7 @@ class _GoogleIconSlot extends StatelessWidget {
   }
 }
 
-// --------------------- Glass pill / back button ---------------------
+// --------------------- Glass pill ---------------------
 
 class _GlassPill extends StatelessWidget {
   final Widget child;
@@ -996,3 +1058,4 @@ class _CircleIconButton extends StatelessWidget {
     );
   }
 }
+
