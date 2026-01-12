@@ -251,7 +251,22 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                               ],
                             ),
                           )
-                        : null,
+                        : index == 2
+                            ? Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 8),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.calendar_today, color: Colors.black, size: 16),
+                                    const SizedBox(width: 4),
+                                    const Text(
+                                      'Available',
+                                      style: TextStyle(color: Colors.black, fontSize: 12),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            : null,
                   ),
                 ),
               ),
