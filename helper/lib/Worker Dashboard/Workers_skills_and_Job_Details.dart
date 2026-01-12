@@ -1,3 +1,5 @@
+// ignore_for_file: depend_on_referenced_packages
+
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -18,20 +20,32 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
   final _formStep1 = GlobalKey<FormState>();
   final _formStep2 = GlobalKey<FormState>();
 
-  // Step 1 controllers
+  // Step 1 controllers/values
   String? _jobCategory;
   final _businessNameCtrl = TextEditingController();
   final _skillsDescCtrl = TextEditingController();
-  String _yearsExp = '1';
-  String _pricingType = 'Hour/Fixed Price';
+  String? _yearsExp; // ✅ required now (null until picked)
+  String? _pricingType; // ✅ required now (null until picked)
   final _amountCtrl = TextEditingController();
 
-  // Step 2 controllers
+  // Step 2 controllers/values
   final _workplaceCtrl = TextEditingController();
   String? _experienceLevel;
+  bool _pickedPlaceOnMap = false; // optional (kept optional as your UI)
 
   // Step 3 state
   final List<String> _fakeSelectedImages = []; // placeholder list
+
+  @override
+  void initState() {
+    super.initState();
+    // Recalc progress when typing changes (so progress updates live)
+    _businessNameCtrl.addListener(_recalcProgress);
+    _skillsDescCtrl.addListener(_recalcProgress);
+    _amountCtrl.addListener(_recalcProgress);
+    _workplaceCtrl.addListener(_recalcProgress);
+    _recalcProgress();
+  }
 
   @override
   void dispose() {
@@ -42,38 +56,105 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
     super.dispose();
   }
 
-  double get _progress {
-    if (_step == 0) return 0.0;
-    if (_step == 1) return 0.60;
-    return 0.80;
-  }
+  // ----------------------------
+  // ✅ PROGRESS: increments per field across the whole flow
+  // Total required fields = 8
+  // Step 1 (5): job category, business name, skills, years exp, pricing type, amount => (6 actually)
+  // Step 2 (2): work place, experience level
+  // Step 3 (0 required here for now) - you said map later; uploads in step3 can remain optional
+  //
+  // To match your “3 shifts” idea and still keep your current guard:
+  // - Step 1 requires all its fields before Continue
+  // - Step 2 requires its fields before Save -> step3
+  // - Step 3 Save just shows toast (hook API later)
+  //
+  // Required count = 8 (Step1: 6 + Step2: 2)
+  // ----------------------------
+  static const int _totalRequired = 8;
+  double _progressValue = 0;
+
+  double get _progress => _progressValue.clamp(0.0, 1.0);
 
   String get _progressLabel {
     final pct = (_progress * 100).round();
     return '$pct% Complete';
   }
 
+  void _recalcProgress() {
+    int done = 0;
+
+    // Step 1 required
+    if (_jobCategory != null) done++;
+    if (_businessNameCtrl.text.trim().isNotEmpty) done++;
+    if (_skillsDescCtrl.text.trim().isNotEmpty) done++;
+    if (_yearsExp != null) done++;
+    if (_pricingType != null) done++;
+    if (_amountCtrl.text.trim().isNotEmpty) done++;
+
+    // Step 2 required
+    if (_workplaceCtrl.text.trim().isNotEmpty) done++;
+    if (_experienceLevel != null) done++;
+
+    setState(() => _progressValue = done / _totalRequired);
+  }
+
+  // ----------------------------
+  // ✅ Gate navigation exactly like you asked:
+  // - Can't proceed unless current step is complete
+  // ----------------------------
+  bool get _step1Complete {
+    final okForm = _formStep1.currentState?.validate() ?? false;
+    final okCategory = _jobCategory != null;
+    final okYears = _yearsExp != null;
+    final okPricing = _pricingType != null;
+    return okForm && okCategory && okYears && okPricing;
+  }
+
+  bool get _step2Complete {
+    final okForm = _formStep2.currentState?.validate() ?? false;
+    final okLevel = _experienceLevel != null;
+    return okForm && okLevel;
+  }
+
   void _next() {
     FocusScope.of(context).unfocus();
+
     if (_step == 0) {
-      if (!(_formStep1.currentState?.validate() ?? false)) return;
+      // validate form first
+      final ok = _formStep1.currentState?.validate() ?? false;
+      if (!ok) return;
+
       if (_jobCategory == null) {
         _toast('Please select a job category');
         return;
       }
+      if (_yearsExp == null) {
+        _toast('Please select years of experience');
+        return;
+      }
+      if (_pricingType == null) {
+        _toast('Please select pricing type');
+        return;
+      }
+
       setState(() => _step = 1);
       return;
     }
+
     if (_step == 1) {
-      if (!(_formStep2.currentState?.validate() ?? false)) return;
+      final ok = _formStep2.currentState?.validate() ?? false;
+      if (!ok) return;
+
       if (_experienceLevel == null) {
         _toast('Please select your experience level');
         return;
       }
+
       setState(() => _step = 2);
       return;
     }
-    // step 2 -> finish
+
+    // Step 3 finish
     _toast('Saved (hook API later)');
   }
 
@@ -92,6 +173,123 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
         content: Text(msg, style: const TextStyle(fontFamily: 'Poppins')),
         backgroundColor: Colors.black.withOpacity(0.85),
       ),
+    );
+  }
+
+  // ----------------------------
+  // ✅ Pickers for your “Years Experience” and “Pricing Type”
+  // We use a bottom sheet to match your “dope” UI and avoid overflow.
+  // ----------------------------
+  Future<void> _pickYearsExp() async {
+    final items = List.generate(31, (i) => i == 30 ? '30+' : '${i + 1}');
+    final selected = await _bottomPick(
+      title: 'Years of Experience',
+      items: items,
+      selected: _yearsExp,
+    );
+    if (selected != null) {
+      setState(() => _yearsExp = selected);
+      _recalcProgress();
+    }
+  }
+
+  Future<void> _pickPricingType() async {
+    final items = const ['Hourly', 'Fixed Price', 'Per Day', 'Per Job'];
+    final selected = await _bottomPick(
+      title: 'Pricing Type',
+      items: items,
+      selected: _pricingType,
+    );
+    if (selected != null) {
+      setState(() => _pricingType = selected);
+      _recalcProgress();
+    }
+  }
+
+  Future<String?> _bottomPick({
+    required String title,
+    required List<String> items,
+    required String? selected,
+  }) async {
+    return showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (_) {
+        return ClipRRect(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.65),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
+                border: Border.all(color: Colors.white.withOpacity(0.18)),
+              ),
+              child: SafeArea(
+                top: false,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(height: MediaQuery.of(context).size.height * 0.015),
+                    Container(
+                      width: 60,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.35),
+                        borderRadius: BorderRadius.circular(99),
+                      ),
+                    ),
+                    SizedBox(height: MediaQuery.of(context).size.height * 0.015),
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontFamily: 'Poppins',
+                        fontWeight: FontWeight.w800,
+                        fontSize: 16,
+                      ),
+                    ),
+                    SizedBox(height: MediaQuery.of(context).size.height * 0.01),
+                    ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxHeight: MediaQuery.of(context).size.height * 0.45,
+                      ),
+                      child: ListView.separated(
+                        shrinkWrap: true,
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        itemCount: items.length,
+                        separatorBuilder: (_, __) => Divider(
+                          height: 1,
+                          color: Colors.white.withOpacity(0.10),
+                        ),
+                        itemBuilder: (context, i) {
+                          final v = items[i];
+                          final isSel = v == selected;
+                          return ListTile(
+                            onTap: () => Navigator.pop(context, v),
+                            title: Text(
+                              v,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontFamily: 'Poppins',
+                                fontWeight: isSel ? FontWeight.w900 : FontWeight.w700,
+                              ),
+                            ),
+                            trailing: isSel
+                                ? Icon(Icons.check_circle, color: _brandOrange.withOpacity(0.95))
+                                : null,
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -142,13 +340,17 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
                           ),
                         ),
                         SizedBox(width: w * 0.05),
-                        Text(
-                          'Skills & Job Details',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: w * 0.055,
-                            fontFamily: 'AbrilFatface',
-                            letterSpacing: 0.2,
+                        Flexible(
+                          child: Text(
+                            'Skills & Job Details',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: w * 0.055,
+                              fontFamily: 'AbrilFatface',
+                              letterSpacing: 0.2,
+                            ),
                           ),
                         ),
                       ],
@@ -178,7 +380,7 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
 
                     SizedBox(height: h * 0.018),
 
-                    // Progress bar + label
+                    // ✅ progress bar now live-updates by filled fields
                     _ProgressBar(
                       width: w,
                       progress: _progress,
@@ -271,7 +473,10 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
               'Mechanic',
               'Painter',
             ],
-            onChanged: (v) => setState(() => _jobCategory = v),
+            onChanged: (v) {
+              setState(() => _jobCategory = v);
+              _recalcProgress();
+            },
           ),
 
           SizedBox(height: h * 0.018),
@@ -307,6 +512,7 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
 
           SizedBox(height: h * 0.018),
 
+          // ✅ REPLACE with your design: two white pills, each has big label + stacked up/down arrows (no DropdownButton)
           Row(
             children: [
               Expanded(
@@ -315,13 +521,11 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
                   children: [
                     _label('Years Of Experience', w),
                     SizedBox(height: h * 0.012),
-                    _pillMiniDropdown(
+                    _designPickerPill(
                       w: w,
                       h: h,
-                      value: _yearsExp,
-                      items: List.generate(30, (i) => '${i + 1}'),
-                      onChanged: (v) => setState(() => _yearsExp = v ?? '1'),
-                      leadingText: 'Experience',
+                      text: _yearsExp == null ? 'Experience' : '${_yearsExp!} yr',
+                      onTap: _pickYearsExp,
                     ),
                   ],
                 ),
@@ -333,14 +537,11 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
                   children: [
                     _label('Pricing Type', w),
                     SizedBox(height: h * 0.012),
-                    _pillMiniDropdown(
+                    _designPickerPill(
                       w: w,
                       h: h,
-                      value: _pricingType,
-                      items: const ['Hour/Fixed Price', 'Per Day', 'Per Job'],
-                      onChanged: (v) =>
-                          setState(() => _pricingType = v ?? 'Hour/Fixed Price'),
-                      leadingText: 'Hour/Fixed Price',
+                      text: _pricingType ?? 'Hour/Fixed Price',
+                      onTap: _pickPricingType,
                     ),
                   ],
                 ),
@@ -402,7 +603,10 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
             hint: 'Select your Experience Level',
             value: _experienceLevel,
             items: const ['Beginner', 'Intermediate', 'Expert'],
-            onChanged: (v) => setState(() => _experienceLevel = v),
+            onChanged: (v) {
+              setState(() => _experienceLevel = v);
+              _recalcProgress();
+            },
           ),
 
           SizedBox(height: h * 0.018),
@@ -452,6 +656,7 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
               _fakeSelectedImages.add('image_${_fakeSelectedImages.length + 1}');
             });
             _toast('Picked (hook file picker later)');
+            // (Uploads not required for progress right now; if you want required later, add to progress calc.)
           },
         ),
       ],
@@ -467,6 +672,69 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
         fontFamily: 'Poppins',
         fontSize: w * 0.038,
         fontWeight: FontWeight.w800,
+      ),
+    );
+  }
+
+  Widget _designPickerPill({
+    required double w,
+    required double h,
+    required String text,
+    required VoidCallback onTap,
+  }) {
+    // Matches your screenshot: white pill, bold text, stacked up/down arrows on right
+    final fieldH = h * 0.060;
+    final r = fieldH / 2;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: fieldH,
+        padding: EdgeInsets.symmetric(horizontal: w * 0.045),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(r),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.12),
+              blurRadius: 14,
+              spreadRadius: 1,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                text,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: Colors.black,
+                  fontFamily: 'Poppins',
+                  fontWeight: FontWeight.w900,
+                  fontSize: w * 0.038,
+                ),
+              ),
+            ),
+            SizedBox(width: w * 0.02),
+            SizedBox(
+              width: w * 0.08,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.arrow_drop_up, color: Colors.black, size: w * 0.085),
+                  Transform.translate(
+                    offset: Offset(0, -w * 0.03),
+                    child: Icon(Icons.arrow_drop_down,
+                        color: Colors.black, size: w * 0.085),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -493,7 +761,13 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
         controller: controller,
         keyboardType: keyboardType,
         inputFormatters: inputFormatters,
-        validator: validator,
+        validator: (v) {
+          final res = validator?.call(v);
+          // refresh progress on validation changes too
+          WidgetsBinding.instance.addPostFrameCallback((_) => _recalcProgress());
+          return res;
+        },
+        onChanged: (_) => _recalcProgress(),
         style: TextStyle(
           color: Colors.black,
           fontFamily: 'Poppins',
@@ -536,7 +810,12 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
           Expanded(
             child: TextFormField(
               controller: controller,
-              validator: validator,
+              validator: (v) {
+                final res = validator?.call(v);
+                WidgetsBinding.instance.addPostFrameCallback((_) => _recalcProgress());
+                return res;
+              },
+              onChanged: (_) => _recalcProgress(),
               style: TextStyle(
                 color: Colors.black,
                 fontFamily: 'Poppins',
@@ -609,83 +888,11 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
                 ),
               )
               .toList(),
-          onChanged: onChanged,
+          onChanged: (v) {
+            onChanged(v);
+            _recalcProgress();
+          },
         ),
-      ),
-    );
-  }
-
-  Widget _pillMiniDropdown({
-    required double w,
-    required double h,
-    required String value,
-    required List<String> items,
-    required ValueChanged<String?> onChanged,
-    required String leadingText,
-  }) {
-    final fieldH = h * 0.060; // slightly smaller
-    final radius = 30.0;
-
-    return Container(
-      height: fieldH,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(radius),
-      ),
-      padding: EdgeInsets.symmetric(horizontal: w * 0.035),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              leadingText,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: Colors.black,
-                fontFamily: 'Poppins',
-                fontWeight: FontWeight.w800,
-                fontSize: w * 0.030, // smaller so it always fits
-              ),
-            ),
-          ),
-
-          SizedBox(width: w * 0.02),
-
-          // value dropdown (fixed width, no vertical icon column)
-          SizedBox(
-            width: w * 0.18,
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<String>(
-                isExpanded: true,
-                value: value,
-                icon: Icon(
-                  Icons.keyboard_arrow_down_rounded,
-                  color: Colors.black,
-                  size: w * 0.07,
-                ),
-                items: items
-                    .map(
-                      (e) => DropdownMenuItem(
-                        value: e,
-                        child: Text(
-                          e,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontFamily: 'Poppins',
-                            fontWeight: FontWeight.w900,
-                            fontSize: w * 0.032,
-                          ),
-                        ),
-                      ),
-                    )
-                    .toList(),
-                onChanged: onChanged,
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -707,7 +914,12 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
       padding: EdgeInsets.symmetric(horizontal: w * 0.04, vertical: h * 0.012),
       child: TextFormField(
         controller: controller,
-        validator: validator,
+        validator: (v) {
+          final res = validator?.call(v);
+          WidgetsBinding.instance.addPostFrameCallback((_) => _recalcProgress());
+          return res;
+        },
+        onChanged: (_) => _recalcProgress(),
         maxLines: null,
         expands: true,
         style: TextStyle(
@@ -741,27 +953,18 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
         color: Colors.white,
         child: Stack(
           children: [
-            // Fake "map" background look
             Positioned.fill(
               child: Container(
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [
-                      const Color(0xFFEDEDED),
-                      const Color(0xFFF7F7F7),
-                    ],
+                    colors: [Color(0xFFEDEDED), Color(0xFFF7F7F7)],
                   ),
                 ),
-                child: const Opacity(
-                  opacity: 0.22,
-                  child: FlutterLogo(),
-                ),
+                child: const Opacity(opacity: 0.22, child: FlutterLogo()),
               ),
             ),
-
-            // Pin
             Center(
               child: Icon(
                 Icons.location_pin,
@@ -769,8 +972,6 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
                 size: w * 0.10,
               ),
             ),
-
-            // Zoom controls
             Positioned(
               right: w * 0.03,
               top: mapH * 0.35,
@@ -780,6 +981,30 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
                   SizedBox(height: h * 0.01),
                   _zoomBtn(icon: Icons.remove, w: w),
                 ],
+              ),
+            ),
+            Positioned(
+              left: w * 0.03,
+              bottom: w * 0.03,
+              child: ElevatedButton(
+                onPressed: () {
+                  setState(() => _pickedPlaceOnMap = !_pickedPlaceOnMap);
+                  _toast(_pickedPlaceOnMap ? 'Picked on map (optional)' : 'Unpicked map');
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _pickedPlaceOnMap ? Colors.green : _brandOrange,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+                ),
+                child: Text(
+                  _pickedPlaceOnMap ? 'Picked ✓' : 'Pick',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontFamily: 'Poppins',
+                    fontWeight: FontWeight.w900,
+                    fontSize: w * 0.032,
+                  ),
+                ),
               ),
             ),
           ],
@@ -1024,7 +1249,10 @@ class _DashedBorderPainter extends CustomPainter {
       while (distance < metric.length) {
         final len = dashWidth;
         final next = distance + len;
-        final extract = metric.extractPath(distance, next.clamp(0.0, metric.length));
+        final extract = metric.extractPath(
+          distance,
+          next.clamp(0.0, metric.length),
+        );
         canvas.drawPath(extract, paint);
         distance = next + dashSpace;
       }
