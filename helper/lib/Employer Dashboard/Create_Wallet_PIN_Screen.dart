@@ -74,7 +74,7 @@ class _CreateWalletPINScreenState extends State<CreateWalletPINScreen> {
                       ),
                       SizedBox(width: screenWidth * 0.06),
                       Text(
-                        'Create Wallet PIN',
+                        'Set Your PIN Here',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: screenWidth * 0.055,
