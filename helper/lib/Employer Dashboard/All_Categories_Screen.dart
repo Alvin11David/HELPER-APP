@@ -291,6 +291,53 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                 ),
               ),
             ),
+            AnimatedPositioned(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+              top: (_showFilters ? 225 : 175) + 30,
+              left: w * 0.04,
+              child: SizedBox(
+                width: w - 2 * w * 0.04,
+                height: 5 * 217 + 40, // approximate height for 5 rectangles
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        children: List.generate(
+                          5,
+                          (index) => Container(
+                            width: 183,
+                            height: 217,
+                            margin: const EdgeInsets.only(bottom: 10),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        children: List.generate(
+                          5,
+                          (index) => Container(
+                            width: 183,
+                            height: 217,
+                            margin: const EdgeInsets.only(bottom: 10),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ],
         ),
       ),
