@@ -517,11 +517,9 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                                           child: Container(
                                             width: 30,
                                             height: 30,
-                                            decoration:  BoxDecoration(
+                                            decoration: const BoxDecoration(
                                               shape: BoxShape.circle,
-                                              border: Border.all(
-                                                color: Colors.black,
-                                              ),
+                                              color: Colors.white,
                                             ),
                                             child: Icon(
                                               liked[index + 8]
