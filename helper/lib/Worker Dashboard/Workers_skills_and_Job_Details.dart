@@ -15,7 +15,7 @@ class WorkerSkillsJobDetailsScreen extends StatefulWidget {
 class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScreen> {
   static const _brandOrange = Color(0xFFFFA10D);
 
-  int _step = 0; // 0,1,2
+  int _step = 0; // 0,1,2,3 (3 = preview)
 
   final _formStep1 = GlobalKey<FormState>();
   final _formStep2 = GlobalKey<FormState>();
@@ -24,14 +24,14 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
   String? _jobCategory;
   final _businessNameCtrl = TextEditingController();
   final _skillsDescCtrl = TextEditingController();
-  String? _yearsExp; // ✅ required now (null until picked)
-  String? _pricingType; // ✅ required now (null until picked)
+  String? _yearsExp; // required
+  String? _pricingType; // required
   final _amountCtrl = TextEditingController();
 
   // Step 2 controllers/values
   final _workplaceCtrl = TextEditingController();
   String? _experienceLevel;
-  bool _pickedPlaceOnMap = false; // optional (kept optional as your UI)
+  bool _pickedPlaceOnMap = false; // optional
 
   // Step 3 state
   final List<String> _fakeSelectedImages = []; // placeholder list
@@ -39,7 +39,6 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
   @override
   void initState() {
     super.initState();
-    // Recalc progress when typing changes (so progress updates live)
     _businessNameCtrl.addListener(_recalcProgress);
     _skillsDescCtrl.addListener(_recalcProgress);
     _amountCtrl.addListener(_recalcProgress);
@@ -56,20 +55,7 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
     super.dispose();
   }
 
-  // ----------------------------
-  // ✅ PROGRESS: increments per field across the whole flow
-  // Total required fields = 8
-  // Step 1 (5): job category, business name, skills, years exp, pricing type, amount => (6 actually)
-  // Step 2 (2): work place, experience level
-  // Step 3 (0 required here for now) - you said map later; uploads in step3 can remain optional
-  //
-  // To match your “3 shifts” idea and still keep your current guard:
-  // - Step 1 requires all its fields before Continue
-  // - Step 2 requires its fields before Save -> step3
-  // - Step 3 Save just shows toast (hook API later)
-  //
-  // Required count = 8 (Step1: 6 + Step2: 2)
-  // ----------------------------
+  // ✅ Progress increments per required field across Step1+Step2 only
   static const int _totalRequired = 8;
   double _progressValue = 0;
 
@@ -83,7 +69,7 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
   void _recalcProgress() {
     int done = 0;
 
-    // Step 1 required
+    // Step 1 required (6)
     if (_jobCategory != null) done++;
     if (_businessNameCtrl.text.trim().isNotEmpty) done++;
     if (_skillsDescCtrl.text.trim().isNotEmpty) done++;
@@ -91,36 +77,17 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
     if (_pricingType != null) done++;
     if (_amountCtrl.text.trim().isNotEmpty) done++;
 
-    // Step 2 required
+    // Step 2 required (2)
     if (_workplaceCtrl.text.trim().isNotEmpty) done++;
     if (_experienceLevel != null) done++;
 
     setState(() => _progressValue = done / _totalRequired);
   }
 
-  // ----------------------------
-  // ✅ Gate navigation exactly like you asked:
-  // - Can't proceed unless current step is complete
-  // ----------------------------
-  bool get _step1Complete {
-    final okForm = _formStep1.currentState?.validate() ?? false;
-    final okCategory = _jobCategory != null;
-    final okYears = _yearsExp != null;
-    final okPricing = _pricingType != null;
-    return okForm && okCategory && okYears && okPricing;
-  }
-
-  bool get _step2Complete {
-    final okForm = _formStep2.currentState?.validate() ?? false;
-    final okLevel = _experienceLevel != null;
-    return okForm && okLevel;
-  }
-
   void _next() {
     FocusScope.of(context).unfocus();
 
     if (_step == 0) {
-      // validate form first
       final ok = _formStep1.currentState?.validate() ?? false;
       if (!ok) return;
 
@@ -154,8 +121,18 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
       return;
     }
 
-    // Step 3 finish
-    _toast('Saved (hook API later)');
+    if (_step == 2) {
+      // step3 -> preview (job preview)
+      if (_fakeSelectedImages.isEmpty) {
+        _toast('Please upload at least 1 file (tap Upload File).');
+        return;
+      }
+      setState(() => _step = 3);
+      return;
+    }
+
+    // submit from preview
+    _toast('Submitted ✅ (hook API later)');
   }
 
   void _back() {
@@ -165,6 +142,11 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
       return;
     }
     setState(() => _step -= 1);
+  }
+
+  void _goToStep(int step) {
+    FocusScope.of(context).unfocus();
+    setState(() => _step = step.clamp(0, 3));
   }
 
   void _toast(String msg) {
@@ -177,8 +159,7 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
   }
 
   // ----------------------------
-  // ✅ Pickers for your “Years Experience” and “Pricing Type”
-  // We use a bottom sheet to match your “dope” UI and avoid overflow.
+  // Pickers
   // ----------------------------
   Future<void> _pickYearsExp() async {
     final items = List.generate(31, (i) => i == 30 ? '30+' : '${i + 1}');
@@ -277,7 +258,8 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
                               ),
                             ),
                             trailing: isSel
-                                ? Icon(Icons.check_circle, color: _brandOrange.withOpacity(0.95))
+                                ? Icon(Icons.check_circle,
+                                    color: _brandOrange.withOpacity(0.95))
                                 : null,
                           );
                         },
@@ -300,6 +282,8 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
 
     final sidePad = w * 0.06;
     final topPad = h * 0.05;
+
+    final isPreview = _step == 3;
 
     return Scaffold(
       body: SafeArea(
@@ -342,7 +326,7 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
                         SizedBox(width: w * 0.05),
                         Flexible(
                           child: Text(
-                            'Skills & Job Details',
+                            isPreview ? 'Job Preview' : 'Skills & Job Details',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
@@ -367,7 +351,9 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
                           vertical: h * 0.007,
                         ),
                         child: Text(
-                          'Tell Employers what you do',
+                          isPreview
+                              ? 'Preview what you have added'
+                              : 'Tell Employers what you do',
                           style: TextStyle(
                             color: Colors.white.withOpacity(0.92),
                             fontSize: w * 0.032,
@@ -380,15 +366,18 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
 
                     SizedBox(height: h * 0.018),
 
-                    // ✅ progress bar now live-updates by filled fields
-                    _ProgressBar(
-                      width: w,
-                      progress: _progress,
-                      label: _progressLabel,
-                      accent: _brandOrange,
-                    ),
-
-                    SizedBox(height: h * 0.02),
+                    // ✅ HIDE progress bar on Job Preview screen
+                    if (!isPreview) ...[
+                      _ProgressBar(
+                        width: w,
+                        progress: _progress,
+                        label: _progressLabel,
+                        accent: _brandOrange,
+                      ),
+                      SizedBox(height: h * 0.02),
+                    ] else ...[
+                      SizedBox(height: h * 0.01),
+                    ],
 
                     // Step body (animated)
                     AnimatedSwitcher(
@@ -399,7 +388,9 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
                         final slide = Tween<Offset>(
                           begin: const Offset(0.04, 0),
                           end: Offset.zero,
-                        ).animate(CurvedAnimation(parent: anim, curve: Curves.easeOut));
+                        ).animate(
+                          CurvedAnimation(parent: anim, curve: Curves.easeOut),
+                        );
                         return FadeTransition(
                           opacity: anim,
                           child: SlideTransition(position: slide, child: child),
@@ -409,35 +400,41 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
                           ? _stepOne(w, h)
                           : _step == 1
                               ? _stepTwo(w, h)
-                              : _stepThree(w, h),
+                              : _step == 2
+                                  ? _stepThree(w, h)
+                                  : _jobPreview(w, h),
                     ),
 
                     SizedBox(height: h * 0.03),
 
                     // Bottom CTA
-                    SizedBox(
-                      width: double.infinity,
-                      height: h * 0.07,
-                      child: ElevatedButton(
-                        onPressed: _next,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _brandOrange,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
+                    if (!isPreview)
+                      SizedBox(
+                        width: double.infinity,
+                        height: h * 0.07,
+                        child: ElevatedButton(
+                          onPressed: _next,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _brandOrange,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30),
+                            ),
                           ),
-                        ),
-                        child: Text(
-                          _step == 0 ? 'Continue' : 'Save',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: w * 0.045,
-                            fontWeight: FontWeight.w800,
-                            fontFamily: 'Poppins',
+                          child: Text(
+                            _step == 0 ? 'Continue' : _step == 1 ? 'Save' : 'Continue',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: w * 0.045,
+                              fontWeight: FontWeight.w800,
+                              fontFamily: 'Poppins',
+                            ),
                           ),
                         ),
                       ),
-                    ),
+
+                    // ✅ Preview screen buttons inside the white card (like your image)
+                    if (isPreview) SizedBox(height: h * 0.01),
 
                     SizedBox(height: h * 0.03),
                   ],
@@ -512,7 +509,6 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
 
           SizedBox(height: h * 0.018),
 
-          // ✅ REPLACE with your design: two white pills, each has big label + stacked up/down arrows (no DropdownButton)
           Row(
             children: [
               Expanded(
@@ -524,7 +520,7 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
                     _designPickerPill(
                       w: w,
                       h: h,
-                      text: _yearsExp == null ? 'Experience' : '${_yearsExp!} yr',
+                      text: _yearsExp == null ? 'Experience' : _yearsExp!,
                       onTap: _pickYearsExp,
                     ),
                   ],
@@ -641,23 +637,183 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _mapPlaceholder(w, h, taller: true),
-
         SizedBox(height: h * 0.02),
-
         _label('Upload Images', w),
         SizedBox(height: h * 0.012),
-
         _uploadBox(
           w: w,
           h: h,
           onTap: () {
-            // TODO: file/image picker
             setState(() {
-              _fakeSelectedImages.add('image_${_fakeSelectedImages.length + 1}');
+              _fakeSelectedImages.add('file_${_fakeSelectedImages.length + 1}');
             });
             _toast('Picked (hook file picker later)');
-            // (Uploads not required for progress right now; if you want required later, add to progress calc.)
           },
+        ),
+      ],
+    );
+  }
+
+  // ----------------------- PREVIEW (UI matches image) -----------------------
+  Widget _jobPreview(double w, double h) {
+    final leftStyle = TextStyle(
+      color: Colors.black,
+      fontFamily: 'Poppins',
+      fontWeight: FontWeight.w900,
+      fontSize: w * 0.032,
+    );
+
+    final rightStyle = TextStyle(
+      color: Colors.black.withOpacity(0.75),
+      fontFamily: 'Poppins',
+      fontWeight: FontWeight.w800,
+      fontSize: w * 0.032,
+    );
+
+    Widget row(String l, String r) {
+      return Padding(
+        padding: EdgeInsets.only(bottom: h * 0.012),
+        child: Row(
+          children: [
+            Expanded(child: Text(l, style: leftStyle)),
+            Expanded(
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: Text(
+                  r.isEmpty ? '-' : r,
+                  textAlign: TextAlign.right,
+                  style: rightStyle,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      key: const ValueKey('preview'),
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(26),
+          child: Container(
+            width: double.infinity,
+            color: Colors.white,
+            padding: EdgeInsets.symmetric(horizontal: w * 0.06, vertical: h * 0.02),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // ✅ Title INSIDE white container
+                Center(
+                  child: Text(
+                    'Preview Section',
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontFamily: 'AbrilFatface',
+                      fontSize: w * 0.060,
+                    ),
+                  ),
+                ),
+
+                SizedBox(height: h * 0.012),
+
+                // ✅ dotted lines like the image (top, between groups, bottom)
+                _dashedDivider(color: Colors.black.withOpacity(0.35)),
+                SizedBox(height: h * 0.018),
+
+                // Group 1
+                row('Business Name', _businessNameCtrl.text.trim()),
+                row('Job Category', (_jobCategory ?? '').trim()),
+                row('Years Of Experience:', (_yearsExp ?? '').trim()),
+                row('Pricing Type', (_pricingType ?? '').trim()),
+                row('Pricing', _amountCtrl.text.trim()),
+                row('Experience Level', (_experienceLevel ?? '').trim()),
+
+                SizedBox(height: h * 0.004),
+                _dashedDivider(color: Colors.black.withOpacity(0.35)),
+                SizedBox(height: h * 0.018),
+
+                // Group 2
+                row('Job District', 'District'),
+                row('Skills & Job Description', _skillsDescCtrl.text.trim()),
+                row('Work Place Location', _workplaceCtrl.text.trim()),
+
+                SizedBox(height: h * 0.012),
+                _dashedDivider(color: Colors.black.withOpacity(0.35)),
+                SizedBox(height: h * 0.016),
+
+                Center(
+                  child: Text(
+                    'The above are the details you have\nfilled in and they will appear on the\nemployers side.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: _brandOrange,
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.w800,
+                      fontSize: w * 0.032,
+                      height: 1.25,
+                    ),
+                  ),
+                ),
+
+                SizedBox(height: h * 0.02),
+
+                // ✅ Buttons inside container like your image
+                Row(
+                  children: [
+                    Expanded(
+                      child: SizedBox(
+                        height: h * 0.060,
+                        child: OutlinedButton(
+                          onPressed: () => _goToStep(0),
+                          style: OutlinedButton.styleFrom(
+                            side: BorderSide(color: _brandOrange, width: 2),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                          ),
+                          child: Text(
+                            'Edit',
+                            style: TextStyle(
+                              color: _brandOrange,
+                              fontFamily: 'Poppins',
+                              fontWeight: FontWeight.w900,
+                              fontSize: w * 0.040,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: w * 0.06),
+                    Expanded(
+                      child: SizedBox(
+                        height: h * 0.060,
+                        child: ElevatedButton(
+                          onPressed: _next, // submit
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _brandOrange,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                          ),
+                          child: Text(
+                            'Submit',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontFamily: 'Poppins',
+                              fontWeight: FontWeight.w900,
+                              fontSize: w * 0.040,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
         ),
       ],
     );
@@ -676,13 +832,19 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
     );
   }
 
+  Widget _dashedDivider({required Color color}) {
+    return CustomPaint(
+      painter: _DashedLinePainter(color: color),
+      child: const SizedBox(height: 1),
+    );
+  }
+
   Widget _designPickerPill({
     required double w,
     required double h,
     required String text,
     required VoidCallback onTap,
   }) {
-    // Matches your screenshot: white pill, bold text, stacked up/down arrows on right
     final fieldH = h * 0.060;
     final r = fieldH / 2;
 
@@ -727,8 +889,7 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
                   Icon(Icons.arrow_drop_up, color: Colors.black, size: w * 0.085),
                   Transform.translate(
                     offset: Offset(0, -w * 0.03),
-                    child: Icon(Icons.arrow_drop_down,
-                        color: Colors.black, size: w * 0.085),
+                    child: Icon(Icons.arrow_drop_down, color: Colors.black, size: w * 0.085),
                   ),
                 ],
               ),
@@ -763,7 +924,6 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
         inputFormatters: inputFormatters,
         validator: (v) {
           final res = validator?.call(v);
-          // refresh progress on validation changes too
           WidgetsBinding.instance.addPostFrameCallback((_) => _recalcProgress());
           return res;
         },
@@ -862,7 +1022,11 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
         child: DropdownButton<String>(
           value: value,
           isExpanded: true,
-          icon: Icon(Icons.keyboard_arrow_down_rounded, color: Colors.black, size: w * 0.07),
+          icon: Icon(
+            Icons.keyboard_arrow_down_rounded,
+            color: Colors.black,
+            size: w * 0.07,
+          ),
           hint: Text(
             hint,
             style: TextStyle(
@@ -966,11 +1130,7 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
               ),
             ),
             Center(
-              child: Icon(
-                Icons.location_pin,
-                color: Colors.redAccent,
-                size: w * 0.10,
-              ),
+              child: Icon(Icons.location_pin, color: Colors.redAccent, size: w * 0.10),
             ),
             Positioned(
               right: w * 0.03,
@@ -1267,4 +1427,29 @@ class _DashedBorderPainter extends CustomPainter {
         oldDelegate.dashSpace != dashSpace ||
         oldDelegate.strokeWidth != strokeWidth;
   }
+}
+
+// ✅ dashed divider used in preview (exact dotted lines like image)
+class _DashedLinePainter extends CustomPainter {
+  final Color color;
+  _DashedLinePainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1.2;
+
+    const dashWidth = 6.0;
+    const dashSpace = 5.0;
+    double startX = 0;
+
+    while (startX < size.width) {
+      canvas.drawLine(Offset(startX, 0), Offset(startX + dashWidth, 0), paint);
+      startX += dashWidth + dashSpace;
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _DashedLinePainter oldDelegate) => false;
 }
