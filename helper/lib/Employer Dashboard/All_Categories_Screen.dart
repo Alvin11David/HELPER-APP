@@ -25,6 +25,24 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
     'Cleaning',
     'Gardening',
   ];
+  List<String> professions = [
+    'Plumbers',
+    'Electricians',
+    'Engineers',
+    'Drivers',
+    'Cleaners',
+    'Gardeners',
+    'Painters',
+    'Mechanics',
+    'Chefs',
+    'Tutors',
+    'Doctors',
+    'Lawyers',
+    'Photographers',
+    'Designers',
+    'Writers',
+    'Musicians',
+  ];
   bool _showFilters = false;
 
   @override
