@@ -466,7 +466,7 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                   ),
                   Positioned(
                     top: h * 0.4 + 650,
-                    left: w * 0.05 + 240,
+                    left: w * 0.06 + 240,
                     child: GestureDetector(
                       onTap: _commentController.text.isNotEmpty
                           ? () {
