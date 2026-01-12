@@ -74,7 +74,7 @@ class _CreateWalletPINScreenState extends State<CreateWalletPINScreen> {
                       ),
                       SizedBox(width: screenWidth * 0.06),
                       Text(
-                        'Set Your PIN Here',
+                        'Create Wallet PIN',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: screenWidth * 0.055,
@@ -246,6 +246,48 @@ class _CreateWalletPINScreenState extends State<CreateWalletPINScreen> {
                   _RuleRow('No repeating digits (1111)'),
                   _RuleRow('No sequential digits (1234, 4321)'),
                 ],
+              ),
+            ),
+            Positioned(
+              top: screenHeight * 0.14 + 50 + screenWidth * 0.2 + 20 + 70 + 40 + 100,
+              left: 0,
+              right: 0,
+              child: SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Row(
+                    children: [
+                      GestureDetector(
+                        onTap: () => Navigator.of(context).maybePop(),
+                        child: Container(
+                          width: screenWidth * 0.13,
+                          height: screenWidth * 0.13,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFFFFF),
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                          child: Center(
+                            child: Icon(
+                              Icons.chevron_left,
+                              color: Colors.black,
+                              size: screenWidth * 0.10,
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: screenWidth * 0.06),
+                      Text(
+                        'Set Your PIN Here',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: screenWidth * 0.055,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'Montserrat',
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ],
