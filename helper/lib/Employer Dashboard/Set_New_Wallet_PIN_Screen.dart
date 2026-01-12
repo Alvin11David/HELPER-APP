@@ -270,7 +270,7 @@ class _SetNewWalletPINScreenState extends State<SetNewWalletPINScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          'Set Your PIN Here',
+                          'Set Your New PIN Here',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: screenWidth * 0.04,
