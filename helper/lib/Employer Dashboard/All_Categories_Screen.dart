@@ -399,9 +399,12 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                                           child: Container(
                                             width: 30,
                                             height: 30,
-                                            decoration: const BoxDecoration(
+                                            decoration: BoxDecoration(
                                               shape: BoxShape.circle,
                                               color: Colors.white,
+                                              border: Border.all(
+                                                color: Colors.black,
+                                              ),
                                             ),
                                             child: Icon(
                                               liked[index]
