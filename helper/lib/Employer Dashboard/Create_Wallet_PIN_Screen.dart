@@ -77,7 +77,7 @@ class _CreateWalletPINScreenState extends State<CreateWalletPINScreen> {
                   child: Container(
                     padding: EdgeInsets.symmetric(
                       horizontal: screenWidth * 0.02,
-                      vertical: screenHeight * 0.004,
+                      vertical: screenHeight * 0.003,
                     ),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
@@ -101,7 +101,7 @@ class _CreateWalletPINScreenState extends State<CreateWalletPINScreen> {
                         ),
                       ],
                     ),
-                    height: 33,
+                    height: 30,
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
