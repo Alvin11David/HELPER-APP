@@ -434,6 +434,8 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                       child: Padding(
                         padding: const EdgeInsets.all(10),
                         child: TextField(
+                          controller: _commentController,
+                          onChanged: (value) => setState(() {}),
                           style: const TextStyle(color: Colors.white),
                           decoration: const InputDecoration(
                             hintText:
