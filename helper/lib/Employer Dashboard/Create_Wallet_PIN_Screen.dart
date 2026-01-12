@@ -162,49 +162,77 @@ class _CreateWalletPINScreenState extends State<CreateWalletPINScreen> {
               right: 0,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(4, (index) => Column(
-                  children: [
-                    Container(
-                      width: 50,
-                      height: 50,
-                      margin: const EdgeInsets.symmetric(horizontal: 5),
-                      child: TextField(
-                        controller: controllers[index],
-                        focusNode: focusNodes[index],
-                        maxLength: 1,
-                        textAlign: TextAlign.center,
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                        style: const TextStyle(color: Colors.white),
-                        decoration: InputDecoration(
-                          counterText: '',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(color: Colors.white),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(color: Colors.white),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(color: Colors.white),
-                          ),
+                children: List.generate(
+                  4,
+                  (index) => Column(
+                    children: [
+                      Container(
+                        width: 50,
+                        height: 70,
+                        margin: const EdgeInsets.symmetric(horizontal: 5),
+                        child: Stack(
+                          children: [
+                            TextField(
+                              controller: controllers[index],
+                              focusNode: focusNodes[index],
+                              maxLength: 1,
+                              textAlign: TextAlign.center,
+                              keyboardType: TextInputType.number,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly,
+                              ],
+                              style: const TextStyle(color: Colors.white),
+                              decoration: InputDecoration(
+                                counterText: '',
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                  borderSide: const BorderSide(
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                  borderSide: const BorderSide(
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                  borderSide: const BorderSide(
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                              onChanged: (value) {
+                                if (value.isNotEmpty && index < 3) {
+                                  focusNodes[index + 1].requestFocus();
+                                }
+                              },
+                            ),
+                            Positioned(
+                              bottom: 20,
+                              left: 15,
+                              right: 15,
+                              child: Container(height: 2, color: Colors.orange),
+                            ),
+                          ],
                         ),
-                        onChanged: (value) {
-                          if (value.isNotEmpty && index < 3) {
-                            focusNodes[index + 1].requestFocus();
-                          }
-                        },
                       ),
-                    ),
-                    Container(
-                      width: 20,
-                      height: 2,
-                      color: Colors.white,
-                    ),
-                  ],
-                )),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              top: screenHeight * 0.14 + 50 + screenWidth * 0.2 + 20 + 70 + 10,
+              right: screenWidth / 2 - 120,
+              child: Text(
+                'Forgot PIN?',
+                style: TextStyle(
+                  color: Colors.orange,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ),
           ],
