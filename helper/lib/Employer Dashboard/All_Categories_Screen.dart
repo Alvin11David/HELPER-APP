@@ -339,7 +339,8 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                                 child: Padding(
                                   padding: const EdgeInsets.all(10),
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Text(
@@ -383,7 +384,8 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                                 child: Padding(
                                   padding: const EdgeInsets.all(10),
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Text(
