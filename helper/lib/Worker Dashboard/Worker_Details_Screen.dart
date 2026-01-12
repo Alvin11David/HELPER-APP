@@ -18,6 +18,7 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
   bool _isExpanded = false;
   bool _isDescriptionExpanded = false;
   int _rating = 0;
+  final TextEditingController _commentController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -437,7 +438,10 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                           decoration: const InputDecoration(
                             hintText:
                                 'Please share your ideas with us about this service',
-                            hintStyle: TextStyle(color: Colors.white70, fontSize: 12),
+                            hintStyle: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 12,
+                            ),
                             border: InputBorder.none,
                           ),
                           maxLines: 3,
