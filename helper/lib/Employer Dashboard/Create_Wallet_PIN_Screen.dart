@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:ui'; // For ImageFilter
+import 'package:flutter/services.dart'; // For FilteringTextInputFormatter
 
 class CreateWalletPINScreen extends StatefulWidget {
   const CreateWalletPINScreen({super.key});
@@ -9,6 +10,27 @@ class CreateWalletPINScreen extends StatefulWidget {
 }
 
 class _CreateWalletPINScreenState extends State<CreateWalletPINScreen> {
+  late List<TextEditingController> controllers;
+  late List<FocusNode> focusNodes;
+
+  @override
+  void initState() {
+    super.initState();
+    controllers = List.generate(4, (_) => TextEditingController());
+    focusNodes = List.generate(4, (_) => FocusNode());
+  }
+
+  @override
+  void dispose() {
+    for (var controller in controllers) {
+      controller.dispose();
+    }
+    for (var node in focusNodes) {
+      node.dispose();
+    }
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
@@ -119,6 +141,70 @@ class _CreateWalletPINScreenState extends State<CreateWalletPINScreen> {
                     ),
                   ),
                 ),
+              ),
+            ),
+            Positioned(
+              top:
+                  screenHeight * 0.14 +
+                  50, // Position below the glassy rectangle
+              left: screenWidth * 0.4,
+              right: screenWidth * 0.4,
+              child: Image.asset(
+                'assets/images/padlock.png',
+                width: screenWidth * 0.2,
+                height: screenWidth * 0.2,
+                fit: BoxFit.contain,
+              ),
+            ),
+            Positioned(
+              top: screenHeight * 0.14 + 50 + screenWidth * 0.2 + 20,
+              left: 0,
+              right: 0,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(4, (index) => Column(
+                  children: [
+                    Container(
+                      width: 50,
+                      height: 50,
+                      margin: const EdgeInsets.symmetric(horizontal: 5),
+                      child: TextField(
+                        controller: controllers[index],
+                        focusNode: focusNodes[index],
+                        maxLength: 1,
+                        textAlign: TextAlign.center,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                        style: const TextStyle(color: Colors.white),
+                        decoration: InputDecoration(
+                          counterText: '',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(color: Colors.white),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(color: Colors.white),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(color: Colors.white),
+                          ),
+                        ),
+                        onChanged: (value) {
+                          if (value.isNotEmpty && index < 3) {
+                            focusNodes[index + 1].requestFocus();
+                          }
+                        },
+                      ),
+                    ),
+                    Container(
+                      width: 20,
+                      height: 2,
+                      color: Colors.white,
+                    ),
+                  ],
+                )),
               ),
             ),
           ],
