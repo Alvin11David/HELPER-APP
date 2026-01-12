@@ -454,17 +454,20 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                   Positioned(
                     top: h * 0.4 + 650,
                     left: w * 0.04 + 240,
-                    child: Container(
-                      width: 30,
-                      height: 30,
-                      decoration: const BoxDecoration(
-                        color: Colors.orange,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.send,
-                        color: Colors.black,
-                        size: 16,
+                    child: GestureDetector(
+                      onTap: _commentController.text.isNotEmpty ? () { /* Send comment */ } : null,
+                      child: Container(
+                        width: 30,
+                        height: 30,
+                        decoration: BoxDecoration(
+                          color: _commentController.text.isNotEmpty ? Colors.orange : Colors.grey,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.send,
+                          color: Colors.black,
+                          size: 16,
+                        ),
                       ),
                     ),
                   ),
