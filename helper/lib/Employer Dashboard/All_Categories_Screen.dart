@@ -43,6 +43,7 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
     'Writers',
     'Musicians',
   ];
+  List<bool> liked = List.generate(16, (index) => false);
   bool _showFilters = false;
 
   @override
@@ -334,33 +335,63 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(20),
                               ),
-                              child: Align(
-                                alignment: Alignment.bottomLeft,
-                                child: Padding(
-                                  padding: const EdgeInsets.all(10),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(
-                                        professions[index],
-                                        style: const TextStyle(
-                                          color: Colors.black,
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.bold,
-                                        ),
+                              child: Stack(
+                                children: [
+                                  Align(
+                                    alignment: Alignment.bottomLeft,
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(10),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text(
+                                            professions[index],
+                                            style: const TextStyle(
+                                              color: Colors.black,
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          const Text(
+                                            'Number Providers',
+                                            style: TextStyle(
+                                              color: Colors.black,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                      const Text(
-                                        'Number Providers',
-                                        style: TextStyle(
-                                          color: Colors.black,
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                    ],
+                                    ),
                                   ),
-                                ),
+                                  Align(
+                                    alignment: Alignment.topRight,
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(10),
+                                      child: AnimatedScale(
+                                        scale: liked[index] ? 1.2 : 1.0,
+                                        duration: const Duration(milliseconds: 200),
+                                        child: GestureDetector(
+                                          onTap: () => setState(() => liked[index] = !liked[index]),
+                                          child: Container(
+                                            width: 30,
+                                            height: 30,
+                                            decoration: BoxDecoration(
+                                              shape: BoxShape.circle,
+                                              border: Border.all(color: Colors.black, width: 2),
+                                            ),
+                                            child: Icon(
+                                              Icons.favorite,
+                                              color: liked[index] ? Colors.red : Colors.black,
+                                              size: 16,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),
