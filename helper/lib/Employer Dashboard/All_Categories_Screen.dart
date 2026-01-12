@@ -519,6 +519,9 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                                           borderRadius: BorderRadius.circular(
                                             8,
                                           ),
+                                          border: Border.all(
+                                                color: Colors.black,
+                                              ),
                                         ),
                                         child: Row(
                                           mainAxisSize: MainAxisSize.min,
