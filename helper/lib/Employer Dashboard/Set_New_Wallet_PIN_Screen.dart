@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'dart:ui'; // For ImageFilter
 import 'package:flutter/services.dart'; // For FilteringTextInputFormatter
 
-class CreateWalletPINScreen extends StatefulWidget {
-  const CreateWalletPINScreen({super.key});
+class SetNewWalletPINScreen extends StatefulWidget {
+  const SetNewWalletPINScreen({super.key});
 
   @override
-  State<CreateWalletPINScreen> createState() => _CreateWalletPINScreenState();
+  State<SetNewWalletPINScreen> createState() => _SetNewWalletPINScreenState();
 }
 
-class _CreateWalletPINScreenState extends State<CreateWalletPINScreen> {
+class _SetNewWalletPINScreenState extends State<SetNewWalletPINScreen> {
   late List<TextEditingController> controllers;
   late List<FocusNode> focusNodes;
 
@@ -74,7 +74,7 @@ class _CreateWalletPINScreenState extends State<CreateWalletPINScreen> {
                       ),
                       SizedBox(width: screenWidth * 0.06),
                       Text(
-                        'Create Wallet PIN',
+                        'Reset Wallet PIN',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: screenWidth * 0.055,
