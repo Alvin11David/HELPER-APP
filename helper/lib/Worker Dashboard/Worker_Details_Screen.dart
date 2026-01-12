@@ -17,6 +17,7 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
 
   bool _isExpanded = false;
   bool _isDescriptionExpanded = false;
+  int _rating = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -399,10 +400,7 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                     left: w * 0.04,
                     child: const Text(
                       'Rate this service',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 14,
-                      ),
+                      style: TextStyle(color: Colors.white, fontSize: 14),
                     ),
                   ),
                   Positioned(
