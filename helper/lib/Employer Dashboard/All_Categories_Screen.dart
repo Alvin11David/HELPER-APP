@@ -200,7 +200,7 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                 children: List.generate(
                   4,
                   (index) => Container(
-                    width: 80,
+                    width: 100,
                     height: 40,
                     margin: const EdgeInsets.only(right: 10),
                     decoration: BoxDecoration(
@@ -230,21 +230,28 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                             ),
                           )
                         : index == 1
-                            ? Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 8),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(Icons.star, color: Colors.orange, size: 16),
-                                    const SizedBox(width: 4),
-                                    const Text(
-                                      'Top Rated',
-                                      style: TextStyle(color: Colors.black, fontSize: 12),
-                                    ),
-                                  ],
+                        ? Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.star,
+                                  color: Colors.orange,
+                                  size: 16,
                                 ),
-                              )
-                            : null,
+                                const SizedBox(width: 4),
+                                const Text(
+                                  'Top Rated',
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        : null,
                   ),
                 ),
               ),
