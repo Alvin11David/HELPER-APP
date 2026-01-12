@@ -43,6 +43,24 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
     'Writers',
     'Musicians',
   ];
+  List<double> ratings = [
+    4.9,
+    4.2,
+    3.8,
+    4.5,
+    2.3,
+    4.1,
+    3.9,
+    4.7,
+    4.0,
+    3.5,
+    4.3,
+    2.8,
+    4.6,
+    3.2,
+    4.4,
+    3.7,
+  ];
   List<bool> liked = List.generate(16, (index) => false);
   bool _showFilters = false;
 
@@ -383,6 +401,7 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                                             height: 30,
                                             decoration: BoxDecoration(
                                               shape: BoxShape.circle,
+                                              color: Colors.white,
                                               border: Border.all(
                                                 color: Colors.black,
                                               ),
@@ -397,6 +416,45 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                                               size: 16,
                                             ),
                                           ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  Align(
+                                    alignment: Alignment.topLeft,
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(10),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 6,
+                                          vertical: 4,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: Colors.grey[100],
+                                          borderRadius: BorderRadius.circular(
+                                            10,
+                                          ),
+                                          border: Border.all(
+                                            color: Colors.black,
+                                          ),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(
+                                              Icons.star,
+                                              color: Colors.orange,
+                                              size: 12,
+                                            ),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              ratings[index].toString(),
+                                              style: const TextStyle(
+                                                color: Colors.black,
+                                                fontSize: 10,
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                       ),
                                     ),
@@ -451,6 +509,45 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                                     ),
                                   ),
                                   Align(
+                                    alignment: Alignment.topLeft,
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(10),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 6,
+                                          vertical: 4,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: Colors.grey[100],
+                                          borderRadius: BorderRadius.circular(
+                                            10,
+                                          ),
+                                          border: Border.all(
+                                                color: Colors.black,
+                                              ),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(
+                                              Icons.star,
+                                              color: Colors.orange,
+                                              size: 12,
+                                            ),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              ratings[index + 8].toString(),
+                                              style: const TextStyle(
+                                                color: Colors.black,
+                                                fontSize: 10,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  Align(
                                     alignment: Alignment.topRight,
                                     child: Padding(
                                       padding: const EdgeInsets.all(10),
@@ -467,8 +564,9 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                                           child: Container(
                                             width: 30,
                                             height: 30,
-                                            decoration:  BoxDecoration(
+                                            decoration: BoxDecoration(
                                               shape: BoxShape.circle,
+                                              color: Colors.white,
                                               border: Border.all(
                                                 color: Colors.black,
                                               ),
