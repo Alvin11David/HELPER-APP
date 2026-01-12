@@ -100,8 +100,22 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                 ],
               ),
             ),
-            Positioned(
-              top: 20,
+            Positioned(              top: 125,
+              left: w * 0.04,
+              child: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: const Icon(
+                  Icons.chevron_left,
+                  color: Colors.black,
+                ),
+              ),
+            ),
+            Positioned(              top: 20,
               right: w * 0.04,
               child: Row(
                 mainAxisSize: MainAxisSize.min,
