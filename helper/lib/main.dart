@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:helper/Employer%20Dashboard/All_Categories_Screen.dart';
 import 'package:helper/Worker%20Dashboard/Worker_Details_Screen.dart';
 import 'firebase_options.dart';
 import 'package:helper/Auth/OTP_Verification_Screen.dart';
@@ -45,7 +46,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: WorkerDetailsScreen(),
+      home: AllCategoriesScreen(),
     );
   }
 }
