@@ -213,16 +213,38 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.location_on, color: Colors.black, size: 16),
+                                Icon(
+                                  Icons.location_on,
+                                  color: Colors.black,
+                                  size: 16,
+                                ),
                                 const SizedBox(width: 4),
                                 const Text(
                                   'Nearest',
-                                  style: TextStyle(color: Colors.black, fontSize: 12),
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                    fontSize: 12,
+                                  ),
                                 ),
                               ],
                             ),
                           )
-                        : null,
+                        : index == 1
+                            ? Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 8),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.star, color: Colors.orange, size: 16),
+                                    const SizedBox(width: 4),
+                                    const Text(
+                                      'Top Rated',
+                                      style: TextStyle(color: Colors.black, fontSize: 12),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            : null,
                   ),
                 ),
               ),
