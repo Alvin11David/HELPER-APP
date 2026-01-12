@@ -25,6 +25,7 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
     'Cleaning',
     'Gardening',
   ];
+  bool _showFilters = false;
 
   @override
   void initState() {
