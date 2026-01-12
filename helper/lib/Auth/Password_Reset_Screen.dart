@@ -43,7 +43,7 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
     double screenHeight = MediaQuery.of(context).size.height;
     final w = MediaQuery.of(context).size.width;
     final h = MediaQuery.of(context).size.height;
-    const _brandOrange = Color(0xFFFFA10D);
+    const brandOrange = Color(0xFFFFA10D);
 
     return Scaffold(
       body: Container(
@@ -126,7 +126,7 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
                       width: w,
                       activeIndex: 0,
                       labels: const ['1', '2', '3'],
-                      accent: _brandOrange,
+                      accent: brandOrange,
                     ),
                     SizedBox(height: screenHeight * 0.03),
                     Center(
@@ -516,7 +516,6 @@ class _PillInput extends StatelessWidget {
     required this.contentFontSize,
     this.obscure = false,
     this.suffix,
-    this.validator,
   });
 
   @override

@@ -189,7 +189,7 @@ class _ProfessionalLicenseUploadScreenState
                               data: Theme.of(context).copyWith(
                                 dropdownMenuTheme: DropdownMenuThemeData(
                                   menuStyle: MenuStyle(
-                                    shape: MaterialStateProperty.all(
+                                    shape: WidgetStateProperty.all(
                                       RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(20),
                                       ),

@@ -35,15 +35,15 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
     final double h = MediaQuery.of(context).size.height;
     double screenWidth = MediaQuery.of(context).size.width;
     double screenHeight = MediaQuery.of(context).size.height;
-    const _brandOrange = Color(0xFFFFA10D);
-    bool _loading = false;
-    final _formKey = GlobalKey<FormState>();
+    const brandOrange = Color(0xFFFFA10D);
+    bool loading = false;
+    final formKey = GlobalKey<FormState>();
 
-    Future<void> _onContinue() async {
+    Future<void> onContinue() async {
       FocusScope.of(context).unfocus();
-      if (!(_formKey.currentState?.validate() ?? false)) return;
+      if (!(formKey.currentState?.validate() ?? false)) return;
 
-      setState(() => _loading = true);
+      setState(() => loading = true);
 
       // TODO:
       // phone: send OTP -> navigate to OTPVerificationScreen
@@ -51,7 +51,7 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
       await Future.delayed(const Duration(milliseconds: 650));
 
       if (!mounted) return;
-      setState(() => _loading = false);
+      setState(() => loading = false);
     }
 
     return Scaffold(
@@ -131,7 +131,7 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                       width: w,
                       activeIndex: 0,
                       labels: const ['1', '2', '3'],
-                      accent: _brandOrange,
+                      accent: brandOrange,
                     ),
                     SizedBox(height: screenHeight * 0.03),
                     Center(
@@ -417,7 +417,7 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                       width: double.infinity,
                       height: h * 0.062,
                       child: ElevatedButton(
-                        onPressed: _loading ? null : _onContinue,
+                        onPressed: loading ? null : onContinue,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Color(0XFFFBBC04),
                           disabledBackgroundColor: Color(
@@ -428,7 +428,7 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                             borderRadius: BorderRadius.circular(30),
                           ),
                         ),
-                        child: _loading
+                        child: loading
                             ? SizedBox(
                                 width: h * 0.03,
                                 height: h * 0.03,
