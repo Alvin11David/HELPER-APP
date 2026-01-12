@@ -299,10 +299,10 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
               child: SizedBox(
                 width: w - 2 * w * 0.04,
                 height: 5 * 200 + 40, // adjusted height
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: SingleChildScrollView(
+                child: SingleChildScrollView(
+                  child: Row(
+                    children: [
+                      Expanded(
                         child: Column(
                           children: List.generate(
                             5,
@@ -318,10 +318,8 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                           ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: SingleChildScrollView(
+                      const SizedBox(width: 10),
+                      Expanded(
                         child: Column(
                           children: List.generate(
                             5,
@@ -337,8 +335,8 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                           ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
