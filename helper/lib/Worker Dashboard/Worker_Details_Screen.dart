@@ -427,11 +427,25 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                       width: 280,
                       height: 110,
                       decoration: BoxDecoration(
-                        border: Border.all(
-                          color: Colors.white,
-                          width: 1,
-                        ),
+                        border: Border.all(color: Colors.white, width: 1),
                         borderRadius: BorderRadius.circular(20),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    top: h * 0.4 + 650,
+                    left: w * 0.04 + 240,
+                    child: Container(
+                      width: 30,
+                      height: 30,
+                      decoration: const BoxDecoration(
+                        color: Colors.orange,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.send,
+                        color: Colors.black,
+                        size: 16,
                       ),
                     ),
                   ),
