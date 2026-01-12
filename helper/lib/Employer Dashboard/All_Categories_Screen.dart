@@ -371,19 +371,28 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                                       padding: const EdgeInsets.all(10),
                                       child: AnimatedScale(
                                         scale: liked[index] ? 1.2 : 1.0,
-                                        duration: const Duration(milliseconds: 200),
+                                        duration: const Duration(
+                                          milliseconds: 200,
+                                        ),
                                         child: GestureDetector(
-                                          onTap: () => setState(() => liked[index] = !liked[index]),
+                                          onTap: () => setState(
+                                            () => liked[index] = !liked[index],
+                                          ),
                                           child: Container(
                                             width: 30,
                                             height: 30,
                                             decoration: BoxDecoration(
                                               shape: BoxShape.circle,
-                                              border: Border.all(color: Colors.black, width: 2),
+                                              border: Border.all(
+                                                color: Colors.black,
+                                                width: 2,
+                                              ),
                                             ),
                                             child: Icon(
                                               Icons.favorite,
-                                              color: liked[index] ? Colors.red : Colors.black,
+                                              color: liked[index]
+                                                  ? Colors.red
+                                                  : Colors.black,
                                               size: 16,
                                             ),
                                           ),
@@ -446,19 +455,29 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                                       padding: const EdgeInsets.all(10),
                                       child: AnimatedScale(
                                         scale: liked[index + 8] ? 1.2 : 1.0,
-                                        duration: const Duration(milliseconds: 200),
+                                        duration: const Duration(
+                                          milliseconds: 200,
+                                        ),
                                         child: GestureDetector(
-                                          onTap: () => setState(() => liked[index + 8] = !liked[index + 8]),
+                                          onTap: () => setState(
+                                            () => liked[index + 8] =
+                                                !liked[index + 8],
+                                          ),
                                           child: Container(
                                             width: 30,
                                             height: 30,
                                             decoration: BoxDecoration(
                                               shape: BoxShape.circle,
-                                              border: Border.all(color: Colors.black, width: 2),
+                                              border: Border.all(
+                                                color: Colors.black,
+                                                width: 2,
+                                              ),
                                             ),
                                             child: Icon(
                                               Icons.favorite,
-                                              color: liked[index + 8] ? Colors.red : Colors.black,
+                                              color: liked[index + 8]
+                                                  ? Colors.red
+                                                  : Colors.black,
                                               size: 16,
                                             ),
                                           ),
