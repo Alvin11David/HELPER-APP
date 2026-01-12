@@ -298,20 +298,22 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
               left: w * 0.04,
               child: SizedBox(
                 width: w - 2 * w * 0.04,
-                height: 5 * 217 + 40, // approximate height for 5 rectangles
+                height: 5 * 200 + 40, // adjusted height
                 child: Row(
                   children: [
                     Expanded(
-                      child: Column(
-                        children: List.generate(
-                          5,
-                          (index) => Container(
-                            width: 183,
-                            height: 217,
-                            margin: const EdgeInsets.only(bottom: 10),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(20),
+                      child: SingleChildScrollView(
+                        child: Column(
+                          children: List.generate(
+                            5,
+                            (index) => Container(
+                              width: 183,
+                              height: 200,
+                              margin: const EdgeInsets.only(bottom: 10),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(20),
+                              ),
                             ),
                           ),
                         ),
@@ -319,16 +321,18 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                     ),
                     const SizedBox(width: 10),
                     Expanded(
-                      child: Column(
-                        children: List.generate(
-                          5,
-                          (index) => Container(
-                            width: 183,
-                            height: 217,
-                            margin: const EdgeInsets.only(bottom: 10),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(20),
+                      child: SingleChildScrollView(
+                        child: Column(
+                          children: List.generate(
+                            5,
+                            (index) => Container(
+                              width: 183,
+                              height: 217,
+                              margin: const EdgeInsets.only(bottom: 10),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(20),
+                              ),
                             ),
                           ),
                         ),
