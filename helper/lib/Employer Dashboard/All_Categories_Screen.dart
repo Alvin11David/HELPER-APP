@@ -325,7 +325,7 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                             5,
                             (index) => Container(
                               width: 183,
-                              height: 217,
+                              height: 200,
                               margin: const EdgeInsets.only(bottom: 10),
                               decoration: BoxDecoration(
                                 color: Colors.white,
