@@ -298,14 +298,16 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
               left: w * 0.04,
               child: SizedBox(
                 width: w - 2 * w * 0.04,
-                height: 5 * 200 + 40, // adjusted height
+                height:
+                    MediaQuery.of(context).size.height -
+                    ((_showFilters ? 225 : 175) + 30),
                 child: SingleChildScrollView(
                   child: Row(
                     children: [
                       Expanded(
                         child: Column(
                           children: List.generate(
-                            5,
+                            8,
                             (index) => Container(
                               width: 183,
                               height: 200,
@@ -322,7 +324,7 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                       Expanded(
                         child: Column(
                           children: List.generate(
-                            5,
+                            8,
                             (index) => Container(
                               width: 183,
                               height: 200,
