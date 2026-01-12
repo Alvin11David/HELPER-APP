@@ -191,6 +191,42 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                 ],
               ),
             ),
+            AnimatedPositioned(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+              top: 175,
+              left: _showFilters ? w * 0.04 : -400,
+              child: Row(
+                children: List.generate(
+                  4,
+                  (index) => Container(
+                    width: 80,
+                    height: 40,
+                    margin: const EdgeInsets.only(right: 10),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: index == 0
+                        ? Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.location_on, color: Colors.black, size: 16),
+                                const SizedBox(width: 4),
+                                const Text(
+                                  'Nearest',
+                                  style: TextStyle(color: Colors.black, fontSize: 12),
+                                ),
+                              ],
+                            ),
+                          )
+                        : null,
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
       ),
