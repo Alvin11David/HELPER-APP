@@ -23,6 +23,7 @@ import 'package:helper/Payments/MTN_Payment_Method_Screen.dart';
 import 'package:helper/Document Upload/National_ID_Passport_Front_Upload_Screen.dart';
 import 'package:helper/Document Upload/Professional_License_Upload.dart';
 import 'package:helper/Document Upload/Selfie_Verification_Upload.dart';
+import 'package:helper/Worker Dashboard/Workers_skills_and_Job_Details.dart';
 
 void main() {
   runApp(const MyApp());
@@ -39,7 +40,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: const PhoneNumberEmailAddressScreen(),
+      home: const WorkerSkillsJobDetailsScreen(),
     );
   }
 }
