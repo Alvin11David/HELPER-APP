@@ -24,7 +24,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
           builder: (context, setState) {
             double screenWidth = MediaQuery.of(context).size.width;
             return Container(
-              height: 250, // Fixed height to prevent the modal from shrinking
+              height: 270, // Fixed height to prevent the modal from shrinking
               width: double.infinity, // Fixed width to prevent width changes
               padding: EdgeInsets.only(left: 0, right: 0, bottom: 0),
               decoration: BoxDecoration(
@@ -106,6 +106,15 @@ class _BottomNavBarState extends State<BottomNavBar> {
                           }
                         },
                       ),
+                    ),
+                  ),
+                  SizedBox(height: 5),
+                  Text(
+                    'Forgot PIN?',
+                    style: TextStyle(
+                      color: Color(0xFFFFA10D),
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                   SizedBox(height: 20),
