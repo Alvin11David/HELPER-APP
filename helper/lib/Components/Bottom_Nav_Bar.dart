@@ -25,6 +25,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
             double screenWidth = MediaQuery.of(context).size.width;
             return Container(
               height: 250, // Fixed height to prevent the modal from shrinking
+              width: double.infinity, // Fixed width to prevent width changes
               padding: EdgeInsets.only(left: 0, right: 0, bottom: 0),
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -69,40 +70,52 @@ class _BottomNavBarState extends State<BottomNavBar> {
                             );
                           }),
                         )
-                      : SizedBox(height: 15), // Maintain height when circles are hidden
-                  Transform.translate(
-                    offset: Offset(
-                      0,
-                      -30,
-                    ), // Move up by 8 pixels to be very close to the circles
-                    child: Container(
-                      width: screenWidth * 0.35, // Reduced from 0.8 to 0.6
-                      child: TextField(
-                        keyboardType: TextInputType.number,
-                        maxLength: 4,
-                        obscureText: true,
-                        decoration: InputDecoration(
-                          contentPadding: EdgeInsets.symmetric(
-                            vertical: 0,
-                          ), // Reduce vertical padding to lift the underline
-                          enabledBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.black),
+                      : SizedBox(
+                          height: 15,
+                        ), // Maintain height when circles are hidden
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(4, (index) {
+                      return Container(
+                        margin: EdgeInsets.symmetric(horizontal: 5),
+                        width:
+                            30, // Increased from 15 to 30 for better input on web
+                        child: TextField(
+                          keyboardType: TextInputType.number,
+                          maxLength: 1,
+                          obscureText: true,
+                          textAlign: TextAlign.center,
+                          decoration: InputDecoration(
+                            contentPadding: EdgeInsets.symmetric(vertical: 0),
+                            enabledBorder: UnderlineInputBorder(
+                              borderSide: BorderSide(color: Colors.black),
+                            ),
+                            focusedBorder: UnderlineInputBorder(
+                              borderSide: BorderSide(color: Colors.black),
+                            ),
+                            counterText: '', // Hide character counter
                           ),
-                          focusedBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.black),
-                          ),
+                          onChanged: (value) {
+                            setState(() {
+                              // Update the pin
+                              List<String> digits = _pin
+                                  .padRight(4, '')
+                                  .split('');
+                              digits[index] = value;
+                              _pin = digits.join();
+                            });
+                            if (value.isNotEmpty && index < 3) {
+                              // Move to next field
+                              FocusScope.of(context).nextFocus();
+                            }
+                            if (_pin.length == 4 && !_pin.contains('')) {
+                              // TODO: Verify PIN
+                              Navigator.pop(context);
+                            }
+                          },
                         ),
-                        onChanged: (value) {
-                          setState(() {
-                            _pin = value;
-                          });
-                          if (_pin.length == 4) {
-                            // TODO: Verify PIN
-                            Navigator.pop(context);
-                          }
-                        },
-                      ),
-                    ),
+                      );
+                    }),
                   ),
                   SizedBox(height: 20),
                 ],
