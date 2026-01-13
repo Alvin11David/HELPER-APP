@@ -69,7 +69,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
                   ),
                   SizedBox(height: 20),
                   Container(
-                    width: screenWidth * 0.6,  // Reduced from 0.8 to 0.6
+                    width: screenWidth * 0.35, // Reduced from 0.8 to 0.6
                     child: TextField(
                       keyboardType: TextInputType.number,
                       maxLength: 4,
