@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:helper/Worker Dashboard/Workers_skills_and_Job_Details.dart';
+import 'package:helper/Employer Dashboard/job_detail_booking_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -16,7 +16,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: const WorkerSkillsJobDetailsScreen(),
+      home: const JobDetailBookingScreen(),
     );
   }
 }
