@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../Components/Bottom_Nav_Bar.dart';
+import 'Create_Wallet_PIN_Screen.dart';
 
 class EmployerDashboardScreen extends StatefulWidget {
   const EmployerDashboardScreen({super.key});
@@ -44,6 +46,20 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
     _focusNode.dispose();
     _controller.dispose();
     super.dispose();
+  }
+
+  void _onItemTapped(int index) async {
+    if (index == 2) { // Wallet index
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      bool pinSet = prefs.getBool('wallet_pin_set') ?? false;
+      if (!pinSet) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => CreateWalletPINScreen()),
+        );
+      }
+    }
+    // Handle other indices if needed
   }
 
   @override
@@ -971,7 +987,7 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
           ),
         ),
       ),
-      bottomNavigationBar: BottomNavBar(),
+      bottomNavigationBar: BottomNavBar(onItemTapped: _onItemTapped),
     );
   }
 }
