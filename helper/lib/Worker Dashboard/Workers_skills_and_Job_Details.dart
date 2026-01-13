@@ -1053,44 +1053,53 @@ class _WorkerSkillsJobDetailsScreenState
         borderRadius: BorderRadius.circular(30),
       ),
       padding: EdgeInsets.symmetric(horizontal: w * 0.05),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: value,
-          isExpanded: true,
-          icon: Icon(
-            Icons.keyboard_arrow_down_rounded,
-            color: Colors.black,
-            size: w * 0.07,
-          ),
-          hint: Text(
-            hint,
-            style: TextStyle(
-              color: Colors.black.withOpacity(0.65),
-              fontFamily: 'Inter',
-              fontWeight: FontWeight.w800,
-              fontSize: w * 0.034,
+      child: Theme(
+        data: Theme.of(context).copyWith(
+          popupMenuTheme: PopupMenuThemeData(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
             ),
           ),
-          items: items
-              .map(
-                (e) => DropdownMenuItem(
-                  value: e,
-                  child: Text(
-                    e,
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontFamily: 'Inter',
-                      fontWeight: FontWeight.w800,
-                      fontSize: w * 0.036,
+        ),
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton<String>(
+            value: value,
+            isExpanded: true,
+            icon: Icon(
+              Icons.keyboard_arrow_down_rounded,
+              color: Colors.black,
+              size: w * 0.07,
+            ),
+            hint: Text(
+              hint,
+              style: TextStyle(
+                color: Colors.black.withOpacity(0.65),
+                fontFamily: 'Inter',
+                fontWeight: FontWeight.w800,
+                fontSize: w * 0.034,
+              ),
+            ),
+            items: items
+                .map(
+                  (e) => DropdownMenuItem(
+                    value: e,
+                    child: Text(
+                      e,
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontFamily: 'Inter',
+                        fontWeight: FontWeight.w800,
+                        fontSize: w * 0.036,
+                      ),
                     ),
                   ),
-                ),
-              )
-              .toList(),
-          onChanged: (v) {
-            onChanged(v);
-            _recalcProgress();
-          },
+                )
+                .toList(),
+            onChanged: (v) {
+              onChanged(v);
+              _recalcProgress();
+            },
+          ),
         ),
       ),
     );
