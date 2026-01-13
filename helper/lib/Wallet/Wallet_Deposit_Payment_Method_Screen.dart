@@ -140,50 +140,6 @@ class _WalletDepositPaymentMethodScreenState extends State<WalletDepositPaymentM
                         ),
                       ),
                     ),
-                    SizedBox(height: screenHeight * 0.02),
-                    Center(
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(30),
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                          child: Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: screenWidth * 0.04,
-                              vertical: screenHeight * 0.004,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(30),
-                              border: Border.all(
-                                color: Colors.white.withOpacity(0.4),
-                                width: 2,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.white.withOpacity(0.1),
-                                  blurRadius: 15,
-                                  spreadRadius: 2,
-                                ),
-                              ],
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  'Outside World: \$10',
-                                  style: TextStyle(
-                                    color: Colors.black,
-                                    fontSize: screenWidth * 0.04,
-                                    fontWeight: FontWeight.w500,
-                                    fontFamily: 'Poppins',
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
                   ],
                 ),
               ),
