@@ -143,7 +143,7 @@ class WalletTopUpScreen extends StatelessWidget {
                               style: TextStyle(
                                 color: Colors.black,
                                 fontSize: screenWidth * 0.035,
-                                fontWeight: FontWeight.w900,
+                                fontWeight: FontWeight.bold,
                                 fontFamily: 'Inter',
                               ),
                             ),
@@ -155,6 +155,39 @@ class WalletTopUpScreen extends StatelessWidget {
                                 fontSize: screenWidth * 0.03,
                                 fontWeight: FontWeight.w500,
                                 fontFamily: 'Poppins',
+                              ),
+                            ),
+                            SizedBox(height: screenHeight * 0.01),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  "UGX",
+                                  style: TextStyle(
+                                    color: const Color(0xFFFFA10D),
+                                    fontSize: screenWidth * 0.035,
+                                    fontWeight: FontWeight.w600,
+                                    fontFamily: 'Poppins',
+                                  ),
+                                ),
+                                SizedBox(width: screenWidth * 0.02),
+                                Text(
+                                  "Enter Amount",
+                                  style: TextStyle(
+                                    color: Colors.black.withOpacity(0.55),
+                                    fontSize: screenWidth * 0.03,
+                                    fontWeight: FontWeight.w400,
+                                    fontFamily: 'Poppins',
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: screenHeight * 0.005),
+                            CustomPaint(
+                              painter: _DashedLinePainter(color: Colors.black.withOpacity(0.5)),
+                              child: SizedBox(
+                                height: 1,
+                                width: screenWidth * 0.8,
                               ),
                             ),
                           ],
