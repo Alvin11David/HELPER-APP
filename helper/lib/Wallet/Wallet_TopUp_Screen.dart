@@ -133,15 +133,31 @@ class WalletTopUpScreen extends StatelessWidget {
                       ),
                       child: Align(
                         alignment: Alignment.topLeft,
-                        child: Text(
-                          "How much money would you like to add to your\nHelper's App Wallet?",
-                          textAlign: TextAlign.left,
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontSize: screenWidth * 0.035,
-                            fontWeight: FontWeight.w600,
-                            fontFamily: 'Poppins',
-                          ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "How much money would you like to add to your\nHelper's App Wallet?",
+                              textAlign: TextAlign.left,
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontSize: screenWidth * 0.035,
+                                fontWeight: FontWeight.w600,
+                                fontFamily: 'Poppins',
+                              ),
+                            ),
+                            SizedBox(height: screenHeight * 0.005),
+                            Text(
+                              "Amount",
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontSize: screenWidth * 0.03,
+                                fontWeight: FontWeight.w500,
+                                fontFamily: 'Poppins',
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
