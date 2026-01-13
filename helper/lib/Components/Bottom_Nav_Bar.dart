@@ -67,7 +67,6 @@ class _BottomNavBarState extends State<BottomNavBar> {
                       );
                     }),
                   ),
-                  SizedBox(height: 2), // Lifted closer
                   Container(
                     width: screenWidth * 0.35, // Reduced from 0.8 to 0.6
                     child: TextField(
@@ -75,7 +74,9 @@ class _BottomNavBarState extends State<BottomNavBar> {
                       maxLength: 4,
                       obscureText: true,
                       decoration: InputDecoration(
-                        contentPadding: EdgeInsets.symmetric(vertical: 0), // Reduce vertical padding to lift the underline
+                        contentPadding: EdgeInsets.symmetric(
+                          vertical: 0,
+                        ), // Reduce vertical padding to lift the underline
                         enabledBorder: UnderlineInputBorder(
                           borderSide: BorderSide(color: Colors.black),
                         ),
