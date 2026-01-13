@@ -119,9 +119,11 @@ class _BottomNavBarState extends State<BottomNavBar> {
               if (index == 2) {
                 print('Wallet tapped');
                 try {
-                  SharedPreferences prefs = await SharedPreferences.getInstance();
+                  SharedPreferences prefs =
+                      await SharedPreferences.getInstance();
                   bool pinSet = prefs.getBool('wallet_pin_set') ?? false;
-                  print('pinSet: $pinSet');
+                  String? savedPin = prefs.getString('wallet_pin');
+                  print('pinSet: $pinSet, savedPin: $savedPin');
                   if (!pinSet) {
                     print('Navigating to CreateWalletPINScreen');
                     Navigator.push(

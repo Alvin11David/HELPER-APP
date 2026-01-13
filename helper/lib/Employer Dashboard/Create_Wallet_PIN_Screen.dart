@@ -34,13 +34,20 @@ class _CreateWalletPINScreenState extends State<CreateWalletPINScreen> {
 
   void _savePin() async {
     String pin = controllers.map((c) => c.text).join();
+    print('Saving PIN: $pin');
     if (pin.length == 4) {
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      await prefs.setString('wallet_pin', pin);
-      await prefs.setBool('wallet_pin_set', true);
-      Navigator.pop(context); // Go back to dashboard
+      try {
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        await prefs.setString('wallet_pin', pin);
+        await prefs.setBool('wallet_pin_set', true);
+        print('PIN saved successfully');
+        Navigator.pop(context); // Go back to dashboard
+      } catch (e) {
+        print('Error saving PIN: $e');
+      }
     } else {
       // Show error
+      print('PIN length not 4');
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Please enter a 4-digit PIN')));
@@ -183,7 +190,7 @@ class _CreateWalletPINScreenState extends State<CreateWalletPINScreen> {
                     children: [
                       Container(
                         width: 50,
-                        height: 85,
+                        height: 90,
                         margin: const EdgeInsets.symmetric(horizontal: 5),
                         child: Stack(
                           children: [
