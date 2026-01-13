@@ -19,6 +19,11 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
     super.dispose();
   }
 
+  void onContinue() {
+    // TODO: Implement continue logic
+    print('Continue pressed');
+  }
+
   Widget _amountButton(double w, double h, String text) {
     return Container(
       width: w * 0.22,
