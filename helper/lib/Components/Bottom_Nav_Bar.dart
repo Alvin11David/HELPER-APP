@@ -67,7 +67,9 @@ class _BottomNavBarState extends State<BottomNavBar> {
                       );
                     }),
                   ),
-                  SizedBox(height: 20),
+                  SizedBox(
+                    height: 0,
+                  ), // Reduced from 20 to 10 to lift the dash up
                   Container(
                     width: screenWidth * 0.35, // Reduced from 0.8 to 0.6
                     child: TextField(
