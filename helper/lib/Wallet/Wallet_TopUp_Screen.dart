@@ -25,24 +25,28 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
     print('Continue pressed');
   }
 
-  Widget _amountButton(double w, double h, String text) {
-    return Container(
-      width: w * 0.22,
-      height: h * 0.04,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFFFA10D), width: 2),
-      ),
-      child: Center(
-        child: Text(
-          text,
-          style: TextStyle(
-            color: Colors.black,
-            fontSize: w * 0.03,
-            fontWeight: FontWeight.w500,
-            fontFamily: 'Poppins',
+  Widget _amountButton(double w, double h, String text, bool isSelected, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: w * 0.22,
+        height: h * 0.04,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0xFFFFA10D), width: 2),
+          color: isSelected ? const Color(0xFFFFA10D) : Colors.transparent,
+        ),
+        child: Center(
+          child: Text(
+            text,
+            style: TextStyle(
+              color: isSelected ? Colors.white : Colors.black,
+              fontSize: w * 0.03,
+              fontWeight: FontWeight.w500,
+              fontFamily: 'Poppins',
+            ),
+            textAlign: TextAlign.center,
           ),
-          textAlign: TextAlign.center,
         ),
       ),
     );
