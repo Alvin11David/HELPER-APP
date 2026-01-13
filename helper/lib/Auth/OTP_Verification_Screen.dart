@@ -275,7 +275,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
                           width: otpBoxWidth,
                           height: otpBoxHeight,
                           margin: EdgeInsets.symmetric(
-                            horizontal: screenWidth * 0.01,
+                            horizontal: screenWidth * 0.02,
                           ),
                           decoration: BoxDecoration(
                             border: Border.all(color: Colors.white, width: 1),

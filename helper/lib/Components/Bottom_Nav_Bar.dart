@@ -24,6 +24,8 @@ class _BottomNavBarState extends State<BottomNavBar> {
           builder: (context, setState) {
             double screenWidth = MediaQuery.of(context).size.width;
             return Container(
+              height: 270, // Fixed height to prevent the modal from shrinking
+              width: double.infinity, // Fixed width to prevent width changes
               padding: EdgeInsets.only(left: 0, right: 0, bottom: 0),
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -51,46 +53,68 @@ class _BottomNavBarState extends State<BottomNavBar> {
                     ),
                   ),
                   SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(4, (index) {
-                      return Container(
-                        margin: EdgeInsets.symmetric(horizontal: 5),
-                        width: 15,
-                        height: 15,
-                        decoration: BoxDecoration(
-                          color: _pin.length > index
-                              ? Colors.black
-                              : Color(0xFFD9D9D9),
-                          shape: BoxShape.circle,
+                  _pin.isEmpty
+                      ? Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: List.generate(4, (index) {
+                            return Container(
+                              margin: EdgeInsets.symmetric(horizontal: 10),
+                              width: 15,
+                              height: 15,
+                              decoration: BoxDecoration(
+                                color: _pin.length > index
+                                    ? Colors.black
+                                    : Color(0xFFD9D9D9),
+                                shape: BoxShape.circle,
+                              ),
+                            );
+                          }),
+                        )
+                      : SizedBox(
+                          height: 15,
+                        ), // Maintain height when circles are hidden
+                  Transform.translate(
+                    offset: Offset(
+                      0,
+                      -30,
+                    ), // Move up by 8 pixels to be very close to the circles
+                    child: Container(
+                      width: screenWidth * 0.35, // Reduced from 0.8 to 0.6
+                      child: TextField(
+                        keyboardType: TextInputType.number,
+                        maxLength: 4,
+                        obscureText: true,
+                        textAlign: TextAlign.center,
+                        decoration: InputDecoration(
+                          contentPadding: EdgeInsets.symmetric(
+                            vertical: 0,
+                          ), // Reduce vertical padding to lift the underline
+                          enabledBorder: UnderlineInputBorder(
+                            borderSide: BorderSide(color: Colors.black),
+                          ),
+                          focusedBorder: UnderlineInputBorder(
+                            borderSide: BorderSide(color: Colors.black),
+                          ),
                         ),
-                      );
-                    }),
-                  ),
-                  SizedBox(height: 20),
-                  Container(
-                    width: screenWidth * 0.6,  // Reduced from 0.8 to 0.6
-                    child: TextField(
-                      keyboardType: TextInputType.number,
-                      maxLength: 4,
-                      obscureText: true,
-                      decoration: InputDecoration(
-                        enabledBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(color: Colors.black),
-                        ),
-                        focusedBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(color: Colors.black),
-                        ),
+                        onChanged: (value) {
+                          setState(() {
+                            _pin = value;
+                          });
+                          if (_pin.length == 4) {
+                            // TODO: Verify PIN
+                            Navigator.pop(context);
+                          }
+                        },
                       ),
-                      onChanged: (value) {
-                        setState(() {
-                          _pin = value;
-                        });
-                        if (_pin.length == 4) {
-                          // TODO: Verify PIN
-                          Navigator.pop(context);
-                        }
-                      },
+                    ),
+                  ),
+                  SizedBox(height: 0),
+                  Text(
+                    'Forgot PIN?',
+                    style: TextStyle(
+                      color: Color(0xFFFFA10D),
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                   SizedBox(height: 20),
