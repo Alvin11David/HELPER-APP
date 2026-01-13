@@ -259,7 +259,7 @@ class _CreateWalletPINScreenState extends State<CreateWalletPINScreen> {
               ),
             ),
             Positioned(
-              top: screenHeight * 0.60, // Adjusted to reduce space from header
+              top: screenHeight * 0.70, // Adjusted to reduce space from header
               left: screenWidth * 0.15,
               right: screenWidth * 0.15,
               child: ClipRRect(
