@@ -138,13 +138,13 @@ class WalletTopUpScreen extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              "How much money would you like to add to your\nHelper's App Wallet?",
+                              "How much money would you like to add to \nyour Helper's App Wallet?",
                               textAlign: TextAlign.left,
                               style: TextStyle(
                                 color: Colors.black,
                                 fontSize: screenWidth * 0.035,
-                                fontWeight: FontWeight.w600,
-                                fontFamily: 'Poppins',
+                                fontWeight: FontWeight.w900,
+                                fontFamily: 'Inter',
                               ),
                             ),
                             SizedBox(height: screenHeight * 0.005),
