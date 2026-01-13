@@ -67,32 +67,38 @@ class _BottomNavBarState extends State<BottomNavBar> {
                       );
                     }),
                   ),
-                  Container(
-                    width: screenWidth * 0.35, // Reduced from 0.8 to 0.6
-                    child: TextField(
-                      keyboardType: TextInputType.number,
-                      maxLength: 4,
-                      obscureText: true,
-                      decoration: InputDecoration(
-                        contentPadding: EdgeInsets.symmetric(
-                          vertical: 0,
-                        ), // Reduce vertical padding to lift the underline
-                        enabledBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(color: Colors.black),
+                  Transform.translate(
+                    offset: Offset(
+                      0,
+                      -20,
+                    ), // Move up by 8 pixels to be very close to the circles
+                    child: Container(
+                      width: screenWidth * 0.35, // Reduced from 0.8 to 0.6
+                      child: TextField(
+                        keyboardType: TextInputType.number,
+                        maxLength: 4,
+                        obscureText: true,
+                        decoration: InputDecoration(
+                          contentPadding: EdgeInsets.symmetric(
+                            vertical: 0,
+                          ), // Reduce vertical padding to lift the underline
+                          enabledBorder: UnderlineInputBorder(
+                            borderSide: BorderSide(color: Colors.black),
+                          ),
+                          focusedBorder: UnderlineInputBorder(
+                            borderSide: BorderSide(color: Colors.black),
+                          ),
                         ),
-                        focusedBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(color: Colors.black),
-                        ),
+                        onChanged: (value) {
+                          setState(() {
+                            _pin = value;
+                          });
+                          if (_pin.length == 4) {
+                            // TODO: Verify PIN
+                            Navigator.pop(context);
+                          }
+                        },
                       ),
-                      onChanged: (value) {
-                        setState(() {
-                          _pin = value;
-                        });
-                        if (_pin.length == 4) {
-                          // TODO: Verify PIN
-                          Navigator.pop(context);
-                        }
-                      },
                     ),
                   ),
                   SizedBox(height: 20),
