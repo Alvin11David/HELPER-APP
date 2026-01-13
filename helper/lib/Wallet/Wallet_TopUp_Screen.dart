@@ -18,6 +18,32 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
     super.dispose();
   }
 
+  Widget _amountButton(double w, double h, String text) {
+    return Container(
+      width: w * 0.15,
+      height: h * 0.04,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: const Color(0xFFFFA10D),
+          width: 2,
+        ),
+      ),
+      child: Center(
+        child: Text(
+          text,
+          style: TextStyle(
+            color: Colors.black,
+            fontSize: w * 0.025,
+            fontWeight: FontWeight.w500,
+            fontFamily: 'Poppins',
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -223,6 +249,17 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
                                 height: 1,
                                 width: screenWidth * 0.8,
                               ),
+                            ),
+                            SizedBox(height: screenHeight * 0.01),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                _amountButton(screenWidth, screenHeight, "UGX 10,000"),
+                                _amountButton(screenWidth, screenHeight, "UGX 25,000"),
+                                _amountButton(screenWidth, screenHeight, "UGX 50,000"),
+                                _amountButton(screenWidth, screenHeight, "UGX 100,000"),
+                                _amountButton(screenWidth, screenHeight, "UGX 200,000"),
+                              ],
                             ),
                           ],
                         ),
