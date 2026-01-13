@@ -11,6 +11,7 @@ class WalletTopUpScreen extends StatefulWidget {
 
 class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
   final TextEditingController _amountController = TextEditingController();
+  bool loading = false;
 
   @override
   void dispose() {
