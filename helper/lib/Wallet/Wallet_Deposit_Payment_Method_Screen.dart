@@ -113,14 +113,8 @@ class _WalletDepositPaymentMethodScreenState extends State<WalletDepositPaymentM
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(
-                                  Icons.attach_money,
-                                  color: Colors.white,
-                                  size: screenWidth * 0.055,
-                                ),
-                                SizedBox(width: screenWidth * 0.02),
                                 Text(
-                                  'Registration Fee',
+                                  'Kindly select a method below',
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontSize: screenWidth * 0.04,
