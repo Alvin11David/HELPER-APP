@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class WalletTopUpScreen extends StatefulWidget {
   const WalletTopUpScreen({super.key});
@@ -171,37 +172,47 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
                               ),
                             ),
                             SizedBox(height: screenHeight * 0.015),
-                            TextField(
-                              controller: _amountController,
-                              keyboardType: TextInputType.number,
-                              inputFormatters: [
-                                FilteringTextInputFormatter.digitsOnly,
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  "UGX",
+                                  style: TextStyle(
+                                    color: const Color(0xFFFFA10D),
+                                    fontSize: screenWidth * 0.035,
+                                    fontWeight: FontWeight.w600,
+                                    fontFamily: 'Poppins',
+                                  ),
+                                ),
+                                SizedBox(width: screenWidth * 0.02),
+                                Expanded(
+                                  child: TextField(
+                                    controller: _amountController,
+                                    keyboardType: TextInputType.number,
+                                    inputFormatters: [
+                                      FilteringTextInputFormatter.digitsOnly,
+                                    ],
+                                    style: TextStyle(
+                                      color: Colors.black,
+                                      fontSize: screenWidth * 0.035,
+                                      fontWeight: FontWeight.w500,
+                                      fontFamily: 'Poppins',
+                                    ),
+                                    decoration: InputDecoration(
+                                      hintText: "Enter Amount",
+                                      hintStyle: TextStyle(
+                                        color: Colors.black.withOpacity(0.55),
+                                        fontSize: screenWidth * 0.03,
+                                        fontWeight: FontWeight.w400,
+                                        fontFamily: 'Poppins',
+                                      ),
+                                      border: InputBorder.none,
+                                      isCollapsed: true,
+                                      contentPadding: EdgeInsets.zero,
+                                    ),
+                                  ),
+                                ),
                               ],
-                              style: TextStyle(
-                                color: Colors.black,
-                                fontSize: screenWidth * 0.035,
-                                fontWeight: FontWeight.w500,
-                                fontFamily: 'Poppins',
-                              ),
-                              decoration: InputDecoration(
-                                prefixText: "UGX ",
-                                prefixStyle: TextStyle(
-                                  color: const Color(0xFFFFA10D),
-                                  fontSize: screenWidth * 0.035,
-                                  fontWeight: FontWeight.w600,
-                                  fontFamily: 'Poppins',
-                                ),
-                                hintText: "Enter Amount",
-                                hintStyle: TextStyle(
-                                  color: Colors.black.withOpacity(0.55),
-                                  fontSize: screenWidth * 0.03,
-                                  fontWeight: FontWeight.w400,
-                                  fontFamily: 'Poppins',
-                                ),
-                                border: InputBorder.none,
-                                isCollapsed: true,
-                                contentPadding: EdgeInsets.zero,
-                              ),
                             ),
                             SizedBox(height: screenHeight * 0.005),
                             CustomPaint(
