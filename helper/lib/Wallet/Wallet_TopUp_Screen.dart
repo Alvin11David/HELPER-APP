@@ -117,6 +117,17 @@ class WalletTopUpScreen extends StatelessWidget {
                     ),
                   ),
                 ),
+                SizedBox(height: screenHeight * 0.02),
+                Center(
+                  child: Container(
+                    width: screenWidth * 0.9,
+                    height: screenHeight * 0.07,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
