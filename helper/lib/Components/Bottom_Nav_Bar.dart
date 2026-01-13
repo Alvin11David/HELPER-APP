@@ -58,7 +58,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: List.generate(4, (index) {
                             return Container(
-                              margin: EdgeInsets.symmetric(horizontal: 5),
+                              margin: EdgeInsets.symmetric(horizontal: 10),
                               width: 15,
                               height: 15,
                               decoration: BoxDecoration(
