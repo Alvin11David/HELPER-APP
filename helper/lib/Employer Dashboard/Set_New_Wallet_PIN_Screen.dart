@@ -161,9 +161,8 @@ class _SetNewWalletPINScreenState extends State<SetNewWalletPINScreen> {
               right: 0,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(
-                  4,
-                  (index) => Column(
+                children: [
+                  Column(
                     children: [
                       Container(
                         width: 50,
@@ -172,8 +171,8 @@ class _SetNewWalletPINScreenState extends State<SetNewWalletPINScreen> {
                         child: Stack(
                           children: [
                             TextField(
-                              controller: controllers[index],
-                              focusNode: focusNodes[index],
+                              controller: controllers[0],
+                              focusNode: focusNodes[0],
                               maxLength: 1,
                               textAlign: TextAlign.center,
                               keyboardType: TextInputType.number,
@@ -203,8 +202,8 @@ class _SetNewWalletPINScreenState extends State<SetNewWalletPINScreen> {
                                 ),
                               ),
                               onChanged: (value) {
-                                if (value.isNotEmpty && index < 3) {
-                                  focusNodes[index + 1].requestFocus();
+                                if (value.isNotEmpty) {
+                                  focusNodes[1].requestFocus();
                                 }
                               },
                             ),
@@ -213,7 +212,167 @@ class _SetNewWalletPINScreenState extends State<SetNewWalletPINScreen> {
                       ),
                     ],
                   ),
-                ),
+                  Column(
+                    children: [
+                      Container(
+                        width: 50,
+                        height: 85,
+                        margin: const EdgeInsets.symmetric(horizontal: 5),
+                        child: Stack(
+                          children: [
+                            TextField(
+                              controller: controllers[1],
+                              focusNode: focusNodes[1],
+                              maxLength: 1,
+                              textAlign: TextAlign.center,
+                              keyboardType: TextInputType.number,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly,
+                              ],
+                              style: const TextStyle(color: Colors.white),
+                              decoration: InputDecoration(
+                                counterText: '',
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                  borderSide: const BorderSide(
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                  borderSide: const BorderSide(
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                  borderSide: const BorderSide(
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                              onChanged: (value) {
+                                if (value.isNotEmpty) {
+                                  focusNodes[2].requestFocus();
+                                }
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  Transform.translate(
+                    offset: const Offset(0, -15),
+                    child: Container(
+                      width: 10,
+                      height: 10,
+                      margin: const EdgeInsets.symmetric(horizontal: 5),
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ),
+                  Column(
+                    children: [
+                      Container(
+                        width: 50,
+                        height: 85,
+                        margin: const EdgeInsets.symmetric(horizontal: 5),
+                        child: Stack(
+                          children: [
+                            TextField(
+                              controller: controllers[2],
+                              focusNode: focusNodes[2],
+                              maxLength: 1,
+                              textAlign: TextAlign.center,
+                              keyboardType: TextInputType.number,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly,
+                              ],
+                              style: const TextStyle(color: Colors.white),
+                              decoration: InputDecoration(
+                                counterText: '',
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                  borderSide: const BorderSide(
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                  borderSide: const BorderSide(
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                  borderSide: const BorderSide(
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                              onChanged: (value) {
+                                if (value.isNotEmpty) {
+                                  focusNodes[3].requestFocus();
+                                }
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  Column(
+                    children: [
+                      Container(
+                        width: 50,
+                        height: 85,
+                        margin: const EdgeInsets.symmetric(horizontal: 5),
+                        child: Stack(
+                          children: [
+                            TextField(
+                              controller: controllers[3],
+                              focusNode: focusNodes[3],
+                              maxLength: 1,
+                              textAlign: TextAlign.center,
+                              keyboardType: TextInputType.number,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly,
+                              ],
+                              style: const TextStyle(color: Colors.white),
+                              decoration: InputDecoration(
+                                counterText: '',
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                  borderSide: const BorderSide(
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                  borderSide: const BorderSide(
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                  borderSide: const BorderSide(
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                              onChanged: (value) {
+                                // No next field
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
             Positioned(
@@ -243,7 +402,7 @@ class _SetNewWalletPINScreenState extends State<SetNewWalletPINScreen> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Text( 
+                            Text(
                               'Reset PIN',
                               style: TextStyle(
                                 color: Colors.black,

@@ -10,6 +10,15 @@ class EmployerDashboardScreen extends StatefulWidget {
 }
 
 class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
+  int _selectedIndex = 0;
+
+  void _onItemTapped(int index) async {
+    setState(() {
+      _selectedIndex = index;
+    });
+    // Add navigation or logic here if needed
+  }
+
   String _getGreeting() {
     final hour = DateTime.now().hour;
     if (hour < 12) return 'Good Morning';
@@ -971,7 +980,7 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
           ),
         ),
       ),
-      bottomNavigationBar: BottomNavBar(),
+      bottomNavigationBar: BottomNavBar(onItemTapped: _onItemTapped),
     );
   }
 }

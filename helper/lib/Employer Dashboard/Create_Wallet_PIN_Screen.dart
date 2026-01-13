@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:ui'; // For ImageFilter
 import 'package:flutter/services.dart'; // For FilteringTextInputFormatter
+import 'package:shared_preferences/shared_preferences.dart';
 
 class CreateWalletPINScreen extends StatefulWidget {
   const CreateWalletPINScreen({super.key});
@@ -29,6 +30,28 @@ class _CreateWalletPINScreenState extends State<CreateWalletPINScreen> {
       node.dispose();
     }
     super.dispose();
+  }
+
+  void _savePin() async {
+    String pin = controllers.map((c) => c.text).join();
+    print('Saving PIN: $pin');
+    if (pin.length == 4) {
+      try {
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        await prefs.setString('wallet_pin', pin);
+        await prefs.setBool('wallet_pin_set', true);
+        print('PIN saved successfully');
+        Navigator.pop(context); // Go back to dashboard
+      } catch (e) {
+        print('Error saving PIN: $e');
+      }
+    } else {
+      // Show error
+      print('PIN length not 4');
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Please enter a 4-digit PIN')));
+    }
   }
 
   @override
@@ -167,7 +190,7 @@ class _CreateWalletPINScreenState extends State<CreateWalletPINScreen> {
                     children: [
                       Container(
                         width: 50,
-                        height: 85,
+                        height: 90,
                         margin: const EdgeInsets.symmetric(horizontal: 5),
                         child: Stack(
                           children: [
@@ -243,7 +266,7 @@ class _CreateWalletPINScreenState extends State<CreateWalletPINScreen> {
               ),
             ),
             Positioned(
-              top: screenHeight * 0.80, // Adjusted to reduce space from header
+              top: screenHeight * 0.70, // Adjusted to reduce space from header
               left: screenWidth * 0.15,
               right: screenWidth * 0.15,
               child: ClipRRect(
@@ -293,6 +316,44 @@ class _CreateWalletPINScreenState extends State<CreateWalletPINScreen> {
                         ),
                       ],
                     ),
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              top: screenHeight * 0.85,
+              left: screenWidth * 0.1,
+              right: screenWidth * 0.1,
+              child: SizedBox(
+                width: screenWidth * 0.9,
+                height: screenHeight * 0.07,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                  ),
+                  onPressed: _savePin,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Create PIN',
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: screenWidth * 0.045,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: "Poppins",
+                        ),
+                      ),
+                      SizedBox(width: screenWidth * 0.03),
+                      Icon(
+                        Icons.arrow_forward,
+                        color: Colors.black,
+                        size: screenWidth * 0.05,
+                      ),
+                    ],
                   ),
                 ),
               ),
