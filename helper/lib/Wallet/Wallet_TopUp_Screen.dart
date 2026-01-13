@@ -253,7 +253,7 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.start,
                                 children: [
-                                  SizedBox(width: screenWidth * 0.05),
+                                  SizedBox(width: screenWidth * 0.0),
                                   _amountButton(
                                     screenWidth,
                                     screenHeight,
@@ -283,7 +283,7 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
                                     screenHeight,
                                     "UGX 200,000",
                                   ),
-                                  SizedBox(width: screenWidth * 0.05),
+                                  SizedBox(width: screenWidth * 0.02),
                                 ],
                               ),
                             ),
