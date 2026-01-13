@@ -24,6 +24,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
           builder: (context, setState) {
             double screenWidth = MediaQuery.of(context).size.width;
             return Container(
+              height: 250, // Fixed height to prevent the modal from shrinking
               padding: EdgeInsets.only(left: 0, right: 0, bottom: 0),
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -51,22 +52,24 @@ class _BottomNavBarState extends State<BottomNavBar> {
                     ),
                   ),
                   SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(4, (index) {
-                      return Container(
-                        margin: EdgeInsets.symmetric(horizontal: 5),
-                        width: 15,
-                        height: 15,
-                        decoration: BoxDecoration(
-                          color: _pin.length > index
-                              ? Colors.black
-                              : Color(0xFFD9D9D9),
-                          shape: BoxShape.circle,
-                        ),
-                      );
-                    }),
-                  ),
+                  _pin.isEmpty
+                      ? Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: List.generate(4, (index) {
+                            return Container(
+                              margin: EdgeInsets.symmetric(horizontal: 5),
+                              width: 15,
+                              height: 15,
+                              decoration: BoxDecoration(
+                                color: _pin.length > index
+                                    ? Colors.black
+                                    : Color(0xFFD9D9D9),
+                                shape: BoxShape.circle,
+                              ),
+                            );
+                          }),
+                        )
+                      : SizedBox(height: 15), // Maintain height when circles are hidden
                   Transform.translate(
                     offset: Offset(
                       0,
