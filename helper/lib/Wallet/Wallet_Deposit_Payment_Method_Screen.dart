@@ -128,7 +128,7 @@ class _WalletDepositPaymentMethodScreenState extends State<WalletDepositPaymentM
                         ),
                       ),
                     ),
-                    SizedBox(height: screenHeight * 0.015),
+                    SizedBox(height: screenHeight * 0.03),
                     Center(
                       child: Text(
                         'UGX 25,000',
