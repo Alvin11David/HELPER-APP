@@ -248,35 +248,44 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
                               ),
                             ),
                             SizedBox(height: screenHeight * 0.01),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              children: [
-                                _amountButton(
-                                  screenWidth,
-                                  screenHeight,
-                                  "UGX 10,000",
-                                ),
-                                _amountButton(
-                                  screenWidth,
-                                  screenHeight,
-                                  "UGX 25,000",
-                                ),
-                                _amountButton(
-                                  screenWidth,
-                                  screenHeight,
-                                  "UGX 50,000",
-                                ),
-                                _amountButton(
-                                  screenWidth,
-                                  screenHeight,
-                                  "UGX 100,000",
-                                ),
-                                _amountButton(
-                                  screenWidth,
-                                  screenHeight,
-                                  "UGX 200,000",
-                                ),
-                              ],
+                            SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                children: [
+                                  SizedBox(width: screenWidth * 0.05),
+                                  _amountButton(
+                                    screenWidth,
+                                    screenHeight,
+                                    "UGX 10,000",
+                                  ),
+                                  SizedBox(width: screenWidth * 0.02),
+                                  _amountButton(
+                                    screenWidth,
+                                    screenHeight,
+                                    "UGX 25,000",
+                                  ),
+                                  SizedBox(width: screenWidth * 0.02),
+                                  _amountButton(
+                                    screenWidth,
+                                    screenHeight,
+                                    "UGX 50,000",
+                                  ),
+                                  SizedBox(width: screenWidth * 0.02),
+                                  _amountButton(
+                                    screenWidth,
+                                    screenHeight,
+                                    "UGX 100,000",
+                                  ),
+                                  SizedBox(width: screenWidth * 0.02),
+                                  _amountButton(
+                                    screenWidth,
+                                    screenHeight,
+                                    "UGX 200,000",
+                                  ),
+                                  SizedBox(width: screenWidth * 0.05),
+                                ],
+                              ),
                             ),
                           ],
                         ),
