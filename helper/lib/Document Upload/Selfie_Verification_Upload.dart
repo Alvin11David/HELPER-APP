@@ -200,7 +200,7 @@ class _GlassPill extends StatelessWidget {
   final Widget child;
   final double height;
 
-  const _GlassPill({required this.child});
+  const _GlassPill({required this.child, required this.height});
 
   @override
   Widget build(BuildContext context) {
