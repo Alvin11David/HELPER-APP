@@ -269,30 +269,65 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
                                     screenWidth,
                                     screenHeight,
                                     "UGX 10,000",
+                                    selectedAmount == "UGX 10,000",
+                                    () {
+                                      setState(() {
+                                        selectedAmount = "UGX 10,000";
+                                        _amountController.text = "10,000";
+                                      });
+                                    },
                                   ),
                                   SizedBox(width: screenWidth * 0.02),
                                   _amountButton(
                                     screenWidth,
                                     screenHeight,
                                     "UGX 25,000",
+                                    selectedAmount == "UGX 25,000",
+                                    () {
+                                      setState(() {
+                                        selectedAmount = "UGX 25,000";
+                                        _amountController.text = "25,000";
+                                      });
+                                    },
                                   ),
                                   SizedBox(width: screenWidth * 0.02),
                                   _amountButton(
                                     screenWidth,
                                     screenHeight,
                                     "UGX 50,000",
+                                    selectedAmount == "UGX 50,000",
+                                    () {
+                                      setState(() {
+                                        selectedAmount = "UGX 50,000";
+                                        _amountController.text = "50,000";
+                                      });
+                                    },
                                   ),
                                   SizedBox(width: screenWidth * 0.02),
                                   _amountButton(
                                     screenWidth,
                                     screenHeight,
                                     "UGX 100,000",
+                                    selectedAmount == "UGX 100,000",
+                                    () {
+                                      setState(() {
+                                        selectedAmount = "UGX 100,000";
+                                        _amountController.text = "100,000";
+                                      });
+                                    },
                                   ),
                                   SizedBox(width: screenWidth * 0.02),
                                   _amountButton(
                                     screenWidth,
                                     screenHeight,
                                     "UGX 200,000",
+                                    selectedAmount == "UGX 200,000",
+                                    () {
+                                      setState(() {
+                                        selectedAmount = "UGX 200,000";
+                                        _amountController.text = "200,000";
+                                      });
+                                    },
                                   ),
                                   SizedBox(width: screenWidth * 0.02),
                                 ],
