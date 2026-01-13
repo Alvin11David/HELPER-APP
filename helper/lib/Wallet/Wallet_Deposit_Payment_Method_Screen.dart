@@ -10,7 +10,6 @@ class WalletDepositPaymentMethodScreen extends StatefulWidget {
 }
 
 class _WalletDepositPaymentMethodScreenState extends State<WalletDepositPaymentMethodScreen> {
-  bool _isMasterCardSelected = false;
   bool _isVisaCardSelected = false;
   bool _isMtnCardSelected = false;
   bool _isPaypalSelected = false;
@@ -213,129 +212,6 @@ class _WalletDepositPaymentMethodScreenState extends State<WalletDepositPaymentM
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _isMasterCardSelected = !_isMasterCardSelected;
-                        });
-                      },
-                      child: Container(
-                        width: screenWidth * 0.91,
-                        height: screenHeight * 0.091,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: screenWidth * 0.05,
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Image.asset(
-                                    'assets/images/mastercard.png',
-                                    width: screenWidth * 0.12,
-                                    height: screenWidth * 0.12,
-                                  ),
-                                  SizedBox(width: screenWidth * 0.04),
-                                  Text(
-                                    'Master Card',
-                                    style: TextStyle(
-                                      color: Colors.black,
-                                      fontSize: screenWidth * 0.045,
-                                      fontWeight: FontWeight.w600,
-                                      fontFamily: 'Poppins',
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              Container(
-                                width: screenWidth * 0.065,
-                                height: screenWidth * 0.065,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: _isMasterCardSelected
-                                      ? Colors.orange
-                                      : Colors.transparent,
-                                  border: Border.all(
-                                    color: _isMasterCardSelected
-                                        ? Colors.white
-                                        : Colors.black,
-                                    width: 1.5,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: screenHeight * 0.02),
-                    GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _isVisaCardSelected = !_isVisaCardSelected;
-                        });
-                      },
-                      child: Container(
-                        width: screenWidth * 0.91,
-                        height: screenHeight * 0.091,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: screenWidth * 0.05,
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Image.asset(
-                                    'assets/images/visa.png',
-                                    width: screenWidth * 0.12,
-                                    height: screenWidth * 0.12,
-                                  ),
-                                  SizedBox(width: screenWidth * 0.04),
-                                  Text(
-                                    'Visa Card',
-                                    style: TextStyle(
-                                      color: Colors.black,
-                                      fontSize: screenWidth * 0.045,
-                                      fontWeight: FontWeight.w600,
-                                      fontFamily: 'Poppins',
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              Container(
-                                width: screenWidth * 0.065,
-                                height: screenWidth * 0.065,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: _isVisaCardSelected
-                                      ? Colors.orange
-                                      : Colors.transparent,
-                                  border: Border.all(
-                                    color: _isVisaCardSelected
-                                        ? Colors.white
-                                        : Colors.black,
-                                    width: 1.5,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
                     SizedBox(height: screenHeight * 0.02),
                     GestureDetector(
                       onTap: () {
