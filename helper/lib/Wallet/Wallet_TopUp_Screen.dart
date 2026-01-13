@@ -299,6 +299,57 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
                     ),
                   ),
                 ),
+                SizedBox(height: screenHeight * 0.06),
+                // Continue (white)
+                SizedBox(
+                  width: double.infinity,
+                  height: screenHeight * 0.062,
+                  child: ElevatedButton(
+                    onPressed: loading ? null : onContinue,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0XFFFBBC04),
+                      disabledBackgroundColor: const Color(
+                        0XFFFBBC04,
+                      ).withOpacity(0.6),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                    ),
+                    child: loading
+                        ? SizedBox(
+                            width: screenHeight * 0.03,
+                            height: screenHeight * 0.03,
+                            child: const CircularProgressIndicator(
+                              strokeWidth: 3,
+                              color: Colors.black,
+                            ),
+                          )
+                        : Center(
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  'Continue',
+                                  style: TextStyle(
+                                    fontSize: screenWidth * 0.045,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black,
+                                    fontFamily: 'Poppins',
+                                  ),
+                                ),
+                                SizedBox(width: screenWidth * 0.02),
+                                Icon(
+                                  Icons.arrow_forward_rounded,
+                                  color: Colors.black,
+                                  size: screenHeight * 0.035,
+                                ),
+                              ],
+                            ),
+                          ),
+                  ),
+                ),
               ],
             ),
           ),
