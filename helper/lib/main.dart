@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:helper/Employer%20Dashboard/All_Categories_Screen.dart';
 import 'package:helper/Employer%20Dashboard/Create_Wallet_PIN_Screen.dart';
 import 'package:helper/Employer%20Dashboard/Set_New_Wallet_PIN_Screen.dart';
+import 'package:helper/Wallet/Wallet_TopUp_Screen.dart';
 import 'package:helper/Worker%20Dashboard/Worker_Details_Screen.dart';
 import 'package:helper/Worker%20Dashboard/Workers_skills_and_Job_Details.dart';
 import 'firebase_options.dart';
@@ -49,7 +50,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: WorkerSkillsJobDetailsScreen(),
+      home: WalletTopUpScreen(),
     );
   }
 }
