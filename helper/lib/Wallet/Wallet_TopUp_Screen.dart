@@ -302,7 +302,7 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
                 SizedBox(height: screenHeight * 0.06),
                 // Continue (white)
                 SizedBox(
-                  width: double.infinity,
+                  width: screenWidth * 0.9,
                   height: screenHeight * 0.062,
                   child: ElevatedButton(
                     onPressed: loading ? null : onContinue,
