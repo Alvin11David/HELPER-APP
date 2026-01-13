@@ -84,6 +84,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
                         keyboardType: TextInputType.number,
                         maxLength: 4,
                         obscureText: true,
+                        textAlign: TextAlign.center,
                         decoration: InputDecoration(
                           contentPadding: EdgeInsets.symmetric(
                             vertical: 0,
