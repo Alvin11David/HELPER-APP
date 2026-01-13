@@ -20,7 +20,7 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
 
   Widget _amountButton(double w, double h, String text) {
     return Container(
-      width: w * 0.18,
+      width: w * 0.14,
       height: h * 0.04,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
@@ -251,11 +251,31 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                               children: [
-                                _amountButton(screenWidth, screenHeight, "UGX 10,000"),
-                                _amountButton(screenWidth, screenHeight, "UGX 25,000"),
-                                _amountButton(screenWidth, screenHeight, "UGX 50,000"),
-                                _amountButton(screenWidth, screenHeight, "UGX 100,000"),
-                                _amountButton(screenWidth, screenHeight, "UGX 200,000"),
+                                _amountButton(
+                                  screenWidth,
+                                  screenHeight,
+                                  "UGX 10,000",
+                                ),
+                                _amountButton(
+                                  screenWidth,
+                                  screenHeight,
+                                  "UGX 25,000",
+                                ),
+                                _amountButton(
+                                  screenWidth,
+                                  screenHeight,
+                                  "UGX 50,000",
+                                ),
+                                _amountButton(
+                                  screenWidth,
+                                  screenHeight,
+                                  "UGX 100,000",
+                                ),
+                                _amountButton(
+                                  screenWidth,
+                                  screenHeight,
+                                  "UGX 200,000",
+                                ),
                               ],
                             ),
                           ],
