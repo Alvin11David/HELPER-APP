@@ -12,6 +12,28 @@ class EmployerDashboardScreen extends StatefulWidget {
 }
 
 class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
+  int _selectedIndex = 0;
+
+  void _onItemTapped(int index) async {
+    setState(() {
+      _selectedIndex = index;
+    });
+    if (index == 2) {
+      // Wallet index
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      bool pinSet = prefs.getBool('wallet_pin_set') ?? false;
+      if (!pinSet) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => CreateWalletPINScreen()),
+        );
+      } else {
+        _showPINEntryModal();
+      }
+    }
+    // Add navigation or logic here if needed
+  }
+
   String _getGreeting() {
     final hour = DateTime.now().hour;
     if (hour < 12) return 'Good Morning';
@@ -48,18 +70,42 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
     super.dispose();
   }
 
-  void _onItemTapped(int index) async {
-    if (index == 2) { // Wallet index
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      bool pinSet = prefs.getBool('wallet_pin_set') ?? false;
-      if (!pinSet) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => CreateWalletPINScreen()),
+  void _showPINEntryModal() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
+        return Container(
+          padding: EdgeInsets.only(left: 0, right: 0, bottom: 0),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(30),
+              topRight: Radius.circular(30),
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(height: 20),
+              Image.asset('assets/images/padlock.png', width: 50, height: 50),
+              SizedBox(height: 10),
+              Text(
+                'Enter Your PIN',
+                style: TextStyle(
+                  color: Colors.black,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              // Add PIN input fields here if needed
+              SizedBox(height: 20),
+            ],
+          ),
         );
-      }
-    }
-    // Handle other indices if needed
+      },
+    );
   }
 
   @override

@@ -41,9 +41,9 @@ class _CreateWalletPINScreenState extends State<CreateWalletPINScreen> {
       Navigator.pop(context); // Go back to dashboard
     } else {
       // Show error
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Please enter a 4-digit PIN')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Please enter a 4-digit PIN')));
     }
   }
 
