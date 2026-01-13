@@ -247,7 +247,7 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
                                 width: screenWidth * 0.8,
                               ),
                             ),
-                            SizedBox(height: screenHeight * 0.01),
+                            SizedBox(height: screenHeight * 0.04),
                             SingleChildScrollView(
                               scrollDirection: Axis.horizontal,
                               child: Row(
