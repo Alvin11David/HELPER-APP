@@ -1083,13 +1083,22 @@ class _WorkerSkillsJobDetailsScreenState
                 .map(
                   (e) => DropdownMenuItem(
                     value: e,
-                    child: Text(
-                      e,
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontFamily: 'Inter',
-                        fontWeight: FontWeight.w800,
-                        fontSize: w * 0.036,
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        vertical: 8,
+                        horizontal: 16,
+                      ),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        e,
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontFamily: 'Inter',
+                          fontWeight: FontWeight.w800,
+                          fontSize: w * 0.036,
+                        ),
                       ),
                     ),
                   ),
