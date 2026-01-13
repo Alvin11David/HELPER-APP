@@ -273,6 +273,10 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
 }
 
 // Dashed line painter
