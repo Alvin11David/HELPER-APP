@@ -158,7 +158,7 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
                 Center(
                   child: Container(
                     width: screenWidth * 0.9,
-                    height: screenHeight * 0.35,
+                    height: screenHeight * 0.3,
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(20),
