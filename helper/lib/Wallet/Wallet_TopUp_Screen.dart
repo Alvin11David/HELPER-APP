@@ -1,8 +1,21 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 
-class WalletTopUpScreen extends StatelessWidget {
+class WalletTopUpScreen extends StatefulWidget {
   const WalletTopUpScreen({super.key});
+
+  @override
+  State<WalletTopUpScreen> createState() => _WalletTopUpScreenState();
+}
+
+class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
+  final TextEditingController _amountController = TextEditingController();
+
+  @override
+  void dispose() {
+    _amountController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -158,29 +171,37 @@ class WalletTopUpScreen extends StatelessWidget {
                               ),
                             ),
                             SizedBox(height: screenHeight * 0.015),
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  "UGX",
-                                  style: TextStyle(
-                                    color: const Color(0xFFFFA10D),
-                                    fontSize: screenWidth * 0.035,
-                                    fontWeight: FontWeight.w600,
-                                    fontFamily: 'Poppins',
-                                  ),
-                                ),
-                                SizedBox(width: screenWidth * 0.02),
-                                Text(
-                                  "Enter Amount",
-                                  style: TextStyle(
-                                    color: Colors.black.withOpacity(0.55),
-                                    fontSize: screenWidth * 0.03,
-                                    fontWeight: FontWeight.w400,
-                                    fontFamily: 'Poppins',
-                                  ),
-                                ),
+                            TextField(
+                              controller: _amountController,
+                              keyboardType: TextInputType.number,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly,
                               ],
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontSize: screenWidth * 0.035,
+                                fontWeight: FontWeight.w500,
+                                fontFamily: 'Poppins',
+                              ),
+                              decoration: InputDecoration(
+                                prefixText: "UGX ",
+                                prefixStyle: TextStyle(
+                                  color: const Color(0xFFFFA10D),
+                                  fontSize: screenWidth * 0.035,
+                                  fontWeight: FontWeight.w600,
+                                  fontFamily: 'Poppins',
+                                ),
+                                hintText: "Enter Amount",
+                                hintStyle: TextStyle(
+                                  color: Colors.black.withOpacity(0.55),
+                                  fontSize: screenWidth * 0.03,
+                                  fontWeight: FontWeight.w400,
+                                  fontFamily: 'Poppins',
+                                ),
+                                border: InputBorder.none,
+                                isCollapsed: true,
+                                contentPadding: EdgeInsets.zero,
+                              ),
                             ),
                             SizedBox(height: screenHeight * 0.005),
                             CustomPaint(
