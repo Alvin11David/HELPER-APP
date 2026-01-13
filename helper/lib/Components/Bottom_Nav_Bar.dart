@@ -108,7 +108,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
                       ),
                     ),
                   ),
-                  SizedBox(height: 5),
+                  SizedBox(height: 0),
                   Text(
                     'Forgot PIN?',
                     style: TextStyle(
