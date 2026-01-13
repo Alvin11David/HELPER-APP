@@ -117,7 +117,7 @@ class WalletTopUpScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-                SizedBox(height: screenHeight * 0.02),
+                SizedBox(height: screenHeight * 0.04),
                 Center(
                   child: Container(
                     width: screenWidth * 0.9,
@@ -147,7 +147,7 @@ class WalletTopUpScreen extends StatelessWidget {
                                 fontFamily: 'Inter',
                               ),
                             ),
-                            SizedBox(height: screenHeight * 0.005),
+                            SizedBox(height: screenHeight * 0.02),
                             Text(
                               "Amount",
                               style: TextStyle(
@@ -157,7 +157,7 @@ class WalletTopUpScreen extends StatelessWidget {
                                 fontFamily: 'Poppins',
                               ),
                             ),
-                            SizedBox(height: screenHeight * 0.01),
+                            SizedBox(height: screenHeight * 0.015),
                             Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
@@ -184,7 +184,9 @@ class WalletTopUpScreen extends StatelessWidget {
                             ),
                             SizedBox(height: screenHeight * 0.005),
                             CustomPaint(
-                              painter: _DashedLinePainter(color: Colors.black.withOpacity(0.5)),
+                              painter: _DashedLinePainter(
+                                color: Colors.black.withOpacity(0.5),
+                              ),
                               child: SizedBox(
                                 height: 1,
                                 width: screenWidth * 0.8,
