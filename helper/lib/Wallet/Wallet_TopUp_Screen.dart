@@ -23,43 +23,50 @@ class WalletTopUpScreen extends StatelessWidget {
           ),
           Positioned(
             top: screenHeight * 0.04,
-            left: screenWidth * 0.04,
+            left: 0,
+            right: 0,
             child: Column(
               mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    GestureDetector(
-                      onTap: () => Navigator.of(context).maybePop(),
-                      child: Container(
-                        width: screenWidth * 0.13,
-                        height: screenWidth * 0.13,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFFFFFF),
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                        child: Center(
-                          child: Icon(
-                            Icons.chevron_left,
-                            color: Colors.black,
-                            size: screenWidth * 0.10,
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Padding(
+                    padding: EdgeInsets.only(left: screenWidth * 0.04),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        GestureDetector(
+                          onTap: () => Navigator.of(context).maybePop(),
+                          child: Container(
+                            width: screenWidth * 0.13,
+                            height: screenWidth * 0.13,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFFFFFF),
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                            child: Center(
+                              child: Icon(
+                                Icons.chevron_left,
+                                color: Colors.black,
+                                size: screenWidth * 0.10,
+                              ),
+                            ),
                           ),
                         ),
-                      ),
+                        SizedBox(width: screenWidth * 0.06),
+                        Text(
+                          'Top Up Wallet',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: screenWidth * 0.08,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'Montserrat',
+                          ),
+                        ),
+                      ],
                     ),
-                    SizedBox(width: screenWidth * 0.06),
-                    Text(
-                      'Top Up Wallet',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: screenWidth * 0.08,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'Montserrat',
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
                 SizedBox(height: screenHeight * 0.03),
                 Center(
