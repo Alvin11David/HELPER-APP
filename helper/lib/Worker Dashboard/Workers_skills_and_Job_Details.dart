@@ -12,7 +12,8 @@ class WorkerSkillsJobDetailsScreen extends StatefulWidget {
       _WorkerSkillsJobDetailsScreenState();
 }
 
-class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScreen> {
+class _WorkerSkillsJobDetailsScreenState
+    extends State<WorkerSkillsJobDetailsScreen> {
   static const _brandOrange = Color(0xFFFFA10D);
 
   int _step = 0; // 0,1,2,3 (3 = preview)
@@ -204,7 +205,9 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
             child: Container(
               decoration: BoxDecoration(
                 color: Colors.black.withOpacity(0.65),
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(26),
+                ),
                 border: Border.all(color: Colors.white.withOpacity(0.18)),
               ),
               child: SafeArea(
@@ -212,7 +215,9 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    SizedBox(height: MediaQuery.of(context).size.height * 0.015),
+                    SizedBox(
+                      height: MediaQuery.of(context).size.height * 0.015,
+                    ),
                     Container(
                       width: 60,
                       height: 6,
@@ -221,7 +226,9 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
                         borderRadius: BorderRadius.circular(99),
                       ),
                     ),
-                    SizedBox(height: MediaQuery.of(context).size.height * 0.015),
+                    SizedBox(
+                      height: MediaQuery.of(context).size.height * 0.015,
+                    ),
                     Text(
                       title,
                       style: const TextStyle(
@@ -254,12 +261,16 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
                               style: TextStyle(
                                 color: Colors.white,
                                 fontFamily: 'AbrilFatface',
-                                fontWeight: isSel ? FontWeight.w900 : FontWeight.w700,
+                                fontWeight: isSel
+                                    ? FontWeight.w900
+                                    : FontWeight.w700,
                               ),
                             ),
                             trailing: isSel
-                                ? Icon(Icons.check_circle,
-                                    color: _brandOrange.withOpacity(0.95))
+                                ? Icon(
+                                    Icons.check_circle,
+                                    color: _brandOrange.withOpacity(0.95),
+                                  )
                                 : null,
                           );
                         },
@@ -385,12 +396,16 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
                       switchInCurve: Curves.easeOut,
                       switchOutCurve: Curves.easeIn,
                       transitionBuilder: (child, anim) {
-                        final slide = Tween<Offset>(
-                          begin: const Offset(0.04, 0),
-                          end: Offset.zero,
-                        ).animate(
-                          CurvedAnimation(parent: anim, curve: Curves.easeOut),
-                        );
+                        final slide =
+                            Tween<Offset>(
+                              begin: const Offset(0.04, 0),
+                              end: Offset.zero,
+                            ).animate(
+                              CurvedAnimation(
+                                parent: anim,
+                                curve: Curves.easeOut,
+                              ),
+                            );
                         return FadeTransition(
                           opacity: anim,
                           child: SlideTransition(position: slide, child: child),
@@ -399,10 +414,10 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
                       child: _step == 0
                           ? _stepOne(w, h)
                           : _step == 1
-                              ? _stepTwo(w, h)
-                              : _step == 2
-                                  ? _stepThree(w, h)
-                                  : _jobPreview(w, h),
+                          ? _stepTwo(w, h)
+                          : _step == 2
+                          ? _stepThree(w, h)
+                          : _jobPreview(w, h),
                     ),
 
                     SizedBox(height: h * 0.03),
@@ -422,7 +437,11 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
                             ),
                           ),
                           child: Text(
-                            _step == 0 ? 'Continue' : _step == 1 ? 'Save' : 'Continue',
+                            _step == 0
+                                ? 'Continue'
+                                : _step == 1
+                                ? 'Save'
+                                : 'Continue',
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: w * 0.045,
@@ -501,7 +520,8 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
             controller: _skillsDescCtrl,
             hint: 'Describe your skills, experience, and services\nyou offer',
             validator: (v) {
-              if ((v ?? '').trim().isEmpty) return 'Please describe your skills';
+              if ((v ?? '').trim().isEmpty)
+                return 'Please describe your skills';
               if ((v ?? '').trim().length < 15) return 'Add a bit more detail';
               return null;
             },
@@ -699,7 +719,10 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
           child: Container(
             width: double.infinity,
             color: Colors.white,
-            padding: EdgeInsets.symmetric(horizontal: w * 0.06, vertical: h * 0.02),
+            padding: EdgeInsets.symmetric(
+              horizontal: w * 0.06,
+              vertical: h * 0.02,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -845,7 +868,7 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
     required String text,
     required VoidCallback onTap,
   }) {
-    final fieldH = h * 0.060;
+    final fieldH = h * 0.080;
     final r = fieldH / 2;
 
     return GestureDetector(
@@ -886,10 +909,18 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.arrow_drop_up, color: Colors.black, size: w * 0.085),
+                  Icon(
+                    Icons.arrow_drop_up,
+                    color: Colors.black,
+                    size: w * 0.06,
+                  ),
                   Transform.translate(
-                    offset: Offset(0, -w * 0.03),
-                    child: Icon(Icons.arrow_drop_down, color: Colors.black, size: w * 0.085),
+                    offset: Offset(0, -w * 0.02),
+                    child: Icon(
+                      Icons.arrow_drop_down,
+                      color: Colors.black,
+                      size: w * 0.06,
+                    ),
                   ),
                 ],
               ),
@@ -924,7 +955,9 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
         inputFormatters: inputFormatters,
         validator: (v) {
           final res = validator?.call(v);
-          WidgetsBinding.instance.addPostFrameCallback((_) => _recalcProgress());
+          WidgetsBinding.instance.addPostFrameCallback(
+            (_) => _recalcProgress(),
+          );
           return res;
         },
         onChanged: (_) => _recalcProgress(),
@@ -972,7 +1005,9 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
               controller: controller,
               validator: (v) {
                 final res = validator?.call(v);
-                WidgetsBinding.instance.addPostFrameCallback((_) => _recalcProgress());
+                WidgetsBinding.instance.addPostFrameCallback(
+                  (_) => _recalcProgress(),
+                );
                 return res;
               },
               onChanged: (_) => _recalcProgress(),
@@ -1080,7 +1115,9 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
         controller: controller,
         validator: (v) {
           final res = validator?.call(v);
-          WidgetsBinding.instance.addPostFrameCallback((_) => _recalcProgress());
+          WidgetsBinding.instance.addPostFrameCallback(
+            (_) => _recalcProgress(),
+          );
           return res;
         },
         onChanged: (_) => _recalcProgress(),
@@ -1130,7 +1167,11 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
               ),
             ),
             Center(
-              child: Icon(Icons.location_pin, color: Colors.redAccent, size: w * 0.10),
+              child: Icon(
+                Icons.location_pin,
+                color: Colors.redAccent,
+                size: w * 0.10,
+              ),
             ),
             Positioned(
               right: w * 0.03,
@@ -1149,12 +1190,20 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
               child: ElevatedButton(
                 onPressed: () {
                   setState(() => _pickedPlaceOnMap = !_pickedPlaceOnMap);
-                  _toast(_pickedPlaceOnMap ? 'Picked on map (optional)' : 'Unpicked map');
+                  _toast(
+                    _pickedPlaceOnMap
+                        ? 'Picked on map (optional)'
+                        : 'Unpicked map',
+                  );
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: _pickedPlaceOnMap ? Colors.green : _brandOrange,
+                  backgroundColor: _pickedPlaceOnMap
+                      ? Colors.green
+                      : _brandOrange,
                   elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(22),
+                  ),
                 ),
                 child: Text(
                   _pickedPlaceOnMap ? 'Picked ✓' : 'Pick',
@@ -1224,7 +1273,11 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.cloud_upload_rounded, color: Colors.white, size: w * 0.14),
+                Icon(
+                  Icons.cloud_upload_rounded,
+                  color: Colors.white,
+                  size: w * 0.14,
+                ),
                 SizedBox(height: h * 0.01),
                 Text(
                   'Upload File',
@@ -1355,7 +1408,10 @@ class _GlassPill extends StatelessWidget {
               ],
             ),
             borderRadius: BorderRadius.circular(radius),
-            border: Border.all(color: Colors.white.withOpacity(0.35), width: 1.6),
+            border: Border.all(
+              color: Colors.white.withOpacity(0.35),
+              width: 1.6,
+            ),
             boxShadow: [
               BoxShadow(
                 color: Colors.white.withOpacity(0.08),
@@ -1453,4 +1509,3 @@ class _DashedLinePainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _DashedLinePainter oldDelegate) => false;
 }
-
