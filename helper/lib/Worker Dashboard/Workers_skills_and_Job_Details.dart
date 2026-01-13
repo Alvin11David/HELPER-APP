@@ -152,7 +152,7 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
   void _toast(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(msg, style: const TextStyle(fontFamily: 'Poppins')),
+        content: Text(msg, style: const TextStyle(fontFamily: 'AbrilFatface')),
         backgroundColor: Colors.black.withOpacity(0.85),
       ),
     );
@@ -226,7 +226,7 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
                       title,
                       style: const TextStyle(
                         color: Colors.white,
-                        fontFamily: 'Poppins',
+                        fontFamily: 'AbrilFatface',
                         fontWeight: FontWeight.w800,
                         fontSize: 16,
                       ),
@@ -253,7 +253,7 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
                               v,
                               style: TextStyle(
                                 color: Colors.white,
-                                fontFamily: 'Poppins',
+                                fontFamily: 'AbrilFatface',
                                 fontWeight: isSel ? FontWeight.w900 : FontWeight.w700,
                               ),
                             ),
@@ -358,7 +358,7 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
                             color: Colors.white.withOpacity(0.92),
                             fontSize: w * 0.032,
                             fontWeight: FontWeight.w600,
-                            fontFamily: 'Poppins',
+                            fontFamily: 'Inter',
                           ),
                         ),
                       ),
@@ -427,7 +427,7 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
                               color: Colors.white,
                               fontSize: w * 0.045,
                               fontWeight: FontWeight.w800,
-                              fontFamily: 'Poppins',
+                              fontFamily: 'Inter',
                             ),
                           ),
                         ),
@@ -615,7 +615,7 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
                 'Optional',
                 style: TextStyle(
                   color: Colors.white.withOpacity(0.65),
-                  fontFamily: 'Poppins',
+                  fontFamily: 'Inter',
                   fontWeight: FontWeight.w600,
                   fontSize: w * 0.032,
                 ),
@@ -658,14 +658,14 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
   Widget _jobPreview(double w, double h) {
     final leftStyle = TextStyle(
       color: Colors.black,
-      fontFamily: 'Poppins',
+      fontFamily: 'Inter',
       fontWeight: FontWeight.w900,
       fontSize: w * 0.032,
     );
 
     final rightStyle = TextStyle(
       color: Colors.black.withOpacity(0.75),
-      fontFamily: 'Poppins',
+      fontFamily: 'Inter',
       fontWeight: FontWeight.w800,
       fontSize: w * 0.032,
     );
@@ -708,7 +708,7 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
                   child: Text(
                     'Preview Section',
                     style: TextStyle(
-                      color: Colors.black,
+                      color: const Color.fromRGBO(0, 0, 0, 1),
                       fontFamily: 'AbrilFatface',
                       fontSize: w * 0.060,
                     ),
@@ -748,7 +748,7 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: _brandOrange,
-                      fontFamily: 'Poppins',
+                      fontFamily: 'Inter',
                       fontWeight: FontWeight.w800,
                       fontSize: w * 0.032,
                       height: 1.25,
@@ -776,7 +776,7 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
                             'Edit',
                             style: TextStyle(
                               color: _brandOrange,
-                              fontFamily: 'Poppins',
+                              fontFamily: 'Inter',
                               fontWeight: FontWeight.w900,
                               fontSize: w * 0.040,
                             ),
@@ -801,7 +801,7 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
                             'Submit',
                             style: TextStyle(
                               color: Colors.white,
-                              fontFamily: 'Poppins',
+                              fontFamily: 'Inter',
                               fontWeight: FontWeight.w900,
                               fontSize: w * 0.040,
                             ),
@@ -825,7 +825,7 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
       t,
       style: TextStyle(
         color: Colors.white,
-        fontFamily: 'Poppins',
+        fontFamily: 'Inter',
         fontSize: w * 0.038,
         fontWeight: FontWeight.w800,
       ),
@@ -874,7 +874,7 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   color: Colors.black,
-                  fontFamily: 'Poppins',
+                  fontFamily: 'Inter',
                   fontWeight: FontWeight.w900,
                   fontSize: w * 0.038,
                 ),
@@ -930,7 +930,7 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
         onChanged: (_) => _recalcProgress(),
         style: TextStyle(
           color: Colors.black,
-          fontFamily: 'Poppins',
+          fontFamily: 'Inter',
           fontWeight: FontWeight.w700,
           fontSize: w * 0.038,
         ),
@@ -938,7 +938,7 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
           hintText: hint,
           hintStyle: TextStyle(
             color: Colors.black.withOpacity(0.55),
-            fontFamily: 'Poppins',
+            fontFamily: 'Inter',
             fontWeight: FontWeight.w700,
             fontSize: w * 0.035,
           ),
@@ -978,7 +978,7 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
               onChanged: (_) => _recalcProgress(),
               style: TextStyle(
                 color: Colors.black,
-                fontFamily: 'Poppins',
+                fontFamily: 'Inter',
                 fontWeight: FontWeight.w700,
                 fontSize: w * 0.038,
               ),
@@ -986,7 +986,7 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
                 hintText: hint,
                 hintStyle: TextStyle(
                   color: Colors.black.withOpacity(0.55),
-                  fontFamily: 'Poppins',
+                  fontFamily: 'Inter',
                   fontWeight: FontWeight.w700,
                   fontSize: w * 0.035,
                 ),
@@ -1031,7 +1031,7 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
             hint,
             style: TextStyle(
               color: Colors.black.withOpacity(0.65),
-              fontFamily: 'Poppins',
+              fontFamily: 'Inter',
               fontWeight: FontWeight.w800,
               fontSize: w * 0.034,
             ),
@@ -1044,7 +1044,7 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
                     e,
                     style: TextStyle(
                       color: Colors.black,
-                      fontFamily: 'Poppins',
+                      fontFamily: 'Inter',
                       fontWeight: FontWeight.w800,
                       fontSize: w * 0.036,
                     ),
@@ -1088,7 +1088,7 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
         expands: true,
         style: TextStyle(
           color: Colors.black,
-          fontFamily: 'Poppins',
+          fontFamily: 'Inter',
           fontWeight: FontWeight.w700,
           fontSize: w * 0.035,
         ),
@@ -1096,9 +1096,9 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
           hintText: hint,
           hintStyle: TextStyle(
             color: Colors.black.withOpacity(0.55),
-            fontFamily: 'Poppins',
+            fontFamily: 'Inter',
             fontWeight: FontWeight.w700,
-            fontSize: w * 0.032,
+            fontSize: w * 0.033,
             height: 1.25,
           ),
           border: InputBorder.none,
@@ -1160,7 +1160,7 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
                   _pickedPlaceOnMap ? 'Picked ✓' : 'Pick',
                   style: TextStyle(
                     color: Colors.white,
-                    fontFamily: 'Poppins',
+                    fontFamily: 'Inter',
                     fontWeight: FontWeight.w900,
                     fontSize: w * 0.032,
                   ),
@@ -1230,7 +1230,7 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
                   'Upload File',
                   style: TextStyle(
                     color: Colors.white,
-                    fontFamily: 'Poppins',
+                    fontFamily: 'Inter',
                     fontWeight: FontWeight.w900,
                     fontSize: w * 0.04,
                   ),
@@ -1241,7 +1241,7 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: Colors.white.withOpacity(0.75),
-                    fontFamily: 'Poppins',
+                    fontFamily: 'Inter',
                     fontWeight: FontWeight.w600,
                     fontSize: w * 0.028,
                     height: 1.25,
@@ -1253,7 +1253,7 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
                     '${_fakeSelectedImages.length} file(s) selected',
                     style: TextStyle(
                       color: _brandOrange,
-                      fontFamily: 'Poppins',
+                      fontFamily: 'Inter',
                       fontWeight: FontWeight.w900,
                       fontSize: w * 0.03,
                     ),
@@ -1314,7 +1314,7 @@ class _ProgressBar extends StatelessWidget {
           label,
           style: TextStyle(
             color: Colors.white.withOpacity(0.85),
-            fontFamily: 'Poppins',
+            fontFamily: '',
             fontWeight: FontWeight.w700,
             fontSize: width * 0.03,
           ),
