@@ -25,7 +25,13 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
     print('Continue pressed');
   }
 
-  Widget _amountButton(double w, double h, String text, bool isSelected, VoidCallback onTap) {
+  Widget _amountButton(
+    double w,
+    double h,
+    String text,
+    bool isSelected,
+    VoidCallback onTap,
+  ) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -339,7 +345,7 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
                     ),
                   ),
                 ),
-                SizedBox(height: screenHeight * 0.06),
+                SizedBox(height: screenHeight * 0.09),
                 // Continue (white)
                 SizedBox(
                   width: screenWidth * 0.9,
