@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../Components/Bottom_Nav_Bar.dart';
-import 'Create_Wallet_PIN_Screen.dart';
 
 class EmployerDashboardScreen extends StatefulWidget {
   const EmployerDashboardScreen({super.key});
@@ -18,19 +16,6 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
     setState(() {
       _selectedIndex = index;
     });
-    if (index == 2) {
-      // Wallet index
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      bool pinSet = prefs.getBool('wallet_pin_set') ?? false;
-      if (!pinSet) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => CreateWalletPINScreen()),
-        );
-      } else {
-        _showPINEntryModal();
-      }
-    }
     // Add navigation or logic here if needed
   }
 
@@ -68,44 +53,6 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
     _focusNode.dispose();
     _controller.dispose();
     super.dispose();
-  }
-
-  void _showPINEntryModal() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (BuildContext context) {
-        return Container(
-          padding: EdgeInsets.only(left: 0, right: 0, bottom: 0),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(30),
-              topRight: Radius.circular(30),
-            ),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SizedBox(height: 20),
-              Image.asset('assets/images/padlock.png', width: 50, height: 50),
-              SizedBox(height: 10),
-              Text(
-                'Enter Your PIN',
-                style: TextStyle(
-                  color: Colors.black,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              // Add PIN input fields here if needed
-              SizedBox(height: 20),
-            ],
-          ),
-        );
-      },
-    );
   }
 
   @override
