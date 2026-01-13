@@ -2,7 +2,12 @@ import 'package:flutter/material.dart';
 import 'dart:ui';
 
 class WalletDepositPaymentMethodScreen extends StatefulWidget {
-  const WalletDepositPaymentMethodScreen({super.key});
+  final String amount;
+
+  const WalletDepositPaymentMethodScreen({
+    super.key,
+    required this.amount,
+  });
 
   @override
   State<WalletDepositPaymentMethodScreen> createState() =>
@@ -131,7 +136,7 @@ class _WalletDepositPaymentMethodScreenState extends State<WalletDepositPaymentM
                     SizedBox(height: screenHeight * 0.03),
                     Center(
                       child: Text(
-                        'UGX 25,000',
+                        'UGX ${widget.amount}',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: screenWidth * 0.06,

@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'Wallet_Deposit_Payment_Method_Screen.dart';
 
 class WalletTopUpScreen extends StatefulWidget {
   const WalletTopUpScreen({super.key});
@@ -21,8 +22,21 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
   }
 
   void onContinue() {
-    // TODO: Implement continue logic
-    print('Continue pressed');
+    // Get the amount to pass - either from selected preset or manual input
+    String amountToPass = selectedAmount != null
+        ? selectedAmount!.replaceAll('UGX ', '')
+        : _amountController.text.isNotEmpty
+            ? _amountController.text
+            : '0';
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => WalletDepositPaymentMethodScreen(
+          amount: amountToPass,
+        ),
+      ),
+    );
   }
 
   Widget _amountButton(
