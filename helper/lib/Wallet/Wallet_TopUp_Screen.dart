@@ -247,6 +247,17 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
                                 width: screenWidth * 0.8,
                               ),
                             ),
+                            SizedBox(height: screenHeight * 0.01),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                _amountButton(screenWidth, screenHeight, "UGX 10,000"),
+                                _amountButton(screenWidth, screenHeight, "UGX 25,000"),
+                                _amountButton(screenWidth, screenHeight, "UGX 50,000"),
+                                _amountButton(screenWidth, screenHeight, "UGX 100,000"),
+                                _amountButton(screenWidth, screenHeight, "UGX 200,000"),
+                              ],
+                            ),
                           ],
                         ),
                       ),
@@ -254,23 +265,6 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
                   ),
                 ),
               ],
-            ),
-          ),
-          Positioned(
-            top: screenHeight * 0.41,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _amountButton(screenWidth, screenHeight, "UGX 10,000"),
-                  _amountButton(screenWidth, screenHeight, "UGX 25,000"),
-                  _amountButton(screenWidth, screenHeight, "UGX 50,000"),
-                  _amountButton(screenWidth, screenHeight, "UGX 100,000"),
-                  _amountButton(screenWidth, screenHeight, "UGX 200,000"),
-                ],
-              ),
             ),
           ),
         ],
