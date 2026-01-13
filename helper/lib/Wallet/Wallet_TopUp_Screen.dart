@@ -20,7 +20,7 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
 
   Widget _amountButton(double w, double h, String text) {
     return Container(
-      width: w * 0.18,
+      width: w * 0.16,
       height: h * 0.04,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
