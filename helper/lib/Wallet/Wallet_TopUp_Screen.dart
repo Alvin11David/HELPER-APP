@@ -13,7 +13,7 @@ class WalletTopUpScreen extends StatefulWidget {
 class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
   final TextEditingController _amountController = TextEditingController();
   bool loading = false;
-  String? selectedAmount;
+  String? selectedAmount; 
 
   @override
   void dispose() {
@@ -26,15 +26,14 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
     String amountToPass = selectedAmount != null
         ? selectedAmount!.replaceAll('UGX ', '')
         : _amountController.text.isNotEmpty
-            ? _amountController.text
-            : '0';
+        ? _amountController.text
+        : '0';
 
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => WalletDepositPaymentMethodScreen(
-          amount: amountToPass,
-        ),
+        builder: (context) =>
+            WalletDepositPaymentMethodScreen(amount: amountToPass),
       ),
     );
   }

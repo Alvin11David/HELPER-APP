@@ -4,17 +4,15 @@ import 'dart:ui';
 class WalletDepositPaymentMethodScreen extends StatefulWidget {
   final String amount;
 
-  const WalletDepositPaymentMethodScreen({
-    super.key,
-    required this.amount,
-  });
+  const WalletDepositPaymentMethodScreen({super.key, required this.amount});
 
   @override
   State<WalletDepositPaymentMethodScreen> createState() =>
       _WalletDepositPaymentMethodScreenState();
 }
 
-class _WalletDepositPaymentMethodScreenState extends State<WalletDepositPaymentMethodScreen> {
+class _WalletDepositPaymentMethodScreenState
+    extends State<WalletDepositPaymentMethodScreen> {
   bool _isVisaCardSelected = false;
   bool _isMtnCardSelected = false;
   bool _isPaypalSelected = false;
