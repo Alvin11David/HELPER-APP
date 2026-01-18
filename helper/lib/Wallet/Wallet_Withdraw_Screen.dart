@@ -218,8 +218,36 @@ class _WalletWithdrawScreenState extends State<WalletWithdrawScreen> {
                     decoration: BoxDecoration(
                       color: const Color(0xFFFBBC04),
                       borderRadius: BorderRadius.circular(25),
-                    ),
-                  ),
+                    ),                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.attach_money,
+                          color: Colors.black,
+                          size: screenWidth * 0.05,
+                        ),
+                        SizedBox(width: screenWidth * 0.02),
+                        Text(
+                          'Available Balance:',
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontSize: screenWidth * 0.035,
+                            fontWeight: FontWeight.w500,
+                            fontFamily: 'Poppins',
+                          ),
+                        ),
+                        SizedBox(width: screenWidth * 0.02),
+                        Text(
+                          '0.00',
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontSize: screenWidth * 0.035,
+                            fontWeight: FontWeight.w600,
+                            fontFamily: 'Poppins',
+                          ),
+                        ),
+                      ],
+                    ),                  ),
                 ),
                 SizedBox(height: screenHeight * 0.04),
                 Center(
