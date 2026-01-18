@@ -172,7 +172,7 @@ class _WalletDepositPaymentMethodScreenState
                       onTap: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => MtnAirtelDepositWithdrawScreen()),
+                          MaterialPageRoute(builder: (context) => MtnAirtelDepositWithdrawScreen(amount: widget.amount)),
                         );
                       },
                       child: Container(

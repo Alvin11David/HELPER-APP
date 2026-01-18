@@ -3,7 +3,9 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 
 class MtnAirtelDepositWithdrawScreen extends StatefulWidget {
-  const MtnAirtelDepositWithdrawScreen({super.key});
+  final String amount;
+
+  const MtnAirtelDepositWithdrawScreen({super.key, required this.amount});
 
   @override
   State<MtnAirtelDepositWithdrawScreen> createState() =>
