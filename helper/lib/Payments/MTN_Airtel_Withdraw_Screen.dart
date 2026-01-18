@@ -506,7 +506,7 @@ class _MtnAirtelWithdrawScreenState
                         ),
                         SizedBox(height: screenHeight * 0.0),
                         Text(
-                          'Congratulations\nyou have added money',
+                          'Congratulations\nyou have withdrawn money',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: Colors.black,
