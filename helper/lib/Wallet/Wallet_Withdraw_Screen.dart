@@ -213,7 +213,7 @@ class _WalletWithdrawScreenState extends State<WalletWithdrawScreen> {
                 SizedBox(height: screenHeight * 0.04),
                 Center(
                   child: Container(
-                    width: screenWidth * 0.8,
+                    width: screenWidth * 0.9,
                     height: screenHeight * 0.05,
                     decoration: BoxDecoration(
                       color: const Color(0xFFFBBC04),
