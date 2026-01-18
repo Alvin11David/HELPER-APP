@@ -25,7 +25,7 @@ class VoiceCallScreen extends StatelessWidget {
                     children: [
                       Text(
                         'Business Name',
-                        style: TextStyle(color: Colors.white, fontSize: 24),
+                        style: TextStyle(color: Colors.white, fontSize: 24, fontFamily: 'AbrilFatface'),
                       ),
                       Text(
                         'Ringing...',
@@ -38,8 +38,8 @@ class VoiceCallScreen extends StatelessWidget {
               Align(
                 alignment: Alignment.center,
                 child: Container(
-                  width: 300,
-                  height: 300,
+                  width: 280,
+                  height: 280,
                   decoration: BoxDecoration(
                     color: Colors.white,
                     shape: BoxShape.circle,
@@ -48,9 +48,9 @@ class VoiceCallScreen extends StatelessWidget {
                 ),
               ),
               Positioned(
-                bottom: 0,
-                left: 0,
-                right: 0,
+                bottom: 20,
+                left: 20,
+                right: 20,
                 height: 60,
                 child: Container(
                   decoration: BoxDecoration(
