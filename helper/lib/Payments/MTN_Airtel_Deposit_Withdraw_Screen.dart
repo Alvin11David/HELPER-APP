@@ -181,31 +181,36 @@ class _MtnAirtelDepositWithdrawScreenState
                             ],
                           ),
 
-                          Positioned(
-                            bottom: screenWidth * 0.04,
-                            right: screenWidth * 0.04,
-                            child: Container(
-                              width: screenWidth * (94 / 340),
-                              height: screenWidth * (40 / 340),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(30),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.10),
-                                    blurRadius: 6,
-                                    spreadRadius: 1,
-                                    offset: Offset(0, 2),
-                                  ),
-                                ],
+                          Align(
+                            alignment: Alignment.bottomRight,
+                            child: Padding(
+                              padding: EdgeInsets.only(
+                                bottom: screenWidth * 0.04,
+                                right: screenWidth * 0.04,
                               ),
-                              alignment: Alignment.center,
-                              child: Text(
-                                'Not Paid', // Change this to 'Not Paid', 'Pending', etc. as needed
-                                style: TextStyle(
-                                  color: Colors.black,
-                                  fontSize: screenWidth * 0.035,
-                                  fontWeight: FontWeight.bold,
+                              child: Container(
+                                width: screenWidth * (94 / 340),
+                                height: screenWidth * (40 / 340),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(30),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.10),
+                                      blurRadius: 6,
+                                      spreadRadius: 1,
+                                      offset: Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                alignment: Alignment.center,
+                                child: Text(
+                                  'Not Paid', // Change this to 'Not Paid', 'Pending', etc. as needed
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                    fontSize: screenWidth * 0.035,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
                             ),
