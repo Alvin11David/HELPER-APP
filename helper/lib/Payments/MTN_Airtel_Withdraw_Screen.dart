@@ -3,23 +3,23 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-class MtnAirtelDepositScreen extends StatefulWidget {
+class MtnAirtelWithdrawScreen extends StatefulWidget {
   final String amount;
   final String type;
 
-  const MtnAirtelDepositScreen({
+  const MtnAirtelWithdrawScreen({
     super.key,
     required this.amount,
     required this.type,
   });
 
   @override
-  State<MtnAirtelDepositScreen> createState() =>
-      _MtnAirtelDepositScreenState();
+  State<MtnAirtelWithdrawScreen> createState() =>
+      _MtnAirtelWithdrawScreenState();
 }
 
-class _MtnAirtelDepositScreenState
-    extends State<MtnAirtelDepositScreen> {
+class _MtnAirtelWithdrawScreenState
+    extends State<MtnAirtelWithdrawScreen> {
   final TextEditingController _cardNumberController = TextEditingController();
   bool isChecked = false;
   bool _isDimming = false;
