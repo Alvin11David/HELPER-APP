@@ -37,7 +37,8 @@ class _WalletWithdrawScreenState extends State<WalletWithdrawScreen> {
   final TextEditingController _amountController = TextEditingController();
   bool loading = false;
   String? selectedAmount;
-  final double screenWidth = WidgetsBinding.instance.window.physicalSize.width /
+  final double screenWidth =
+      WidgetsBinding.instance.window.physicalSize.width /
       WidgetsBinding.instance.window.devicePixelRatio;
 
   @override
@@ -98,7 +99,6 @@ class _WalletWithdrawScreenState extends State<WalletWithdrawScreen> {
       ),
     );
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -521,7 +521,7 @@ class _RuleRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(left: 18, right: 18, bottom: 8),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
