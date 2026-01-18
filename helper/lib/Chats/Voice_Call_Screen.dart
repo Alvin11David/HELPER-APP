@@ -1,6 +1,14 @@
 import 'package:flutter/material.dart';
 
-class VoiceCallScreen extends StatelessWidget {
+class VoiceCallScreen extends StatefulWidget {
+  @override
+  _VoiceCallScreenState createState() => _VoiceCallScreenState();
+}
+
+class _VoiceCallScreenState extends State<VoiceCallScreen> {
+  bool _volumeClicked = false;
+  bool _micClicked = false;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -25,7 +33,11 @@ class VoiceCallScreen extends StatelessWidget {
                     children: [
                       Text(
                         'Business Name',
-                        style: TextStyle(color: Colors.white, fontSize: 24, fontFamily: 'AbrilFatface'),
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 24,
+                          fontFamily: 'AbrilFatface',
+                        ),
                       ),
                       Text(
                         'Ringing...',
@@ -60,23 +72,35 @@ class VoiceCallScreen extends StatelessWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
+                      GestureDetector(
+                        onTap: () => setState(() => _volumeClicked = !_volumeClicked),
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: _volumeClicked ? Color(0xFFFFA10D) : Colors.white,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.volume_up,
+                            color: _volumeClicked ? Colors.white : Colors.black,
+                          ),
                         ),
-                        child: Icon(Icons.volume_up, color: Colors.black),
                       ),
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
+                      GestureDetector(
+                        onTap: () => setState(() => _micClicked = !_micClicked),
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: _micClicked ? Color(0xFFFFA10D) : Colors.white,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.mic_off,
+                            color: _micClicked ? Colors.white : Colors.black,
+                          ),
                         ),
-                        child: Icon(Icons.mic_off, color: Colors.black),
                       ),
                       Container(
                         width: 40,
