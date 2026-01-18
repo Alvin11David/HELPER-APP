@@ -36,18 +36,6 @@ class ChatListScreen extends StatelessWidget {
                         ),
                         child: const Icon(Icons.person, color: Colors.black),
                       ),
-                      Positioned(
-                        bottom: 0,
-                        right: 0,
-                        child: Container(
-                          width: 10,
-                          height: 10,
-                          decoration: const BoxDecoration(
-                            color: Colors.green,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                      ),
                     ],
                   ),
                   SizedBox(width: screenWidth * 0.025),
