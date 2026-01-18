@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../Components/Bottom_Nav_Bar.dart';
+import 'Chat_Screen.dart';
 
 class ChatListScreen extends StatefulWidget {
   @override
@@ -219,63 +220,71 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 8.0,
                                 ),
-                                child: Row(
-                                  children: [
-                                    Stack(
-                                      children: [
-                                        Container(
-                                          width: 40,
-                                          height: 40,
-                                          decoration: const BoxDecoration(
-                                            color: Colors.white,
-                                            shape: BoxShape.circle,
-                                          ),
-                                        ),
-                                        Positioned(
-                                          bottom: 0,
-                                          right: 0,
-                                          child: Container(
-                                            width: 10,
-                                            height: 10,
+                                child: GestureDetector(
+                                  onTap: () => Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => ChatScreen(),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Stack(
+                                        children: [
+                                          Container(
+                                            width: 40,
+                                            height: 40,
                                             decoration: const BoxDecoration(
-                                              color: Colors.green,
+                                              color: Colors.white,
                                               shape: BoxShape.circle,
                                             ),
                                           ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          'Names',
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold,
+                                          Positioned(
+                                            bottom: 0,
+                                            right: 0,
+                                            child: Container(
+                                              width: 10,
+                                              height: 10,
+                                              decoration: const BoxDecoration(
+                                                color: Colors.green,
+                                                shape: BoxShape.circle,
+                                              ),
+                                            ),
                                           ),
-                                        ),
-                                        Text(
-                                          'Hey there',
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 14,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const Spacer(),
-                                    Text(
-                                      'dd/mm/yyyy',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 12,
+                                        ],
                                       ),
-                                    ),
-                                  ],
+                                      const SizedBox(width: 10),
+                                      Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Names',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          Text(
+                                            'Hey there',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const Spacer(),
+                                      Text(
+                                        'dd/mm/yyyy',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
