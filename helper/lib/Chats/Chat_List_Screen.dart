@@ -59,18 +59,18 @@ class ChatListScreen extends StatelessWidget {
                       color: Colors.white,
                       fontSize: screenWidth * 0.07,
                       fontWeight: FontWeight.bold,
-                      fontFamily: 'Montserrat', 
+                      fontFamily: 'Montserrat',
                     ),
                   ),
                 ],
               ),
             ),
             Positioned(
-              top: screenHeight * 0.08,
+              top: screenHeight * 0.1,
               left: screenWidth * 0.04,
               right: screenWidth * 0.04,
               child: Container(
-                height: 50,
+                height: 40,
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(30),
@@ -79,10 +79,14 @@ class ChatListScreen extends StatelessWidget {
                   children: [
                     SizedBox(width: 16),
                     Icon(Icons.search, color: Colors.black),
-                    SizedBox(width: 8),
+                    SizedBox(width: 5),
                     Text(
                       'Search here...',
-                      style: TextStyle(color: Colors.black),
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: screenWidth * 0.04,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ],
                 ),
