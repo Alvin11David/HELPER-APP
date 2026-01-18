@@ -506,7 +506,7 @@ class _MtnAirtelDepositWithdrawScreenState
                         ),
                         SizedBox(height: screenHeight * 0.0),
                         Text(
-                          'Account Created',
+                          'Congratulations\nyou have added money',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: Colors.black,
@@ -516,7 +516,7 @@ class _MtnAirtelDepositWithdrawScreenState
                           ),
                         ),
                         Text(
-                          'Successfully',
+                          'to your wallet',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: Colors.black,
@@ -531,7 +531,7 @@ class _MtnAirtelDepositWithdrawScreenState
                             horizontal: screenWidth * 0.08,
                           ),
                           child: Text(
-                            'Your payment of UGX ${NumberFormat('#,###').format(int.parse(widget.amount))}\nhas been successfully\nreceived.',
+                            'Your deposit of UGX ${NumberFormat('#,###').format(int.parse(widget.amount))}\nhas been successfully\nmade.',
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               color: Colors.black,
@@ -540,17 +540,6 @@ class _MtnAirtelDepositWithdrawScreenState
                               fontWeight: FontWeight.w500,
                               height: 1.4,
                             ),
-                          ),
-                        ),
-                        SizedBox(height: screenHeight * 0.04),
-                        Text(
-                          'Welcome to Helper!',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontSize: screenWidth * 0.06,
-                            fontFamily: 'AbrilFatface',
-                            fontWeight: FontWeight.w500,
                           ),
                         ),
                         SizedBox(height: screenHeight * 0.07),
@@ -577,7 +566,7 @@ class _MtnAirtelDepositWithdrawScreenState
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text(
-                                    'Go To Dashboard',
+                                    'Go To Wallet',
                                     style: TextStyle(
                                       fontSize: screenWidth * 0.045,
                                       fontWeight: FontWeight.bold,
