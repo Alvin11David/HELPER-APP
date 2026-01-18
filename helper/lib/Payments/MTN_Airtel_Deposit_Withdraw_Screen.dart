@@ -7,7 +7,11 @@ class MtnAirtelDepositWithdrawScreen extends StatefulWidget {
   final String amount;
   final String type;
 
-  const MtnAirtelDepositWithdrawScreen({super.key, required this.amount, required this.type});
+  const MtnAirtelDepositWithdrawScreen({
+    super.key,
+    required this.amount,
+    required this.type,
+  });
 
   @override
   State<MtnAirtelDepositWithdrawScreen> createState() =>
@@ -101,7 +105,15 @@ class _MtnAirtelDepositWithdrawScreenState
                         gradient: LinearGradient(
                           begin: Alignment.centerLeft,
                           end: Alignment.centerRight,
-                          colors: widget.type == 'MTN' ? [const Color(0xFFFFCB05), const Color(0xFFFFFFFF)] : [const Color(0xFFD40000), const Color(0xFFFFFFFF)],
+                          colors: widget.type == 'MTN'
+                              ? [
+                                  const Color(0xFFFFCB05),
+                                  const Color(0xFFFFFFFF),
+                                ]
+                              : [
+                                  const Color(0xFFD40000),
+                                  const Color(0xFFFFFFFF),
+                                ],
                           stops: [0.73, 1.2],
                         ),
                       ),
@@ -122,7 +134,9 @@ class _MtnAirtelDepositWithdrawScreenState
                                   ],
                                 ),
                                 child: Image.asset(
-                                  widget.type == 'MTN' ? 'assets/images/mtn.png' : 'assets/images/airtel.png',
+                                  widget.type == 'MTN'
+                                      ? 'assets/images/mtn.png'
+                                      : 'assets/images/airtel.png',
                                   width: screenWidth * 0.15,
                                   fit: BoxFit.contain,
                                 ),
@@ -167,34 +181,34 @@ class _MtnAirtelDepositWithdrawScreenState
                           ),
 
                           Positioned(
-                            bottom: screenWidth * 0.04,
-                            right: screenWidth * 0.04,
-                            child: Container(
-                              width: screenWidth * (94 / 340),
-                              height: screenWidth * (40 / 340),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(30),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.10),
-                                    blurRadius: 6,
-                                    spreadRadius: 1,
-                                    offset: Offset(0, 2),
-                                  ),
-                                ],
-                              ),
-                              alignment: Alignment.center,
-                              child: Text(
-                                'Not Paid', // Change this to 'Not Paid', 'Pending', etc. as needed
-                                style: TextStyle(
-                                  color: Colors.black,
-                                  fontSize: screenWidth * 0.035,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ),
+  bottom: screenWidth * 0.04,
+  right: screenWidth * 0.04,
+  child: Container(
+    width: screenWidth * (120 / 340),  // Increased width
+    height: screenWidth * (40 / 340),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(30),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.10),
+          blurRadius: 6,
+          spreadRadius: 1,
+          offset: Offset(0, 2),
+        ),
+      ],
+    ),
+    alignment: Alignment.center,
+    child: Text(
+      'Not Paid',
+      style: TextStyle(
+        color: Colors.black,
+        fontSize: screenWidth * 0.03,  // Slightly smaller font
+        fontWeight: FontWeight.bold,
+      ),
+    ),
+  ),
+),
                         ],
                       ),
                     ),
@@ -246,7 +260,8 @@ class _MtnAirtelDepositWithdrawScreenState
                                     fontWeight: FontWeight.w900,
                                   ),
                                   decoration: InputDecoration(
-                                    hintText: 'Enter Your ${widget.type} Number',
+                                    hintText:
+                                        'Enter Your ${widget.type} Number',
                                     hintStyle: TextStyle(
                                       color: Colors.black54,
                                       fontSize: screenWidth * 0.04,
@@ -261,7 +276,13 @@ class _MtnAirtelDepositWithdrawScreenState
                                 ),
                               ),
                               SizedBox(width: screenWidth * 0.02),
-                              Icon(Icons.phone, color: widget.type == 'MTN' ? Colors.yellow : Colors.red, size: 24),
+                              Icon(
+                                Icons.phone,
+                                color: widget.type == 'MTN'
+                                    ? Colors.yellow
+                                    : Colors.red,
+                                size: 24,
+                              ),
                             ],
                           ),
                         ),
