@@ -1,20 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:helper/Payments/MTN_Airtel_Withdraw_Screen.dart';
 import 'dart:ui';
 import 'package:intl/intl.dart';
 import '../Payments/MTN_Airtel_Deposit_Screen.dart';
 
-class WalletDepositPaymentMethodScreen extends StatefulWidget {
+class WalletWithdrawPaymentMethodScreen extends StatefulWidget {
   final String amount;
 
-  const WalletDepositPaymentMethodScreen({super.key, required this.amount});
+  const WalletWithdrawPaymentMethodScreen({super.key, required this.amount});
 
   @override
-  State<WalletDepositPaymentMethodScreen> createState() =>
-      _WalletDepositPaymentMethodScreenState();
+  State<WalletWithdrawPaymentMethodScreen> createState() =>
+      _WalletWithdrawPaymentMethodScreenState();
 }
 
-class _WalletDepositPaymentMethodScreenState
-    extends State<WalletDepositPaymentMethodScreen> {
+class _WalletWithdrawPaymentMethodScreenState
+    extends State<WalletWithdrawPaymentMethodScreen> {
   bool _isMtnCardSelected = false;
   bool _isAirtelCardSelected = false;
 
@@ -172,7 +173,7 @@ class _WalletDepositPaymentMethodScreenState
                           context,
                           MaterialPageRoute(
                             builder: (context) =>
-                                MtnAirtelDepositScreen(
+                                MtnAirtelWithdrawScreen(
                                   amount: widget.amount,
                                   type: 'MTN',
                                 ),
@@ -241,7 +242,7 @@ class _WalletDepositPaymentMethodScreenState
                           context,
                           MaterialPageRoute(
                             builder: (context) =>
-                                MtnAirtelDepositScreen(
+                                MtnAirtelWithdrawScreen(
                                   amount: widget.amount,
                                   type: 'AIRTEL', 
                                 ),
