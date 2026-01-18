@@ -311,7 +311,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
           ],
         ),
       ),
-      bottomNavigationBar: BottomNavBar(onItemTapped: _onItemTapped),
+      bottomNavigationBar: BottomNavBar(onItemTapped: _onItemTapped, initialSelectedIndex: 3),
     );
   }
 }
