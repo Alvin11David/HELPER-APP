@@ -171,7 +171,7 @@ class _MtnAirtelDepositWithdrawScreenState
                             right: screenWidth * 0.04,
                             child: Container(
                               width: screenWidth * (94 / 340),
-                              height: screenWidth * (28 / 340),
+                              height: screenWidth * (40 / 340),
                               decoration: BoxDecoration(
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(30),
