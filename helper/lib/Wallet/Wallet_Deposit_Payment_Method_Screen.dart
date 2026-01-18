@@ -135,7 +135,7 @@ class _WalletDepositPaymentMethodScreenState
                     SizedBox(height: screenHeight * 0.03),
                     Center(
                       child: Text(
-                        'UGX ${widget.amount}',
+                        'UGX ${NumberFormat('#,###').format(int.parse(widget.amount))}',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: screenWidth * 0.06,
