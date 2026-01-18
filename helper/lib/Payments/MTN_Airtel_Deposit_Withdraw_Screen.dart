@@ -98,10 +98,10 @@ class _MtnAirtelDepositWithdrawScreenState
                       height: screenWidth * 0.92 * (148 / 340),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(30),
-                        gradient: const LinearGradient(
+                        gradient: LinearGradient(
                           begin: Alignment.centerLeft,
                           end: Alignment.centerRight,
-                          colors: [Color(0xFFFFCB05), Color(0xFFFFFFFF)],
+                          colors: widget.type == 'MTN' ? [const Color(0xFFFFCB05), const Color(0xFFFFFFFF)] : [const Color(0xFFD40000), const Color(0xFFFFFFFF)],
                           stops: [0.73, 1.2],
                         ),
                       ),
