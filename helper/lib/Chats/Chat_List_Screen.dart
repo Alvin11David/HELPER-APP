@@ -1,32 +1,10 @@
 import 'package:flutter/material.dart';
 
-class ChatListScreen extends StatefulWidget {
-  @override
-  _ChatListScreenState createState() => _ChatListScreenState();
-}
-
-class _ChatListScreenState extends State<ChatListScreen> {
-  ScrollController _scrollController = ScrollController();
-
-  @override
-  void initState() {
-    super.initState();
-    _scrollController.addListener(() {
-      setState(() {});
-    });
-  }
-
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
-  }
-
+class ChatListScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
-    double scale = _scrollController.hasClients ? (1 - (_scrollController.offset / 200)).clamp(0.8, 1.0) : 1.0;
     return Scaffold(
       body: SafeArea(
         child: Stack(
@@ -72,44 +50,19 @@ class _ChatListScreenState extends State<ChatListScreen> {
             Positioned(
               top: screenHeight * 0.03,
               left: screenWidth * 0.04,
-              child: Transform.scale(
-                scale: scale,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'Messages',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: screenWidth * 0.07,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'Montserrat',
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            Positioned(
-              top: screenHeight * 0.1,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: SingleChildScrollView(
-                controller: _scrollController,
-                child: Column(
-                  children: List.generate(
-                    20,
-                    (index) => Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Container(
-                        height: 60,
-                        color: Colors.white.withOpacity(0.8),
-                        child: Center(child: Text('Chat ${index + 1}')),
-                      ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Messages',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: screenWidth * 0.07,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Montserrat', 
                     ),
                   ),
-                ),
+                ],
               ),
             ),
           ],
