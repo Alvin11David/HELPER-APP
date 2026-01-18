@@ -115,7 +115,7 @@ class ChatListScreen extends StatelessWidget {
                           9,
                           (index) => Padding(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 8.0,
+                              horizontal: 9.0,
                             ),
                             child: Column(
                               children: [
@@ -160,7 +160,7 @@ class ChatListScreen extends StatelessWidget {
                     SizedBox(height: 20),
                     Column(
                       children: List.generate(
-                        9,
+                        20,
                         (index) => Padding(
                           padding: const EdgeInsets.symmetric(vertical: 8.0),
                           child: Row(
