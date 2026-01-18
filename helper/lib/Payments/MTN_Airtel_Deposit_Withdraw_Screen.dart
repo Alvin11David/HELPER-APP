@@ -246,7 +246,7 @@ class _MtnAirtelDepositWithdrawScreenState
                                     fontWeight: FontWeight.w900,
                                   ),
                                   decoration: InputDecoration(
-                                    hintText: 'Enter Your MTN Number',
+                                    hintText: 'Enter Your ${widget.type} Number',
                                     hintStyle: TextStyle(
                                       color: Colors.black54,
                                       fontSize: screenWidth * 0.04,
@@ -261,7 +261,7 @@ class _MtnAirtelDepositWithdrawScreenState
                                 ),
                               ),
                               SizedBox(width: screenWidth * 0.02),
-                              Icon(Icons.phone, color: Colors.yellow, size: 24),
+                              Icon(Icons.phone, color: widget.type == 'MTN' ? Colors.yellow : Colors.red, size: 24),
                             ],
                           ),
                         ),
