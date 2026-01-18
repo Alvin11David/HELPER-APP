@@ -516,7 +516,7 @@ class _MtnAirtelWithdrawScreenState
                           ),
                         ),
                         Text(
-                          'to your wallet',
+                          'to your phone number',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: Colors.black,
@@ -531,7 +531,7 @@ class _MtnAirtelWithdrawScreenState
                             horizontal: screenWidth * 0.08,
                           ),
                           child: Text(
-                            'Your deposit of UGX ${NumberFormat('#,###').format(int.parse(widget.amount))}\nhas been successfully\nmade.',
+                            'Your withdrawal of UGX ${NumberFormat('#,###').format(int.parse(widget.amount))}\nhas been successfully\nmade.',
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               color: Colors.black,
