@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:helper/Chats/Chat_List_Screen.dart';
 import 'package:helper/Employer%20Dashboard/All_Categories_Screen.dart';
 import 'package:helper/Employer%20Dashboard/Create_Wallet_PIN_Screen.dart';
 import 'package:helper/Employer%20Dashboard/Set_New_Wallet_PIN_Screen.dart';
@@ -34,8 +35,7 @@ import 'package:helper/Payments/MTN_Payment_Method_Screen.dart';
 import 'package:helper/Document Upload/National_ID_Passport_Front_Upload_Screen.dart';
 import 'package:helper/Document Upload/Professional_License_Upload.dart';
 import 'package:helper/Document Upload/Selfie_Verification_Upload.dart';
-import 'package:helper/Employer Dashboard/job_detail_booking_screen.dart';
-import 'package:helper/Wallet/Wallet_Cancelled_screen.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
@@ -53,11 +53,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-<<<<<<< HEAD
-      home: const WalletFlowScreen(),
-=======
-      home: WalletWithdrawScreen(),
->>>>>>> d7926c0ed02ca07f4baad1b87ec72a7f59c2ccef
+      home: ChatListScreen(),
     );
   }
 }
