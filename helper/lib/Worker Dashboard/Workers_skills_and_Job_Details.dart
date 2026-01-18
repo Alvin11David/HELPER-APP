@@ -12,7 +12,8 @@ class WorkerSkillsJobDetailsScreen extends StatefulWidget {
       _WorkerSkillsJobDetailsScreenState();
 }
 
-class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScreen> {
+class _WorkerSkillsJobDetailsScreenState
+    extends State<WorkerSkillsJobDetailsScreen> {
   static const _brandOrange = Color(0xFFFFA10D);
 
   int _step = 0; // 0,1,2,3 (3 = preview)
@@ -152,7 +153,7 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
   void _toast(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(msg, style: const TextStyle(fontFamily: 'Poppins')),
+        content: Text(msg, style: const TextStyle(fontFamily: 'AbrilFatface')),
         backgroundColor: Colors.black.withOpacity(0.85),
       ),
     );
@@ -204,7 +205,9 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
             child: Container(
               decoration: BoxDecoration(
                 color: Colors.black.withOpacity(0.65),
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(26),
+                ),
                 border: Border.all(color: Colors.white.withOpacity(0.18)),
               ),
               child: SafeArea(
@@ -212,7 +215,9 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    SizedBox(height: MediaQuery.of(context).size.height * 0.015),
+                    SizedBox(
+                      height: MediaQuery.of(context).size.height * 0.015,
+                    ),
                     Container(
                       width: 60,
                       height: 6,
@@ -221,12 +226,14 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
                         borderRadius: BorderRadius.circular(99),
                       ),
                     ),
-                    SizedBox(height: MediaQuery.of(context).size.height * 0.015),
+                    SizedBox(
+                      height: MediaQuery.of(context).size.height * 0.015,
+                    ),
                     Text(
                       title,
                       style: const TextStyle(
                         color: Colors.white,
-                        fontFamily: 'Poppins',
+                        fontFamily: 'AbrilFatface',
                         fontWeight: FontWeight.w800,
                         fontSize: 16,
                       ),
@@ -253,13 +260,17 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
                               v,
                               style: TextStyle(
                                 color: Colors.white,
-                                fontFamily: 'Poppins',
-                                fontWeight: isSel ? FontWeight.w900 : FontWeight.w700,
+                                fontFamily: 'AbrilFatface',
+                                fontWeight: isSel
+                                    ? FontWeight.w900
+                                    : FontWeight.w700,
                               ),
                             ),
                             trailing: isSel
-                                ? Icon(Icons.check_circle,
-                                    color: _brandOrange.withOpacity(0.95))
+                                ? Icon(
+                                    Icons.check_circle,
+                                    color: _brandOrange.withOpacity(0.95),
+                                  )
                                 : null,
                           );
                         },
@@ -358,7 +369,7 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
                             color: Colors.white.withOpacity(0.92),
                             fontSize: w * 0.032,
                             fontWeight: FontWeight.w600,
-                            fontFamily: 'Poppins',
+                            fontFamily: 'Inter',
                           ),
                         ),
                       ),
@@ -385,12 +396,16 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
                       switchInCurve: Curves.easeOut,
                       switchOutCurve: Curves.easeIn,
                       transitionBuilder: (child, anim) {
-                        final slide = Tween<Offset>(
-                          begin: const Offset(0.04, 0),
-                          end: Offset.zero,
-                        ).animate(
-                          CurvedAnimation(parent: anim, curve: Curves.easeOut),
-                        );
+                        final slide =
+                            Tween<Offset>(
+                              begin: const Offset(0.04, 0),
+                              end: Offset.zero,
+                            ).animate(
+                              CurvedAnimation(
+                                parent: anim,
+                                curve: Curves.easeOut,
+                              ),
+                            );
                         return FadeTransition(
                           opacity: anim,
                           child: SlideTransition(position: slide, child: child),
@@ -399,10 +414,10 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
                       child: _step == 0
                           ? _stepOne(w, h)
                           : _step == 1
-                              ? _stepTwo(w, h)
-                              : _step == 2
-                                  ? _stepThree(w, h)
-                                  : _jobPreview(w, h),
+                          ? _stepTwo(w, h)
+                          : _step == 2
+                          ? _stepThree(w, h)
+                          : _jobPreview(w, h),
                     ),
 
                     SizedBox(height: h * 0.03),
@@ -422,12 +437,16 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
                             ),
                           ),
                           child: Text(
-                            _step == 0 ? 'Continue' : _step == 1 ? 'Save' : 'Continue',
+                            _step == 0
+                                ? 'Continue'
+                                : _step == 1
+                                ? 'Save'
+                                : 'Continue',
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: w * 0.045,
                               fontWeight: FontWeight.w800,
-                              fontFamily: 'Poppins',
+                              fontFamily: 'Inter',
                             ),
                           ),
                         ),
@@ -501,7 +520,8 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
             controller: _skillsDescCtrl,
             hint: 'Describe your skills, experience, and services\nyou offer',
             validator: (v) {
-              if ((v ?? '').trim().isEmpty) return 'Please describe your skills';
+              if ((v ?? '').trim().isEmpty)
+                return 'Please describe your skills';
               if ((v ?? '').trim().length < 15) return 'Add a bit more detail';
               return null;
             },
@@ -615,7 +635,7 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
                 'Optional',
                 style: TextStyle(
                   color: Colors.white.withOpacity(0.65),
-                  fontFamily: 'Poppins',
+                  fontFamily: 'Inter',
                   fontWeight: FontWeight.w600,
                   fontSize: w * 0.032,
                 ),
@@ -658,14 +678,14 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
   Widget _jobPreview(double w, double h) {
     final leftStyle = TextStyle(
       color: Colors.black,
-      fontFamily: 'Poppins',
+      fontFamily: 'Inter',
       fontWeight: FontWeight.w900,
       fontSize: w * 0.032,
     );
 
     final rightStyle = TextStyle(
       color: Colors.black.withOpacity(0.75),
-      fontFamily: 'Poppins',
+      fontFamily: 'Inter',
       fontWeight: FontWeight.w800,
       fontSize: w * 0.032,
     );
@@ -699,7 +719,10 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
           child: Container(
             width: double.infinity,
             color: Colors.white,
-            padding: EdgeInsets.symmetric(horizontal: w * 0.06, vertical: h * 0.02),
+            padding: EdgeInsets.symmetric(
+              horizontal: w * 0.06,
+              vertical: h * 0.02,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -708,7 +731,7 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
                   child: Text(
                     'Preview Section',
                     style: TextStyle(
-                      color: Colors.black,
+                      color: const Color.fromRGBO(0, 0, 0, 1),
                       fontFamily: 'AbrilFatface',
                       fontSize: w * 0.060,
                     ),
@@ -748,7 +771,7 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: _brandOrange,
-                      fontFamily: 'Poppins',
+                      fontFamily: 'Inter',
                       fontWeight: FontWeight.w800,
                       fontSize: w * 0.032,
                       height: 1.25,
@@ -776,7 +799,7 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
                             'Edit',
                             style: TextStyle(
                               color: _brandOrange,
-                              fontFamily: 'Poppins',
+                              fontFamily: 'Inter',
                               fontWeight: FontWeight.w900,
                               fontSize: w * 0.040,
                             ),
@@ -801,7 +824,7 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
                             'Submit',
                             style: TextStyle(
                               color: Colors.white,
-                              fontFamily: 'Poppins',
+                              fontFamily: 'Inter',
                               fontWeight: FontWeight.w900,
                               fontSize: w * 0.040,
                             ),
@@ -825,7 +848,7 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
       t,
       style: TextStyle(
         color: Colors.white,
-        fontFamily: 'Poppins',
+        fontFamily: 'Inter',
         fontSize: w * 0.038,
         fontWeight: FontWeight.w800,
       ),
@@ -845,7 +868,7 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
     required String text,
     required VoidCallback onTap,
   }) {
-    final fieldH = h * 0.060;
+    final fieldH = h * 0.080;
     final r = fieldH / 2;
 
     return GestureDetector(
@@ -874,7 +897,7 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   color: Colors.black,
-                  fontFamily: 'Poppins',
+                  fontFamily: 'Inter',
                   fontWeight: FontWeight.w900,
                   fontSize: w * 0.038,
                 ),
@@ -886,10 +909,18 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.arrow_drop_up, color: Colors.black, size: w * 0.085),
+                  Icon(
+                    Icons.arrow_drop_up,
+                    color: Colors.black,
+                    size: w * 0.06,
+                  ),
                   Transform.translate(
-                    offset: Offset(0, -w * 0.03),
-                    child: Icon(Icons.arrow_drop_down, color: Colors.black, size: w * 0.085),
+                    offset: Offset(0, -w * 0.02),
+                    child: Icon(
+                      Icons.arrow_drop_down,
+                      color: Colors.black,
+                      size: w * 0.06,
+                    ),
                   ),
                 ],
               ),
@@ -924,13 +955,15 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
         inputFormatters: inputFormatters,
         validator: (v) {
           final res = validator?.call(v);
-          WidgetsBinding.instance.addPostFrameCallback((_) => _recalcProgress());
+          WidgetsBinding.instance.addPostFrameCallback(
+            (_) => _recalcProgress(),
+          );
           return res;
         },
         onChanged: (_) => _recalcProgress(),
         style: TextStyle(
           color: Colors.black,
-          fontFamily: 'Poppins',
+          fontFamily: 'Inter',
           fontWeight: FontWeight.w700,
           fontSize: w * 0.038,
         ),
@@ -938,7 +971,7 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
           hintText: hint,
           hintStyle: TextStyle(
             color: Colors.black.withOpacity(0.55),
-            fontFamily: 'Poppins',
+            fontFamily: 'Inter',
             fontWeight: FontWeight.w700,
             fontSize: w * 0.035,
           ),
@@ -972,13 +1005,15 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
               controller: controller,
               validator: (v) {
                 final res = validator?.call(v);
-                WidgetsBinding.instance.addPostFrameCallback((_) => _recalcProgress());
+                WidgetsBinding.instance.addPostFrameCallback(
+                  (_) => _recalcProgress(),
+                );
                 return res;
               },
               onChanged: (_) => _recalcProgress(),
               style: TextStyle(
                 color: Colors.black,
-                fontFamily: 'Poppins',
+                fontFamily: 'Inter',
                 fontWeight: FontWeight.w700,
                 fontSize: w * 0.038,
               ),
@@ -986,7 +1021,7 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
                 hintText: hint,
                 hintStyle: TextStyle(
                   color: Colors.black.withOpacity(0.55),
-                  fontFamily: 'Poppins',
+                  fontFamily: 'Inter',
                   fontWeight: FontWeight.w700,
                   fontSize: w * 0.035,
                 ),
@@ -1018,44 +1053,62 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
         borderRadius: BorderRadius.circular(30),
       ),
       padding: EdgeInsets.symmetric(horizontal: w * 0.05),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: value,
-          isExpanded: true,
-          icon: Icon(
-            Icons.keyboard_arrow_down_rounded,
-            color: Colors.black,
-            size: w * 0.07,
-          ),
-          hint: Text(
-            hint,
-            style: TextStyle(
-              color: Colors.black.withOpacity(0.65),
-              fontFamily: 'Poppins',
-              fontWeight: FontWeight.w800,
-              fontSize: w * 0.034,
+      child: Theme(
+        data: Theme.of(context).copyWith(
+          popupMenuTheme: PopupMenuThemeData(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
             ),
           ),
-          items: items
-              .map(
-                (e) => DropdownMenuItem(
-                  value: e,
-                  child: Text(
-                    e,
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontFamily: 'Poppins',
-                      fontWeight: FontWeight.w800,
-                      fontSize: w * 0.036,
+        ),
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton<String>(
+            value: value,
+            isExpanded: true,
+            icon: Icon(
+              Icons.keyboard_arrow_down_rounded,
+              color: Colors.black,
+              size: w * 0.07,
+            ),
+            hint: Text(
+              hint,
+              style: TextStyle(
+                color: Colors.black.withOpacity(0.65),
+                fontFamily: 'Inter',
+                fontWeight: FontWeight.w800,
+                fontSize: w * 0.034,
+              ),
+            ),
+            items: items
+                .map(
+                  (e) => DropdownMenuItem(
+                    value: e,
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        vertical: 8,
+                        horizontal: 16,
+                      ),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        e,
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontFamily: 'Inter',
+                          fontWeight: FontWeight.w800,
+                          fontSize: w * 0.036,
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              )
-              .toList(),
-          onChanged: (v) {
-            onChanged(v);
-            _recalcProgress();
-          },
+                )
+                .toList(),
+            onChanged: (v) {
+              onChanged(v);
+              _recalcProgress();
+            },
+          ),
         ),
       ),
     );
@@ -1080,7 +1133,9 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
         controller: controller,
         validator: (v) {
           final res = validator?.call(v);
-          WidgetsBinding.instance.addPostFrameCallback((_) => _recalcProgress());
+          WidgetsBinding.instance.addPostFrameCallback(
+            (_) => _recalcProgress(),
+          );
           return res;
         },
         onChanged: (_) => _recalcProgress(),
@@ -1088,7 +1143,7 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
         expands: true,
         style: TextStyle(
           color: Colors.black,
-          fontFamily: 'Poppins',
+          fontFamily: 'Inter',
           fontWeight: FontWeight.w700,
           fontSize: w * 0.035,
         ),
@@ -1096,9 +1151,9 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
           hintText: hint,
           hintStyle: TextStyle(
             color: Colors.black.withOpacity(0.55),
-            fontFamily: 'Poppins',
+            fontFamily: 'Inter',
             fontWeight: FontWeight.w700,
-            fontSize: w * 0.032,
+            fontSize: w * 0.033,
             height: 1.25,
           ),
           border: InputBorder.none,
@@ -1130,7 +1185,11 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
               ),
             ),
             Center(
-              child: Icon(Icons.location_pin, color: Colors.redAccent, size: w * 0.10),
+              child: Icon(
+                Icons.location_pin,
+                color: Colors.redAccent,
+                size: w * 0.10,
+              ),
             ),
             Positioned(
               right: w * 0.03,
@@ -1149,18 +1208,26 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
               child: ElevatedButton(
                 onPressed: () {
                   setState(() => _pickedPlaceOnMap = !_pickedPlaceOnMap);
-                  _toast(_pickedPlaceOnMap ? 'Picked on map (optional)' : 'Unpicked map');
+                  _toast(
+                    _pickedPlaceOnMap
+                        ? 'Picked on map (optional)'
+                        : 'Unpicked map',
+                  );
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: _pickedPlaceOnMap ? Colors.green : _brandOrange,
+                  backgroundColor: _pickedPlaceOnMap
+                      ? Colors.green
+                      : _brandOrange,
                   elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(22),
+                  ),
                 ),
                 child: Text(
                   _pickedPlaceOnMap ? 'Picked ✓' : 'Pick',
                   style: TextStyle(
                     color: Colors.white,
-                    fontFamily: 'Poppins',
+                    fontFamily: 'Inter',
                     fontWeight: FontWeight.w900,
                     fontSize: w * 0.032,
                   ),
@@ -1224,13 +1291,17 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.cloud_upload_rounded, color: Colors.white, size: w * 0.14),
+                Icon(
+                  Icons.cloud_upload_rounded,
+                  color: Colors.white,
+                  size: w * 0.14,
+                ),
                 SizedBox(height: h * 0.01),
                 Text(
                   'Upload File',
                   style: TextStyle(
                     color: Colors.white,
-                    fontFamily: 'Poppins',
+                    fontFamily: 'Inter',
                     fontWeight: FontWeight.w900,
                     fontSize: w * 0.04,
                   ),
@@ -1241,7 +1312,7 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: Colors.white.withOpacity(0.75),
-                    fontFamily: 'Poppins',
+                    fontFamily: 'Inter',
                     fontWeight: FontWeight.w600,
                     fontSize: w * 0.028,
                     height: 1.25,
@@ -1253,7 +1324,7 @@ class _WorkerSkillsJobDetailsScreenState extends State<WorkerSkillsJobDetailsScr
                     '${_fakeSelectedImages.length} file(s) selected',
                     style: TextStyle(
                       color: _brandOrange,
-                      fontFamily: 'Poppins',
+                      fontFamily: 'Inter',
                       fontWeight: FontWeight.w900,
                       fontSize: w * 0.03,
                     ),
@@ -1314,7 +1385,7 @@ class _ProgressBar extends StatelessWidget {
           label,
           style: TextStyle(
             color: Colors.white.withOpacity(0.85),
-            fontFamily: 'Poppins',
+            fontFamily: '',
             fontWeight: FontWeight.w700,
             fontSize: width * 0.03,
           ),
@@ -1355,7 +1426,10 @@ class _GlassPill extends StatelessWidget {
               ],
             ),
             borderRadius: BorderRadius.circular(radius),
-            border: Border.all(color: Colors.white.withOpacity(0.35), width: 1.6),
+            border: Border.all(
+              color: Colors.white.withOpacity(0.35),
+              width: 1.6,
+            ),
             boxShadow: [
               BoxShadow(
                 color: Colors.white.withOpacity(0.08),
@@ -1453,4 +1527,3 @@ class _DashedLinePainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _DashedLinePainter oldDelegate) => false;
 }
-

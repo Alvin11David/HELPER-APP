@@ -3,7 +3,11 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:helper/Employer%20Dashboard/All_Categories_Screen.dart';
 import 'package:helper/Employer%20Dashboard/Create_Wallet_PIN_Screen.dart';
 import 'package:helper/Employer%20Dashboard/Set_New_Wallet_PIN_Screen.dart';
+import 'package:helper/Wallet/Wallet_Deposit_Payment_Method_Screen.dart';
+import 'package:helper/Wallet/Wallet_TopUp_Screen.dart';
+import 'package:helper/Wallet/Wallet_Withdraw_Screen.dart';
 import 'package:helper/Worker%20Dashboard/Worker_Details_Screen.dart';
+import 'package:helper/Worker%20Dashboard/Workers_skills_and_Job_Details.dart';
 import 'firebase_options.dart';
 import 'package:helper/Auth/OTP_Verification_Screen.dart';
 import 'package:helper/Auth/Password_Reset_Screen.dart';
@@ -49,7 +53,11 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
+<<<<<<< HEAD
       home: const WalletFlowScreen(),
+=======
+      home: WalletWithdrawScreen(),
+>>>>>>> d7926c0ed02ca07f4baad1b87ec72a7f59c2ccef
     );
   }
 }
