@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:helper/Payments/MTN_Airtel_Withdraw_Screen.dart';
 import 'dart:ui';
 import 'package:intl/intl.dart';
 import '../Payments/MTN_Airtel_Deposit_Screen.dart';
@@ -172,7 +173,7 @@ class _WalletWithdrawPaymentMethodScreenState
                           context,
                           MaterialPageRoute(
                             builder: (context) =>
-                                MtnAirtelDepositScreen(
+                                MtnAirtelWithdrawScreen(
                                   amount: widget.amount,
                                   type: 'MTN',
                                 ),
@@ -241,7 +242,7 @@ class _WalletWithdrawPaymentMethodScreenState
                           context,
                           MaterialPageRoute(
                             builder: (context) =>
-                                MtnAirtelDepositScreen(
+                                MtnAirtelWithdrawScreen(
                                   amount: widget.amount,
                                   type: 'AIRTEL', 
                                 ),
