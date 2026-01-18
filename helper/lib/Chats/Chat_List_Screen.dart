@@ -41,16 +41,13 @@ class ChatListScreen extends StatelessWidget {
                       color: Colors.white,
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(
-                      Icons.notifications,
-                      color: Colors.black,
-                    ),
+                    child: const Icon(Icons.notifications, color: Colors.black),
                   ),
                 ],
               ),
             ),
             Positioned(
-              top: 0,
+              top: screenWidth * 0.05,
               left: screenWidth * 0.04,
               child: Text(
                 'Messages',
