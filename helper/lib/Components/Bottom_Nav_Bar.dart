@@ -26,7 +26,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
   }
 
   void _showPINEntryModal() {
-    String _pin = '';
+    String pin = '';
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -65,7 +65,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
                     ),
                   ),
                   SizedBox(height: 20),
-                  _pin.isEmpty
+                  pin.isEmpty
                       ? Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: List.generate(4, (index) {
@@ -74,7 +74,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
                               width: 15,
                               height: 15,
                               decoration: BoxDecoration(
-                                color: _pin.length > index
+                                color: pin.length > index
                                     ? Colors.black
                                     : Color(0xFFD9D9D9),
                                 shape: BoxShape.circle,
@@ -90,7 +90,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
                       0,
                       -30,
                     ), // Move up by 8 pixels to be very close to the circles
-                    child: Container(
+                    child: SizedBox(
                       width: screenWidth * 0.35, // Reduced from 0.8 to 0.6
                       child: TextField(
                         keyboardType: TextInputType.number,
@@ -110,9 +110,9 @@ class _BottomNavBarState extends State<BottomNavBar> {
                         ),
                         onChanged: (value) {
                           setState(() {
-                            _pin = value;
+                            pin = value;
                           });
-                          if (_pin.length == 4) {
+                          if (pin.length == 4) {
                             // TODO: Verify PIN
                             Navigator.pop(context);
                           }
