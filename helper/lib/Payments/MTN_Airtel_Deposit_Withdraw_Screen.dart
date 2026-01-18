@@ -118,6 +118,7 @@ class _MtnAirtelDepositWithdrawScreenState
                         ),
                       ),
                       child: Stack(
+                        clipBehavior: Clip.none,
                         children: [
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
