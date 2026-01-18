@@ -121,7 +121,7 @@ class ChatScreen extends StatelessWidget {
                               style: TextStyle(color: Colors.black),
                             ),
                           ),
-                          const Spacer(),
+                          SizedBox(width: screenWidth * 0.4),
                           const Padding(
                             padding: EdgeInsets.only(right: 10),
                             child: Icon(Icons.image, color: Colors.black),
