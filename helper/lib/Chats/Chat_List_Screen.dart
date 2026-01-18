@@ -177,15 +177,15 @@ class ChatListScreen extends StatelessWidget {
                                     fontSize: 14,
                                   ),
                                 ),
-                                const SizedBox(height: 5),
-                                Text(
-                                  'dd/mm/yyyy',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 12,
-                                  ),
-                                ),
                               ],
+                            ),
+                            const Spacer(),
+                            Text(
+                              'dd/mm/yyyy',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                              ),
                             ),
                           ],
                         ),
