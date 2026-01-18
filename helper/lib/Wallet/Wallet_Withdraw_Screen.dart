@@ -218,7 +218,8 @@ class _WalletWithdrawScreenState extends State<WalletWithdrawScreen> {
                     decoration: BoxDecoration(
                       color: const Color(0xFFFBBC04),
                       borderRadius: BorderRadius.circular(25),
-                    ),                    child: Row(
+                    ),
+                    child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(
@@ -233,7 +234,7 @@ class _WalletWithdrawScreenState extends State<WalletWithdrawScreen> {
                             color: Colors.black,
                             fontSize: screenWidth * 0.035,
                             fontWeight: FontWeight.w500,
-                            fontFamily: 'Poppins',
+                            fontFamily: 'Inter',
                           ),
                         ),
                         SizedBox(width: screenWidth * 0.02),
@@ -247,7 +248,8 @@ class _WalletWithdrawScreenState extends State<WalletWithdrawScreen> {
                           ),
                         ),
                       ],
-                    ),                  ),
+                    ),
+                  ),
                 ),
                 SizedBox(height: screenHeight * 0.04),
                 Center(
