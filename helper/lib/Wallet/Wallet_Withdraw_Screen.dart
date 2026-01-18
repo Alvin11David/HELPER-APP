@@ -272,7 +272,7 @@ class _WalletWithdrawScreenState extends State<WalletWithdrawScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              "How much money would you like to add to \nyour Helper's App Wallet?",
+                              "How much money would you like to withdraw \nFrom your Helper's App Wallet?",
                               textAlign: TextAlign.left,
                               style: TextStyle(
                                 color: Colors.black,
