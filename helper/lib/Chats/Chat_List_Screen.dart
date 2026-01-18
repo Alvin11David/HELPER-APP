@@ -65,6 +65,29 @@ class ChatListScreen extends StatelessWidget {
                 ],
               ),
             ),
+            Positioned(
+              top: screenHeight * 0.08,
+              left: screenWidth * 0.04,
+              right: screenWidth * 0.04,
+              child: Container(
+                height: 50,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                child: Row(
+                  children: [
+                    SizedBox(width: 16),
+                    Icon(Icons.search, color: Colors.black),
+                    SizedBox(width: 8),
+                    Text(
+                      'Search here...',
+                      style: TextStyle(color: Colors.black),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ],
         ),
       ),
