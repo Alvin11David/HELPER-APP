@@ -31,7 +31,7 @@ class ChatListScreen extends StatelessWidget {
               ),
             ),
             Positioned(
-              top: 20,
+              top: screenWidth * 0.05,
               right: screenWidth * 0.04,
               child: Row(
                 mainAxisSize: MainAxisSize.min,
