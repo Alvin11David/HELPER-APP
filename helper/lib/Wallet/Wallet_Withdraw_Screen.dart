@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/intl.dart';
 import 'Wallet_Deposit_Payment_Method_Screen.dart';
+import 'Wallet_Withdraw_Payment_Method_Screen.dart';
 
 class NumberInputFormatter extends TextInputFormatter {
   @override
@@ -62,7 +63,7 @@ class _WalletWithdrawScreenState extends State<WalletWithdrawScreen> {
       context,
       MaterialPageRoute(
         builder: (context) =>
-            WalletDepositPaymentMethodScreen(amount: amountToPass),
+            WalletWithdrawPaymentMethodScreen(amount: amountToPass),
       ),
     );
   }
