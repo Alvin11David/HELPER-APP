@@ -520,8 +520,9 @@ class _WorkerSkillsJobDetailsScreenState
             controller: _skillsDescCtrl,
             hint: 'Describe your skills, experience, and services\nyou offer',
             validator: (v) {
-              if ((v ?? '').trim().isEmpty)
+              if ((v ?? '').trim().isEmpty) {
                 return 'Please describe your skills';
+              }
               if ((v ?? '').trim().length < 15) return 'Add a bit more detail';
               return null;
             },

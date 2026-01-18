@@ -2,7 +2,6 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
-import 'package:intl/intl.dart';
 import 'Wallet_Deposit_Payment_Method_Screen.dart';
 
 class NumberInputFormatter extends TextInputFormatter {

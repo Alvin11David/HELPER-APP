@@ -1,40 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:helper/Employer%20Dashboard/All_Categories_Screen.dart';
-import 'package:helper/Employer%20Dashboard/Create_Wallet_PIN_Screen.dart';
-import 'package:helper/Employer%20Dashboard/Set_New_Wallet_PIN_Screen.dart';
-import 'package:helper/Wallet/Wallet_Deposit_Payment_Method_Screen.dart';
-import 'package:helper/Wallet/Wallet_TopUp_Screen.dart';
-import 'package:helper/Wallet/Wallet_Withdraw_Screen.dart';
-import 'package:helper/Worker%20Dashboard/Worker_Details_Screen.dart';
-import 'package:helper/Worker%20Dashboard/Workers_skills_and_Job_Details.dart';
 import 'firebase_options.dart';
-import 'package:helper/Auth/OTP_Verification_Screen.dart';
-import 'package:helper/Auth/Password_Reset_Screen.dart';
-import 'package:helper/Auth/Referral_Code_Screen.dart';
-import 'package:helper/Document Upload/Academic_Certificate_Upload_Screen.dart';
-import 'package:helper/Document Upload/Add_Profession_Screen.dart';
-import 'package:helper/Document Upload/Document_Upload_screen.dart';
-import 'package:helper/Document Upload/Face_Scan_Screen.dart';
-import 'package:helper/Document Upload/National_ID_Passport_Back_Upload_Screen.dart';
-import 'package:helper/Document Upload/National_ID_Passport_Back_Scan_Screen.dart';
-import 'package:helper/Document Upload/National_ID_Passport_Front_Scan_Screen.dart';
-import 'package:helper/Document Upload/Select_Worker_Type_Screen.dart';
-import 'package:helper/Document Upload/Verification_Information_Screen.dart';
-import 'package:helper/Employer%20Dashboard/Employer_Dashboard_Screen.dart';
-import 'package:helper/Payments/Airtel_Payment_Method_Screen.dart';
-import 'package:helper/Payments/Mastercard_Payment_Method_Screen.dart';
-import 'package:helper/Payments/Registration_Payment_Screen.dart';
-import 'package:helper/Payments/Visa_Payment_Method_Screen.dart';
-import 'package:helper/intro/Role_Selection_Screen.dart';
-import 'package:helper/intro/Splash_Screen.dart';
-import 'package:helper/Auth/Phone_Number_&_Email_Address_Screen.dart';
-import 'package:helper/Auth/Forgot_Password_Screen.dart';
-import 'package:helper/Payments/MTN_Payment_Method_Screen.dart';
-import 'package:helper/Document Upload/National_ID_Passport_Front_Upload_Screen.dart';
-import 'package:helper/Document Upload/Professional_License_Upload.dart';
-import 'package:helper/Document Upload/Selfie_Verification_Upload.dart';
-import 'package:helper/Employer Dashboard/job_detail_booking_screen.dart';
 import 'package:helper/Wallet/Wallet_Cancelled_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -53,11 +19,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-<<<<<<< HEAD
       home: const WalletFlowScreen(),
-=======
-      home: WalletWithdrawScreen(),
->>>>>>> d7926c0ed02ca07f4baad1b87ec72a7f59c2ccef
     );
   }
 }
