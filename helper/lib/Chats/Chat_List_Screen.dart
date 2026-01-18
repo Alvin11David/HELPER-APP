@@ -26,7 +26,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
-    double scale = (1 - (_scrollController.offset / 200)).clamp(0.8, 1.0);
+    double scale = _scrollController.hasClients ? (1 - (_scrollController.offset / 200)).clamp(0.8, 1.0) : 1.0;
     return Scaffold(
       body: SafeArea(
         child: Stack(
