@@ -69,57 +69,63 @@ class ChatListScreen extends StatelessWidget {
               top: screenHeight * 0.1,
               left: screenWidth * 0.04,
               right: screenWidth * 0.04,
-              child: Container(
-                height: 40,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(30),
-                ),
-                child: Row(
-                  children: [
-                    SizedBox(width: 16),
-                    Icon(Icons.search, color: Colors.black),
-                    SizedBox(width: 5),
-                    Text(
-                      'Search here...',
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontSize: screenWidth * 0.04,
-                        fontWeight: FontWeight.w500,
+              child: Column(
+                children: [
+                  Container(
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    child: Row(
+                      children: [
+                        SizedBox(width: 16),
+                        Icon(Icons.search, color: Colors.black),
+                        SizedBox(width: 5),
+                        Text(
+                          'Search here...',
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontSize: screenWidth * 0.04,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: List.generate(
+                      9,
+                      (index) => Column(
+                        children: [
+                          Container(
+                            width: screenWidth * 0.12,
+                            height: screenWidth * 0.12,
+                            decoration: const BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Names',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: screenWidth * 0.03,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ],
-                ),
-              ),
-            ),
-            Positioned(
-              top: screenHeight * 0.15,
-              left: screenWidth * 0.04,
-              right: screenWidth * 0.04,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: List.generate(
-                  6,
-                  (index) => Column(
-                    children: [
-                      Container(
-                        width: screenWidth * 0.1,
-                        height: screenWidth * 0.1,
-                        decoration: const BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Names',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: screenWidth * 0.03,
-                        ),
-                      ),
-                    ],
                   ),
-                ),
+                ],
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
