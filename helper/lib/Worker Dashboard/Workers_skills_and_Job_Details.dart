@@ -674,7 +674,7 @@ class _WorkerSkillsJobDetailsScreenState
     );
   }
 
-  // ----------------------- PREVIEW (UI matches image) -----------------------
+  // ----------------------- PREVIEW (UI  image) -----------------------
   Widget _jobPreview(double w, double h) {
     final leftStyle = TextStyle(
       color: Colors.black,
