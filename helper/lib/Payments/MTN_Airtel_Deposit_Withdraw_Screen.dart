@@ -122,7 +122,7 @@ class _MtnAirtelDepositWithdrawScreenState
                                   ],
                                 ),
                                 child: Image.asset(
-                                  'assets/images/mtn.png',
+                                  widget.type == 'MTN' ? 'assets/images/mtn.png' : 'assets/images/airtel.png',
                                   width: screenWidth * 0.15,
                                   fit: BoxFit.contain,
                                 ),
@@ -133,7 +133,7 @@ class _MtnAirtelDepositWithdrawScreenState
                                 children: [
                                   SizedBox(height: screenHeight * 0.002),
                                   Text(
-                                    'MTN',
+                                    widget.type,
                                     style: TextStyle(
                                       color: Colors.black,
                                       fontSize: screenWidth * 0.055,
