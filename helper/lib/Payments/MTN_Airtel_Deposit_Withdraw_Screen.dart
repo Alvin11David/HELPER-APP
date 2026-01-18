@@ -154,7 +154,7 @@ class _MtnAirtelDepositWithdrawScreenState
                                   Text(
                                     'UGX ${NumberFormat('#,###').format(int.parse(widget.amount))}',
                                     style: TextStyle(
-                                      color: Colors.black,
+                                      color: Colors.white,
                                       fontSize: screenWidth * 0.07,
                                       fontWeight: FontWeight.w500,
                                       fontFamily: 'AbrilFatface',
@@ -170,7 +170,8 @@ class _MtnAirtelDepositWithdrawScreenState
                             right: screenWidth * 0.04,
                             child: Container(
                               width: screenWidth * (94 / 340),
-                              height: screenWidth * (28 / 340),
+                              height:
+                                  screenWidth * (40 / 340), // Increased height
                               decoration: BoxDecoration(
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(30),
@@ -185,10 +186,12 @@ class _MtnAirtelDepositWithdrawScreenState
                               ),
                               alignment: Alignment.center,
                               child: Text(
-                                'Not Paid', // Change this to 'Not Paid', 'Pending', etc. as needed
+                                'Not Paid',
                                 style: TextStyle(
                                   color: Colors.black,
-                                  fontSize: screenWidth * 0.04,
+                                  fontSize:
+                                      screenWidth *
+                                      0.035, // Slightly smaller font
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
