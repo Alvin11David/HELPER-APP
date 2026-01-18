@@ -239,9 +239,16 @@ class _WalletDepositPaymentMethodScreenState
                     SizedBox(height: screenHeight * 0.03),
                     GestureDetector(
                       onTap: () {
-                        setState(() {
-                          _isAirtelCardSelected = !_isAirtelCardSelected;
-                        });
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                MtnAirtelDepositWithdrawScreen(
+                                  amount: widget.amount,
+                                  type: 'AIRTEL',
+                                ),
+                          ),
+                        );
                       },
                       child: Container(
                         width: screenWidth * 0.91,
