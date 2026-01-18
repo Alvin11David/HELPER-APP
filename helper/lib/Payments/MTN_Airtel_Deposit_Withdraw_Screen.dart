@@ -189,7 +189,7 @@ class _MtnAirtelDepositWithdrawScreenState
                                 'Not Paid', // Change this to 'Not Paid', 'Pending', etc. as needed
                                 style: TextStyle(
                                   color: Colors.black,
-                                  fontSize: screenWidth * 0.04,
+                                  fontSize: screenWidth * 0.035,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
