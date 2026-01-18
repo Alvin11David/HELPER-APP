@@ -3,18 +3,18 @@ import 'dart:ui';
 import 'package:intl/intl.dart';
 import '../Payments/MTN_Airtel_Deposit_Withdraw_Screen.dart';
 
-class WalletDepositPaymentMethodScreen extends StatefulWidget {
+class WalletWithdrawPaymentMethodScreen extends StatefulWidget {
   final String amount;
 
-  const WalletDepositPaymentMethodScreen({super.key, required this.amount});
+  const WalletWithdrawPaymentMethodScreen({super.key, required this.amount});
 
   @override
-  State<WalletDepositPaymentMethodScreen> createState() =>
-      _WalletDepositPaymentMethodScreenState();
+  State<WalletWithdrawPaymentMethodScreen> createState() =>
+      _WalletWithdrawPaymentMethodScreenState();
 }
 
-class _WalletDepositPaymentMethodScreenState
-    extends State<WalletDepositPaymentMethodScreen> {
+class _WalletWithdrawPaymentMethodScreenState
+    extends State<WalletWithdrawPaymentMethodScreen> {
   bool _isVisaCardSelected = false;
   bool _isMtnCardSelected = false;
   bool _isPaypalSelected = false;
