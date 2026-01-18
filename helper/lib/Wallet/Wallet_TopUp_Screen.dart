@@ -7,7 +7,10 @@ import 'Wallet_Deposit_Payment_Method_Screen.dart';
 
 class NumberInputFormatter extends TextInputFormatter {
   @override
-  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
     if (newValue.text.isEmpty) {
       return newValue;
     }
@@ -33,7 +36,7 @@ class WalletTopUpScreen extends StatefulWidget {
 class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
   final TextEditingController _amountController = TextEditingController();
   bool loading = false;
-  String? selectedAmount; 
+  String? selectedAmount;
 
   @override
   void dispose() {
@@ -265,9 +268,7 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
                                   child: TextField(
                                     controller: _amountController,
                                     keyboardType: TextInputType.number,
-                                    inputFormatters: [
-                                      NumberInputFormatter(),
-                                    ],
+                                    inputFormatters: [NumberInputFormatter()],
                                     style: TextStyle(
                                       color: Colors.black,
                                       fontSize: screenWidth * 0.035,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
+import 'package:intl/intl.dart';
 
 class WalletDepositPaymentMethodScreen extends StatefulWidget {
   final String amount;
