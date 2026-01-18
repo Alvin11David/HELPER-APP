@@ -227,7 +227,7 @@ class _WalletDepositPaymentMethodScreenState
                         ),
                       ),
                     ),
-                    SizedBox(height: screenHeight * 0.05),
+                    SizedBox(height: screenHeight * 0.03),
                     GestureDetector(
                       onTap: () {
                         setState(() {
