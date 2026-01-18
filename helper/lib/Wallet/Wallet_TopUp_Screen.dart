@@ -1,7 +1,27 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
+import 'package:intl/intl.dart';
 import 'Wallet_Deposit_Payment_Method_Screen.dart';
+
+class NumberInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+    if (newValue.text.isEmpty) {
+      return newValue;
+    }
+    final intValue = int.tryParse(newValue.text.replaceAll(',', ''));
+    if (intValue == null) {
+      return oldValue;
+    }
+    final formatted = NumberFormat('#,###').format(intValue);
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
+    );
+  }
+}
 
 class WalletTopUpScreen extends StatefulWidget {
   const WalletTopUpScreen({super.key});
@@ -28,6 +48,9 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
         : _amountController.text.isNotEmpty
         ? _amountController.text
         : '0';
+
+    // Remove commas for passing the amount
+    amountToPass = amountToPass.replaceAll(',', '');
 
     Navigator.push(
       context,
