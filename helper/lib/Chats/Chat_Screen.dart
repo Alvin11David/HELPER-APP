@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+import 'Voice_Call_Screen.dart';
 
 class ChatScreen extends StatefulWidget {
   @override
@@ -84,18 +85,31 @@ class _ChatScreenState extends State<ChatScreen> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Stack(
-                        children: [
-                          Container(
-                            width: screenWidth * 0.12,
-                            height: screenWidth * 0.12,
-                            decoration: const BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => VoiceCallScreen(),
                             ),
-                            child: const Icon(Icons.phone, color: Colors.black),
-                          ),
-                        ],
+                          );
+                        },
+                        child: Stack(
+                          children: [
+                            Container(
+                              width: screenWidth * 0.12,
+                              height: screenWidth * 0.12,
+                              decoration: const BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.phone,
+                                color: Colors.black,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                       SizedBox(width: screenWidth * 0.025),
                       Stack(
@@ -108,7 +122,7 @@ class _ChatScreenState extends State<ChatScreen> {
                               shape: BoxShape.circle,
                             ),
                             child: const Icon(
-                              Icons.more_vert,
+                              Icons.person,
                               color: Colors.black,
                             ),
                           ),
