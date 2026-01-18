@@ -51,7 +51,7 @@ class ChatScreen extends StatelessWidget {
                               shape: BoxShape.circle,
                             ),
                             child: const Icon(
-                              Icons.notifications,
+                              Icons.more_vert,
                               color: Colors.black,
                             ),
                           ),
