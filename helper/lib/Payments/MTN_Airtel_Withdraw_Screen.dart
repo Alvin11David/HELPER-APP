@@ -543,7 +543,7 @@ class _MtnAirtelWithdrawScreenState
                           ),
                         ),
                         SizedBox(height: screenHeight * 0.07),
-                        SizedBox(
+                        SizedBox( 
                           width: double.infinity,
                           height: screenHeight * 0.062,
                           child: ElevatedButton(
