@@ -1,6 +1,39 @@
 import 'package:flutter/material.dart';
 
-class ChatListScreen extends StatelessWidget {
+class ChatListScreen extends StatefulWidget {
+  @override
+  _ChatListScreenState createState() => _ChatListScreenState();
+}
+
+class _ChatListScreenState extends State<ChatListScreen> {
+  final ScrollController _scrollController = ScrollController();
+  double _scale = 1.0;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    const double maxScroll = 100.0;
+    const double minScale = 0.7;
+    double offset = _scrollController.offset;
+    double newScale = 1.0 - (offset / maxScroll) * (1.0 - minScale);
+    newScale = newScale.clamp(minScale, 1.0);
+    if (newScale != _scale) {
+      setState(() {
+        _scale = newScale;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -22,58 +55,64 @@ class ChatListScreen extends StatelessWidget {
             Positioned(
               top: screenWidth * 0.05,
               right: screenWidth * 0.04,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Stack(
-                    children: [
-                      Container(
-                        width: screenWidth * 0.12,
-                        height: screenWidth * 0.12,
-                        decoration: const BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
+              child: Transform.scale(
+                scale: _scale,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Stack(
+                      children: [
+                        Container(
+                          width: screenWidth * 0.12,
+                          height: screenWidth * 0.12,
+                          decoration: const BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.person, color: Colors.black),
                         ),
-                        child: const Icon(Icons.person, color: Colors.black),
-                      ),
-                    ],
-                  ),
-                  SizedBox(width: screenWidth * 0.025),
-                  Stack(
-                    children: [
-                      Container(
-                        width: screenWidth * 0.12,
-                        height: screenWidth * 0.12,
-                        decoration: const BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
+                      ],
+                    ),
+                    SizedBox(width: screenWidth * 0.025),
+                    Stack(
+                      children: [
+                        Container(
+                          width: screenWidth * 0.12,
+                          height: screenWidth * 0.12,
+                          decoration: const BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.notifications,
+                            color: Colors.black,
+                          ),
                         ),
-                        child: const Icon(
-                          Icons.notifications,
-                          color: Colors.black,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
             Positioned(
               top: screenHeight * 0.03,
               left: screenWidth * 0.04,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'Messages',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: screenWidth * 0.07,
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'Montserrat',
+              child: Transform.scale(
+                scale: _scale,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Messages',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: screenWidth * 0.07,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Montserrat',
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
             Positioned(
@@ -82,6 +121,7 @@ class ChatListScreen extends StatelessWidget {
               right: screenWidth * 0.04,
               bottom: 0,
               child: SingleChildScrollView(
+                controller: _scrollController,
                 child: Column(
                   children: [
                     Container(
