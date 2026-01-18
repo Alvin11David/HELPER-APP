@@ -176,9 +176,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
               } else if (index == 3) {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (context) => ChatListScreen(),
-                  ),
+                  MaterialPageRoute(builder: (context) => ChatListScreen()),
                 );
               } else {
                 setState(() {
