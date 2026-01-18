@@ -149,7 +149,7 @@ class _WalletWithdrawScreenState extends State<WalletWithdrawScreen> {
                         ),
                         SizedBox(width: screenWidth * 0.06),
                         Text(
-                          'Top Up Wallet',
+                          'Withdraw',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: screenWidth * 0.08,
