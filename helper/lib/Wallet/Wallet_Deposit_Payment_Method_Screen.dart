@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:intl/intl.dart';
+import '../Payments/MTN_Airtel_Deposit_Withdraw_Screen.dart';
 
 class WalletDepositPaymentMethodScreen extends StatefulWidget {
   final String amount;
@@ -169,9 +170,10 @@ class _WalletDepositPaymentMethodScreenState
                     SizedBox(height: screenHeight * 0.02),
                     GestureDetector(
                       onTap: () {
-                        setState(() {
-                          _isMtnCardSelected = !_isMtnCardSelected;
-                        });
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => MtnAirtelDepositWithdrawScreen()),
+                        );
                       },
                       child: Container(
                         width: screenWidth * 0.91,
