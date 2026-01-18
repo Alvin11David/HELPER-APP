@@ -65,18 +65,6 @@ class ChatListScreen extends StatelessWidget {
                           color: Colors.black,
                         ),
                       ),
-                      Positioned(
-                        bottom: 0,
-                        right: 0,
-                        child: Container(
-                          width: 10,
-                          height: 10,
-                          decoration: const BoxDecoration(
-                            color: Colors.green,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                      ),
                     ],
                   ),
                 ],
@@ -138,7 +126,9 @@ class ChatListScreen extends StatelessWidget {
                         children: List.generate(
                           9,
                           (index) => Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8.0,
+                            ),
                             child: Column(
                               children: [
                                 Stack(
