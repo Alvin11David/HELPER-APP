@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class MtnAirtelDepositWithdrawScreen extends StatefulWidget {
   final String amount;
@@ -12,11 +13,12 @@ class MtnAirtelDepositWithdrawScreen extends StatefulWidget {
       _MtnAirtelDepositWithdrawScreenState();
 }
 
-class _MtnAirtelDepositWithdrawScreenState extends State<MtnAirtelDepositWithdrawScreen> {
+class _MtnAirtelDepositWithdrawScreenState
+    extends State<MtnAirtelDepositWithdrawScreen> {
   final TextEditingController _cardNumberController = TextEditingController();
   bool isChecked = false;
-  bool _isDimming = false; // State to track if the screen should dim
-  bool _showOverlay = false; // State to control the overlay visibility
+  bool _isDimming = false; 
+  bool _showOverlay = false; 
   final Duration _overlayAnimDuration = Duration(milliseconds: 300);
   @override
   void dispose() {
@@ -28,7 +30,6 @@ class _MtnAirtelDepositWithdrawScreenState extends State<MtnAirtelDepositWithdra
   Widget build(BuildContext context) {
     final double screenWidth = MediaQuery.of(context).size.width;
     final double screenHeight = MediaQuery.of(context).size.height;
-
 
     return Scaffold(
       body: Stack(
@@ -151,7 +152,7 @@ class _MtnAirtelDepositWithdrawScreenState extends State<MtnAirtelDepositWithdra
                                   ),
                                   SizedBox(height: screenHeight * 0.005),
                                   Text(
-                                    'UGX 25,000',
+                                    'UGX ${NumberFormat('#,###').format(int.parse(widget.amount))}',
                                     style: TextStyle(
                                       color: Colors.white,
                                       fontSize: screenWidth * 0.07,
@@ -502,7 +503,7 @@ class _MtnAirtelDepositWithdrawScreenState extends State<MtnAirtelDepositWithdra
                             horizontal: screenWidth * 0.08,
                           ),
                           child: Text(
-                            'Your payment of UGX 25,000\nhas been successfully\nreceived.',
+                            'Your payment of UGX ${NumberFormat('#,###').format(int.parse(widget.amount))}\nhas been successfully\nreceived.',
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               color: Colors.black,
