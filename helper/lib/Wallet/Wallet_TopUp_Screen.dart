@@ -175,7 +175,7 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             color: const Color.fromRGBO(255, 255, 255, 1),
-                            fontSize: screenWidth * 0.04,
+                            fontSize: screenWidth * 0.045,
                             fontWeight: FontWeight.w500,
                             fontFamily: 'Poppins',
                           ),
