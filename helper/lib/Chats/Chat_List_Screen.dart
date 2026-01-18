@@ -94,29 +94,35 @@ class ChatListScreen extends StatelessWidget {
                     ),
                   ),
                   SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: List.generate(
-                      9,
-                      (index) => Column(
-                        children: [
-                          Container(
-                            width: screenWidth * 0.12,
-                            height: screenWidth * 0.12,
-                            decoration: const BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
-                            ),
+                  SizedBox(
+                    height: screenWidth * 0.2,
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
+                      children: List.generate(
+                        9,
+                        (index) => Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                          child: Column(
+                            children: [
+                              Container(
+                                width: screenWidth * 0.12,
+                                height: screenWidth * 0.12,
+                                decoration: const BoxDecoration(
+                                  color: Colors.white,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Names',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: screenWidth * 0.03,
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Names',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: screenWidth * 0.03,
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
                     ),
                   ),
