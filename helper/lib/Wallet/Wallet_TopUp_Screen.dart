@@ -266,7 +266,7 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
                                     controller: _amountController,
                                     keyboardType: TextInputType.number,
                                     inputFormatters: [
-                                      FilteringTextInputFormatter.digitsOnly,
+                                      NumberInputFormatter(),
                                     ],
                                     style: TextStyle(
                                       color: Colors.black,
