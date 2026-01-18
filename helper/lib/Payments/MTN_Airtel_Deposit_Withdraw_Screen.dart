@@ -17,8 +17,8 @@ class _MtnAirtelDepositWithdrawScreenState
     extends State<MtnAirtelDepositWithdrawScreen> {
   final TextEditingController _cardNumberController = TextEditingController();
   bool isChecked = false;
-  bool _isDimming = false; 
-  bool _showOverlay = false; 
+  bool _isDimming = false;
+  bool _showOverlay = false;
   final Duration _overlayAnimDuration = Duration(milliseconds: 300);
   @override
   void dispose() {
@@ -154,7 +154,7 @@ class _MtnAirtelDepositWithdrawScreenState
                                   Text(
                                     'UGX ${NumberFormat('#,###').format(int.parse(widget.amount))}',
                                     style: TextStyle(
-                                      color: Colors.white,
+                                      color: Colors.black,
                                       fontSize: screenWidth * 0.07,
                                       fontWeight: FontWeight.w500,
                                       fontFamily: 'AbrilFatface',
