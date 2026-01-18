@@ -245,7 +245,7 @@ class _WalletDepositPaymentMethodScreenState
                             builder: (context) =>
                                 MtnAirtelDepositScreen(
                                   amount: widget.amount,
-                                  type: 'AIRTEL',
+                                  type: 'AIRTEL', 
                                 ),
                           ),
                         );
