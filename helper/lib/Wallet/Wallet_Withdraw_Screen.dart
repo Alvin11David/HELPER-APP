@@ -37,6 +37,8 @@ class _WalletWithdrawScreenState extends State<WalletWithdrawScreen> {
   final TextEditingController _amountController = TextEditingController();
   bool loading = false;
   String? selectedAmount;
+  final double screenWidth = WidgetsBinding.instance.window.physicalSize.width /
+      WidgetsBinding.instance.window.devicePixelRatio;
 
   @override
   void dispose() {
@@ -97,21 +99,6 @@ class _WalletWithdrawScreenState extends State<WalletWithdrawScreen> {
     );
   }
 
-  Widget _ruleRow(String text) {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.05),
-      child: Text(
-        text,
-        style: TextStyle(
-          color: Colors.white,
-          fontSize: screenWidth * 0.035,
-          fontWeight: FontWeight.w400,
-          fontFamily: 'Poppins',
-        ),
-        textAlign: TextAlign.center,
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -440,8 +427,8 @@ class _WalletWithdrawScreenState extends State<WalletWithdrawScreen> {
                   ),
                 ),
                 const SizedBox(height: 10),
-                _ruleRow('Minimum Amount: UGX 5,000'),
-                _ruleRow('Maximum Amount: Available Balance'),
+                _RuleRow('Minimum Amount: UGX 5,000'),
+                _RuleRow('Maximum Amount: Available Balance'),
                 SizedBox(height: screenHeight * 0.09),
                 // Continue (white)
                 SizedBox(
