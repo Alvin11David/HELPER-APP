@@ -30,7 +30,8 @@ import 'package:helper/Payments/MTN_Payment_Method_Screen.dart';
 import 'package:helper/Document Upload/National_ID_Passport_Front_Upload_Screen.dart';
 import 'package:helper/Document Upload/Professional_License_Upload.dart';
 import 'package:helper/Document Upload/Selfie_Verification_Upload.dart';
-
+import 'package:helper/Employer Dashboard/job_detail_booking_screen.dart';
+import 'package:helper/Wallet/Wallet_Cancelled_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
@@ -48,7 +49,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: const JobDetailBookingScreen(),
+      home: const WalletFlowScreen(),
     );
   }
 }
