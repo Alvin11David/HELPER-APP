@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
+import 'package:intl/intl.dart';
+import '../Payments/MTN_Airtel_Deposit_Withdraw_Screen.dart';
 
 class WalletDepositPaymentMethodScreen extends StatefulWidget {
   final String amount;
@@ -134,7 +136,7 @@ class _WalletDepositPaymentMethodScreenState
                     SizedBox(height: screenHeight * 0.03),
                     Center(
                       child: Text(
-                        'UGX ${widget.amount}',
+                        'UGX ${NumberFormat('#,###').format(int.parse(widget.amount))}',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: screenWidth * 0.06,
@@ -168,9 +170,16 @@ class _WalletDepositPaymentMethodScreenState
                     SizedBox(height: screenHeight * 0.02),
                     GestureDetector(
                       onTap: () {
-                        setState(() {
-                          _isMtnCardSelected = !_isMtnCardSelected;
-                        });
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                MtnAirtelDepositWithdrawScreen(
+                                  amount: widget.amount,
+                                  type: 'MTN',
+                                ),
+                          ),
+                        );
                       },
                       child: Container(
                         width: screenWidth * 0.91,
@@ -227,12 +236,19 @@ class _WalletDepositPaymentMethodScreenState
                         ),
                       ),
                     ),
-                    SizedBox(height: screenHeight * 0.05),
+                    SizedBox(height: screenHeight * 0.03),
                     GestureDetector(
                       onTap: () {
-                        setState(() {
-                          _isAirtelCardSelected = !_isAirtelCardSelected;
-                        });
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                MtnAirtelDepositWithdrawScreen(
+                                  amount: widget.amount,
+                                  type: 'AIRTEL',
+                                ),
+                          ),
+                        );
                       },
                       child: Container(
                         width: screenWidth * 0.91,
