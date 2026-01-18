@@ -174,7 +174,7 @@ class _WalletDepositPaymentMethodScreenState
                           context,
                           MaterialPageRoute(
                             builder: (context) =>
-                                MtnAirtelDepositWithdrawScreen(
+                                MtnAirtelDepositScreen(
                                   amount: widget.amount,
                                   type: 'MTN',
                                 ),
@@ -243,7 +243,7 @@ class _WalletDepositPaymentMethodScreenState
                           context,
                           MaterialPageRoute(
                             builder: (context) =>
-                                MtnAirtelDepositWithdrawScreen(
+                                MtnAirtelDepositScreen(
                                   amount: widget.amount,
                                   type: 'AIRTEL',
                                 ),
