@@ -1,17 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../Employer Dashboard/Create_Wallet_PIN_Screen.dart';
+import '../Chats/Chat_List_Screen.dart';
 
 class BottomNavBar extends StatefulWidget {
   final Function(int)? onItemTapped;
-  const BottomNavBar({super.key, this.onItemTapped});
+  final int initialSelectedIndex;
+  const BottomNavBar({
+    super.key,
+    this.onItemTapped,
+    this.initialSelectedIndex = 0,
+  });
 
   @override
   _BottomNavBarState createState() => _BottomNavBarState();
 }
 
 class _BottomNavBarState extends State<BottomNavBar> {
-  int _selectedIndex = 0;
+  late int _selectedIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedIndex = widget.initialSelectedIndex;
+  }
 
   void _showPINEntryModal() {
     String pin = '';
@@ -139,9 +151,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
           bool isSelected = index == _selectedIndex;
           return GestureDetector(
             onTap: () async {
-              print('Tapped index: $index');
               if (index == 2) {
-                print('Wallet tapped');
                 try {
                   SharedPreferences prefs =
                       await SharedPreferences.getInstance();
@@ -163,6 +173,11 @@ class _BottomNavBarState extends State<BottomNavBar> {
                 } catch (e) {
                   print('Error in wallet tap: $e');
                 }
+              } else if (index == 3) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => ChatListScreen()),
+                );
               } else {
                 setState(() {
                   _selectedIndex = index;
