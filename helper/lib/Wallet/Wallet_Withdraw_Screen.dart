@@ -97,6 +97,22 @@ class _WalletWithdrawScreenState extends State<WalletWithdrawScreen> {
     );
   }
 
+  Widget _ruleRow(String text) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.05),
+      child: Text(
+        text,
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: screenWidth * 0.035,
+          fontWeight: FontWeight.w400,
+          fontFamily: 'Poppins',
+        ),
+        textAlign: TextAlign.center,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
