@@ -18,49 +18,49 @@ class ChatListScreen extends StatelessWidget {
                 ),
               ),
             ),
-          Positioned(
-            top: 20,
-            left: screenWidth * 0.04,
-            child: Text(
-              'Messages',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
+            Positioned(
+              top: screenWidth * 0.05,
+              left: screenWidth * 0.04,
+              child: Text(
+                'Messages',
+                style: TextStyle(
+                  color: Colors.black,
+                  fontSize: screenWidth * 0.06,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
-          ),
-          Positioned(
-            top: 20,
-            right: screenWidth * 0.04,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
+            Positioned(
+              top: 20,
+              right: screenWidth * 0.04,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.person, color: Colors.black),
                   ),
-                  child: const Icon(Icons.person, color: Colors.black),
-                ),
-                const SizedBox(width: 10),
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
+                  const SizedBox(width: 10),
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.notifications, color: Colors.black),
                   ),
-                  child: const Icon(Icons.notifications, color: Colors.black),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-    ),
-  );
+    );
   }
 }
