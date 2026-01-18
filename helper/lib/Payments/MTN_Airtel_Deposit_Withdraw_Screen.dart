@@ -5,8 +5,9 @@ import 'package:intl/intl.dart';
 
 class MtnAirtelDepositWithdrawScreen extends StatefulWidget {
   final String amount;
+  final String type;
 
-  const MtnAirtelDepositWithdrawScreen({super.key, required this.amount});
+  const MtnAirtelDepositWithdrawScreen({super.key, required this.amount, required this.type});
 
   @override
   State<MtnAirtelDepositWithdrawScreen> createState() =>
@@ -170,8 +171,7 @@ class _MtnAirtelDepositWithdrawScreenState
                             right: screenWidth * 0.04,
                             child: Container(
                               width: screenWidth * (94 / 340),
-                              height:
-                                  screenWidth * (40 / 340), // Increased height
+                              height: screenWidth * (28 / 340),
                               decoration: BoxDecoration(
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(30),
@@ -186,12 +186,10 @@ class _MtnAirtelDepositWithdrawScreenState
                               ),
                               alignment: Alignment.center,
                               child: Text(
-                                'Not Paid',
+                                'Not Paid', // Change this to 'Not Paid', 'Pending', etc. as needed
                                 style: TextStyle(
                                   color: Colors.black,
-                                  fontSize:
-                                      screenWidth *
-                                      0.035, // Slightly smaller font
+                                  fontSize: screenWidth * 0.04,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
