@@ -37,18 +37,18 @@ class ChatListScreen extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Container(
-                    width: 40,
-                    height: 40,
+                    width: screenWidth * 0.1,
+                    height: screenWidth * 0.1,
                     decoration: const BoxDecoration(
                       color: Colors.white,
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(Icons.person, color: Colors.black),
                   ),
-                  const SizedBox(width: 10),
+                  SizedBox(width: screenWidth * 0.025),
                   Container(
-                    width: 40,
-                    height: 40,
+                    width: screenWidth * 0.1,
+                    height: screenWidth * 0.1,
                     decoration: const BoxDecoration(
                       color: Colors.white,
                       shape: BoxShape.circle,
