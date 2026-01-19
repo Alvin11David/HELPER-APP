@@ -9,6 +9,7 @@ class WorkersDashboardScreen extends StatefulWidget {
 class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
   final TextEditingController _controller = TextEditingController();
   final FocusNode _focusNode = FocusNode();
+  final GlobalKey<_SideBarState> _sidebarKey = GlobalKey();
 
   String status = 'Available'; // Can be 'Available', 'On Job', 'Not Available'
 
