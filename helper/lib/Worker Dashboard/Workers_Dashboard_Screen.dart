@@ -486,7 +486,9 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                                 fontWeight: FontWeight.w300,
                               ),
                             ),
-                            const SizedBox(height: 10),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
                         Center(
                           child: Container(
                             width: screenWidth * 0.4,
@@ -515,8 +517,6 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                               ],
                             ),
                           ),
-                        ),
-                          ],
                         ),
                       ],
                     ),
