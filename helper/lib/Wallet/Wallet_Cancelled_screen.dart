@@ -51,6 +51,84 @@ class _WalletFlowScreenState extends State<WalletFlowScreen> {
       from: "Employer Wallet",
       to: "Worker Wallet (Escrow)",
     ),
+    _TxItem(
+      type: _TxType.withdraw,
+      status: _TxStatus.pending,
+      title: "Withdraw",
+      date: "Mar, 15, 2026 | 2:30 pm",
+      amount: "UGX 50,000",
+      txDate: "Mar 15, 2026",
+      txTime: "2:30 pm",
+      txId: "TXN-901234",
+      transferType: "Withdraw",
+      from: "Worker Wallet",
+      to: "Mobile Money (Airtel)",
+    ),
+    _TxItem(
+      type: _TxType.deposit,
+      status: _TxStatus.pending,
+      title: "Deposit",
+      date: "Apr, 20, 2026 | 9:15 am",
+      amount: "UGX 200,000",
+      txDate: "Apr 20, 2026",
+      txTime: "9:15 am",
+      txId: "TXN-902345",
+      transferType: "Deposit",
+      from: "Employer Wallet",
+      to: "Worker Wallet (Escrow)",
+    ),
+    _TxItem(
+      type: _TxType.withdraw,
+      status: _TxStatus.pending,
+      title: "Withdraw",
+      date: "May, 08, 2026 | 11:45 am",
+      amount: "UGX 125,000",
+      txDate: "May 08, 2026",
+      txTime: "11:45 am",
+      txId: "TXN-910123",
+      transferType: "Withdraw",
+      from: "Worker Wallet",
+      to: "Mobile Money (MTN)",
+    ),
+    _TxItem(
+      type: _TxType.deposit,
+      status: _TxStatus.pending,
+      title: "Deposit",
+      date: "Jun, 15, 2026 | 10:30 am",
+      amount: "UGX 175,000",
+      txDate: "Jun 15, 2026",
+      txTime: "10:30 am",
+      txId: "TXN-911234",
+      transferType: "Deposit",
+      from: "Employer Wallet",
+      to: "Worker Wallet (Escrow)",
+    ),
+    _TxItem(
+      type: _TxType.withdraw,
+      status: _TxStatus.pending,
+      title: "Withdraw",
+      date: "Jul, 22, 2026 | 3:20 pm",
+      amount: "UGX 90,000",
+      txDate: "Jul 22, 2026",
+      txTime: "3:20 pm",
+      txId: "TXN-912345",
+      transferType: "Withdraw",
+      from: "Worker Wallet",
+      to: "Bank Account",
+    ),
+    _TxItem(
+      type: _TxType.deposit,
+      status: _TxStatus.pending,
+      title: "Deposit",
+      date: "Aug, 05, 2026 | 9:00 am",
+      amount: "UGX 220,000",
+      txDate: "Aug 05, 2026",
+      txTime: "9:00 am",
+      txId: "TXN-913456",
+      transferType: "Deposit",
+      from: "Employer Wallet",
+      to: "Worker Wallet (Escrow)",
+    ),
 
     // COMPLETED (✅ has full actual-looking details)
     _TxItem(
@@ -78,6 +156,97 @@ class _WalletFlowScreenState extends State<WalletFlowScreen> {
       transferType: "Deposit",
       from: "Employer Wallet",
       to: "Worker Wallet (Escrow)",
+    ),
+    _TxItem(
+      type: _TxType.withdraw,
+      status: _TxStatus.completed,
+      title: "Withdraw",
+      date: "Feb, 10, 2026 | 11:20 am",
+      amount: "UGX 150,000",
+      txDate: "Feb 10, 2026",
+      txTime: "11:20 am",
+      txId: "TXN-903456",
+      transferType: "Withdraw",
+      from: "Worker Wallet",
+      to: "Bank Account",
+    ),
+    _TxItem(
+      type: _TxType.deposit,
+      status: _TxStatus.completed,
+      title: "Deposit",
+      date: "Mar, 05, 2026 | 3:45 pm",
+      amount: "UGX 180,000",
+      txDate: "Mar 05, 2026",
+      txTime: "3:45 pm",
+      txId: "TXN-904567",
+      transferType: "Deposit",
+      from: "Employer Wallet",
+      to: "Worker Wallet (Escrow)",
+    ),
+    _TxItem(
+      type: _TxType.withdraw,
+      status: _TxStatus.completed,
+      title: "Withdraw",
+      date: "Apr, 12, 2026 | 1:10 pm",
+      amount: "UGX 300,000",
+      txDate: "Apr 12, 2026",
+      txTime: "1:10 pm",
+      txId: "TXN-905678",
+      transferType: "Withdraw",
+      from: "Worker Wallet",
+      to: "Mobile Money (MTN)",
+    ),
+    _TxItem(
+      type: _TxType.deposit,
+      status: _TxStatus.completed,
+      title: "Deposit",
+      date: "May, 18, 2026 | 2:45 pm",
+      amount: "UGX 135,000",
+      txDate: "May 18, 2026",
+      txTime: "2:45 pm",
+      txId: "TXN-914567",
+      transferType: "Deposit",
+      from: "Employer Wallet",
+      to: "Worker Wallet (Escrow)",
+    ),
+    _TxItem(
+      type: _TxType.withdraw,
+      status: _TxStatus.completed,
+      title: "Withdraw",
+      date: "Jun, 25, 2026 | 4:30 pm",
+      amount: "UGX 190,000",
+      txDate: "Jun 25, 2026",
+      txTime: "4:30 pm",
+      txId: "TXN-915678",
+      transferType: "Withdraw",
+      from: "Worker Wallet",
+      to: "Mobile Money (Airtel)",
+    ),
+    _TxItem(
+      type: _TxType.deposit,
+      status: _TxStatus.completed,
+      title: "Deposit",
+      date: "Jul, 10, 2026 | 11:15 am",
+      amount: "UGX 250,000",
+      txDate: "Jul 10, 2026",
+      txTime: "11:15 am",
+      txId: "TXN-916789",
+      transferType: "Deposit",
+      from: "Employer Wallet",
+      to: "Worker Wallet (Escrow)",
+    ),
+    _TxItem(
+      type: _TxType.withdraw,
+      status: _TxStatus.completed,
+      title: "Withdraw",
+      date: "Aug, 15, 2026 | 12:50 pm",
+      amount: "UGX 165,000",
+      txDate: "Aug 15, 2026",
+      txTime: "12:50 pm",
+      txId: "TXN-917890",
+      transferType: "Withdraw",
+      from: "Worker Wallet",
+      to: "Bank Account",
     ),
 
     // CANCELLED
@@ -220,6 +389,62 @@ class _WalletFlowScreenState extends State<WalletFlowScreen> {
   }
 }
 
+// ===================== MODELS =====================
+
+enum _TxType { deposit, withdraw }
+
+enum _TxStatus { pending, completed, cancelled }
+
+class _TxItem {
+  final _TxType type;
+  final _TxStatus status;
+
+  final String title;
+  final String date;
+  final String amount;
+
+  final String txDate;
+  final String txTime;
+  final String txId;
+  final String transferType;
+  final String from;
+  final String to;
+
+  const _TxItem({
+    required this.type,
+    required this.status,
+    required this.title,
+    required this.date,
+    required this.amount,
+    required this.txDate,
+    required this.txTime,
+    required this.txId,
+    required this.transferType,
+    required this.from,
+    required this.to,
+  });
+}
+
+void showIncomingCall(BuildContext context) {
+  IncomingCallOverlayService.instance.show(
+    context: context,
+    businessName: 'Business Name',
+    subtitle: 'Incoming voice call',
+    timeText: '9:45AM',
+    avatarImage: const AssetImage(
+      'assets/images/person.png',
+    ), // or NetworkImage(...)
+    onDecline: () {
+      // TODO: send "declined" to backend
+      debugPrint('Declined');
+    },
+    onAnswer: () {
+      // TODO: navigate to call screen
+      debugPrint('Answered');
+    },
+  );
+}
+
 // ===================== MAIN WALLET =====================
 
 class _WalletMain extends StatelessWidget {
@@ -263,12 +488,12 @@ class _WalletMain extends StatelessWidget {
           onActionChange: onActionChange,
         ),
 
-        SizedBox(height: h * 0.014),
+        SizedBox(height: h * 0.02),
 
         // ✅ ONE combined escrow tab like your image
         _EscrowSingleTab(w: w, h: h, brandOrange: brandOrange),
 
-        SizedBox(height: h * 0.012),
+        SizedBox(height: h * 0.016),
 
         _StatusTabs(
           w: w,
@@ -279,13 +504,13 @@ class _WalletMain extends StatelessWidget {
           pendingActive: pendingActive,
         ),
 
-        SizedBox(height: h * 0.014),
+        SizedBox(height: h * 0.04),
 
         ListView.separated(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           itemCount: items.length,
-          separatorBuilder: (_, __) => SizedBox(height: h * 0.012),
+          separatorBuilder: (_, __) => SizedBox(height: h * 0.02),
           itemBuilder: (context, i) {
             final item = items[i];
             return _TxCard(
@@ -319,7 +544,7 @@ class _BalanceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cardH = h * 0.185;
+    final cardH = h * 0.20;
 
     return Container(
       height: cardH,
@@ -932,57 +1157,3 @@ class _DashedLinePainter extends CustomPainter {
 // ===================== MODELS =====================
 
 enum _ActionMode { none, deposit, withdraw }
-
-enum _TxType { deposit, withdraw }
-
-enum _TxStatus { pending, completed, cancelled }
-
-class _TxItem {
-  final _TxType type;
-  final _TxStatus status;
-
-  final String title;
-  final String date;
-  final String amount;
-
-  final String txDate;
-  final String txTime;
-  final String txId;
-  final String transferType;
-  final String from;
-  final String to;
-
-  const _TxItem({
-    required this.type,
-    required this.status,
-    required this.title,
-    required this.date,
-    required this.amount,
-    required this.txDate,
-    required this.txTime,
-    required this.txId,
-    required this.transferType,
-    required this.from,
-    required this.to,
-  });
-}
-
-void showIncomingCall(BuildContext context) {
-  IncomingCallOverlayService.instance.show(
-    context: context,
-    businessName: 'Business Name',
-    subtitle: 'Incoming voice call',
-    timeText: '9:45AM',
-    avatarImage: const AssetImage(
-      'assets/images/person.png',
-    ), // or NetworkImage(...)
-    onDecline: () {
-      // TODO: send "declined" to backend
-      debugPrint('Declined');
-    },
-    onAnswer: () {
-      // TODO: navigate to call screen
-      debugPrint('Answered');
-    },
-  );
-}
