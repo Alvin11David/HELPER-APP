@@ -158,6 +158,78 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                           ), // touches left and right
                           color: Colors.black,
                         ),
+                        const SizedBox(height: 15),
+                        Padding(
+                          padding: EdgeInsets.only(left: 8, right: 8),
+                          child: Row(
+                            children: [
+                              Icon(Icons.home, color: Colors.black),
+                              SizedBox(width: 15),
+                              Text(
+                                "Home",
+                                style: TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 15),
+                        Padding(
+                          padding: EdgeInsets.only(left: 8, right: 8),
+                          child: Row(
+                            children: [
+                              Icon(Icons.receipt_long, color: Colors.black),
+                              SizedBox(width: 15),
+                              Text(
+                                "My Jobs",
+                                style: TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 15),
+                        Padding(
+                          padding: EdgeInsets.only(left: 8, right: 8),
+                          child: Row(
+                            children: [
+                              Icon(Icons.calendar_today_rounded, color: Colors.black),
+                              SizedBox(width: 15),
+                              Text(
+                                "Availability & Schedule",
+                                style: TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 15),
+                        Padding(
+                          padding: EdgeInsets.only(left: 8, right: 8),
+                          child: Row(
+                            children: [
+                              Icon(Icons.star, color: Colors.black),
+                              SizedBox(width: 15),
+                              Text(
+                                "Ratings & Reviews",
+                                style: TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ],
                     ),
                   ],
