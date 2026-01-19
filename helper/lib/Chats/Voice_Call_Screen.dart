@@ -125,10 +125,9 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
   }
 }
 
-
-// use appNavKey.currentContext!
-Future<void> showIncomingCallOverlay() async {
-  final ctx = appNavKey.currentContext;
+void _showIncomingCallOverlay() {
+  // use appNavKey.currentContext!
+  final BuildContext? ctx = appNavKey.currentContext;
   if (ctx != null) {
     IncomingCallOverlayService.instance.show(
       context: ctx,
