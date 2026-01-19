@@ -76,9 +76,9 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                   children: [
                     // Add your sidebar content here
                     Container(
-                      margin:  EdgeInsets.only(
+                      margin: EdgeInsets.only(
                         top: 20,
-                        right: screenWidth * 0.45,
+                        right: screenWidth * 0.47,
                       ), // Padding from top and left
                       width: screenWidth * 0.20 > 70
                           ? 70
@@ -95,6 +95,49 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                           ),
                         ],
                       ),
+                    ),
+                    // Add Worker's Name text below the circle
+                    const SizedBox(height: 12),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: EdgeInsets.only(left: 8),
+                          child: Text(
+                            "Worker's Name",
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Padding(
+                          padding: EdgeInsets.only(left: 8),
+                          child: Row(
+                            children: [
+                              Text(
+                                "Referral ID:",
+                                style: TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              SizedBox(width: 16), // space between label and ID
+                              Text(
+                                "ID Number", // Replace with actual ID if needed
+                                style: TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.normal,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
