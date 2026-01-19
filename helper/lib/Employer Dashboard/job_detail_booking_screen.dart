@@ -1,5 +1,3 @@
-// ignore_for_file: depend_on_referenced_packages
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -71,7 +69,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
   void _toast(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(msg, style: const TextStyle(fontFamily: 'Poppins')),
+        content: Text(msg, style: const TextStyle(fontFamily: 'Inter')),
         backgroundColor: Colors.black.withOpacity(0.88),
       ),
     );
@@ -143,8 +141,8 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
               entryModeIconColor: Colors.white,
             ),
             textTheme: const TextTheme(
-              bodyMedium: TextStyle(fontFamily: 'Poppins'),
-              bodySmall: TextStyle(fontFamily: 'Poppins'),
+              bodyMedium: TextStyle(fontFamily: 'Inter'),
+              bodySmall: TextStyle(fontFamily: 'Inter'),
             ),
           ),
           child: child ?? const SizedBox.shrink(),
@@ -259,7 +257,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           color: Colors.white,
-                          fontFamily: 'Poppins',
+                          fontFamily: 'Inter',
                           fontWeight: FontWeight.w800,
                           fontSize: w * 0.040,
                         ),
@@ -312,7 +310,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
                             _step == 3 ? 'Continue to Payment' : 'Continue →',
                             style: TextStyle(
                               color: Colors.black,
-                              fontFamily: 'Poppins',
+                              fontFamily: 'Inter',
                               fontWeight: FontWeight.w900,
                               fontSize: w * 0.045,
                             ),
@@ -370,7 +368,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
               "Optional",
               style: TextStyle(
                 color: Colors.white.withOpacity(0.75),
-                fontFamily: 'Poppins',
+                fontFamily: 'Inter',
                 fontWeight: FontWeight.w600,
                 fontSize: w * 0.032,
               ),
@@ -398,7 +396,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
               "Tap the map to select",
               style: TextStyle(
                 color: Colors.white.withOpacity(0.75),
-                fontFamily: 'Poppins',
+                fontFamily: 'Inter',
                 fontWeight: FontWeight.w600,
                 fontSize: w * 0.030,
               ),
@@ -433,7 +431,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
               "Tap the map to select",
               style: TextStyle(
                 color: Colors.white.withOpacity(0.75),
-                fontFamily: 'Poppins',
+                fontFamily: 'Inter',
                 fontWeight: FontWeight.w600,
                 fontSize: w * 0.030,
               ),
@@ -485,7 +483,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
           "Business Name's Hourly/Fixed Price is (Amount)",
           style: TextStyle(
             color: Colors.white.withOpacity(0.75),
-            fontFamily: 'Poppins',
+            fontFamily: 'Inter',
             fontWeight: FontWeight.w600,
             fontSize: w * 0.030,
           ),
@@ -509,7 +507,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
                 "Enter Amount your wallet can afford",
                 style: TextStyle(
                   color: Colors.white.withOpacity(0.75),
-                  fontFamily: 'Poppins',
+                  fontFamily: 'Inter',
                   fontWeight: FontWeight.w600,
                   fontSize: w * 0.030,
                 ),
@@ -560,7 +558,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
             "Choose Your Time",
             style: TextStyle(
               color: Colors.white,
-              fontFamily: 'Poppins',
+              fontFamily: 'Inter',
               fontWeight: FontWeight.w800,
               fontSize: w * 0.040,
             ),
@@ -618,7 +616,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
                 "Edit Job details",
                 style: TextStyle(
                   color: _brandOrange,
-                  fontFamily: 'Poppins',
+                  fontFamily: 'Inter',
                   fontWeight: FontWeight.w800,
                   fontSize: w * 0.032,
                   decoration: TextDecoration.underline,
@@ -632,7 +630,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
                 "Edit Schedule",
                 style: TextStyle(
                   color: _brandOrange,
-                  fontFamily: 'Poppins',
+                  fontFamily: 'Inter',
                   fontWeight: FontWeight.w800,
                   fontSize: w * 0.032,
                   decoration: TextDecoration.underline,
@@ -651,7 +649,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
       t,
       style: TextStyle(
         color: Colors.white,
-        fontFamily: 'Poppins',
+        fontFamily: 'Inter',
         fontSize: w * 0.038,
         fontWeight: FontWeight.w900,
       ),
@@ -679,7 +677,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
         expands: true,
         style: TextStyle(
           color: Colors.black,
-          fontFamily: 'Poppins',
+          fontFamily: 'Inter',
           fontWeight: FontWeight.w700,
           fontSize: w * 0.034,
         ),
@@ -687,7 +685,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
           hintText: hint,
           hintStyle: TextStyle(
             color: Colors.black.withOpacity(0.55),
-            fontFamily: 'Poppins',
+            fontFamily: 'Inter',
             fontWeight: FontWeight.w700,
             fontSize: w * 0.032,
             height: 1.20,
@@ -721,7 +719,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
         inputFormatters: inputFormatters,
         style: TextStyle(
           color: Colors.black,
-          fontFamily: 'Poppins',
+          fontFamily: 'Inter',
           fontWeight: FontWeight.w800,
           fontSize: w * 0.038,
         ),
@@ -729,7 +727,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
           hintText: hint,
           hintStyle: TextStyle(
             color: Colors.black.withOpacity(0.55),
-            fontFamily: 'Poppins',
+            fontFamily: 'Inter',
             fontWeight: FontWeight.w800,
             fontSize: w * 0.034,
           ),
@@ -772,7 +770,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
               color: Colors.black.withOpacity(0.60),
-              fontFamily: 'Poppins',
+              fontFamily: 'Inter',
               fontWeight: FontWeight.w900,
               fontSize: w * 0.032,
             ),
@@ -787,7 +785,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       color: Colors.black,
-                      fontFamily: 'Poppins',
+                      fontFamily: 'Inter',
                       fontWeight: FontWeight.w900,
                       fontSize: w * 0.035,
                     ),
@@ -826,7 +824,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 color: Colors.black,
-                fontFamily: 'Poppins',
+                fontFamily: 'Inter',
                 fontWeight: FontWeight.w900,
                 fontSize: w * 0.034,
               ),
@@ -854,7 +852,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
           label,
           style: TextStyle(
             color: Colors.white.withOpacity(0.9),
-            fontFamily: 'Poppins',
+            fontFamily: 'Inter',
             fontWeight: FontWeight.w800,
             fontSize: w * 0.030,
           ),
@@ -880,7 +878,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       color: Colors.black.withOpacity(time == null ? 0.55 : 1.0),
-                      fontFamily: 'Poppins',
+                      fontFamily: 'Inter',
                       fontWeight: FontWeight.w900,
                       fontSize: w * 0.033,
                     ),
@@ -1013,7 +1011,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
                   "Upload File",
                   style: TextStyle(
                     color: Colors.white,
-                    fontFamily: 'Poppins',
+                    fontFamily: 'Inter',
                     fontWeight: FontWeight.w900,
                     fontSize: w * 0.040,
                   ),
@@ -1024,7 +1022,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: Colors.white.withOpacity(0.75),
-                    fontFamily: 'Poppins',
+                    fontFamily: 'Inter',
                     fontWeight: FontWeight.w600,
                     fontSize: w * 0.028,
                     height: 1.20,
@@ -1036,7 +1034,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
                     "${_fakePhotos.length} file(s) selected",
                     style: TextStyle(
                       color: _brandOrange,
-                      fontFamily: 'Poppins',
+                      fontFamily: 'Inter',
                       fontWeight: FontWeight.w900,
                       fontSize: w * 0.030,
                     ),
@@ -1085,7 +1083,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
                   "$monthName $year",
                   style: TextStyle(
                     color: Colors.black,
-                    fontFamily: 'Poppins',
+                    fontFamily: 'Inter',
                     fontWeight: FontWeight.w900,
                     fontSize: w * 0.040,
                   ),
@@ -1115,7 +1113,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
                           d,
                           style: TextStyle(
                             color: Colors.black.withOpacity(0.55),
-                            fontFamily: 'Poppins',
+                            fontFamily: 'Inter',
                             fontWeight: FontWeight.w800,
                             fontSize: w * 0.028,
                           ),
@@ -1172,7 +1170,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
                           "${day.day}",
                           style: TextStyle(
                             color: txt,
-                            fontFamily: 'Poppins',
+                            fontFamily: 'Inter',
                             fontWeight: FontWeight.w900,
                             fontSize: w * 0.032,
                           ),
@@ -1192,7 +1190,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
               children: [
                 _legendDot(w, Colors.redAccent, "Unavailable days"),
                 _legendDot(w, Colors.grey.withOpacity(0.35), "Available days"),
-                _legendDot(w, Colors.green, "Current day"),
+                _legendDot(w, const Color.fromARGB(255, 0, 255, 8), "Current day"),
               ],
             ),
           ],
@@ -1211,7 +1209,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
           t,
           style: TextStyle(
             color: Colors.black.withOpacity(0.55),
-            fontFamily: 'Poppins',
+            fontFamily: 'Inter',
             fontWeight: FontWeight.w700,
             fontSize: w * 0.026,
           ),
@@ -1274,7 +1272,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: Colors.black,
-                    fontFamily: 'Poppins',
+                    fontFamily: 'Inter',
                     fontWeight: FontWeight.w900,
                     fontSize: w * 0.038,
                   ),
@@ -1286,7 +1284,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: Colors.black.withOpacity(0.55),
-                    fontFamily: 'Poppins',
+                    fontFamily: 'Inter',
                     fontWeight: FontWeight.w700,
                     fontSize: w * 0.030,
                   ),
@@ -1346,7 +1344,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
                 "Total",
                 style: TextStyle(
                   color: Colors.black,
-                  fontFamily: 'Poppins',
+                  fontFamily: 'Inter',
                   fontWeight: FontWeight.w900,
                   fontSize: w * 0.040,
                 ),
@@ -1356,7 +1354,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
                 _amountCtrl.text.trim().isEmpty ? "Amount" : _amountCtrl.text.trim(),
                 style: TextStyle(
                   color: Colors.black,
-                  fontFamily: 'Poppins',
+                  fontFamily: 'Inter',
                   fontWeight: FontWeight.w900,
                   fontSize: w * 0.040,
                 ),
@@ -1376,7 +1374,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
                   "The Pricing is entirely set by the worker",
                   style: TextStyle(
                     color: Colors.black.withOpacity(0.7),
-                    fontFamily: 'Poppins',
+                    fontFamily: 'Inter',
                     fontWeight: FontWeight.w700,
                     fontSize: w * 0.030,
                   ),
@@ -1401,7 +1399,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 color: Colors.black.withOpacity(0.80),
-                fontFamily: 'Poppins',
+                fontFamily: 'Inter',
                 fontWeight: FontWeight.w800,
                 fontSize: w * 0.030,
               ),
@@ -1414,7 +1412,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
               color: Colors.black.withOpacity(0.75),
-              fontFamily: 'Poppins',
+              fontFamily: 'Inter',
               fontWeight: FontWeight.w800,
               fontSize: w * 0.030,
             ),
@@ -1522,7 +1520,7 @@ class _TopBar extends StatelessWidget {
           ),
         ),
 
-        SizedBox(width: w * 0.04),
+        SizedBox(width: w * 0.06),
 
         Expanded(
           child: Column(
@@ -1534,7 +1532,7 @@ class _TopBar extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   color: Colors.white,
-                  fontFamily: 'AbrilFatface',
+                  fontFamily: 'Montserrat',
                   fontSize: w * 0.052,
                 ),
               ),
@@ -1545,9 +1543,9 @@ class _TopBar extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   color: Colors.white.withOpacity(0.75),
-                  fontFamily: 'Poppins',
+                  fontFamily: 'Montserrat',
                   fontWeight: FontWeight.w700,
-                  fontSize: w * 0.028,
+                  fontSize: w * 0.03,
                 ),
               ),
             ],
@@ -1593,7 +1591,7 @@ class _TopBar extends StatelessWidget {
                 "Available",
                 style: TextStyle(
                   color: Colors.black,
-                  fontFamily: 'Poppins',
+                  fontFamily: 'Inter',
                   fontWeight: FontWeight.w900,
                   fontSize: w * 0.024,
                 ),
@@ -1653,7 +1651,7 @@ class _DotStepper extends StatelessWidget {
     // labels
     TextStyle labelStyle(bool on) => TextStyle(
           color: Colors.white.withOpacity(on ? 0.95 : 0.75),
-          fontFamily: 'Poppins',
+          fontFamily: 'Inter',
           fontWeight: FontWeight.w800,
           fontSize: w * 0.026,
         );
