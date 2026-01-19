@@ -303,52 +303,52 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                           ),
                         ),
                       ),
-                      Positioned(
-                        top: 60,
-                        left: 0,
-                        right: 0,
-                        child: Align(
-                          alignment: Alignment.center,
-                          child: Row(
-                            children: [
-                              Container(
-                                width: screenWidth * 0.2,
-                                height: 40,
-                                decoration: BoxDecoration(
-                                  color: Colors.red,
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: const Center(
-                                  child: Text(
-                                    'Decline',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              Container(
-                                width: screenWidth * 0.2,
-                                height: 40,
-                                decoration: BoxDecoration(
-                                  color: Colors.green,
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: const Center(
-                                  child: Text(
-                                    'Accept',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
+                    ],
+                  ),
+                ),
+              ),
+              Positioned(
+                top: screenWidth * 0.5 + 40 + 60,
+                left: 0,
+                right: 0,
+                child: Align(
+                  alignment: Alignment.center,
+                  child: Row(
+                    children: [
+                      Container(
+                        width: screenWidth * 0.35,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Center(
+                          child: Text(
+                            'Decline',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Container(
+                        width: screenWidth * 0.35,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: Colors.green,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Center(
+                          child: Text(
+                            'Accept',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ),
@@ -364,37 +364,3 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
   }
 }
 
-class _RuleRow extends StatelessWidget {
-  final String text;
-  const _RuleRow(this.text);
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8, left: 16),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(
-            Icons.info_outline,
-            color: Colors.white.withOpacity(0.9),
-            size: 20,
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              text,
-              style: TextStyle(
-                color: Colors.white,
-                fontFamily: 'Inter',
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
-                height: 1.25,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
