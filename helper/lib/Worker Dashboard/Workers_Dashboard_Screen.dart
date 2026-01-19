@@ -444,7 +444,7 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 10),
+                        const SizedBox(height: 5),
                         Row(
                           children: [
                             const Text(
@@ -466,7 +466,7 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 10),
+                        const SizedBox(height: 5),
                         Row(
                           children: [
                             const Text(
