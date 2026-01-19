@@ -69,10 +69,13 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                 switchInCurve: Curves.easeOut,
                 switchOutCurve: Curves.easeIn,
                 transitionBuilder: (child, anim) {
-                  final slide = Tween<Offset>(
-                    begin: Offset(_phase == 0 ? -0.04 : 0.04, 0),
-                    end: Offset.zero,
-                  ).animate(CurvedAnimation(parent: anim, curve: Curves.easeOut));
+                  final slide =
+                      Tween<Offset>(
+                        begin: Offset(_phase == 0 ? -0.04 : 0.04, 0),
+                        end: Offset.zero,
+                      ).animate(
+                        CurvedAnimation(parent: anim, curve: Curves.easeOut),
+                      );
                   return FadeTransition(
                     opacity: anim,
                     child: SlideTransition(position: slide, child: child),
@@ -410,7 +413,9 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                           child: OutlinedButton(
                             onPressed: () => Navigator.pop(ctx),
                             style: OutlinedButton.styleFrom(
-                              side: BorderSide(color: Colors.white.withOpacity(0.35)),
+                              side: BorderSide(
+                                color: Colors.white.withOpacity(0.35),
+                              ),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(22),
                               ),
@@ -437,7 +442,9 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                                     'Terminated (hook API later)',
                                     style: TextStyle(fontFamily: 'Inter'),
                                   ),
-                                  backgroundColor: Colors.black.withOpacity(0.85),
+                                  backgroundColor: Colors.black.withOpacity(
+                                    0.85,
+                                  ),
                                 ),
                               );
                             },
@@ -509,11 +516,7 @@ class _InfoRow extends StatelessWidget {
   final String value;
   final Color? valueColor;
 
-  const _InfoRow({
-    required this.label,
-    required this.value,
-    this.valueColor,
-  });
+  const _InfoRow({required this.label, required this.value, this.valueColor});
 
   @override
   Widget build(BuildContext context) {
@@ -532,8 +535,8 @@ class _InfoRow extends StatelessWidget {
             style: TextStyle(
               color: Colors.black,
               fontFamily: 'Inter',
-              fontWeight: FontWeight.w800,
-              fontSize: w * 0.032,
+              fontWeight: FontWeight.w900,
+              fontSize: w * 0.033,
             ),
           ),
           const Spacer(),
@@ -545,7 +548,7 @@ class _InfoRow extends StatelessWidget {
             style: TextStyle(
               color: valueColor ?? Colors.black.withOpacity(0.85),
               fontFamily: 'Inter',
-              fontWeight: FontWeight.w900,
+              fontWeight: FontWeight.normal,
               fontSize: w * 0.032,
             ),
           ),
@@ -628,11 +631,7 @@ class _MapCard extends StatelessWidget {
   final double h;
   final VoidCallback onNavigate;
 
-  const _MapCard({
-    required this.w,
-    required this.h,
-    required this.onNavigate,
-  });
+  const _MapCard({required this.w, required this.h, required this.onNavigate});
 
   @override
   Widget build(BuildContext context) {
@@ -704,7 +703,11 @@ class _MapCard extends StatelessWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.navigation_rounded, color: Colors.white, size: w * 0.05),
+                        Icon(
+                          Icons.navigation_rounded,
+                          color: Colors.white,
+                          size: w * 0.05,
+                        ),
                         SizedBox(width: w * 0.02),
                         Text(
                           'Navigate',
@@ -733,11 +736,7 @@ class _MapPin extends StatelessWidget {
   final Color color;
   final double w;
 
-  const _MapPin({
-    required this.label,
-    required this.color,
-    required this.w,
-  });
+  const _MapPin({required this.label, required this.color, required this.w});
 
   @override
   Widget build(BuildContext context) {
@@ -829,10 +828,7 @@ class _PhaseDots extends StatelessWidget {
       );
     }
 
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [dot(0), dot(1)],
-    );
+    return Row(mainAxisSize: MainAxisSize.min, children: [dot(0), dot(1)]);
   }
 }
 
@@ -863,11 +859,7 @@ class _TopIcon extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
 
-  const _TopIcon({
-    required this.w,
-    required this.icon,
-    required this.onTap,
-  });
+  const _TopIcon({required this.w, required this.icon, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -918,7 +910,10 @@ class _GlassPill extends StatelessWidget {
               ],
             ),
             borderRadius: BorderRadius.circular(radius),
-            border: Border.all(color: Colors.white.withOpacity(0.35), width: 1.6),
+            border: Border.all(
+              color: Colors.white.withOpacity(0.35),
+              width: 1.6,
+            ),
             boxShadow: [
               BoxShadow(
                 color: Colors.white.withOpacity(0.08),
