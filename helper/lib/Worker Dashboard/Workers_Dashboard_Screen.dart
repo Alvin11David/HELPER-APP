@@ -12,7 +12,6 @@ class WorkersDashboardScreen extends StatelessWidget {
           ),
         ),
         child: Center(
-          child: Text('Worker Dashboard'), // Placeholder content
         ),
       ),
     );
