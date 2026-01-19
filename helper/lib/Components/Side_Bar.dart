@@ -149,6 +149,15 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                             ),
                           ),
                         ),
+                        const SizedBox(height: 12),
+                        Container(
+                          width: double.infinity,
+                          height: 1,
+                          margin: EdgeInsets.symmetric(
+                            horizontal: 0,
+                          ), // touches left and right
+                          color: Colors.black,
+                        ),
                       ],
                     ),
                   ],
