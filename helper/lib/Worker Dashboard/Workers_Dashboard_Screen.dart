@@ -525,6 +525,18 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                   ],
                 ),
               ),
+              Positioned(
+                top: screenWidth * 0.5 + 360,
+                left: w * 0.05,
+                right: w * 0.04,
+                child: Container(
+                  height: 120,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(25),
+                  ),
+                ),
+              ),
             ],
           ),
         ),
