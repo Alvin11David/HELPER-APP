@@ -570,12 +570,11 @@ class _BulletIcon extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         shape: BoxShape.circle,
-        border: Border.all(color: Colors.black.withOpacity(0.18)),
       ),
       child: Center(
         child: Icon(
           Icons.info_outline_rounded,
-          size: size * 0.62,
+          size: size * 0.82,
           color: Colors.black,
         ),
       ),
