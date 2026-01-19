@@ -46,7 +46,7 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
-    final sidebarWidth = 210.0; // Adjust as needed
+    final sidebarWidth = 230.0; // Adjust as needed
 
     return Stack(
       children: [
@@ -76,21 +76,26 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                   children: [
                     // Add your sidebar content here
                     Container(
-            margin: const EdgeInsets.only(top: 20, left: 20), // Padding from top and left
-            width: screenWidth * 0.18 > 70 ? 70 : screenWidth * 0.18, // Max 70, responsive
-            height: screenWidth * 0.18 > 70 ? 70 : screenWidth * 0.18,
-            decoration: BoxDecoration(
-              color: Colors.black,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.4),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-          ),
+                      margin:  EdgeInsets.only(
+                        top: 20,
+                        right: screenWidth * 0.45,
+                      ), // Padding from top and left
+                      width: screenWidth * 0.20 > 70
+                          ? 70
+                          : screenWidth * 0.20, // Max 70, responsive
+                      height: screenWidth * 0.20 > 70 ? 70 : screenWidth * 0.20,
+                      decoration: BoxDecoration(
+                        color: Colors.black,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.4),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),
