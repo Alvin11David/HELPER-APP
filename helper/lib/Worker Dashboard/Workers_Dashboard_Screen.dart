@@ -235,7 +235,7 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                 left: w * 0.05,
                 right: w * 0.04,
                 child: Container(
-                  height: 200,
+                  height: 150,
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(25),
