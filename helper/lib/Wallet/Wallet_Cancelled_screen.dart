@@ -379,7 +379,7 @@ class _WalletFlowScreenState extends State<WalletFlowScreen> {
                         ),
                 ),
 
-                SizedBox(height: h * 0.03),
+                SizedBox(height: h * 0.07),
               ],
             ),
           ),
@@ -956,7 +956,7 @@ class _TransactionDetails extends StatelessWidget {
             ],
           ),
         ),
-        SizedBox(height: h * 0.018),
+        SizedBox(height: h * 0.050),
         SizedBox(
           width: double.infinity,
           height: h * 0.065,
@@ -980,7 +980,7 @@ class _TransactionDetails extends StatelessWidget {
             ),
           ),
         ),
-        SizedBox(height: h * 0.012),
+        SizedBox(height: h * 0.04),
         SizedBox(
           width: double.infinity,
           height: h * 0.065,
