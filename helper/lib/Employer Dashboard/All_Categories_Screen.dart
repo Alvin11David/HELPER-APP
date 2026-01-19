@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 class AllCategoriesScreen extends StatefulWidget {
+  const AllCategoriesScreen({super.key});
+
   @override
   State<AllCategoriesScreen> createState() => _AllCategoriesScreenState();
 }

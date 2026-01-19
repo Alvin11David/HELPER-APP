@@ -16,8 +16,8 @@ class WalletWithdrawPaymentMethodScreen extends StatefulWidget {
 
 class _WalletWithdrawPaymentMethodScreenState
     extends State<WalletWithdrawPaymentMethodScreen> {
-  bool _isMtnCardSelected = false;
-  bool _isAirtelCardSelected = false;
+  final bool _isMtnCardSelected = false;
+  final bool _isAirtelCardSelected = false;
 
   @override
   Widget build(BuildContext context) {
