@@ -134,20 +134,6 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                   ],
                 ),
               ),
-
-              // Phase dots (like small step indicator)
-              Positioned(
-                top: h * 0.12,
-                left: 0,
-                right: 0,
-                child: Center(
-                  child: _PhaseDots(
-                    activeIndex: _phase,
-                    onTap: _goPhase,
-                    accent: _brandOrange,
-                  ),
-                ),
-              ),
             ],
           ),
         ),
@@ -249,35 +235,52 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
 
           SizedBox(height: h * 0.02),
 
-          // Swipe/Next hint button (optional, matches the idea of going to next panel)
+          SizedBox(height: h * 0.015),
+
           Center(
-            child: GestureDetector(
-              onTap: () => setState(() => _phase = 1),
-              child: _GlassPill(
-                radius: 20,
-                padding: EdgeInsets.symmetric(
-                  horizontal: w * 0.05,
-                  vertical: h * 0.008,
+            child: _GlassPill(
+              radius: 20,
+              padding: EdgeInsets.symmetric(
+                horizontal: w * 0.05,
+                vertical: h * 0.007,
+              ),
+              child: Text(
+                'Payment is held in Escrow',
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.92),
+                  fontSize: w * 0.03,
+                  fontWeight: FontWeight.w700,
+                  fontFamily: 'Inter',
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'View Time & Payment',
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.92),
-                        fontSize: w * 0.032,
-                        fontWeight: FontWeight.w700,
-                        fontFamily: 'Inter',
-                      ),
-                    ),
-                    SizedBox(width: w * 0.02),
-                    Icon(
-                      Icons.arrow_forward_rounded,
-                      color: Colors.white.withOpacity(0.92),
-                      size: w * 0.05,
-                    ),
-                  ],
+              ),
+            ),
+          ),
+
+          SizedBox(height: h * 0.06),
+
+          // Terminate job (big red)
+          SizedBox(
+            width: double.infinity,
+            height: h * 0.078,
+            child: ElevatedButton(
+              onPressed: () {
+                // TODO: confirm dialog -> terminate
+                _showTerminateDialog();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFE80B0B),
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(35),
+                ),
+              ),
+              child: Text(
+                'Terminate Job',
+                style: TextStyle(
+                  color: Colors.black,
+                  fontSize: w * 0.045,
+                  fontWeight: FontWeight.w900,
+                  fontFamily: 'Inter',
                 ),
               ),
             ),
@@ -567,10 +570,7 @@ class _BulletIcon extends StatelessWidget {
     return Container(
       width: size,
       height: size,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        shape: BoxShape.circle,
-      ),
+      decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle),
       child: Center(
         child: Icon(
           Icons.info_outline_rounded,

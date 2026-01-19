@@ -1102,7 +1102,6 @@ class _HeaderRow extends StatelessWidget {
           ),
         ),
         SizedBox(width: w * 0.03),
-
         Container(
           width: 40,
           height: 40,
