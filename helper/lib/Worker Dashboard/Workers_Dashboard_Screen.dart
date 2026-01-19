@@ -28,6 +28,8 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final w = MediaQuery.of(context).size.width;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
     return Scaffold(
       body: SafeArea(
         child: Container(
@@ -197,8 +199,8 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                 ),
               ),
               Positioned(
-                top: 125,
-                left: w * 0.04,
+                top: screenWidth * 0.5,
+                left: w * 0.05,
                 right: w * 0.04,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
