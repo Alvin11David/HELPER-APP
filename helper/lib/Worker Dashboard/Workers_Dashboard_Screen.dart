@@ -416,8 +416,8 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                               'Name',
                               style: TextStyle(
                                 color: Color(0xFFFFA10D),
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w300,
                               ),
                             ),
                           ],
@@ -438,8 +438,8 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                               'Type',
                               style: TextStyle(
                                 color: Color(0xFFFFA10D),
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w300,
                               ),
                             ),
                           ],
@@ -460,8 +460,8 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                               'Location',
                               style: TextStyle(
                                 color: Color(0xFFFFA10D),
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w300,
                               ),
                             ),
                           ],
@@ -482,8 +482,8 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                               '00:00:00',
                               style: TextStyle(
                                 color: Color(0xFFFFA10D),
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w300,
                               ),
                             ),
                           ],
