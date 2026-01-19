@@ -535,6 +535,34 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(25),
                   ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(10),
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            const Text(
+                              'Amount:',
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const Spacer(),
+                            Text(
+                              'Amount',
+                              style: TextStyle(
+                                color: Color(0xFFFFA10D),
+                                fontSize: 13,
+                                fontWeight: FontWeight.w300,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ],
