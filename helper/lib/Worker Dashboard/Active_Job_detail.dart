@@ -109,7 +109,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                         ),
                       ),
                     ),
-                    SizedBox(width: w * 0.04),
+                    SizedBox(width: w * 0.05),
                     Expanded(
                       child: Text(
                         'Active Job',
@@ -117,9 +117,8 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: w * 0.055,
-                          fontFamily: 'AbrilFatface',
-                          letterSpacing: 0.2,
+              fontFamily: 'Montserrat',
+              fontSize: w * 0.055,
                         ),
                       ),
                     ),
