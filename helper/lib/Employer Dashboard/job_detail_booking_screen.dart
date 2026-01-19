@@ -248,8 +248,6 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    SizedBox(height: topPad),
-
                     _TopBar(
                       title: _stepTitle(),
                       subtitle: _businessName,
