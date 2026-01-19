@@ -112,7 +112,7 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                             ),
                           ),
                         ),
-                        const SizedBox(height: 6),
+                        const SizedBox(height: 2),
                         Padding(
                           padding: EdgeInsets.only(left: 8),
                           child: Row(
@@ -122,7 +122,7 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                                 style: TextStyle(
                                   color: Colors.black,
                                   fontSize: 14,
-                                  fontWeight: FontWeight.bold,
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
                               SizedBox(width: 16), // space between label and ID
@@ -135,6 +135,18 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                                 ),
                               ),
                             ],
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Padding(
+                          padding: EdgeInsets.only(left: 8),
+                          child: Text(
+                            "Profession",
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontSize: 13,
+                              fontWeight: FontWeight.normal,
+                            ),
                           ),
                         ),
                       ],
