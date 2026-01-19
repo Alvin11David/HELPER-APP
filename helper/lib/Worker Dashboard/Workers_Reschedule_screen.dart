@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+
 class WorkerJobRescheduleScreen extends StatefulWidget {
   const WorkerJobRescheduleScreen({super.key});
 
@@ -77,13 +78,13 @@ class _WorkerJobRescheduleScreenState extends State<WorkerJobRescheduleScreen> {
               dayPeriodTextColor: Colors.black,
               dialTextColor: Colors.black,
               entryModeIconColor: _brandOrange,
-              helpTextStyle: const TextStyle(fontFamily: 'Poppins'),
+              helpTextStyle: const TextStyle(fontFamily: 'Inter'),
             ),
             colorScheme: ColorScheme.fromSeed(
               seedColor: _brandOrange,
               brightness: Brightness.light,
             ),
-            textTheme: Theme.of(context).textTheme.apply(fontFamily: 'Poppins'),
+            textTheme: Theme.of(context).textTheme.apply(fontFamily: 'Inter'),
           ),
           child: child!,
         );
@@ -111,13 +112,13 @@ class _WorkerJobRescheduleScreenState extends State<WorkerJobRescheduleScreen> {
               dayPeriodTextColor: Colors.black,
               dialTextColor: Colors.black,
               entryModeIconColor: _brandOrange,
-              helpTextStyle: const TextStyle(fontFamily: 'Poppins'),
+              helpTextStyle: const TextStyle(fontFamily: 'Inter'),
             ),
             colorScheme: ColorScheme.fromSeed(
               seedColor: _brandOrange,
               brightness: Brightness.light,
             ),
-            textTheme: Theme.of(context).textTheme.apply(fontFamily: 'Poppins'),
+            textTheme: Theme.of(context).textTheme.apply(fontFamily: 'Inter'),
           ),
           child: child!,
         );
@@ -166,7 +167,7 @@ class _WorkerJobRescheduleScreenState extends State<WorkerJobRescheduleScreen> {
   void _toast(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(msg, style: const TextStyle(fontFamily: 'Poppins')),
+        content: Text(msg, style: const TextStyle(fontFamily: 'Inter')),
         backgroundColor: Colors.black.withOpacity(0.85),
       ),
     );
@@ -178,7 +179,7 @@ class _WorkerJobRescheduleScreenState extends State<WorkerJobRescheduleScreen> {
     final h = MediaQuery.of(context).size.height;
 
     final sidePad = w * 0.06;
-    final topPad = h * 0.045;
+    final topPad = h * 0.025;
 
     return Scaffold(
       body: SafeArea(
@@ -230,7 +231,10 @@ class _WorkerJobRescheduleScreenState extends State<WorkerJobRescheduleScreen> {
                     ),
                     const _TopAvatar(),
                     SizedBox(width: w * 0.02),
-                    _TopIcon(icon: Icons.notifications_none_rounded, onTap: () {}),
+                    _TopIcon(
+                      icon: Icons.notifications_none_rounded,
+                      onTap: () {},
+                    ),
                   ],
                 ),
 
@@ -247,7 +251,7 @@ class _WorkerJobRescheduleScreenState extends State<WorkerJobRescheduleScreen> {
                       "Schedule Jobs to avoid double booking",
                       style: TextStyle(
                         color: Colors.white.withOpacity(0.92),
-                        fontFamily: 'Poppins',
+                        fontFamily: 'Inter',
                         fontWeight: FontWeight.w700,
                         fontSize: w * 0.03,
                       ),
@@ -263,18 +267,22 @@ class _WorkerJobRescheduleScreenState extends State<WorkerJobRescheduleScreen> {
                     switchInCurve: Curves.easeOut,
                     switchOutCurve: Curves.easeIn,
                     transitionBuilder: (child, anim) {
-                      final slide = Tween<Offset>(
-                        begin: const Offset(0.05, 0),
-                        end: Offset.zero,
-                      ).animate(CurvedAnimation(parent: anim, curve: Curves.easeOut));
+                      final slide =
+                          Tween<Offset>(
+                            begin: const Offset(0.05, 0),
+                            end: Offset.zero,
+                          ).animate(
+                            CurvedAnimation(
+                              parent: anim,
+                              curve: Curves.easeOut,
+                            ),
+                          );
                       return FadeTransition(
                         opacity: anim,
                         child: SlideTransition(position: slide, child: child),
                       );
                     },
-                    child: _step == 0
-                        ? _listView(w, h)
-                        : _rescheduleView(w, h),
+                    child: _step == 0 ? _listView(w, h) : _rescheduleView(w, h),
                   ),
                 ),
               ],
@@ -299,7 +307,7 @@ class _WorkerJobRescheduleScreenState extends State<WorkerJobRescheduleScreen> {
                 "Contradicting Jobs",
                 style: TextStyle(
                   color: Colors.white,
-                  fontFamily: 'Poppins',
+                  fontFamily: 'Inter',
                   fontWeight: FontWeight.w900,
                   fontSize: w * 0.04,
                 ),
@@ -309,7 +317,7 @@ class _WorkerJobRescheduleScreenState extends State<WorkerJobRescheduleScreen> {
               "Reschedule one of these Jobs",
               style: TextStyle(
                 color: Colors.white.withOpacity(0.65),
-                fontFamily: 'Poppins',
+                fontFamily: 'Inter',
                 fontWeight: FontWeight.w700,
                 fontSize: w * 0.028,
               ),
@@ -331,7 +339,7 @@ class _WorkerJobRescheduleScreenState extends State<WorkerJobRescheduleScreen> {
                 "And",
                 style: TextStyle(
                   color: Colors.white,
-                  fontFamily: 'Poppins',
+                  fontFamily: 'Inter',
                   fontWeight: FontWeight.w900,
                   fontSize: w * 0.04,
                 ),
@@ -355,7 +363,7 @@ class _WorkerJobRescheduleScreenState extends State<WorkerJobRescheduleScreen> {
           "Reschedule Job Date and Time",
           style: TextStyle(
             color: Colors.white,
-            fontFamily: 'Poppins',
+            fontFamily: 'Inter',
             fontWeight: FontWeight.w900,
             fontSize: w * 0.04,
           ),
@@ -407,7 +415,7 @@ class _WorkerJobRescheduleScreenState extends State<WorkerJobRescheduleScreen> {
                   "Save",
                   style: TextStyle(
                     color: Colors.black,
-                    fontFamily: 'Poppins',
+                    fontFamily: 'Inter',
                     fontWeight: FontWeight.w900,
                     fontSize: w * 0.045,
                   ),
@@ -447,7 +455,7 @@ class _WorkerJobRescheduleScreenState extends State<WorkerJobRescheduleScreen> {
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 color: Colors.black,
-                fontFamily: 'Poppins',
+                fontFamily: 'Inter',
                 fontWeight: FontWeight.w900,
                 fontSize: w * 0.034,
               ),
@@ -480,7 +488,7 @@ class _WorkerJobRescheduleScreenState extends State<WorkerJobRescheduleScreen> {
                       _monthTitle,
                       style: TextStyle(
                         color: Colors.black,
-                        fontFamily: 'Poppins',
+                        fontFamily: 'Inter',
                         fontWeight: FontWeight.w900,
                         fontSize: w * 0.04,
                       ),
@@ -557,7 +565,7 @@ class _WorkerJobRescheduleScreenState extends State<WorkerJobRescheduleScreen> {
                               "$day",
                               style: TextStyle(
                                 color: fg,
-                                fontFamily: 'Poppins',
+                                fontFamily: 'Inter',
                                 fontWeight: FontWeight.w900,
                                 fontSize: w * 0.032,
                               ),
@@ -582,7 +590,7 @@ class _WorkerJobRescheduleScreenState extends State<WorkerJobRescheduleScreen> {
                   "Unavailable days",
                   style: TextStyle(
                     color: Colors.black.withOpacity(0.75),
-                    fontFamily: 'Poppins',
+                    fontFamily: 'Inter',
                     fontWeight: FontWeight.w800,
                     fontSize: w * 0.028,
                   ),
@@ -594,7 +602,7 @@ class _WorkerJobRescheduleScreenState extends State<WorkerJobRescheduleScreen> {
                   "Available days",
                   style: TextStyle(
                     color: Colors.black.withOpacity(0.75),
-                    fontFamily: 'Poppins',
+                    fontFamily: 'Inter',
                     fontWeight: FontWeight.w800,
                     fontSize: w * 0.028,
                   ),
@@ -607,7 +615,7 @@ class _WorkerJobRescheduleScreenState extends State<WorkerJobRescheduleScreen> {
                     "Current day",
                     style: TextStyle(
                       color: Colors.black.withOpacity(0.75),
-                      fontFamily: 'Poppins',
+                      fontFamily: 'Inter',
                       fontWeight: FontWeight.w800,
                       fontSize: w * 0.028,
                     ),
@@ -626,14 +634,17 @@ class _WorkerJobRescheduleScreenState extends State<WorkerJobRescheduleScreen> {
       borderRadius: BorderRadius.circular(18),
       child: Container(
         color: Colors.white,
-        padding: EdgeInsets.symmetric(horizontal: w * 0.05, vertical: h * 0.018),
+        padding: EdgeInsets.symmetric(
+          horizontal: w * 0.05,
+          vertical: h * 0.018,
+        ),
         child: Column(
           children: [
             Text(
               "Choose Your Time",
               style: TextStyle(
                 color: Colors.black,
-                fontFamily: 'Poppins',
+                fontFamily: 'Inter',
                 fontWeight: FontWeight.w900,
                 fontSize: w * 0.045,
               ),
@@ -680,7 +691,7 @@ class _WorkerJobRescheduleScreenState extends State<WorkerJobRescheduleScreen> {
           label,
           style: TextStyle(
             color: Colors.black,
-            fontFamily: 'Poppins',
+            fontFamily: 'Inter',
             fontWeight: FontWeight.w900,
             fontSize: w * 0.032,
           ),
@@ -698,8 +709,11 @@ class _WorkerJobRescheduleScreenState extends State<WorkerJobRescheduleScreen> {
             ),
             child: Row(
               children: [
-                Icon(Icons.access_time_rounded,
-                    color: Colors.black.withOpacity(0.7), size: w * 0.05),
+                Icon(
+                  Icons.access_time_rounded,
+                  color: Colors.black.withOpacity(0.7),
+                  size: w * 0.05,
+                ),
                 SizedBox(width: w * 0.02),
                 Expanded(
                   child: Text(
@@ -708,7 +722,7 @@ class _WorkerJobRescheduleScreenState extends State<WorkerJobRescheduleScreen> {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       color: Colors.black.withOpacity(0.65),
-                      fontFamily: 'Poppins',
+                      fontFamily: 'Inter',
                       fontWeight: FontWeight.w900,
                       fontSize: w * 0.03,
                     ),
@@ -745,7 +759,10 @@ class _WorkerJobRescheduleScreenState extends State<WorkerJobRescheduleScreen> {
     return Container(
       width: 14,
       height: 14,
-      decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(4)),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(4),
+      ),
     );
   }
 }
@@ -792,7 +809,7 @@ class _ConflictCard extends StatelessWidget {
                   job.employerName,
                   style: TextStyle(
                     color: Colors.black,
-                    fontFamily: 'Poppins',
+                    fontFamily: 'Inter',
                     fontWeight: FontWeight.w900,
                     fontSize: w * 0.036,
                   ),
@@ -802,7 +819,7 @@ class _ConflictCard extends StatelessWidget {
                   job.description,
                   style: TextStyle(
                     color: Colors.black.withOpacity(0.75),
-                    fontFamily: 'Poppins',
+                    fontFamily: 'Inter',
                     fontWeight: FontWeight.w800,
                     fontSize: w * 0.028,
                   ),
@@ -812,7 +829,7 @@ class _ConflictCard extends StatelessWidget {
                   job.dateRange,
                   style: TextStyle(
                     color: Colors.black.withOpacity(0.75),
-                    fontFamily: 'Poppins',
+                    fontFamily: 'Inter',
                     fontWeight: FontWeight.w900,
                     fontSize: w * 0.028,
                   ),
@@ -821,37 +838,46 @@ class _ConflictCard extends StatelessWidget {
             ),
           ),
           SizedBox(width: w * 0.02),
-          Column(
-            children: [
-              SizedBox(
-                height: 30,
-                child: ElevatedButton(
-                  onPressed: onReschedule,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF1FE21A),
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(999),
+          Padding(
+            padding: EdgeInsets.only(
+              top: MediaQuery.of(context).size.height * 0.009,
+            ),
+            child: Row(
+              children: [
+                SizedBox(
+                  height: 30,
+                  child: ElevatedButton(
+                    onPressed: onReschedule,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF1FE21A),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 14),
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 14),
-                  ),
-                  child: const Text(
-                    "Reschedule",
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontFamily: 'Poppins',
-                      fontWeight: FontWeight.w900,
-                      fontSize: 11.5,
+                    child: const Text(
+                      "Reschedule",
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontFamily: 'Inter',
+                        fontWeight: FontWeight.w900,
+                        fontSize: 11.5,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              SizedBox(height: w * 0.01),
-              GestureDetector(
-                onTap: onMore,
-                child: Icon(Icons.more_vert, color: Colors.black, size: w * 0.06),
-              ),
-            ],
+                SizedBox(width: w * 0.02),
+                GestureDetector(
+                  onTap: onMore,
+                  child: Icon(
+                    Icons.more_vert,
+                    color: Colors.black,
+                    size: w * 0.06,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -885,7 +911,7 @@ class _Weekday extends StatelessWidget {
           t,
           style: TextStyle(
             color: Colors.black.withOpacity(0.75),
-            fontFamily: 'Poppins',
+            fontFamily: 'Inter',
             fontWeight: FontWeight.w900,
             fontSize: 10.5,
           ),
@@ -926,7 +952,10 @@ class _GlassPill extends StatelessWidget {
               ],
             ),
             borderRadius: BorderRadius.circular(radius),
-            border: Border.all(color: Colors.white.withOpacity(0.35), width: 1.6),
+            border: Border.all(
+              color: Colors.white.withOpacity(0.35),
+              width: 1.6,
+            ),
             boxShadow: [
               BoxShadow(
                 color: Colors.white.withOpacity(0.08),
@@ -968,10 +997,7 @@ class _TopIcon extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
 
-  const _TopIcon({
-    required this.icon,
-    required this.onTap,
-  });
+  const _TopIcon({required this.icon, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
