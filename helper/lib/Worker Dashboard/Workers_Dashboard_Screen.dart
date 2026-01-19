@@ -376,7 +376,7 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                         vertical: 5,
                       ),
                       child: Text(
-                        'View All',
+                        'View Job',
                         style: TextStyle(
                           color: Color(0xFFF79F1A),
                           fontSize: w * 0.04,
