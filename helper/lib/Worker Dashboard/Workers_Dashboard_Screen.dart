@@ -30,6 +30,11 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
     final w = MediaQuery.of(context).size.width;
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
+    final now = DateTime.now();
+    final hour = now.hour % 12 == 0 ? 12 : now.hour % 12;
+    final minute = now.minute.toString().padLeft(2, '0');
+    final amPm = now.hour >= 12 ? 'PM' : 'AM';
+    final time = '$hour:$minute $amPm';
     return Scaffold(
       body: SafeArea(
         child: Container(
@@ -284,6 +289,18 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                               ],
                             ),
                           ],
+                        ),
+                      ),
+                      Positioned(
+                        top: 10,
+                        right: 10,
+                        child: Text(
+                          time,
+                          style: const TextStyle(
+                            color: Colors.black,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ],
