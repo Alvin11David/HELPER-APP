@@ -422,7 +422,7 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 10),
+                        const SizedBox(height: 5),
                         Row(
                           children: [
                             const Text(
@@ -436,6 +436,50 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                             const Spacer(),
                             Text(
                               'Type',
+                              style: TextStyle(
+                                color: Color(0xFFFFA10D),
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            const Text(
+                              'Job Location:',
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const Spacer(),
+                            Text(
+                              'Location',
+                              style: TextStyle(
+                                color: Color(0xFFFFA10D),
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            const Text(
+                              'Time Remaining:',
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const Spacer(),
+                            Text(
+                              '00:00:00',
                               style: TextStyle(
                                 color: Color(0xFFFFA10D),
                                 fontSize: 14,
