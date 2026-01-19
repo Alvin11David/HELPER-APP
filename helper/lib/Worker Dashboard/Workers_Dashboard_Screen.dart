@@ -6,6 +6,9 @@ class WorkersDashboardScreen extends StatefulWidget {
 }
 
 class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
+  final TextEditingController _controller = TextEditingController();
+  final FocusNode _focusNode = FocusNode();
+
   String _getGreeting() {
     final hour = DateTime.now().hour;
     if (hour < 12) return 'Good Morning';
