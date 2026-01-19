@@ -158,7 +158,7 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                           ), // touches left and right
                           color: Colors.black,
                         ),
-                        const SizedBox(height: 15),
+                        const SizedBox(height: 20),
                         Padding(
                           padding: EdgeInsets.only(left: 8, right: 8),
                           child: Row(
@@ -176,7 +176,7 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                             ],
                           ),
                         ),
-                        const SizedBox(height: 15),
+                        const SizedBox(height: 20),
                         Padding(
                           padding: EdgeInsets.only(left: 8, right: 8),
                           child: Row(
@@ -194,7 +194,7 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                             ],
                           ),
                         ),
-                        const SizedBox(height: 15),
+                        const SizedBox(height: 20),
                         Padding(
                           padding: EdgeInsets.only(left: 8, right: 8),
                           child: Row(
@@ -212,7 +212,7 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                             ],
                           ),
                         ),
-                        const SizedBox(height: 15),
+                        const SizedBox(height: 20),
                         Padding(
                           padding: EdgeInsets.only(left: 8, right: 8),
                           child: Row(
@@ -230,7 +230,7 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                             ],
                           ),
                         ),
-                        const SizedBox(height: 15),
+                        const SizedBox(height: 20),
                         Padding(
                           padding: EdgeInsets.only(left: 8, right: 8),
                           child: Row(
@@ -248,7 +248,7 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                             ],
                           ),
                         ),
-                        const SizedBox(height: 15),
+                        const SizedBox(height: 20),
                         Padding(
                           padding: EdgeInsets.only(left: 8, right: 8),
                           child: Row(
@@ -266,7 +266,7 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                             ],
                           ),
                         ),
-                        const SizedBox(height: 15),
+                        const SizedBox(height: 20),
                         Padding(
                           padding: EdgeInsets.only(left: 8, right: 8),
                           child: Row(
@@ -275,6 +275,24 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                               SizedBox(width: 15),
                               Text(
                                 "Privacy Policy",
+                                style: TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        Padding(
+                          padding: EdgeInsets.only(left: 8, right: 8),
+                          child: Row(
+                            children: [
+                              Icon(Icons.logout, color: Colors.black.withOpacity(0.6)),
+                              SizedBox(width: 15),
+                              Text(
+                                "Log Out",
                                 style: TextStyle(
                                   color: Colors.black,
                                   fontSize: 15,
