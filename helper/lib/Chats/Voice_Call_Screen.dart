@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:helper/Chats/overlays/incoming_call_overlay_service.dart';
+import 'package:helper/main.dart';
 
 class VoiceCallScreen extends StatefulWidget {
   @override
@@ -73,15 +75,12 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       GestureDetector(
-                        onTap: () =>
-                            setState(() => _volumeClicked = !_volumeClicked),
+                        onTap: () => setState(() => _volumeClicked = !_volumeClicked),
                         child: Container(
                           width: 40,
                           height: 40,
                           decoration: BoxDecoration(
-                            color: _volumeClicked
-                                ? Color(0xFFFFA10D)
-                                : Colors.white,
+                            color: _volumeClicked ? Color(0xFFFFA10D) : Colors.white,
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
@@ -96,9 +95,7 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
                           width: 40,
                           height: 40,
                           decoration: BoxDecoration(
-                            color: _micClicked
-                                ? Color(0xFFFFA10D)
-                                : Colors.white,
+                            color: _micClicked ? Color(0xFFFFA10D) : Colors.white,
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
@@ -127,3 +124,21 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
     );
   }
 }
+
+void _showIncomingCallOverlay() {
+  // use appNavKey.currentContext!
+  final BuildContext? ctx = appNavKey.currentContext;
+  if (ctx != null) {
+    IncomingCallOverlayService.instance.show(
+      context: ctx,
+      businessName: 'Business Name',
+      subtitle: 'Incoming voice call',
+      timeText: '9:45AM',
+      avatarImage: const AssetImage('assets/images/person.png'),
+      onDecline: () {},
+      onAnswer: () {},
+    );
+  }
+}
+
+
