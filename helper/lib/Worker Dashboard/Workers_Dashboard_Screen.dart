@@ -182,7 +182,7 @@ class _RuleRow extends StatelessWidget {
               style: TextStyle(
                 color: Colors.white.withOpacity(0.9),
                 fontFamily: 'Inter',
-                fontWeight: FontWeight.w900,
+                fontWeight: FontWeight.bold,
                 fontSize: 14,
                 height: 1.25,
               ),
