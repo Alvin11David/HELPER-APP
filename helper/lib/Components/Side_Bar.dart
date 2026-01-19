@@ -230,6 +230,42 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                             ],
                           ),
                         ),
+                        const SizedBox(height: 15),
+                        Padding(
+                          padding: EdgeInsets.only(left: 8, right: 8),
+                          child: Row(
+                            children: [
+                              Icon(Icons.support_agent, color: Colors.black.withOpacity(0.6)),
+                              SizedBox(width: 15),
+                              Text(
+                                "Support",
+                                style: TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 15),
+                        Padding(
+                          padding: EdgeInsets.only(left: 8, right: 8),
+                          child: Row(
+                            children: [
+                              Icon(Icons.support_agent, color: Colors.black.withOpacity(0.6)),
+                              SizedBox(width: 15),
+                              Text(
+                                "Support",
+                                style: TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ],
                     ),
                   ],

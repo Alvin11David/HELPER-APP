@@ -1,20 +1,5 @@
-// ignore_for_file: depend_on_referenced_packages
-
 import 'dart:ui';
 import 'package:flutter/material.dart';
-
-/// RECOMMENDED FILE NAME:
-/// worker_job_reschedule_screen.dart
-///
-/// SCREEN:
-/// WorkerJobRescheduleScreen
-///
-/// WHAT YOU GET:
-/// - Left screen: "Schedule" with list of contradicting jobs + "Reschedule" button + more menu
-/// - Right flow: When a job is selected to reschedule -> shows date range + calendar + time range + save
-/// - Responsive sizing (no overflows) + your usual fonts (AbrilFatface/Poppins)
-/// - Calendar is UI-only (no package). You can hook real date/time picking later.
-
 class WorkerJobRescheduleScreen extends StatefulWidget {
   const WorkerJobRescheduleScreen({super.key});
 
