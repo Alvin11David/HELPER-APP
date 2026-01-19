@@ -560,6 +560,50 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                             ),
                           ],
                         ),
+                        const SizedBox(height: 5),
+                        Row(
+                          children: [
+                            const Text(
+                              'Jobs Completed:',
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const Spacer(),
+                            Text(
+                              'Number',
+                              style: TextStyle(
+                                color: Color(0xFFFFA10D),
+                                fontSize: 13,
+                                fontWeight: FontWeight.w300,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 5),
+                        Row(
+                          children: [
+                            const Text(
+                              'Hours Worked:',
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const Spacer(),
+                            Text(
+                              '00:00:00',
+                              style: TextStyle(
+                                color: Color(0xFFFFA10D),
+                                fontSize: 13,
+                                fontWeight: FontWeight.w300,
+                              ),
+                            ),
+                          ],
+                        ),
                       ],
                     ),
                   ),
