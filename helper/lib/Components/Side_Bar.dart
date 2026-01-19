@@ -163,7 +163,7 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                           padding: EdgeInsets.only(left: 8, right: 8),
                           child: Row(
                             children: [
-                              Icon(Icons.home, color: Colors.black),
+                              Icon(Icons.home, color: Colors.black.withOpacity(0.6)),
                               SizedBox(width: 15),
                               Text(
                                 "Home",
@@ -181,7 +181,7 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                           padding: EdgeInsets.only(left: 8, right: 8),
                           child: Row(
                             children: [
-                              Icon(Icons.receipt_long, color: Colors.black),
+                              Icon(Icons.receipt_long, color: Colors.black.withOpacity(0.6)),
                               SizedBox(width: 15),
                               Text(
                                 "My Jobs",
@@ -199,7 +199,7 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                           padding: EdgeInsets.only(left: 8, right: 8),
                           child: Row(
                             children: [
-                              Icon(Icons.calendar_today_rounded, color: Colors.black),
+                              Icon(Icons.calendar_today_rounded, color: Colors.black.withOpacity(0.6)),
                               SizedBox(width: 15),
                               Text(
                                 "Availability & Schedule",
@@ -217,7 +217,7 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                           padding: EdgeInsets.only(left: 8, right: 8),
                           child: Row(
                             children: [
-                              Icon(Icons.star, color: Colors.black),
+                              Icon(Icons.star, color: Colors.black.withOpacity(0.6)),
                               SizedBox(width: 15),
                               Text(
                                 "Ratings & Reviews",
