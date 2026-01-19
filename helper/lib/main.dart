@@ -10,8 +10,10 @@ import 'package:helper/Wallet/Wallet_Deposit_Payment_Method_Screen.dart';
 import 'package:helper/Wallet/Wallet_TopUp_Screen.dart';
 import 'package:helper/Wallet/Wallet_Withdraw_Screen.dart';
 import 'package:helper/Worker%20Dashboard/Worker_Details_Screen.dart';
+import 'package:helper/Worker%20Dashboard/Worker_Jobs_Hub_Screen';
 import 'package:helper/Worker%20Dashboard/Workers_Dashboard_Screen.dart';
 import 'package:helper/Worker%20Dashboard/Active_Job_detail.dart';
+//import 'package:helper/Worker%20Dashboard/Worker_Jobs_Hub_Screen.dart';
 import 'package:helper/Worker%20Dashboard/Workers_skills_and_Job_Details.dart';
 import 'firebase_options.dart';
 import 'package:helper/Auth/OTP_Verification_Screen.dart';
@@ -60,7 +62,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: const ActiveJobScreen(),
+      home: const WorkerJobsHubScreen(),
     );
   }
 }
