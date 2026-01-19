@@ -376,7 +376,7 @@ Widget _buildGlassyRectangle(
                     right: 0,
                     child: Center(
                       child: Text(
-                        'Helper App',
+                        'Helpers App',
                         style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,

@@ -1,5 +1,3 @@
-// ignore_for_file: depend_on_referenced_packages
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -47,14 +45,17 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
   // -------------------- VALIDATION --------------------
   bool get _phase1Complete {
     final okDesc = _descCtrl.text.trim().isNotEmpty;
-    final okLocation = (_pickedJobLocation != null && _pickedJobLocation!.trim().isNotEmpty);
+    final okLocation =
+        (_pickedJobLocation != null && _pickedJobLocation!.trim().isNotEmpty);
     return okDesc && okLocation;
   }
 
   bool get _phase2Complete {
     final okWorkers = _workersCount != null;
     final okDuration = _jobDuration != null;
-    final okAmount = _amountCtrl.text.trim().isNotEmpty && int.tryParse(_amountCtrl.text.trim()) != null;
+    final okAmount =
+        _amountCtrl.text.trim().isNotEmpty &&
+        int.tryParse(_amountCtrl.text.trim()) != null;
     return okWorkers && okDuration && okAmount;
   }
 
@@ -71,7 +72,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
   void _toast(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(msg, style: const TextStyle(fontFamily: 'Poppins')),
+        content: Text(msg, style: const TextStyle(fontFamily: 'Inter')),
         backgroundColor: Colors.black.withOpacity(0.88),
       ),
     );
@@ -90,33 +91,16 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
     FocusScope.of(context).unfocus();
 
     if (_step == 0) {
-      if (!_phase1Complete) {
-        if (_descCtrl.text.trim().isEmpty) _toast('Please describe the job');
-        if (_pickedJobLocation == null) _toast('Please pick a job location on the map');
-        return;
-      }
       setState(() => _step = 1);
       return;
     }
 
     if (_step == 1) {
-      if (!_phase2Complete) {
-        if (_workersCount == null) _toast('Please select number of workers');
-        if (_jobDuration == null) _toast('Please select job duration type');
-        final t = _amountCtrl.text.trim();
-        if (t.isEmpty || int.tryParse(t) == null) _toast('Enter a valid amount');
-        return;
-      }
       setState(() => _step = 2);
       return;
     }
 
     if (_step == 2) {
-      if (!_phase3Complete) {
-        if (_startDate == null || _endDate == null) _toast('Please select a date range');
-        if (_timeFrom == null || _timeTo == null) _toast('Please select a time range');
-        return;
-      }
       setState(() => _step = 3);
       return;
     }
@@ -127,7 +111,9 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
 
   // -------------------- TIME PICKERS --------------------
   Future<void> _pickTime({required bool isFrom}) async {
-    final initial = isFrom ? (_timeFrom ?? const TimeOfDay(hour: 9, minute: 0)) : (_timeTo ?? const TimeOfDay(hour: 17, minute: 0));
+    final initial = isFrom
+        ? (_timeFrom ?? const TimeOfDay(hour: 9, minute: 0))
+        : (_timeTo ?? const TimeOfDay(hour: 17, minute: 0));
     final picked = await showTimePicker(
       context: context,
       initialTime: initial,
@@ -143,8 +129,8 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
               entryModeIconColor: Colors.white,
             ),
             textTheme: const TextTheme(
-              bodyMedium: TextStyle(fontFamily: 'Poppins'),
-              bodySmall: TextStyle(fontFamily: 'Poppins'),
+              bodyMedium: TextStyle(fontFamily: 'Inter'),
+              bodySmall: TextStyle(fontFamily: 'Inter'),
             ),
           ),
           child: child ?? const SizedBox.shrink(),
@@ -189,17 +175,26 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
   bool _inRange(DateTime d) {
     if (_startDate == null) return false;
     final day = DateTime(d.year, d.month, d.day);
-    final start = DateTime(_startDate!.year, _startDate!.month, _startDate!.day);
+    final start = DateTime(
+      _startDate!.year,
+      _startDate!.month,
+      _startDate!.day,
+    );
     if (_endDate == null) return day == start;
 
     final end = DateTime(_endDate!.year, _endDate!.month, _endDate!.day);
-    return (day.isAtSameMomentAs(start) || day.isAfter(start)) && (day.isAtSameMomentAs(end) || day.isBefore(end));
+    return (day.isAtSameMomentAs(start) || day.isAfter(start)) &&
+        (day.isAtSameMomentAs(end) || day.isBefore(end));
   }
 
   bool _isEdge(DateTime d) {
     if (_startDate == null) return false;
     final day = DateTime(d.year, d.month, d.day);
-    final start = DateTime(_startDate!.year, _startDate!.month, _startDate!.day);
+    final start = DateTime(
+      _startDate!.year,
+      _startDate!.month,
+      _startDate!.day,
+    );
     if (_endDate == null) return day == start;
 
     final end = DateTime(_endDate!.year, _endDate!.month, _endDate!.day);
@@ -232,8 +227,6 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    SizedBox(height: topPad),
-
                     _TopBar(
                       title: _stepTitle(),
                       subtitle: _businessName,
@@ -244,13 +237,19 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
 
                     // stepper (dots + dashed)
                     Center(
-                      child: _DotStepper(
-                        activeIndex: _step,
+                      child: _StepIndicator(
+                        width: w,
+                        activeIndex: _step < 3 ? _step : 2,
+                        labels: const [
+                          'Job Details',
+                          'Choose Date',
+                          'Payment Details',
+                        ],
                         accent: _brandOrange,
                       ),
                     ),
 
-                    SizedBox(height: h * 0.018),
+                    SizedBox(height: h * 0.019),
 
                     // phase title (small centered)
                     Center(
@@ -259,7 +258,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           color: Colors.white,
-                          fontFamily: 'Poppins',
+                          fontFamily: 'Inter',
                           fontWeight: FontWeight.w800,
                           fontSize: w * 0.040,
                         ),
@@ -273,10 +272,16 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
                       switchInCurve: Curves.easeOut,
                       switchOutCurve: Curves.easeIn,
                       transitionBuilder: (child, anim) {
-                        final slide = Tween<Offset>(
-                          begin: const Offset(0.04, 0),
-                          end: Offset.zero,
-                        ).animate(CurvedAnimation(parent: anim, curve: Curves.easeOut));
+                        final slide =
+                            Tween<Offset>(
+                              begin: const Offset(0.04, 0),
+                              end: Offset.zero,
+                            ).animate(
+                              CurvedAnimation(
+                                parent: anim,
+                                curve: Curves.easeOut,
+                              ),
+                            );
                         return FadeTransition(
                           opacity: anim,
                           child: SlideTransition(position: slide, child: child),
@@ -285,14 +290,13 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
                       child: _step == 0
                           ? _phase1(w, h)
                           : _step == 1
-                              ? _phase2(w, h)
-                              : _step == 2
-                                  ? _phase3(w, h)
-                                  : _phase4(w, h),
+                          ? _phase2(w, h)
+                          : _step == 2
+                          ? _phase3(w, h)
+                          : _phase4(w, h),
                     ),
 
-                    SizedBox(height: h * 0.022),
-
+                    SizedBox(height: h * 0.05),
                     // CTA button
                     SizedBox(
                       width: double.infinity,
@@ -312,7 +316,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
                             _step == 3 ? 'Continue to Payment' : 'Continue →',
                             style: TextStyle(
                               color: Colors.black,
-                              fontFamily: 'Poppins',
+                              fontFamily: 'Inter',
                               fontWeight: FontWeight.w900,
                               fontSize: w * 0.045,
                             ),
@@ -339,7 +343,8 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
   }
 
   String _stepHeadline() {
-    if (_step == 0) return "Choose Date"; // your first mock shows "Choose Date" even on details
+    if (_step == 0)
+      return "Choose Date"; // your first mock shows "Choose Date" even on details
     if (_step == 1) return "Choose Date";
     if (_step == 2) return "Choose Date";
     return "Choose Date";
@@ -357,7 +362,8 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
           w: w,
           h: h,
           controller: _descCtrl,
-          hint: "Explain what needs to be done, tools required\nand any special instructions...",
+          hint:
+              "Explain what needs to be done, tools required\nand any special instructions...",
         ),
 
         SizedBox(height: h * 0.018),
@@ -370,7 +376,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
               "Optional",
               style: TextStyle(
                 color: Colors.white.withOpacity(0.75),
-                fontFamily: 'Poppins',
+                fontFamily: 'Inter',
                 fontWeight: FontWeight.w600,
                 fontSize: w * 0.032,
               ),
@@ -398,7 +404,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
               "Tap the map to select",
               style: TextStyle(
                 color: Colors.white.withOpacity(0.75),
-                fontFamily: 'Poppins',
+                fontFamily: 'Inter',
                 fontWeight: FontWeight.w600,
                 fontSize: w * 0.030,
               ),
@@ -425,34 +431,6 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
       key: const ValueKey('phase2'),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            _label("Job Location", w),
-            const Spacer(),
-            Text(
-              "Tap the map to select",
-              style: TextStyle(
-                color: Colors.white.withOpacity(0.75),
-                fontFamily: 'Poppins',
-                fontWeight: FontWeight.w600,
-                fontSize: w * 0.030,
-              ),
-            ),
-          ],
-        ),
-        SizedBox(height: h * 0.010),
-        _mapPlaceholder(
-          w: w,
-          h: h,
-          heightFactor: 0.28,
-          onTapPick: () {
-            setState(() => _pickedJobLocation = "Kampala");
-            _toast("Picked job location (placeholder)");
-          },
-        ),
-
-        SizedBox(height: h * 0.018),
-
         _label("Number of Workers", w),
         SizedBox(height: h * 0.010),
         _pillDropdown(
@@ -485,7 +463,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
           "Business Name's Hourly/Fixed Price is (Amount)",
           style: TextStyle(
             color: Colors.white.withOpacity(0.75),
-            fontFamily: 'Poppins',
+            fontFamily: 'Inter',
             fontWeight: FontWeight.w600,
             fontSize: w * 0.030,
           ),
@@ -502,14 +480,18 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
         SizedBox(height: h * 0.010),
         Row(
           children: [
-            Icon(Icons.info_outline_rounded, color: Colors.white.withOpacity(0.85), size: w * 0.050),
+            Icon(
+              Icons.info_outline_rounded,
+              color: Colors.white.withOpacity(0.85),
+              size: w * 0.050,
+            ),
             SizedBox(width: w * 0.02),
             Expanded(
               child: Text(
                 "Enter Amount your wallet can afford",
                 style: TextStyle(
                   color: Colors.white.withOpacity(0.75),
-                  fontFamily: 'Poppins',
+                  fontFamily: 'Inter',
                   fontWeight: FontWeight.w600,
                   fontSize: w * 0.030,
                 ),
@@ -560,7 +542,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
             "Choose Your Time",
             style: TextStyle(
               color: Colors.white,
-              fontFamily: 'Poppins',
+              fontFamily: 'Inter',
               fontWeight: FontWeight.w800,
               fontSize: w * 0.040,
             ),
@@ -618,7 +600,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
                 "Edit Job details",
                 style: TextStyle(
                   color: _brandOrange,
-                  fontFamily: 'Poppins',
+                  fontFamily: 'Inter',
                   fontWeight: FontWeight.w800,
                   fontSize: w * 0.032,
                   decoration: TextDecoration.underline,
@@ -632,7 +614,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
                 "Edit Schedule",
                 style: TextStyle(
                   color: _brandOrange,
-                  fontFamily: 'Poppins',
+                  fontFamily: 'Inter',
                   fontWeight: FontWeight.w800,
                   fontSize: w * 0.032,
                   decoration: TextDecoration.underline,
@@ -651,7 +633,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
       t,
       style: TextStyle(
         color: Colors.white,
-        fontFamily: 'Poppins',
+        fontFamily: 'Inter',
         fontSize: w * 0.038,
         fontWeight: FontWeight.w900,
       ),
@@ -672,14 +654,19 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
       ),
-      padding: EdgeInsets.symmetric(horizontal: w * 0.04, vertical: h * 0.012),
+      padding: EdgeInsets.only(
+        left: w * 0.04,
+        right: w * 0.04,
+        top: h * 0.006,
+        bottom: h * 0.018,
+      ),
       child: TextFormField(
         controller: controller,
         maxLines: null,
         expands: true,
         style: TextStyle(
           color: Colors.black,
-          fontFamily: 'Poppins',
+          fontFamily: 'Inter',
           fontWeight: FontWeight.w700,
           fontSize: w * 0.034,
         ),
@@ -687,7 +674,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
           hintText: hint,
           hintStyle: TextStyle(
             color: Colors.black.withOpacity(0.55),
-            fontFamily: 'Poppins',
+            fontFamily: 'Inter',
             fontWeight: FontWeight.w700,
             fontSize: w * 0.032,
             height: 1.20,
@@ -721,7 +708,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
         inputFormatters: inputFormatters,
         style: TextStyle(
           color: Colors.black,
-          fontFamily: 'Poppins',
+          fontFamily: 'Inter',
           fontWeight: FontWeight.w800,
           fontSize: w * 0.038,
         ),
@@ -729,7 +716,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
           hintText: hint,
           hintStyle: TextStyle(
             color: Colors.black.withOpacity(0.55),
-            fontFamily: 'Poppins',
+            fontFamily: 'Inter',
             fontWeight: FontWeight.w800,
             fontSize: w * 0.034,
           ),
@@ -772,7 +759,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
               color: Colors.black.withOpacity(0.60),
-              fontFamily: 'Poppins',
+              fontFamily: 'Inter',
               fontWeight: FontWeight.w900,
               fontSize: w * 0.032,
             ),
@@ -787,7 +774,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       color: Colors.black,
-                      fontFamily: 'Poppins',
+                      fontFamily: 'Inter',
                       fontWeight: FontWeight.w900,
                       fontSize: w * 0.035,
                     ),
@@ -826,7 +813,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 color: Colors.black,
-                fontFamily: 'Poppins',
+                fontFamily: 'Inter',
                 fontWeight: FontWeight.w900,
                 fontSize: w * 0.034,
               ),
@@ -854,7 +841,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
           label,
           style: TextStyle(
             color: Colors.white.withOpacity(0.9),
-            fontFamily: 'Poppins',
+            fontFamily: 'Inter',
             fontWeight: FontWeight.w800,
             fontSize: w * 0.030,
           ),
@@ -871,7 +858,11 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
             ),
             child: Row(
               children: [
-                Icon(Icons.access_time_rounded, color: Colors.black, size: w * 0.05),
+                Icon(
+                  Icons.access_time_rounded,
+                  color: Colors.black,
+                  size: w * 0.05,
+                ),
                 SizedBox(width: w * 0.03),
                 Expanded(
                   child: Text(
@@ -879,8 +870,10 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      color: Colors.black.withOpacity(time == null ? 0.55 : 1.0),
-                      fontFamily: 'Poppins',
+                      color: Colors.black.withOpacity(
+                        time == null ? 0.55 : 1.0,
+                      ),
+                      fontFamily: 'Inter',
                       fontWeight: FontWeight.w900,
                       fontSize: w * 0.033,
                     ),
@@ -933,7 +926,11 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
                     shape: BoxShape.circle,
                   ),
                   child: Center(
-                    child: Icon(Icons.location_pin, color: Colors.redAccent, size: w * 0.10),
+                    child: Icon(
+                      Icons.location_pin,
+                      color: Colors.redAccent,
+                      size: w * 0.10,
+                    ),
                   ),
                 ),
               ),
@@ -987,14 +984,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
       child: Container(
         height: boxH,
         width: double.infinity,
-        decoration: BoxDecoration(
-          color: Colors.black.withOpacity(0.35),
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: Colors.white.withOpacity(0.75),
-            width: 1.3,
-          ),
-        ),
+        decoration: BoxDecoration(borderRadius: BorderRadius.circular(18)),
         child: CustomPaint(
           painter: _DashedBorderPainter(
             color: Colors.white.withOpacity(0.75),
@@ -1007,13 +997,17 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.cloud_upload_rounded, color: Colors.white, size: w * 0.14),
+                Icon(
+                  Icons.cloud_upload_rounded,
+                  color: Colors.white,
+                  size: w * 0.14,
+                ),
                 SizedBox(height: h * 0.008),
                 Text(
                   "Upload File",
                   style: TextStyle(
                     color: Colors.white,
-                    fontFamily: 'Poppins',
+                    fontFamily: 'Inter',
                     fontWeight: FontWeight.w900,
                     fontSize: w * 0.040,
                   ),
@@ -1024,7 +1018,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: Colors.white.withOpacity(0.75),
-                    fontFamily: 'Poppins',
+                    fontFamily: 'Inter',
                     fontWeight: FontWeight.w600,
                     fontSize: w * 0.028,
                     height: 1.20,
@@ -1036,7 +1030,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
                     "${_fakePhotos.length} file(s) selected",
                     style: TextStyle(
                       color: _brandOrange,
-                      fontFamily: 'Poppins',
+                      fontFamily: 'Inter',
                       fontWeight: FontWeight.w900,
                       fontSize: w * 0.030,
                     ),
@@ -1065,7 +1059,10 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
         height: cardH,
         width: double.infinity,
         color: Colors.white,
-        padding: EdgeInsets.symmetric(horizontal: w * 0.04, vertical: h * 0.015),
+        padding: EdgeInsets.symmetric(
+          horizontal: w * 0.04,
+          vertical: h * 0.015,
+        ),
         child: Column(
           children: [
             // month header
@@ -1076,7 +1073,10 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
                   icon: Icons.chevron_left,
                   onTap: () {
                     setState(() {
-                      _calendarMonth = DateTime(_calendarMonth.year, _calendarMonth.month - 1);
+                      _calendarMonth = DateTime(
+                        _calendarMonth.year,
+                        _calendarMonth.month - 1,
+                      );
                     });
                   },
                 ),
@@ -1085,7 +1085,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
                   "$monthName $year",
                   style: TextStyle(
                     color: Colors.black,
-                    fontFamily: 'Poppins',
+                    fontFamily: 'Inter',
                     fontWeight: FontWeight.w900,
                     fontSize: w * 0.040,
                   ),
@@ -1096,7 +1096,10 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
                   icon: Icons.chevron_right,
                   onTap: () {
                     setState(() {
-                      _calendarMonth = DateTime(_calendarMonth.year, _calendarMonth.month + 1);
+                      _calendarMonth = DateTime(
+                        _calendarMonth.year,
+                        _calendarMonth.month + 1,
+                      );
                     });
                   },
                 ),
@@ -1115,7 +1118,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
                           d,
                           style: TextStyle(
                             color: Colors.black.withOpacity(0.55),
-                            fontFamily: 'Poppins',
+                            fontFamily: 'Inter',
                             fontWeight: FontWeight.w800,
                             fontSize: w * 0.028,
                           ),
@@ -1150,7 +1153,9 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
                   Color txt = Colors.black.withOpacity(0.80);
 
                   if (inRange) {
-                    bg = edge ? Colors.redAccent : Colors.grey.withOpacity(0.20);
+                    bg = edge
+                        ? Colors.redAccent
+                        : Colors.grey.withOpacity(0.20);
                     txt = edge ? Colors.white : Colors.black;
                   }
 
@@ -1172,7 +1177,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
                           "${day.day}",
                           style: TextStyle(
                             color: txt,
-                            fontFamily: 'Poppins',
+                            fontFamily: 'Inter',
                             fontWeight: FontWeight.w900,
                             fontSize: w * 0.032,
                           ),
@@ -1192,7 +1197,11 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
               children: [
                 _legendDot(w, Colors.redAccent, "Unavailable days"),
                 _legendDot(w, Colors.grey.withOpacity(0.35), "Available days"),
-                _legendDot(w, Colors.green, "Current day"),
+                _legendDot(
+                  w,
+                  const Color.fromARGB(255, 0, 255, 8),
+                  "Current day",
+                ),
               ],
             ),
           ],
@@ -1205,13 +1214,20 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Container(width: w * 0.035, height: w * 0.035, decoration: BoxDecoration(color: c, borderRadius: BorderRadius.circular(6))),
+        Container(
+          width: w * 0.035,
+          height: w * 0.035,
+          decoration: BoxDecoration(
+            color: c,
+            borderRadius: BorderRadius.circular(6),
+          ),
+        ),
         SizedBox(width: w * 0.018),
         Text(
           t,
           style: TextStyle(
             color: Colors.black.withOpacity(0.55),
-            fontFamily: 'Poppins',
+            fontFamily: 'Inter',
             fontWeight: FontWeight.w700,
             fontSize: w * 0.026,
           ),
@@ -1249,22 +1265,13 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
       ),
-      child: Row(
+      child: Stack(
         children: [
-          Container(
-            width: w * 0.10,
-            height: w * 0.10,
-            decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.black12),
-            child: ClipOval(
-              child: Image.asset(
-                "assets/images/person.png",
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Icon(Icons.person, size: w * 0.06),
-              ),
-            ),
-          ),
-          SizedBox(width: w * 0.03),
-          Expanded(
+          Positioned(
+            left: w * 0.10 + w * 0.03,
+            top: 0,
+            right: 0,
+            bottom: 0,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -1274,7 +1281,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: Colors.black,
-                    fontFamily: 'Poppins',
+                    fontFamily: 'Inter',
                     fontWeight: FontWeight.w900,
                     fontSize: w * 0.038,
                   ),
@@ -1286,7 +1293,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: Colors.black.withOpacity(0.55),
-                    fontFamily: 'Poppins',
+                    fontFamily: 'Inter',
                     fontWeight: FontWeight.w700,
                     fontSize: w * 0.030,
                   ),
@@ -1327,15 +1334,33 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
 
           SizedBox(height: h * 0.012),
 
-          _kv("Selected Date Range", _startDate == null ? "Range" : "${_fmtDate(_startDate!)} - ${_fmtDate(_endDate ?? _startDate!)}", w),
-          _kv("Selected Time Range", (_timeFrom == null || _timeTo == null) ? "Range" : "${_timeFrom!.format(context)} - ${_timeTo!.format(context)}", w),
+          _kv(
+            "Selected Date Range",
+            _startDate == null
+                ? "Range"
+                : "${_fmtDate(_startDate!)} - ${_fmtDate(_endDate ?? _startDate!)}",
+            w,
+          ),
+          _kv(
+            "Selected Time Range",
+            (_timeFrom == null || _timeTo == null)
+                ? "Range"
+                : "${_timeFrom!.format(context)} - ${_timeTo!.format(context)}",
+            w,
+          ),
 
           SizedBox(height: h * 0.010),
           _dashedDivider(color: Colors.black.withOpacity(0.35)),
           SizedBox(height: h * 0.010),
 
           _kv("Number of Workers", _workersCount ?? "Number", w),
-          _kv("Number of Hours", _jobDuration == null ? "Number" : (_jobDuration == "Hours" ? "Number" : "—"), w),
+          _kv(
+            "Number of Hours",
+            _jobDuration == null
+                ? "Number"
+                : (_jobDuration == "Hours" ? "Number" : "—"),
+            w,
+          ),
           _kv("Hourly Pricing", "Amount", w),
 
           SizedBox(height: h * 0.012),
@@ -1346,17 +1371,19 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
                 "Total",
                 style: TextStyle(
                   color: Colors.black,
-                  fontFamily: 'Poppins',
+                  fontFamily: 'Inter',
                   fontWeight: FontWeight.w900,
                   fontSize: w * 0.040,
                 ),
               ),
               const Spacer(),
               Text(
-                _amountCtrl.text.trim().isEmpty ? "Amount" : _amountCtrl.text.trim(),
+                _amountCtrl.text.trim().isEmpty
+                    ? "Amount"
+                    : _amountCtrl.text.trim(),
                 style: TextStyle(
                   color: Colors.black,
-                  fontFamily: 'Poppins',
+                  fontFamily: 'Inter',
                   fontWeight: FontWeight.w900,
                   fontSize: w * 0.040,
                 ),
@@ -1369,14 +1396,18 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(Icons.info_outline_rounded, color: Colors.black.withOpacity(0.8), size: w * 0.05),
+              Icon(
+                Icons.info_outline_rounded,
+                color: Colors.black.withOpacity(0.8),
+                size: w * 0.05,
+              ),
               SizedBox(width: w * 0.02),
               Expanded(
                 child: Text(
                   "The Pricing is entirely set by the worker",
                   style: TextStyle(
                     color: Colors.black.withOpacity(0.7),
-                    fontFamily: 'Poppins',
+                    fontFamily: 'Inter',
                     fontWeight: FontWeight.w700,
                     fontSize: w * 0.030,
                   ),
@@ -1401,7 +1432,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 color: Colors.black.withOpacity(0.80),
-                fontFamily: 'Poppins',
+                fontFamily: 'Inter',
                 fontWeight: FontWeight.w800,
                 fontSize: w * 0.030,
               ),
@@ -1414,7 +1445,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
               color: Colors.black.withOpacity(0.75),
-              fontFamily: 'Poppins',
+              fontFamily: 'Inter',
               fontWeight: FontWeight.w800,
               fontSize: w * 0.030,
             ),
@@ -1522,7 +1553,7 @@ class _TopBar extends StatelessWidget {
           ),
         ),
 
-        SizedBox(width: w * 0.04),
+        SizedBox(width: w * 0.06),
 
         Expanded(
           child: Column(
@@ -1534,7 +1565,7 @@ class _TopBar extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   color: Colors.white,
-                  fontFamily: 'AbrilFatface',
+                  fontFamily: 'Montserrat',
                   fontSize: w * 0.052,
                 ),
               ),
@@ -1545,9 +1576,9 @@ class _TopBar extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   color: Colors.white.withOpacity(0.75),
-                  fontFamily: 'Poppins',
+                  fontFamily: 'Montserrat',
                   fontWeight: FontWeight.w700,
-                  fontSize: w * 0.028,
+                  fontSize: w * 0.03,
                 ),
               ),
             ],
@@ -1556,50 +1587,69 @@ class _TopBar extends StatelessWidget {
 
         SizedBox(width: w * 0.03),
 
-        // profile + availability
-        Column(
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: w * 0.10,
-                  height: w * 0.10,
-                  decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.black12),
-                  child: ClipOval(
-                    child: Image.asset(
-                      "assets/images/person.png",
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Icon(Icons.person, size: w * 0.055),
+        SizedBox(
+          width: 100,
+          height: 80,
+          child: Stack(
+            children: [
+              Positioned(
+                top: 20,
+                right: 0,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.person, color: Colors.black),
                     ),
+                    const SizedBox(width: 10),
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.notifications,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Positioned(
+                bottom: w * 0.0,
+                left: 0,
+                right: 0,
+                child: Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: w * 0.0,
+                    vertical: h * 0.005,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color.fromARGB(255, 0, 254, 8),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    "Available",
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontFamily: 'Inter',
+                      fontWeight: FontWeight.w900,
+                      fontSize: w * 0.026,
+                    ),
+                    textAlign: TextAlign.center,
                   ),
                 ),
-                SizedBox(width: w * 0.02),
-                Container(
-                  width: w * 0.10,
-                  height: w * 0.10,
-                  decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.white),
-                  child: Icon(Icons.notifications_none_rounded, color: Colors.black, size: w * 0.06),
-                ),
-              ],
-            ),
-            SizedBox(height: h * 0.006),
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: w * 0.03, vertical: h * 0.004),
-              decoration: BoxDecoration(
-                color: Colors.green,
-                borderRadius: BorderRadius.circular(999),
               ),
-              child: Text(
-                "Available",
-                style: TextStyle(
-                  color: Colors.black,
-                  fontFamily: 'Poppins',
-                  fontWeight: FontWeight.w900,
-                  fontSize: w * 0.024,
-                ),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ],
     );
@@ -1612,10 +1662,7 @@ class _DotStepper extends StatelessWidget {
   final int activeIndex;
   final Color accent;
 
-  const _DotStepper({
-    required this.activeIndex,
-    required this.accent,
-  });
+  const _DotStepper({required this.activeIndex, required this.accent});
 
   @override
   Widget build(BuildContext context) {
@@ -1652,11 +1699,11 @@ class _DotStepper extends StatelessWidget {
 
     // labels
     TextStyle labelStyle(bool on) => TextStyle(
-          color: Colors.white.withOpacity(on ? 0.95 : 0.75),
-          fontFamily: 'Poppins',
-          fontWeight: FontWeight.w800,
-          fontSize: w * 0.026,
-        );
+      color: Colors.white.withOpacity(on ? 0.95 : 0.75),
+      fontFamily: 'Inter',
+      fontWeight: FontWeight.w800,
+      fontSize: w * 0.026,
+    );
 
     return Column(
       children: [
@@ -1678,13 +1725,30 @@ class _DotStepper extends StatelessWidget {
             dot(activeIndex >= 3),
           ],
         ),
-        SizedBox(height: w * 0.02),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Expanded(child: Center(child: Text("Job Details", style: labelStyle(activeIndex == 0)))),
-            Expanded(child: Center(child: Text("Choose Date", style: labelStyle(activeIndex == 2 || activeIndex == 1)))),
-            Expanded(child: Center(child: Text("Payment Details", style: labelStyle(activeIndex == 3)))),
+            Expanded(
+              child: Center(
+                child: Text("Job Details", style: labelStyle(activeIndex == 0)),
+              ),
+            ),
+            Expanded(
+              child: Center(
+                child: Text(
+                  "Choose Date",
+                  style: labelStyle(activeIndex == 2 || activeIndex == 1),
+                ),
+              ),
+            ),
+            Expanded(
+              child: Center(
+                child: Text(
+                  "Payment Details",
+                  style: labelStyle(activeIndex == 3),
+                ),
+              ),
+            ),
           ],
         ),
       ],
@@ -1712,7 +1776,8 @@ class _DashedLinePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _DashedLinePainter oldDelegate) => oldDelegate.color != color;
+  bool shouldRepaint(covariant _DashedLinePainter oldDelegate) =>
+      oldDelegate.color != color;
 }
 
 // ======================= DASHED BORDER =======================
@@ -1752,7 +1817,10 @@ class _DashedBorderPainter extends CustomPainter {
       double distance = 0;
       while (distance < metric.length) {
         final next = distance + dashWidth;
-        final extract = metric.extractPath(distance, next.clamp(0.0, metric.length));
+        final extract = metric.extractPath(
+          distance,
+          next.clamp(0.0, metric.length),
+        );
         canvas.drawPath(extract, paint);
         distance = next + dashSpace;
       }
@@ -1766,5 +1834,92 @@ class _DashedBorderPainter extends CustomPainter {
         old.dashWidth != dashWidth ||
         old.dashSpace != dashSpace ||
         old.strokeWidth != strokeWidth;
+  }
+}
+
+class _StepIndicator extends StatelessWidget {
+  final double width;
+  final int activeIndex;
+  final List<String> labels;
+  final Color accent;
+
+  const _StepIndicator({
+    required this.width,
+    required this.activeIndex,
+    required this.labels,
+    required this.accent,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final dot = width * 0.02;
+    final lineW = width * 0.18;
+
+    Widget dotW(bool active) {
+      return Container(
+        width: dot * 1.45,
+        height: dot * 1.45,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: active ? accent : Colors.transparent,
+          border: Border.all(color: accent, width: 2),
+          boxShadow: active
+              ? [
+                  BoxShadow(
+                    color: accent.withOpacity(0.35),
+                    blurRadius: 10,
+                    spreadRadius: 1,
+                  ),
+                ]
+              : [],
+        ),
+      );
+    }
+
+    Widget dashed() {
+      return SizedBox(
+        width: lineW,
+        child: CustomPaint(painter: _DashedLinePainter(color: accent)),
+      );
+    }
+
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            dotW(activeIndex >= 0),
+            SizedBox(width: width * 0.02),
+            dashed(),
+            SizedBox(width: width * 0.02),
+            dotW(activeIndex >= 1),
+            SizedBox(width: width * 0.02),
+            dashed(),
+            SizedBox(width: width * 0.02),
+            dotW(activeIndex >= 2),
+          ],
+        ),
+        SizedBox(height: width * 0.02),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: labels
+              .map(
+                (t) => Expanded(
+                  child: Text(
+                    t,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: accent,
+                      fontSize: width * 0.032,
+                      fontWeight: FontWeight.w700,
+                      fontFamily: 'Poppins',
+                    ),
+                  ),
+                ),
+              )
+              .toList(),
+        ),
+      ],
+    );
   }
 }

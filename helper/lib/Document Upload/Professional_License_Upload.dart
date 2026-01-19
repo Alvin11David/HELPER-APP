@@ -113,14 +113,14 @@ class _ProfessionalLicenseUploadScreenState
                             child: Center(
                               child: Text(
                                 'This license is required to verify your eligibility to work',
-                                maxLines: 1, // ✅ force one line
+                                maxLines: 2, // ✅ force one line
                                 overflow: TextOverflow
                                     .ellipsis, // ✅ if very small phones
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   color: Colors.white.withOpacity(0.92),
-                                  fontFamily: 'Poppins',
-                                  fontWeight: FontWeight.w600,
+                                  fontFamily: 'AbrilFatface',
+                                  fontWeight: FontWeight.w300,
                                   fontSize: 12.5,
                                   height: 1.15,
                                 ),
@@ -165,8 +165,8 @@ class _ProfessionalLicenseUploadScreenState
                                     overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
                                       color: Colors.black,
-                                      fontFamily: 'Poppins',
-                                      fontWeight: FontWeight.w800,
+                                      fontFamily: 'Inter',
+                                      fontWeight: FontWeight.w900,
                                       fontSize: (w * 0.034).clamp(12, 14),
                                     ),
                                   ),
@@ -206,8 +206,8 @@ class _ProfessionalLicenseUploadScreenState
                                   hint: Text(
                                     'Select Your License Type',
                                     style: TextStyle(
-                                      fontFamily: 'Poppins',
-                                      fontWeight: FontWeight.w700,
+                                      fontFamily: 'Inter',
+                                      fontWeight: FontWeight.w900,
                                       fontSize: (w * 0.034).clamp(12, 14),
                                       color: Colors.black,
                                     ),
@@ -487,8 +487,8 @@ class _ProfessionalLicenseUploadScreenState
                             'License Verification Rules',
                             style: TextStyle(
                               color: Colors.white,
-                              fontFamily: 'Poppins',
-                              fontWeight: FontWeight.w800,
+                              fontFamily: 'AbrilFatface',
+                              fontWeight: FontWeight.w200,
                               fontSize: (w * 0.036).clamp(13, 15),
                             ),
                           ),
@@ -641,8 +641,8 @@ class _DashedUploadBox extends StatelessWidget {
                   'Supported files: PDF/PNG/JPEG/JPG',
                   style: TextStyle(
                     color: Colors.white.withOpacity(0.8),
-                    fontFamily: 'Poppins',
-                    fontWeight: FontWeight.w600,
+                    fontFamily: 'Inter',
+                    fontWeight: FontWeight.w900,
                     fontSize: 12,
                   ),
                 ),
@@ -651,8 +651,8 @@ class _DashedUploadBox extends StatelessWidget {
                   'Max Size: 5MB',
                   style: TextStyle(
                     color: Colors.white.withOpacity(0.8),
-                    fontFamily: 'Poppins',
-                    fontWeight: FontWeight.w600,
+                    fontFamily: 'Inter',
+                    fontWeight: FontWeight.w900,
                     fontSize: 12,
                   ),
                 ),

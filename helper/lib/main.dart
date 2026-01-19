@@ -5,6 +5,7 @@ import 'package:helper/Chats/Chat_Screen.dart';
 import 'package:helper/Employer%20Dashboard/All_Categories_Screen.dart';
 import 'package:helper/Employer%20Dashboard/Create_Wallet_PIN_Screen.dart';
 import 'package:helper/Employer%20Dashboard/Set_New_Wallet_PIN_Screen.dart';
+import 'package:helper/Employer%20Dashboard/job_detail_booking_screen.dart';
 import 'package:helper/Wallet/Wallet_Cancelled_screen.dart';
 import 'package:helper/Wallet/Wallet_Deposit_Payment_Method_Screen.dart';
 import 'package:helper/Wallet/Wallet_TopUp_Screen.dart';
@@ -64,7 +65,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home:  WorkersDashboardScreen(),
+      home:  JobDetailBookingScreen(),
     );
   }
 }
