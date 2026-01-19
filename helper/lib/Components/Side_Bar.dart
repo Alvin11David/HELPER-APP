@@ -4,10 +4,10 @@ class SideBar extends StatefulWidget {
   const SideBar({super.key});
 
   @override
-  State<SideBar> createState() => _SideBarState();
+  State<SideBar> createState() => SideBarState();
 }
 
-class _SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
+class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
   bool _isOpen = false;
@@ -45,7 +45,7 @@ class _SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
-    final sidebarWidth = 300.0; // Adjust as needed
+    final sidebarWidth = 210.0; // Adjust as needed
 
     return Stack(
       children: [
@@ -61,38 +61,29 @@ class _SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
           builder: (context, child) {
             return Positioned(
               left: _animation.value,
-              top: screenHeight * 0.05, // 5% margin from top
+              top: screenHeight * 0, // 5% margin from top
               bottom: screenHeight * 0.05, // 5% margin from bottom
               width: sidebarWidth,
-              child: ClipRRect(
+              child: Material(
+                // <-- Wrap with Material
+                color: Colors.white,
                 borderRadius: const BorderRadius.only(
                   topRight: Radius.circular(40),
                   bottomRight: Radius.circular(40),
                 ),
-                child: Container(
-                  color: Colors.white,
-                  child: Column(
-                    children: [
-                      // Header or close button
-                      Align(
-                        alignment: Alignment.topRight,
-                        child: IconButton(
-                          icon: const Icon(Icons.close),
-                          onPressed: toggleDrawer,
-                        ),
+                child: Column(
+                  children: [
+                    // Add your sidebar content here
+                    Expanded(
+                      child: ListView(
+                        children: const [
+                          ListTile(title: Text('Menu Item 1')),
+                          ListTile(title: Text('Menu Item 2')),
+                          ListTile(title: Text('Menu Item 3')),
+                        ],
                       ),
-                      // Add your sidebar content here
-                      Expanded(
-                        child: ListView(
-                          children: const [
-                            ListTile(title: Text('Menu Item 1')),
-                            ListTile(title: Text('Menu Item 2')),
-                            ListTile(title: Text('Menu Item 3')),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             );
