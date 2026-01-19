@@ -91,37 +91,16 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
     FocusScope.of(context).unfocus();
 
     if (_step == 0) {
-      if (!_phase1Complete) {
-        if (_descCtrl.text.trim().isEmpty) _toast('Please describe the job');
-        if (_pickedJobLocation == null)
-          _toast('Please pick a job location on the map');
-        return;
-      }
       setState(() => _step = 1);
       return;
     }
 
     if (_step == 1) {
-      if (!_phase2Complete) {
-        if (_workersCount == null) _toast('Please select number of workers');
-        if (_jobDuration == null) _toast('Please select job duration type');
-        final t = _amountCtrl.text.trim();
-        if (t.isEmpty || int.tryParse(t) == null)
-          _toast('Enter a valid amount');
-        return;
-      }
       setState(() => _step = 2);
       return;
     }
 
     if (_step == 2) {
-      if (!_phase3Complete) {
-        if (_startDate == null || _endDate == null)
-          _toast('Please select a date range');
-        if (_timeFrom == null || _timeTo == null)
-          _toast('Please select a time range');
-        return;
-      }
       setState(() => _step = 3);
       return;
     }
