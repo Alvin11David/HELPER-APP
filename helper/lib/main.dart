@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-<<<<<<< HEAD
-import 'firebase_options.dart';
-import 'package:helper/Wallet/Wallet_Cancelled_screen.dart';
-=======
 import 'package:helper/Chats/Chat_List_Screen.dart';
 import 'package:helper/Chats/Chat_Screen.dart';
 import 'package:helper/Employer%20Dashboard/All_Categories_Screen.dart';
 import 'package:helper/Employer%20Dashboard/Create_Wallet_PIN_Screen.dart';
 import 'package:helper/Employer%20Dashboard/Set_New_Wallet_PIN_Screen.dart';
+import 'package:helper/Wallet/Wallet_Cancelled_screen.dart';
 import 'package:helper/Wallet/Wallet_Deposit_Payment_Method_Screen.dart';
 import 'package:helper/Wallet/Wallet_TopUp_Screen.dart';
 import 'package:helper/Wallet/Wallet_Withdraw_Screen.dart';
@@ -41,7 +38,8 @@ import 'package:helper/Document Upload/National_ID_Passport_Front_Upload_Screen.
 import 'package:helper/Document Upload/Professional_License_Upload.dart';
 import 'package:helper/Document Upload/Selfie_Verification_Upload.dart';
 
->>>>>>> 78e3c3805cb2eb5f4297081e505e6999ced08460
+final GlobalKey<NavigatorState> appNavKey = GlobalKey<NavigatorState>();
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
@@ -54,16 +52,13 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: appNavKey,
       debugShowCheckedModeBanner: false,
       title: 'Helper App',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-<<<<<<< HEAD
       home: const WalletFlowScreen(),
-=======
-      home: ChatScreen(),
->>>>>>> 78e3c3805cb2eb5f4297081e505e6999ced08460
     );
   }
 }

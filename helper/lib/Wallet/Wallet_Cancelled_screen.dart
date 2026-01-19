@@ -3,6 +3,8 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 
+
+import 'package:helper/Chats/overlays/incoming_call_overlay_service.dart';
 /// ✅ WALLET UI (updated)
 /// EDITS DONE:
 /// 1) "Held in Escrow: UGX/DOLLARS" is now ONE combined tab (like your image)
@@ -959,4 +961,25 @@ class _TxItem {
     required this.from,
     required this.to,
   });
+}
+
+
+
+
+void showIncomingCall(BuildContext context) {
+  IncomingCallOverlayService.instance.show(
+    context: context,
+    businessName: 'Business Name',
+    subtitle: 'Incoming voice call',
+    timeText: '9:45AM',
+    avatarImage: const AssetImage('assets/images/person.png'), // or NetworkImage(...)
+    onDecline: () {
+      // TODO: send "declined" to backend
+      debugPrint('Declined');
+    },
+    onAnswer: () {
+      // TODO: navigate to call screen
+      debugPrint('Answered');
+    },
+  );
 }

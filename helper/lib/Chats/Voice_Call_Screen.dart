@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:helper/Chats/overlays/incoming_call_overlay_service.dart';
+import 'package:helper/main.dart';
 
 class VoiceCallScreen extends StatefulWidget {
   @override
@@ -122,3 +124,22 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
     );
   }
 }
+
+
+// use appNavKey.currentContext!
+Future<void> showIncomingCallOverlay() async {
+  final ctx = appNavKey.currentContext;
+  if (ctx != null) {
+    IncomingCallOverlayService.instance.show(
+      context: ctx,
+      businessName: 'Business Name',
+      subtitle: 'Incoming voice call',
+      timeText: '9:45AM',
+      avatarImage: const AssetImage('assets/images/person.png'),
+      onDecline: () {},
+      onAnswer: () {},
+    );
+  }
+}
+
+
