@@ -13,6 +13,7 @@ import 'package:helper/Worker%20Dashboard/Worker_Details_Screen.dart';
 import 'package:helper/Worker%20Dashboard/Worker_Jobs_Hub_Screen';
 import 'package:helper/Worker%20Dashboard/Workers_Dashboard_Screen.dart';
 import 'package:helper/Worker%20Dashboard/Active_Job_detail.dart';
+import 'package:helper/Worker%20Dashboard/Workers_Earning_Detail_Screen.dart';
 //import 'package:helper/Worker%20Dashboard/Worker_Jobs_Hub_Screen.dart';
 import 'package:helper/Worker%20Dashboard/Workers_skills_and_Job_Details.dart';
 import 'firebase_options.dart';
@@ -62,7 +63,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: const WorkerJobsHubScreen(),
+      home: const WorkerEarningsScreen(),
     );
   }
 }
