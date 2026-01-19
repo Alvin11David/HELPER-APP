@@ -607,16 +607,14 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                         const SizedBox(height: 10),
                         Center(
                           child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 10,
-                            ),
+                            width: screenWidth * 0.4,
+                            padding: const EdgeInsets.symmetric(vertical: 10),
                             decoration: BoxDecoration(
                               color: const Color(0xFFFFA10D),
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Row(
-                              mainAxisSize: MainAxisSize.min,
+                              mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 const Icon(
                                   Icons.wallet,
