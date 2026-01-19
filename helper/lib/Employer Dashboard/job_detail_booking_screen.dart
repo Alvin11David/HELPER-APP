@@ -270,7 +270,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
                       ),
                     ),
 
-                    SizedBox(height: h * 0.018),
+                    SizedBox(height: h * 0.019),
 
                     // phase title (small centered)
                     Center(
@@ -704,7 +704,12 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
       ),
-      padding: EdgeInsets.symmetric(horizontal: w * 0.04, vertical: h * 0.012),
+      padding: EdgeInsets.only(
+        left: w * 0.04,
+        right: w * 0.04,
+        top: h * 0.006,
+        bottom: h * 0.018,
+      ),
       child: TextFormField(
         controller: controller,
         maxLines: null,
@@ -1030,9 +1035,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
         height: boxH,
         width: double.infinity,
         decoration: BoxDecoration(
-          color: Colors.black.withOpacity(0.35),
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: Colors.white.withOpacity(0.75), width: 1.3),
         ),
         child: CustomPaint(
           painter: _DashedBorderPainter(
@@ -1672,9 +1675,8 @@ class _TopBar extends StatelessWidget {
                   ],
                 ),
               ),
-              SizedBox(height: h * 0.02),
               Positioned(
-                bottom: 0,
+                bottom: w * 0.0,
                 left: 0,
                 right: 0,
                 child: Container(
@@ -1692,7 +1694,7 @@ class _TopBar extends StatelessWidget {
                       color: Colors.black,
                       fontFamily: 'Inter',
                       fontWeight: FontWeight.w900,
-                      fontSize: w * 0.024,
+                      fontSize: w * 0.026,
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -1775,7 +1777,6 @@ class _DotStepper extends StatelessWidget {
             dot(activeIndex >= 3),
           ],
         ),
-        SizedBox(height: w * 0.02),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
