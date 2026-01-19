@@ -37,7 +37,9 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
     final minute = now.minute.toString().padLeft(2, '0');
     final amPm = now.hour >= 12 ? 'PM' : 'AM';
     final time = '$hour:$minute $amPm';
-    return Scaffold(
+    return Stack(
+      children: [
+        Scaffold(
       body: SafeArea(
         child: Container(
           decoration: BoxDecoration(
@@ -59,14 +61,17 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Container(
-                            width: 40,
-                            height: 40,
-                            decoration: const BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
+                          GestureDetector(
+                            onTap: () => _sidebarKey.currentState?.toggleDrawer(),
+                            child: Container(
+                              width: 40,
+                              height: 40,
+                              decoration: const BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.menu, color: Colors.black),
                             ),
-                            child: const Icon(Icons.menu, color: Colors.black),
                           ),
                           const SizedBox(width: 10),
                           Column(
@@ -713,7 +718,8 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
             ],
           ),
         ),
-      ),
+        SideBar(key: _sidebarKey),
+      ],
     );
   }
 }
