@@ -297,7 +297,6 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
                     ),
 
                     SizedBox(height: h * 0.05),
-
                     // CTA button
                     SizedBox(
                       width: double.infinity,
