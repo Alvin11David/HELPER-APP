@@ -305,11 +305,14 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                       ),
                       Positioned(
                         top: 60,
-                        child: Center(
+                        left: 0,
+                        right: 0,
+                        child: Align(
+                          alignment: Alignment.center,
                           child: Row(
                             children: [
                               Container(
-                                width: 100,
+                                width: screenWidth * 0.2,
                                 height: 40,
                                 decoration: BoxDecoration(
                                   color: Colors.red,
@@ -328,7 +331,7 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                               ),
                               const SizedBox(width: 10),
                               Container(
-                                width: 100,
+                                width: screenWidth * 0.2,
                                 height: 40,
                                 decoration: BoxDecoration(
                                   color: Colors.green,
