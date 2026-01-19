@@ -1,20 +1,6 @@
-// ignore_for_file: depend_on_referenced_packages
-
 import 'dart:ui';
 import 'package:flutter/material.dart';
-
-
 import 'package:helper/Chats/overlays/incoming_call_overlay_service.dart';
-/// ✅ WALLET UI (updated)
-/// EDITS DONE:
-/// 1) "Held in Escrow: UGX/DOLLARS" is now ONE combined tab (like your image)
-/// 2) Pending tab active color is a lighter orange/yellow (matches escrow vibe)
-/// 3) Seeded REAL-ish sample data for one tab (Completed) so Transaction Details
-///    shows actual values (future-ready). You can replace with API later.
-///
-/// Assets:
-/// - background: assets/background/normalscreenbg.png
-/// - profile:    assets/images/person.png  (adjust if your path differs)
 
 class WalletFlowScreen extends StatefulWidget {
   const WalletFlowScreen({super.key});
@@ -141,7 +127,7 @@ class _WalletFlowScreenState extends State<WalletFlowScreen> {
   void _toast(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(msg, style: const TextStyle(fontFamily: 'Poppins')),
+        content: Text(msg, style: const TextStyle(fontFamily: 'Inter')),
         backgroundColor: Colors.black.withOpacity(0.85),
       ),
     );
@@ -184,10 +170,13 @@ class _WalletFlowScreenState extends State<WalletFlowScreen> {
                   switchInCurve: Curves.easeOut,
                   switchOutCurve: Curves.easeIn,
                   transitionBuilder: (child, anim) {
-                    final slide = Tween<Offset>(
-                      begin: const Offset(0.04, 0),
-                      end: Offset.zero,
-                    ).animate(CurvedAnimation(parent: anim, curve: Curves.easeOut));
+                    final slide =
+                        Tween<Offset>(
+                          begin: const Offset(0.04, 0),
+                          end: Offset.zero,
+                        ).animate(
+                          CurvedAnimation(parent: anim, curve: Curves.easeOut),
+                        );
                     return FadeTransition(
                       opacity: anim,
                       child: SlideTransition(position: slide, child: child),
@@ -200,8 +189,10 @@ class _WalletFlowScreenState extends State<WalletFlowScreen> {
                           h: h,
                           brandOrange: _brandOrange,
                           item: _selected,
-                          onContact: () => _toast('Contact Support (hook later)'),
-                          onDownload: () => _toast('Download Receipt (hook later)'),
+                          onContact: () =>
+                              _toast('Contact Support (hook later)'),
+                          onDownload: () =>
+                              _toast('Download Receipt (hook later)'),
                         )
                       : _WalletMain(
                           key: const ValueKey('main'),
@@ -212,7 +203,8 @@ class _WalletFlowScreenState extends State<WalletFlowScreen> {
                           statusTab: _statusTab,
                           onStatusChange: (i) => setState(() => _statusTab = i),
                           actionMode: _actionMode,
-                          onActionChange: (m) => setState(() => _actionMode = m),
+                          onActionChange: (m) =>
+                              setState(() => _actionMode = m),
                           items: _filtered,
                           onOpen: _openDetails,
                         ),
@@ -343,7 +335,7 @@ class _BalanceCard extends StatelessWidget {
             'Balance',
             style: TextStyle(
               color: Colors.black.withOpacity(0.85),
-              fontFamily: 'Poppins',
+              fontFamily: 'Inter',
               fontWeight: FontWeight.w800,
               fontSize: w * 0.040,
             ),
@@ -354,7 +346,7 @@ class _BalanceCard extends StatelessWidget {
             style: TextStyle(
               color: Colors.black,
               fontFamily: 'AbrilFatface',
-              fontSize: w * 0.060,
+              fontSize: w * 0.050,
             ),
           ),
           SizedBox(height: h * 0.014),
@@ -368,7 +360,9 @@ class _BalanceCard extends StatelessWidget {
                 active: actionMode == _ActionMode.deposit,
                 brandOrange: brandOrange,
                 onTap: () => onActionChange(
-                  actionMode == _ActionMode.deposit ? _ActionMode.none : _ActionMode.deposit,
+                  actionMode == _ActionMode.deposit
+                      ? _ActionMode.none
+                      : _ActionMode.deposit,
                 ),
               ),
               SizedBox(width: w * 0.12),
@@ -379,7 +373,9 @@ class _BalanceCard extends StatelessWidget {
                 active: actionMode == _ActionMode.withdraw,
                 brandOrange: brandOrange,
                 onTap: () => onActionChange(
-                  actionMode == _ActionMode.withdraw ? _ActionMode.none : _ActionMode.withdraw,
+                  actionMode == _ActionMode.withdraw
+                      ? _ActionMode.none
+                      : _ActionMode.withdraw,
                 ),
               ),
             ],
@@ -420,11 +416,7 @@ class _RoundAction extends StatelessWidget {
               shape: BoxShape.circle,
               color: active ? brandOrange : Colors.black,
             ),
-            child: Icon(
-              icon,
-              color: Colors.white,
-              size: w * 0.06,
-            ),
+            child: Icon(icon, color: Colors.white, size: w * 0.06),
           ),
         ),
         SizedBox(height: w * 0.014),
@@ -432,7 +424,7 @@ class _RoundAction extends StatelessWidget {
           label,
           style: TextStyle(
             color: Colors.black.withOpacity(0.65),
-            fontFamily: 'Poppins',
+            fontFamily: 'Inter',
             fontWeight: FontWeight.w700,
             fontSize: w * 0.030,
           ),
@@ -477,7 +469,7 @@ class _EscrowSingleTab extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 color: Colors.black,
-                fontFamily: 'Poppins',
+                fontFamily: 'Inter',
                 fontWeight: FontWeight.w900,
                 fontSize: w * 0.030,
               ),
@@ -488,7 +480,7 @@ class _EscrowSingleTab extends StatelessWidget {
             'UGX/DOLLARS',
             style: TextStyle(
               color: Colors.black,
-              fontFamily: 'Poppins',
+              fontFamily: 'Inter',
               fontWeight: FontWeight.w900,
               fontSize: w * 0.030,
             ),
@@ -540,7 +532,7 @@ class _StatusTabs extends StatelessWidget {
                   text,
                   style: TextStyle(
                     color: active ? Colors.white : Colors.black,
-                    fontFamily: 'Poppins',
+                    fontFamily: 'Inter',
                     fontWeight: FontWeight.w900,
                     fontSize: w * 0.030,
                   ),
@@ -585,27 +577,30 @@ class _TxCard extends StatelessWidget {
     final amountColor = item.status == _TxStatus.completed
         ? Colors.green
         : item.status == _TxStatus.cancelled
-            ? Colors.red
-            : brandOrange;
+        ? Colors.red
+        : brandOrange;
 
     final arrowBg = item.status == _TxStatus.completed
         ? Colors.green.withOpacity(0.14)
         : item.status == _TxStatus.cancelled
-            ? Colors.red.withOpacity(0.14)
-            : const Color(0xFFF1F1F1);
+        ? Colors.red.withOpacity(0.14)
+        : const Color(0xFFF1F1F1);
 
     // design shows a down arrow on the circle; tint by status
     final arrowColor = item.status == _TxStatus.completed
         ? Colors.green
         : item.status == _TxStatus.cancelled
-            ? Colors.red
-            : brandOrange;
+        ? Colors.red
+        : brandOrange;
 
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: double.infinity,
-        padding: EdgeInsets.symmetric(horizontal: w * 0.04, vertical: h * 0.014),
+        padding: EdgeInsets.symmetric(
+          horizontal: w * 0.04,
+          vertical: h * 0.014,
+        ),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(18),
@@ -623,11 +618,12 @@ class _TxCard extends StatelessWidget {
             Container(
               width: w * 0.10,
               height: w * 0.10,
-              decoration: BoxDecoration(
-                color: arrowBg,
-                shape: BoxShape.circle,
+              decoration: BoxDecoration(color: arrowBg, shape: BoxShape.circle),
+              child: Icon(
+                Icons.arrow_downward_rounded,
+                color: arrowColor,
+                size: w * 0.06,
               ),
-              child: Icon(Icons.arrow_downward_rounded, color: arrowColor, size: w * 0.06),
             ),
             SizedBox(width: w * 0.03),
             Expanded(
@@ -638,7 +634,7 @@ class _TxCard extends StatelessWidget {
                     item.title,
                     style: TextStyle(
                       color: Colors.black,
-                      fontFamily: 'Poppins',
+                      fontFamily: 'Inter',
                       fontWeight: FontWeight.w900,
                       fontSize: w * 0.034,
                     ),
@@ -648,7 +644,7 @@ class _TxCard extends StatelessWidget {
                     item.date,
                     style: TextStyle(
                       color: Colors.black.withOpacity(0.55),
-                      fontFamily: 'Poppins',
+                      fontFamily: 'Inter',
                       fontWeight: FontWeight.w700,
                       fontSize: w * 0.028,
                     ),
@@ -661,7 +657,7 @@ class _TxCard extends StatelessWidget {
               item.amount,
               style: TextStyle(
                 color: amountColor,
-                fontFamily: 'Poppins',
+                fontFamily: 'Inter',
                 fontWeight: FontWeight.w900,
                 fontSize: w * 0.032,
               ),
@@ -705,7 +701,10 @@ class _TransactionDetails extends StatelessWidget {
             color: Colors.white,
             borderRadius: BorderRadius.circular(22),
           ),
-          padding: EdgeInsets.symmetric(horizontal: w * 0.06, vertical: h * 0.02),
+          padding: EdgeInsets.symmetric(
+            horizontal: w * 0.06,
+            vertical: h * 0.02,
+          ),
           child: Column(
             children: [
               Text(
@@ -741,13 +740,15 @@ class _TransactionDetails extends StatelessWidget {
             style: OutlinedButton.styleFrom(
               side: BorderSide(color: brandOrange, width: 2),
               backgroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30),
+              ),
             ),
             child: Text(
               "Contact Support",
               style: TextStyle(
                 color: brandOrange,
-                fontFamily: 'Poppins',
+                fontFamily: 'Inter',
                 fontWeight: FontWeight.w900,
                 fontSize: w * 0.036,
               ),
@@ -763,13 +764,15 @@ class _TransactionDetails extends StatelessWidget {
             style: ElevatedButton.styleFrom(
               elevation: 0,
               backgroundColor: brandOrange,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30),
+              ),
             ),
             child: Text(
               "Download Receipt",
               style: TextStyle(
                 color: Colors.white,
-                fontFamily: 'Poppins',
+                fontFamily: 'Inter',
                 fontWeight: FontWeight.w900,
                 fontSize: w * 0.036,
               ),
@@ -792,7 +795,7 @@ class _TransactionDetails extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 color: Colors.black.withOpacity(0.80),
-                fontFamily: 'Poppins',
+                fontFamily: 'Inter',
                 fontWeight: FontWeight.w800,
                 fontSize: w * 0.030,
               ),
@@ -805,7 +808,7 @@ class _TransactionDetails extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
               color: Colors.black.withOpacity(0.75),
-              fontFamily: 'Poppins',
+              fontFamily: 'Inter',
               fontWeight: FontWeight.w800,
               fontSize: w * 0.030,
             ),
@@ -836,10 +839,7 @@ class _HeaderRow extends StatelessWidget {
   final String title;
   final VoidCallback onBack;
 
-  const _HeaderRow({
-    required this.title,
-    required this.onBack,
-  });
+  const _HeaderRow({required this.title, required this.onBack});
 
   @override
   Widget build(BuildContext context) {
@@ -856,7 +856,11 @@ class _HeaderRow extends StatelessWidget {
               color: Colors.white,
               borderRadius: BorderRadius.circular(15),
             ),
-            child: Icon(Icons.chevron_left, color: Colors.black, size: w * 0.10),
+            child: Icon(
+              Icons.chevron_left,
+              color: Colors.black,
+              size: w * 0.10,
+            ),
           ),
         ),
         SizedBox(width: w * 0.05),
@@ -867,7 +871,7 @@ class _HeaderRow extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
               color: Colors.white,
-              fontFamily: 'AbrilFatface',
+              fontFamily: 'Montserrat',
               fontSize: w * 0.055,
             ),
           ),
@@ -875,24 +879,23 @@ class _HeaderRow extends StatelessWidget {
         SizedBox(width: w * 0.03),
 
         Container(
-          width: w * 0.10,
-          height: w * 0.10,
-          decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.black12),
-          child: ClipOval(
-            child: Image.asset(
-              'assets/images/person.png',
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Icon(Icons.person, size: w * 0.055),
-            ),
+          width: 40,
+          height: 40,
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            shape: BoxShape.circle,
           ),
+          child: const Icon(Icons.person, color: Colors.black),
         ),
-        SizedBox(width: w * 0.02),
-
+        const SizedBox(width: 10),
         Container(
-          width: w * 0.10,
-          height: w * 0.10,
-          decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.white),
-          child: Icon(Icons.notifications_none_rounded, color: Colors.black, size: w * 0.06),
+          width: 40,
+          height: 40,
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(Icons.notifications, color: Colors.black),
         ),
       ],
     );
@@ -922,7 +925,8 @@ class _DashedLinePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _DashedLinePainter oldDelegate) => oldDelegate.color != color;
+  bool shouldRepaint(covariant _DashedLinePainter oldDelegate) =>
+      oldDelegate.color != color;
 }
 
 // ===================== MODELS =====================
@@ -963,16 +967,15 @@ class _TxItem {
   });
 }
 
-
-
-
 void showIncomingCall(BuildContext context) {
   IncomingCallOverlayService.instance.show(
     context: context,
     businessName: 'Business Name',
     subtitle: 'Incoming voice call',
     timeText: '9:45AM',
-    avatarImage: const AssetImage('assets/images/person.png'), // or NetworkImage(...)
+    avatarImage: const AssetImage(
+      'assets/images/person.png',
+    ), // or NetworkImage(...)
     onDecline: () {
       // TODO: send "declined" to backend
       debugPrint('Declined');
