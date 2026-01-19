@@ -305,8 +305,7 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                       ),
                       Positioned(
                         top: 60,
-                        left: 0,
-                        right: 0,
+                        right: screenWidth * 0.09,
                         child: Align(
                           alignment: Alignment.center,
                           child: Row(
