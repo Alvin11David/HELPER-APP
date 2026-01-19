@@ -40,7 +40,8 @@ class _WorkerJobRescheduleScreenState extends State<WorkerJobRescheduleScreen> {
   final String _monthTitle = "January 2026";
   final Set<int> _unavailableDays = {16, 17, 18, 19, 20, 21};
   final int _currentDay = 7;
-  int? _pickedDay;
+  int? _rangeStart;
+  int? _rangeEnd;
 
   void _back() {
     if (_step == 0) {
@@ -60,8 +61,23 @@ class _WorkerJobRescheduleScreenState extends State<WorkerJobRescheduleScreen> {
   void _pickDay(int day) {
     if (_unavailableDays.contains(day)) return;
     setState(() {
-      _pickedDay = day;
-      _selectedDateRangeLabel = "Jan $day, 2026";
+      if (_rangeStart == null) {
+        _rangeStart = day;
+        _selectedDateRangeLabel = "Jan $day, 2026";
+      } else if (_rangeEnd == null) {
+        if (day < _rangeStart!) {
+          _rangeEnd = _rangeStart;
+          _rangeStart = day;
+        } else {
+          _rangeEnd = day;
+        }
+        _selectedDateRangeLabel = "Jan $_rangeStart - $_rangeEnd, 2026";
+      } else {
+        // Reset for new selection
+        _rangeStart = day;
+        _rangeEnd = null;
+        _selectedDateRangeLabel = "Jan $day, 2026";
+      }
     });
   }
 
@@ -151,8 +167,8 @@ class _WorkerJobRescheduleScreenState extends State<WorkerJobRescheduleScreen> {
   }
 
   void _save() {
-    if (_pickedDay == null) {
-      _toast("Pick an available day");
+    if (_rangeStart == null || _rangeEnd == null) {
+      _toast("Pick an available date range");
       return;
     }
     if (_from == null || _to == null) {
@@ -216,7 +232,7 @@ class _WorkerJobRescheduleScreenState extends State<WorkerJobRescheduleScreen> {
                         ),
                       ),
                     ),
-                    SizedBox(width: w * 0.04),
+                    SizedBox(width: w * 0.05),
                     Expanded(
                       child: Text(
                         "Schedule",
@@ -225,15 +241,32 @@ class _WorkerJobRescheduleScreenState extends State<WorkerJobRescheduleScreen> {
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: w * 0.055,
-                          fontFamily: 'AbrilFatface',
+                          fontFamily: 'Montserrat',
                         ),
                       ),
                     ),
-                    const _TopAvatar(),
-                    SizedBox(width: w * 0.02),
-                    _TopIcon(
-                      icon: Icons.notifications_none_rounded,
-                      onTap: () {},
+                    SizedBox(width: w * 0.03),
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.person, color: Colors.black),
+                    ),
+                    const SizedBox(width: 10),
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.notifications,
+                        color: Colors.black,
+                      ),
                     ),
                   ],
                 ),
@@ -542,9 +575,12 @@ class _WorkerJobRescheduleScreenState extends State<WorkerJobRescheduleScreen> {
                       bg = _brandGreen;
                       fg = Colors.white;
                     }
-                    if (_pickedDay == day) {
+                    if (_rangeStart != null &&
+                        _rangeEnd != null &&
+                        day >= _rangeStart! &&
+                        day <= _rangeEnd!) {
                       bg = _brandOrange;
-                      fg = Colors.black;
+                      fg = Colors.white;
                     }
 
                     return SizedBox(
