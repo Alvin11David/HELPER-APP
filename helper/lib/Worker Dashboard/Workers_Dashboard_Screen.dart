@@ -9,6 +9,14 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
   final TextEditingController _controller = TextEditingController();
   final FocusNode _focusNode = FocusNode();
 
+  String status = 'Available'; // Can be 'Available', 'On Job', 'Not Available'
+
+  Color getStatusColor() {
+    if (status == 'Available') return const Color(0xFF00E539);
+    if (status == 'On Job') return Colors.orange;
+    return Colors.red; // Not Available
+  }
+
   String _getGreeting() {
     final hour = DateTime.now().hour;
     if (hour < 12) return 'Good Morning';
@@ -35,7 +43,40 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                 children: [
                   const SizedBox(height: 130),
                   const SizedBox(height: 2),
-                  _RuleRow('Status:'),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8, left: 16, right: 16),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.info_outline,
+                          color: Colors.white.withOpacity(0.9),
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        const Text(
+                          'Status: ',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontFamily: 'Inter',
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                            height: 1.25,
+                          ),
+                        ),
+                        const Spacer(),
+                        Text(
+                          status,
+                          style: TextStyle(
+                            color: getStatusColor(),
+                            fontFamily: 'Inter',
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                            height: 1.25,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
               Positioned(
