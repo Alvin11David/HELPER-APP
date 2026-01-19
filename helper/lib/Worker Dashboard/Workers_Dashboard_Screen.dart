@@ -486,6 +486,36 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                                 fontWeight: FontWeight.w300,
                               ),
                             ),
+                            const SizedBox(height: 10),
+                        Center(
+                          child: Container(
+                            width: screenWidth * 0.4,
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFFA10D),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(
+                                  Icons.phone,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 8),
+                                const Text(
+                                  'Call Now',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                           ],
                         ),
                       ],
