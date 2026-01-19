@@ -265,7 +265,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                         color: Colors.white.withOpacity(0.92),
                         fontSize: w * 0.032,
                         fontWeight: FontWeight.w700,
-                        fontFamily: 'Poppins',
+                        fontFamily: 'Inter',
                       ),
                     ),
                     SizedBox(width: w * 0.02),
@@ -321,7 +321,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                   color: Colors.white.withOpacity(0.92),
                   fontSize: w * 0.03,
                   fontWeight: FontWeight.w700,
-                  fontFamily: 'Poppins',
+                  fontFamily: 'Inter',
                 ),
               ),
             ),
@@ -351,7 +351,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                   color: Colors.black,
                   fontSize: w * 0.045,
                   fontWeight: FontWeight.w900,
-                  fontFamily: 'Poppins',
+                  fontFamily: 'Inter',
                 ),
               ),
             ),
@@ -386,7 +386,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                       'Terminate Job?',
                       style: TextStyle(
                         color: Colors.white,
-                        fontFamily: 'Poppins',
+                        fontFamily: 'Inter',
                         fontWeight: FontWeight.w900,
                         fontSize: w * 0.05,
                       ),
@@ -397,7 +397,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: Colors.white.withOpacity(0.8),
-                        fontFamily: 'Poppins',
+                        fontFamily: 'Inter',
                         fontWeight: FontWeight.w600,
                         fontSize: w * 0.032,
                         height: 1.25,
@@ -420,7 +420,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                               'Cancel',
                               style: TextStyle(
                                 color: Colors.white,
-                                fontFamily: 'Poppins',
+                                fontFamily: 'Inter',
                                 fontWeight: FontWeight.w800,
                               ),
                             ),
@@ -435,7 +435,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                                 SnackBar(
                                   content: const Text(
                                     'Terminated (hook API later)',
-                                    style: TextStyle(fontFamily: 'Poppins'),
+                                    style: TextStyle(fontFamily: 'Inter'),
                                   ),
                                   backgroundColor: Colors.black.withOpacity(0.85),
                                 ),
@@ -453,7 +453,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                               'Terminate',
                               style: TextStyle(
                                 color: Colors.white,
-                                fontFamily: 'Poppins',
+                                fontFamily: 'Inter',
                                 fontWeight: FontWeight.w900,
                               ),
                             ),
@@ -476,7 +476,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
       t,
       style: TextStyle(
         color: Colors.white,
-        fontFamily: 'Poppins',
+        fontFamily: 'Inter',
         fontWeight: FontWeight.w900,
         fontSize: w * 0.038,
       ),
@@ -525,32 +525,28 @@ class _InfoRow extends StatelessWidget {
         children: [
           _BulletIcon(size: w * 0.055),
           const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: Colors.black,
-                fontFamily: 'Poppins',
-                fontWeight: FontWeight.w800,
-                fontSize: w * 0.032,
-              ),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: Colors.black,
+              fontFamily: 'Inter',
+              fontWeight: FontWeight.w800,
+              fontSize: w * 0.032,
             ),
           ),
-          const SizedBox(width: 10),
-          Flexible(
-            child: Text(
-              value,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.right,
-              style: TextStyle(
-                color: valueColor ?? Colors.black.withOpacity(0.85),
-                fontFamily: 'Poppins',
-                fontWeight: FontWeight.w900,
-                fontSize: w * 0.032,
-              ),
+          const Spacer(),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.right,
+            style: TextStyle(
+              color: valueColor ?? Colors.black.withOpacity(0.85),
+              fontFamily: 'Inter',
+              fontWeight: FontWeight.w900,
+              fontSize: w * 0.032,
             ),
           ),
         ],
@@ -615,7 +611,7 @@ class _OrangeMiniButton extends StatelessWidget {
               text,
               style: TextStyle(
                 color: Colors.white,
-                fontFamily: 'Poppins',
+                fontFamily: 'Inter',
                 fontWeight: FontWeight.w900,
                 fontSize: w * 0.034,
               ),
@@ -714,7 +710,7 @@ class _MapCard extends StatelessWidget {
                           'Navigate',
                           style: TextStyle(
                             color: Colors.white,
-                            fontFamily: 'Poppins',
+                            fontFamily: 'Inter',
                             fontWeight: FontWeight.w900,
                             fontSize: w * 0.034,
                           ),
@@ -765,7 +761,7 @@ class _MapPin extends StatelessWidget {
             label,
             style: TextStyle(
               color: Colors.black,
-              fontFamily: 'Poppins',
+              fontFamily: 'Inter',
               fontWeight: FontWeight.w800,
               fontSize: w * 0.028,
             ),
