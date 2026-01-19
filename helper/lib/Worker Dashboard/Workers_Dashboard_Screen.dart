@@ -31,7 +31,13 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
           ),
           child: Stack(
             children: [
-              Center(),
+              Column(
+                children: [
+                  const SizedBox(height: 130),
+                  const SizedBox(height: 2),
+                  _RuleRow('Status:'),
+                ],
+              ),
               Positioned(
                 top: 20,
                 left: w * 0.04,
@@ -148,6 +154,41 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _RuleRow extends StatelessWidget {
+  final String text;
+  const _RuleRow(this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            Icons.info_outline,
+            color: Colors.white.withOpacity(0.9),
+            size: 18,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.9),
+                fontFamily: 'Inter',
+                fontWeight: FontWeight.w600,
+                fontSize: 12,
+                height: 1.25,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
