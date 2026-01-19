@@ -6,12 +6,12 @@ import 'package:helper/Employer%20Dashboard/All_Categories_Screen.dart';
 import 'package:helper/Employer%20Dashboard/Create_Wallet_PIN_Screen.dart';
 import 'package:helper/Employer%20Dashboard/Set_New_Wallet_PIN_Screen.dart';
 import 'package:helper/Employer%20Dashboard/job_detail_booking_screen.dart';
+import 'package:helper/Payments/MTN_Airtel_Deposit_Screen.dart';
 import 'package:helper/Wallet/Wallet_Cancelled_screen.dart';
 import 'package:helper/Wallet/Wallet_Deposit_Payment_Method_Screen.dart';
 import 'package:helper/Wallet/Wallet_TopUp_Screen.dart';
 import 'package:helper/Wallet/Wallet_Withdraw_Screen.dart';
 import 'package:helper/Worker%20Dashboard/Worker_Details_Screen.dart';
-import 'package:helper/Worker%20Dashboard/Worker_Jobs_Hub_Screen';
 import 'package:helper/Worker%20Dashboard/Workers_Dashboard_Screen.dart';
 import 'package:helper/Worker%20Dashboard/Active_Job_detail.dart';
 import 'package:helper/Worker%20Dashboard/Workers_Earning_Detail_Screen.dart';
@@ -65,7 +65,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home:  JobDetailBookingScreen(),
+      home:  WorkerJobRescheduleScreen(),
     );
   }
 }

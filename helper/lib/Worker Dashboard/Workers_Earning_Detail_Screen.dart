@@ -1,21 +1,5 @@
-// ignore_for_file: depend_on_referenced_packages
-
 import 'dart:ui';
 import 'package:flutter/material.dart';
-
-/// FILE NAME (recommended):
-/// workers_earnings_screen.dart
-///
-/// SCREEN:
-/// WorkerEarningsScreen
-///
-/// NOTES:
-/// - UI matches your mock: tabs (Today/This week/This Month/Custom),
-///   yellow Total Earnings bar, green Platform Fee bar,
-///   white "Transaction Details" card,
-///   list of earning-by-job cards,
-///   and a bottom sheet "Job Details" screen like your design.
-/// - Hook real data later (Firebase/API). For now uses fake data.
 
 class WorkerEarningsScreen extends StatefulWidget {
   const WorkerEarningsScreen({super.key});
@@ -82,7 +66,7 @@ class _WorkerEarningsScreenState extends State<WorkerEarningsScreen> {
   void _toast(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(msg, style: const TextStyle(fontFamily: 'Poppins')),
+        content: Text(msg, style: const TextStyle(fontFamily: 'Inter')),
         backgroundColor: Colors.black.withOpacity(0.85),
       ),
     );
@@ -129,7 +113,7 @@ class _WorkerEarningsScreenState extends State<WorkerEarningsScreen> {
                         ),
                       ),
                     ),
-                    SizedBox(width: w * 0.04),
+                    SizedBox(width: w * 0.05),
                     Expanded(
                       child: Text(
                         "Earnings",
@@ -138,17 +122,33 @@ class _WorkerEarningsScreenState extends State<WorkerEarningsScreen> {
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: w * 0.055,
-                          fontFamily: 'AbrilFatface',
+                          fontFamily: 'Montserrat',
                           letterSpacing: 0.2,
                         ),
                       ),
                     ),
-                    SizedBox(width: w * 0.02),
-                    const _TopAvatar(),
-                    SizedBox(width: w * 0.02),
-                    _TopIcon(
-                      icon: Icons.notifications_none_rounded,
-                      onTap: () {},
+                    SizedBox(width: w * 0.03),
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.person, color: Colors.black),
+                    ),
+                    const SizedBox(width: 10),
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.notifications,
+                        color: Colors.black,
+                      ),
                     ),
                   ],
                 ),
@@ -167,7 +167,7 @@ class _WorkerEarningsScreenState extends State<WorkerEarningsScreen> {
                       "View all today’s earnings here",
                       style: TextStyle(
                         color: Colors.white.withOpacity(0.92),
-                        fontFamily: 'Poppins',
+                        fontFamily: 'Inter',
                         fontWeight: FontWeight.w700,
                         fontSize: w * 0.03,
                       ),
@@ -178,32 +178,35 @@ class _WorkerEarningsScreenState extends State<WorkerEarningsScreen> {
                 SizedBox(height: h * 0.018),
 
                 // Tabs row
-                Row(
-                  children: [
-                    _TabChip(
-                      text: "Today",
-                      active: _tab == 0,
-                      onTap: () => _setTab(0),
-                    ),
-                    SizedBox(width: w * 0.02),
-                    _TabChip(
-                      text: "This week",
-                      active: _tab == 1,
-                      onTap: () => _setTab(1),
-                    ),
-                    SizedBox(width: w * 0.02),
-                    _TabChip(
-                      text: "This Month",
-                      active: _tab == 2,
-                      onTap: () => _setTab(2),
-                    ),
-                    SizedBox(width: w * 0.02),
-                    _TabChip(
-                      text: "Custom",
-                      active: _tab == 3,
-                      onTap: () => _setTab(3),
-                    ),
-                  ],
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      _TabChip(
+                        text: "Today",
+                        active: _tab == 0,
+                        onTap: () => _setTab(0),
+                      ),
+                      SizedBox(width: w * 0.04),
+                      _TabChip(
+                        text: "This week",
+                        active: _tab == 1,
+                        onTap: () => _setTab(1),
+                      ),
+                      SizedBox(width: w * 0.04),
+                      _TabChip(
+                        text: "This Month",
+                        active: _tab == 2,
+                        onTap: () => _setTab(2),
+                      ),
+                      SizedBox(width: w * 0.04),
+                      _TabChip(
+                        text: "Custom",
+                        active: _tab == 3,
+                        onTap: () => _setTab(3),
+                      ),
+                    ],
+                  ),
                 ),
 
                 SizedBox(height: h * 0.014),
@@ -229,7 +232,7 @@ class _WorkerEarningsScreenState extends State<WorkerEarningsScreen> {
                           "Based on completed Jobs",
                           style: TextStyle(
                             color: Colors.white.withOpacity(0.75),
-                            fontFamily: 'Poppins',
+                            fontFamily: 'Inter',
                             fontWeight: FontWeight.w700,
                             fontSize: w * 0.028,
                           ),
@@ -254,7 +257,7 @@ class _WorkerEarningsScreenState extends State<WorkerEarningsScreen> {
                           "Platform fee is 5% of every job",
                           style: TextStyle(
                             color: Colors.white.withOpacity(0.75),
-                            fontFamily: 'Poppins',
+                            fontFamily: 'Inter',
                             fontWeight: FontWeight.w700,
                             fontSize: w * 0.028,
                           ),
@@ -268,7 +271,7 @@ class _WorkerEarningsScreenState extends State<WorkerEarningsScreen> {
                         "Earnings Summary",
                         style: TextStyle(
                           color: Colors.white,
-                          fontFamily: 'Poppins',
+                          fontFamily: 'Inter',
                           fontWeight: FontWeight.w900,
                           fontSize: w * 0.04,
                         ),
@@ -301,8 +304,9 @@ class _WorkerEarningsScreenState extends State<WorkerEarningsScreen> {
                               SizedBox(height: h * 0.012),
                               ..._summaryRows.map(
                                 (r) => Padding(
-                                  padding:
-                                      EdgeInsets.symmetric(vertical: h * 0.006),
+                                  padding: EdgeInsets.symmetric(
+                                    vertical: h * 0.006,
+                                  ),
                                   child: Row(
                                     children: [
                                       Expanded(
@@ -310,7 +314,7 @@ class _WorkerEarningsScreenState extends State<WorkerEarningsScreen> {
                                           r.k,
                                           style: TextStyle(
                                             color: Colors.black,
-                                            fontFamily: 'Poppins',
+                                            fontFamily: 'Inter',
                                             fontWeight: FontWeight.w900,
                                             fontSize: w * 0.032,
                                           ),
@@ -320,7 +324,7 @@ class _WorkerEarningsScreenState extends State<WorkerEarningsScreen> {
                                         r.v,
                                         style: TextStyle(
                                           color: Colors.black.withOpacity(0.75),
-                                          fontFamily: 'Poppins',
+                                          fontFamily: 'Inter',
                                           fontWeight: FontWeight.w900,
                                           fontSize: w * 0.032,
                                         ),
@@ -341,7 +345,7 @@ class _WorkerEarningsScreenState extends State<WorkerEarningsScreen> {
                         "Earnings By Job",
                         style: TextStyle(
                           color: Colors.white,
-                          fontFamily: 'Poppins',
+                          fontFamily: 'Inter',
                           fontWeight: FontWeight.w900,
                           fontSize: w * 0.04,
                         ),
@@ -453,7 +457,7 @@ class _MetricBar extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 color: Colors.black,
-                fontFamily: 'Poppins',
+                fontFamily: 'Inter',
                 fontWeight: FontWeight.w900,
                 fontSize: w * 0.032,
               ),
@@ -466,7 +470,7 @@ class _MetricBar extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
               color: Colors.black,
-              fontFamily: 'Poppins',
+              fontFamily: 'Inter',
               fontWeight: rightBold ? FontWeight.w900 : FontWeight.w800,
               fontSize: w * 0.032,
             ),
@@ -481,10 +485,7 @@ class _EarningJobCard extends StatelessWidget {
   final _EarningJobItem job;
   final VoidCallback onMore;
 
-  const _EarningJobCard({
-    required this.job,
-    required this.onMore,
-  });
+  const _EarningJobCard({required this.job, required this.onMore});
 
   @override
   Widget build(BuildContext context) {
@@ -504,7 +505,7 @@ class _EarningJobCard extends StatelessWidget {
                     job.employerName,
                     style: TextStyle(
                       color: Colors.black,
-                      fontFamily: 'Poppins',
+                      fontFamily: 'Inter',
                       fontWeight: FontWeight.w900,
                       fontSize: w * 0.036,
                     ),
@@ -517,7 +518,7 @@ class _EarningJobCard extends StatelessWidget {
                           job.jobCategory,
                           style: TextStyle(
                             color: Colors.black.withOpacity(0.75),
-                            fontFamily: 'Poppins',
+                            fontFamily: 'Inter',
                             fontWeight: FontWeight.w800,
                             fontSize: w * 0.028,
                           ),
@@ -529,7 +530,7 @@ class _EarningJobCard extends StatelessWidget {
                           textAlign: TextAlign.right,
                           style: TextStyle(
                             color: Colors.black.withOpacity(0.75),
-                            fontFamily: 'Poppins',
+                            fontFamily: 'Inter',
                             fontWeight: FontWeight.w800,
                             fontSize: w * 0.028,
                           ),
@@ -545,7 +546,7 @@ class _EarningJobCard extends StatelessWidget {
                           job.grossAmount,
                           style: TextStyle(
                             color: Colors.black.withOpacity(0.75),
-                            fontFamily: 'Poppins',
+                            fontFamily: 'Inter',
                             fontWeight: FontWeight.w900,
                             fontSize: w * 0.028,
                           ),
@@ -557,7 +558,7 @@ class _EarningJobCard extends StatelessWidget {
                           textAlign: TextAlign.right,
                           style: TextStyle(
                             color: Colors.black.withOpacity(0.75),
-                            fontFamily: 'Poppins',
+                            fontFamily: 'Inter',
                             fontWeight: FontWeight.w900,
                             fontSize: w * 0.028,
                           ),
@@ -597,26 +598,28 @@ class _TabChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          height: 34,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: active ? _WorkerEarningsScreenState._brandOrange : Colors.white,
-            borderRadius: BorderRadius.circular(999),
-          ),
-          child: Text(
-            text,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: active ? Colors.black : Colors.black.withOpacity(0.8),
-              fontFamily: 'Poppins',
-              fontWeight: FontWeight.w900,
-              fontSize: 12.5,
-            ),
+    final w = MediaQuery.of(context).size.width;
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: w * 0.26,
+        height: 34,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: active
+              ? _WorkerEarningsScreenState._brandOrange
+              : Colors.white,
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: Text(
+          text,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            color: active ? Colors.black : Colors.black.withOpacity(0.8),
+            fontFamily: 'Inter',
+            fontWeight: FontWeight.w900,
+            fontSize: 12.5,
           ),
         ),
       ),
@@ -701,7 +704,12 @@ class _JobEarningsDetailsSheet extends StatelessWidget {
               _detailRow(w, "Employer Name:", job.employerName),
               _detailRow(w, "Employer Special Notes:", job.employerNotes),
               _detailRow(w, "Job Description:", job.jobDescription),
-              _detailRow(w, "Job Location:", job.jobLocation, valueColor: accent),
+              _detailRow(
+                w,
+                "Job Location:",
+                job.jobLocation,
+                valueColor: accent,
+              ),
               _detailRow(w, "Job Category", job.jobCategory),
               _detailRow(w, "Job Duration:", job.duration),
               _detailRow(w, "Job Status", job.status),
@@ -732,7 +740,7 @@ class _JobEarningsDetailsSheet extends StatelessWidget {
                     "Download Payslip",
                     style: TextStyle(
                       color: Colors.white,
-                      fontFamily: 'Poppins',
+                      fontFamily: 'Inter',
                       fontWeight: FontWeight.w900,
                       fontSize: w * 0.04,
                     ),
@@ -756,7 +764,7 @@ class _JobEarningsDetailsSheet extends StatelessWidget {
               label,
               style: TextStyle(
                 color: Colors.black,
-                fontFamily: 'Poppins',
+                fontFamily: 'Inter',
                 fontWeight: FontWeight.w900,
                 fontSize: w * 0.032,
               ),
@@ -771,7 +779,7 @@ class _JobEarningsDetailsSheet extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 color: valueColor ?? Colors.black.withOpacity(0.75),
-                fontFamily: 'Poppins',
+                fontFamily: 'Inter',
                 fontWeight: FontWeight.w900,
                 fontSize: w * 0.032,
               ),
@@ -811,10 +819,7 @@ class _TopIcon extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
 
-  const _TopIcon({
-    required this.icon,
-    required this.onTap,
-  });
+  const _TopIcon({required this.icon, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -868,7 +873,10 @@ class _GlassPill extends StatelessWidget {
               ],
             ),
             borderRadius: BorderRadius.circular(radius),
-            border: Border.all(color: Colors.white.withOpacity(0.35), width: 1.6),
+            border: Border.all(
+              color: Colors.white.withOpacity(0.35),
+              width: 1.6,
+            ),
             boxShadow: [
               BoxShadow(
                 color: Colors.white.withOpacity(0.08),
@@ -883,4 +891,3 @@ class _GlassPill extends StatelessWidget {
     );
   }
 }
-

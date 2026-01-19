@@ -69,10 +69,13 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                 switchInCurve: Curves.easeOut,
                 switchOutCurve: Curves.easeIn,
                 transitionBuilder: (child, anim) {
-                  final slide = Tween<Offset>(
-                    begin: Offset(_phase == 0 ? -0.04 : 0.04, 0),
-                    end: Offset.zero,
-                  ).animate(CurvedAnimation(parent: anim, curve: Curves.easeOut));
+                  final slide =
+                      Tween<Offset>(
+                        begin: Offset(_phase == 0 ? -0.04 : 0.04, 0),
+                        end: Offset.zero,
+                      ).animate(
+                        CurvedAnimation(parent: anim, curve: Curves.easeOut),
+                      );
                   return FadeTransition(
                     opacity: anim,
                     child: SlideTransition(position: slide, child: child),
@@ -106,7 +109,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                         ),
                       ),
                     ),
-                    SizedBox(width: w * 0.04),
+                    SizedBox(width: w * 0.05),
                     Expanded(
                       child: Text(
                         'Active Job',
@@ -114,35 +117,35 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           color: Colors.white,
+                          fontFamily: 'Montserrat',
                           fontSize: w * 0.055,
-                          fontFamily: 'AbrilFatface',
-                          letterSpacing: 0.2,
                         ),
                       ),
                     ),
                     SizedBox(width: w * 0.03),
-                    _TopAvatar(w: w),
-                    SizedBox(width: w * 0.025),
-                    _TopIcon(
-                      w: w,
-                      icon: Icons.notifications_none_rounded,
-                      onTap: () {},
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.person, color: Colors.black),
+                    ),
+                    const SizedBox(width: 10),
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.notifications,
+                        color: Colors.black,
+                      ),
                     ),
                   ],
-                ),
-              ),
-
-              // Phase dots (like small step indicator)
-              Positioned(
-                top: h * 0.12,
-                left: 0,
-                right: 0,
-                child: Center(
-                  child: _PhaseDots(
-                    activeIndex: _phase,
-                    onTap: _goPhase,
-                    accent: _brandOrange,
-                  ),
                 ),
               ),
             ],
@@ -246,35 +249,52 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
 
           SizedBox(height: h * 0.02),
 
-          // Swipe/Next hint button (optional, matches the idea of going to next panel)
+          SizedBox(height: h * 0.015),
+
           Center(
-            child: GestureDetector(
-              onTap: () => setState(() => _phase = 1),
-              child: _GlassPill(
-                radius: 20,
-                padding: EdgeInsets.symmetric(
-                  horizontal: w * 0.05,
-                  vertical: h * 0.008,
+            child: _GlassPill(
+              radius: 20,
+              padding: EdgeInsets.symmetric(
+                horizontal: w * 0.05,
+                vertical: h * 0.007,
+              ),
+              child: Text(
+                'Payment is held in Escrow',
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.92),
+                  fontSize: w * 0.03,
+                  fontWeight: FontWeight.w700,
+                  fontFamily: 'Inter',
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'View Time & Payment',
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.92),
-                        fontSize: w * 0.032,
-                        fontWeight: FontWeight.w700,
-                        fontFamily: 'Poppins',
-                      ),
-                    ),
-                    SizedBox(width: w * 0.02),
-                    Icon(
-                      Icons.arrow_forward_rounded,
-                      color: Colors.white.withOpacity(0.92),
-                      size: w * 0.05,
-                    ),
-                  ],
+              ),
+            ),
+          ),
+
+          SizedBox(height: h * 0.06),
+
+          // Terminate job (big red)
+          SizedBox(
+            width: double.infinity,
+            height: h * 0.078,
+            child: ElevatedButton(
+              onPressed: () {
+                // TODO: confirm dialog -> terminate
+                _showTerminateDialog();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFE80B0B),
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(35),
+                ),
+              ),
+              child: Text(
+                'Terminate Job',
+                style: TextStyle(
+                  color: Colors.black,
+                  fontSize: w * 0.045,
+                  fontWeight: FontWeight.w900,
+                  fontFamily: 'Inter',
                 ),
               ),
             ),
@@ -321,7 +341,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                   color: Colors.white.withOpacity(0.92),
                   fontSize: w * 0.03,
                   fontWeight: FontWeight.w700,
-                  fontFamily: 'Poppins',
+                  fontFamily: 'Inter',
                 ),
               ),
             ),
@@ -351,7 +371,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                   color: Colors.black,
                   fontSize: w * 0.045,
                   fontWeight: FontWeight.w900,
-                  fontFamily: 'Poppins',
+                  fontFamily: 'Inter',
                 ),
               ),
             ),
@@ -386,7 +406,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                       'Terminate Job?',
                       style: TextStyle(
                         color: Colors.white,
-                        fontFamily: 'Poppins',
+                        fontFamily: 'Inter',
                         fontWeight: FontWeight.w900,
                         fontSize: w * 0.05,
                       ),
@@ -397,7 +417,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: Colors.white.withOpacity(0.8),
-                        fontFamily: 'Poppins',
+                        fontFamily: 'Inter',
                         fontWeight: FontWeight.w600,
                         fontSize: w * 0.032,
                         height: 1.25,
@@ -410,7 +430,9 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                           child: OutlinedButton(
                             onPressed: () => Navigator.pop(ctx),
                             style: OutlinedButton.styleFrom(
-                              side: BorderSide(color: Colors.white.withOpacity(0.35)),
+                              side: BorderSide(
+                                color: Colors.white.withOpacity(0.35),
+                              ),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(22),
                               ),
@@ -420,7 +442,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                               'Cancel',
                               style: TextStyle(
                                 color: Colors.white,
-                                fontFamily: 'Poppins',
+                                fontFamily: 'Inter',
                                 fontWeight: FontWeight.w800,
                               ),
                             ),
@@ -435,9 +457,11 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                                 SnackBar(
                                   content: const Text(
                                     'Terminated (hook API later)',
-                                    style: TextStyle(fontFamily: 'Poppins'),
+                                    style: TextStyle(fontFamily: 'Inter'),
                                   ),
-                                  backgroundColor: Colors.black.withOpacity(0.85),
+                                  backgroundColor: Colors.black.withOpacity(
+                                    0.85,
+                                  ),
                                 ),
                               );
                             },
@@ -453,7 +477,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                               'Terminate',
                               style: TextStyle(
                                 color: Colors.white,
-                                fontFamily: 'Poppins',
+                                fontFamily: 'Inter',
                                 fontWeight: FontWeight.w900,
                               ),
                             ),
@@ -476,7 +500,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
       t,
       style: TextStyle(
         color: Colors.white,
-        fontFamily: 'Poppins',
+        fontFamily: 'Inter',
         fontWeight: FontWeight.w900,
         fontSize: w * 0.038,
       ),
@@ -509,11 +533,7 @@ class _InfoRow extends StatelessWidget {
   final String value;
   final Color? valueColor;
 
-  const _InfoRow({
-    required this.label,
-    required this.value,
-    this.valueColor,
-  });
+  const _InfoRow({required this.label, required this.value, this.valueColor});
 
   @override
   Widget build(BuildContext context) {
@@ -525,32 +545,28 @@ class _InfoRow extends StatelessWidget {
         children: [
           _BulletIcon(size: w * 0.055),
           const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: Colors.black,
-                fontFamily: 'Poppins',
-                fontWeight: FontWeight.w800,
-                fontSize: w * 0.032,
-              ),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: Colors.black,
+              fontFamily: 'Inter',
+              fontWeight: FontWeight.w900,
+              fontSize: w * 0.033,
             ),
           ),
-          const SizedBox(width: 10),
-          Flexible(
-            child: Text(
-              value,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.right,
-              style: TextStyle(
-                color: valueColor ?? Colors.black.withOpacity(0.85),
-                fontFamily: 'Poppins',
-                fontWeight: FontWeight.w900,
-                fontSize: w * 0.032,
-              ),
+          const Spacer(),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.right,
+            style: TextStyle(
+              color: valueColor ?? Colors.black.withOpacity(0.85),
+              fontFamily: 'Inter',
+              fontWeight: FontWeight.normal,
+              fontSize: w * 0.032,
             ),
           ),
         ],
@@ -568,15 +584,11 @@ class _BulletIcon extends StatelessWidget {
     return Container(
       width: size,
       height: size,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        shape: BoxShape.circle,
-        border: Border.all(color: Colors.black.withOpacity(0.18)),
-      ),
+      decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle),
       child: Center(
         child: Icon(
           Icons.info_outline_rounded,
-          size: size * 0.62,
+          size: size * 0.82,
           color: Colors.black,
         ),
       ),
@@ -615,7 +627,7 @@ class _OrangeMiniButton extends StatelessWidget {
               text,
               style: TextStyle(
                 color: Colors.white,
-                fontFamily: 'Poppins',
+                fontFamily: 'Inter',
                 fontWeight: FontWeight.w900,
                 fontSize: w * 0.034,
               ),
@@ -632,11 +644,7 @@ class _MapCard extends StatelessWidget {
   final double h;
   final VoidCallback onNavigate;
 
-  const _MapCard({
-    required this.w,
-    required this.h,
-    required this.onNavigate,
-  });
+  const _MapCard({required this.w, required this.h, required this.onNavigate});
 
   @override
   Widget build(BuildContext context) {
@@ -708,13 +716,17 @@ class _MapCard extends StatelessWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.navigation_rounded, color: Colors.white, size: w * 0.05),
+                        Icon(
+                          Icons.navigation_rounded,
+                          color: Colors.white,
+                          size: w * 0.05,
+                        ),
                         SizedBox(width: w * 0.02),
                         Text(
                           'Navigate',
                           style: TextStyle(
                             color: Colors.white,
-                            fontFamily: 'Poppins',
+                            fontFamily: 'Inter',
                             fontWeight: FontWeight.w900,
                             fontSize: w * 0.034,
                           ),
@@ -737,11 +749,7 @@ class _MapPin extends StatelessWidget {
   final Color color;
   final double w;
 
-  const _MapPin({
-    required this.label,
-    required this.color,
-    required this.w,
-  });
+  const _MapPin({required this.label, required this.color, required this.w});
 
   @override
   Widget build(BuildContext context) {
@@ -765,7 +773,7 @@ class _MapPin extends StatelessWidget {
             label,
             style: TextStyle(
               color: Colors.black,
-              fontFamily: 'Poppins',
+              fontFamily: 'Inter',
               fontWeight: FontWeight.w800,
               fontSize: w * 0.028,
             ),
@@ -833,10 +841,7 @@ class _PhaseDots extends StatelessWidget {
       );
     }
 
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [dot(0), dot(1)],
-    );
+    return Row(mainAxisSize: MainAxisSize.min, children: [dot(0), dot(1)]);
   }
 }
 
@@ -867,11 +872,7 @@ class _TopIcon extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
 
-  const _TopIcon({
-    required this.w,
-    required this.icon,
-    required this.onTap,
-  });
+  const _TopIcon({required this.w, required this.icon, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -922,7 +923,10 @@ class _GlassPill extends StatelessWidget {
               ],
             ),
             borderRadius: BorderRadius.circular(radius),
-            border: Border.all(color: Colors.white.withOpacity(0.35), width: 1.6),
+            border: Border.all(
+              color: Colors.white.withOpacity(0.35),
+              width: 1.6,
+            ),
             boxShadow: [
               BoxShadow(
                 color: Colors.white.withOpacity(0.08),

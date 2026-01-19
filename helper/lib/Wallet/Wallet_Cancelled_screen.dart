@@ -1,20 +1,6 @@
-// ignore_for_file: depend_on_referenced_packages
-
 import 'dart:ui';
 import 'package:flutter/material.dart';
-
-
 import 'package:helper/Chats/overlays/incoming_call_overlay_service.dart';
-/// ✅ WALLET UI (updated)
-/// EDITS DONE:
-/// 1) "Held in Escrow: UGX/DOLLARS" is now ONE combined tab (like your image)
-/// 2) Pending tab active color is a lighter orange/yellow (matches escrow vibe)
-/// 3) Seeded REAL-ish sample data for one tab (Completed) so Transaction Details
-///    shows actual values (future-ready). You can replace with API later.
-///
-/// Assets:
-/// - background: assets/background/normalscreenbg.png
-/// - profile:    assets/images/person.png  (adjust if your path differs)
 
 class WalletFlowScreen extends StatefulWidget {
   const WalletFlowScreen({super.key});
@@ -65,6 +51,84 @@ class _WalletFlowScreenState extends State<WalletFlowScreen> {
       from: "Employer Wallet",
       to: "Worker Wallet (Escrow)",
     ),
+    _TxItem(
+      type: _TxType.withdraw,
+      status: _TxStatus.pending,
+      title: "Withdraw",
+      date: "Mar, 15, 2026 | 2:30 pm",
+      amount: "UGX 50,000",
+      txDate: "Mar 15, 2026",
+      txTime: "2:30 pm",
+      txId: "TXN-901234",
+      transferType: "Withdraw",
+      from: "Worker Wallet",
+      to: "Mobile Money (Airtel)",
+    ),
+    _TxItem(
+      type: _TxType.deposit,
+      status: _TxStatus.pending,
+      title: "Deposit",
+      date: "Apr, 20, 2026 | 9:15 am",
+      amount: "UGX 200,000",
+      txDate: "Apr 20, 2026",
+      txTime: "9:15 am",
+      txId: "TXN-902345",
+      transferType: "Deposit",
+      from: "Employer Wallet",
+      to: "Worker Wallet (Escrow)",
+    ),
+    _TxItem(
+      type: _TxType.withdraw,
+      status: _TxStatus.pending,
+      title: "Withdraw",
+      date: "May, 08, 2026 | 11:45 am",
+      amount: "UGX 125,000",
+      txDate: "May 08, 2026",
+      txTime: "11:45 am",
+      txId: "TXN-910123",
+      transferType: "Withdraw",
+      from: "Worker Wallet",
+      to: "Mobile Money (MTN)",
+    ),
+    _TxItem(
+      type: _TxType.deposit,
+      status: _TxStatus.pending,
+      title: "Deposit",
+      date: "Jun, 15, 2026 | 10:30 am",
+      amount: "UGX 175,000",
+      txDate: "Jun 15, 2026",
+      txTime: "10:30 am",
+      txId: "TXN-911234",
+      transferType: "Deposit",
+      from: "Employer Wallet",
+      to: "Worker Wallet (Escrow)",
+    ),
+    _TxItem(
+      type: _TxType.withdraw,
+      status: _TxStatus.pending,
+      title: "Withdraw",
+      date: "Jul, 22, 2026 | 3:20 pm",
+      amount: "UGX 90,000",
+      txDate: "Jul 22, 2026",
+      txTime: "3:20 pm",
+      txId: "TXN-912345",
+      transferType: "Withdraw",
+      from: "Worker Wallet",
+      to: "Bank Account",
+    ),
+    _TxItem(
+      type: _TxType.deposit,
+      status: _TxStatus.pending,
+      title: "Deposit",
+      date: "Aug, 05, 2026 | 9:00 am",
+      amount: "UGX 220,000",
+      txDate: "Aug 05, 2026",
+      txTime: "9:00 am",
+      txId: "TXN-913456",
+      transferType: "Deposit",
+      from: "Employer Wallet",
+      to: "Worker Wallet (Escrow)",
+    ),
 
     // COMPLETED (✅ has full actual-looking details)
     _TxItem(
@@ -92,6 +156,97 @@ class _WalletFlowScreenState extends State<WalletFlowScreen> {
       transferType: "Deposit",
       from: "Employer Wallet",
       to: "Worker Wallet (Escrow)",
+    ),
+    _TxItem(
+      type: _TxType.withdraw,
+      status: _TxStatus.completed,
+      title: "Withdraw",
+      date: "Feb, 10, 2026 | 11:20 am",
+      amount: "UGX 150,000",
+      txDate: "Feb 10, 2026",
+      txTime: "11:20 am",
+      txId: "TXN-903456",
+      transferType: "Withdraw",
+      from: "Worker Wallet",
+      to: "Bank Account",
+    ),
+    _TxItem(
+      type: _TxType.deposit,
+      status: _TxStatus.completed,
+      title: "Deposit",
+      date: "Mar, 05, 2026 | 3:45 pm",
+      amount: "UGX 180,000",
+      txDate: "Mar 05, 2026",
+      txTime: "3:45 pm",
+      txId: "TXN-904567",
+      transferType: "Deposit",
+      from: "Employer Wallet",
+      to: "Worker Wallet (Escrow)",
+    ),
+    _TxItem(
+      type: _TxType.withdraw,
+      status: _TxStatus.completed,
+      title: "Withdraw",
+      date: "Apr, 12, 2026 | 1:10 pm",
+      amount: "UGX 300,000",
+      txDate: "Apr 12, 2026",
+      txTime: "1:10 pm",
+      txId: "TXN-905678",
+      transferType: "Withdraw",
+      from: "Worker Wallet",
+      to: "Mobile Money (MTN)",
+    ),
+    _TxItem(
+      type: _TxType.deposit,
+      status: _TxStatus.completed,
+      title: "Deposit",
+      date: "May, 18, 2026 | 2:45 pm",
+      amount: "UGX 135,000",
+      txDate: "May 18, 2026",
+      txTime: "2:45 pm",
+      txId: "TXN-914567",
+      transferType: "Deposit",
+      from: "Employer Wallet",
+      to: "Worker Wallet (Escrow)",
+    ),
+    _TxItem(
+      type: _TxType.withdraw,
+      status: _TxStatus.completed,
+      title: "Withdraw",
+      date: "Jun, 25, 2026 | 4:30 pm",
+      amount: "UGX 190,000",
+      txDate: "Jun 25, 2026",
+      txTime: "4:30 pm",
+      txId: "TXN-915678",
+      transferType: "Withdraw",
+      from: "Worker Wallet",
+      to: "Mobile Money (Airtel)",
+    ),
+    _TxItem(
+      type: _TxType.deposit,
+      status: _TxStatus.completed,
+      title: "Deposit",
+      date: "Jul, 10, 2026 | 11:15 am",
+      amount: "UGX 250,000",
+      txDate: "Jul 10, 2026",
+      txTime: "11:15 am",
+      txId: "TXN-916789",
+      transferType: "Deposit",
+      from: "Employer Wallet",
+      to: "Worker Wallet (Escrow)",
+    ),
+    _TxItem(
+      type: _TxType.withdraw,
+      status: _TxStatus.completed,
+      title: "Withdraw",
+      date: "Aug, 15, 2026 | 12:50 pm",
+      amount: "UGX 165,000",
+      txDate: "Aug 15, 2026",
+      txTime: "12:50 pm",
+      txId: "TXN-917890",
+      transferType: "Withdraw",
+      from: "Worker Wallet",
+      to: "Bank Account",
     ),
 
     // CANCELLED
@@ -141,7 +296,7 @@ class _WalletFlowScreenState extends State<WalletFlowScreen> {
   void _toast(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(msg, style: const TextStyle(fontFamily: 'Poppins')),
+        content: Text(msg, style: const TextStyle(fontFamily: 'Inter')),
         backgroundColor: Colors.black.withOpacity(0.85),
       ),
     );
@@ -184,10 +339,13 @@ class _WalletFlowScreenState extends State<WalletFlowScreen> {
                   switchInCurve: Curves.easeOut,
                   switchOutCurve: Curves.easeIn,
                   transitionBuilder: (child, anim) {
-                    final slide = Tween<Offset>(
-                      begin: const Offset(0.04, 0),
-                      end: Offset.zero,
-                    ).animate(CurvedAnimation(parent: anim, curve: Curves.easeOut));
+                    final slide =
+                        Tween<Offset>(
+                          begin: const Offset(0.04, 0),
+                          end: Offset.zero,
+                        ).animate(
+                          CurvedAnimation(parent: anim, curve: Curves.easeOut),
+                        );
                     return FadeTransition(
                       opacity: anim,
                       child: SlideTransition(position: slide, child: child),
@@ -200,8 +358,10 @@ class _WalletFlowScreenState extends State<WalletFlowScreen> {
                           h: h,
                           brandOrange: _brandOrange,
                           item: _selected,
-                          onContact: () => _toast('Contact Support (hook later)'),
-                          onDownload: () => _toast('Download Receipt (hook later)'),
+                          onContact: () =>
+                              _toast('Contact Support (hook later)'),
+                          onDownload: () =>
+                              _toast('Download Receipt (hook later)'),
                         )
                       : _WalletMain(
                           key: const ValueKey('main'),
@@ -212,13 +372,14 @@ class _WalletFlowScreenState extends State<WalletFlowScreen> {
                           statusTab: _statusTab,
                           onStatusChange: (i) => setState(() => _statusTab = i),
                           actionMode: _actionMode,
-                          onActionChange: (m) => setState(() => _actionMode = m),
+                          onActionChange: (m) =>
+                              setState(() => _actionMode = m),
                           items: _filtered,
                           onOpen: _openDetails,
                         ),
                 ),
 
-                SizedBox(height: h * 0.03),
+                SizedBox(height: h * 0.07),
               ],
             ),
           ),
@@ -226,6 +387,62 @@ class _WalletFlowScreenState extends State<WalletFlowScreen> {
       ),
     );
   }
+}
+
+// ===================== MODELS =====================
+
+enum _TxType { deposit, withdraw }
+
+enum _TxStatus { pending, completed, cancelled }
+
+class _TxItem {
+  final _TxType type;
+  final _TxStatus status;
+
+  final String title;
+  final String date;
+  final String amount;
+
+  final String txDate;
+  final String txTime;
+  final String txId;
+  final String transferType;
+  final String from;
+  final String to;
+
+  const _TxItem({
+    required this.type,
+    required this.status,
+    required this.title,
+    required this.date,
+    required this.amount,
+    required this.txDate,
+    required this.txTime,
+    required this.txId,
+    required this.transferType,
+    required this.from,
+    required this.to,
+  });
+}
+
+void showIncomingCall(BuildContext context) {
+  IncomingCallOverlayService.instance.show(
+    context: context,
+    businessName: 'Business Name',
+    subtitle: 'Incoming voice call',
+    timeText: '9:45AM',
+    avatarImage: const AssetImage(
+      'assets/images/person.png',
+    ), // or NetworkImage(...)
+    onDecline: () {
+      // TODO: send "declined" to backend
+      debugPrint('Declined');
+    },
+    onAnswer: () {
+      // TODO: navigate to call screen
+      debugPrint('Answered');
+    },
+  );
 }
 
 // ===================== MAIN WALLET =====================
@@ -271,12 +488,12 @@ class _WalletMain extends StatelessWidget {
           onActionChange: onActionChange,
         ),
 
-        SizedBox(height: h * 0.014),
+        SizedBox(height: h * 0.02),
 
         // ✅ ONE combined escrow tab like your image
         _EscrowSingleTab(w: w, h: h, brandOrange: brandOrange),
 
-        SizedBox(height: h * 0.012),
+        SizedBox(height: h * 0.016),
 
         _StatusTabs(
           w: w,
@@ -287,13 +504,13 @@ class _WalletMain extends StatelessWidget {
           pendingActive: pendingActive,
         ),
 
-        SizedBox(height: h * 0.014),
+        SizedBox(height: h * 0.04),
 
         ListView.separated(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           itemCount: items.length,
-          separatorBuilder: (_, __) => SizedBox(height: h * 0.012),
+          separatorBuilder: (_, __) => SizedBox(height: h * 0.02),
           itemBuilder: (context, i) {
             final item = items[i];
             return _TxCard(
@@ -327,7 +544,7 @@ class _BalanceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cardH = h * 0.185;
+    final cardH = h * 0.20;
 
     return Container(
       height: cardH,
@@ -343,7 +560,7 @@ class _BalanceCard extends StatelessWidget {
             'Balance',
             style: TextStyle(
               color: Colors.black.withOpacity(0.85),
-              fontFamily: 'Poppins',
+              fontFamily: 'Inter',
               fontWeight: FontWeight.w800,
               fontSize: w * 0.040,
             ),
@@ -354,7 +571,7 @@ class _BalanceCard extends StatelessWidget {
             style: TextStyle(
               color: Colors.black,
               fontFamily: 'AbrilFatface',
-              fontSize: w * 0.060,
+              fontSize: w * 0.050,
             ),
           ),
           SizedBox(height: h * 0.014),
@@ -368,7 +585,9 @@ class _BalanceCard extends StatelessWidget {
                 active: actionMode == _ActionMode.deposit,
                 brandOrange: brandOrange,
                 onTap: () => onActionChange(
-                  actionMode == _ActionMode.deposit ? _ActionMode.none : _ActionMode.deposit,
+                  actionMode == _ActionMode.deposit
+                      ? _ActionMode.none
+                      : _ActionMode.deposit,
                 ),
               ),
               SizedBox(width: w * 0.12),
@@ -379,7 +598,9 @@ class _BalanceCard extends StatelessWidget {
                 active: actionMode == _ActionMode.withdraw,
                 brandOrange: brandOrange,
                 onTap: () => onActionChange(
-                  actionMode == _ActionMode.withdraw ? _ActionMode.none : _ActionMode.withdraw,
+                  actionMode == _ActionMode.withdraw
+                      ? _ActionMode.none
+                      : _ActionMode.withdraw,
                 ),
               ),
             ],
@@ -420,11 +641,7 @@ class _RoundAction extends StatelessWidget {
               shape: BoxShape.circle,
               color: active ? brandOrange : Colors.black,
             ),
-            child: Icon(
-              icon,
-              color: Colors.white,
-              size: w * 0.06,
-            ),
+            child: Icon(icon, color: Colors.white, size: w * 0.06),
           ),
         ),
         SizedBox(height: w * 0.014),
@@ -432,7 +649,7 @@ class _RoundAction extends StatelessWidget {
           label,
           style: TextStyle(
             color: Colors.black.withOpacity(0.65),
-            fontFamily: 'Poppins',
+            fontFamily: 'Inter',
             fontWeight: FontWeight.w700,
             fontSize: w * 0.030,
           ),
@@ -477,7 +694,7 @@ class _EscrowSingleTab extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 color: Colors.black,
-                fontFamily: 'Poppins',
+                fontFamily: 'Inter',
                 fontWeight: FontWeight.w900,
                 fontSize: w * 0.030,
               ),
@@ -488,7 +705,7 @@ class _EscrowSingleTab extends StatelessWidget {
             'UGX/DOLLARS',
             style: TextStyle(
               color: Colors.black,
-              fontFamily: 'Poppins',
+              fontFamily: 'Inter',
               fontWeight: FontWeight.w900,
               fontSize: w * 0.030,
             ),
@@ -540,7 +757,7 @@ class _StatusTabs extends StatelessWidget {
                   text,
                   style: TextStyle(
                     color: active ? Colors.white : Colors.black,
-                    fontFamily: 'Poppins',
+                    fontFamily: 'Inter',
                     fontWeight: FontWeight.w900,
                     fontSize: w * 0.030,
                   ),
@@ -585,27 +802,30 @@ class _TxCard extends StatelessWidget {
     final amountColor = item.status == _TxStatus.completed
         ? Colors.green
         : item.status == _TxStatus.cancelled
-            ? Colors.red
-            : brandOrange;
+        ? Colors.red
+        : brandOrange;
 
     final arrowBg = item.status == _TxStatus.completed
         ? Colors.green.withOpacity(0.14)
         : item.status == _TxStatus.cancelled
-            ? Colors.red.withOpacity(0.14)
-            : const Color(0xFFF1F1F1);
+        ? Colors.red.withOpacity(0.14)
+        : const Color(0xFFF1F1F1);
 
     // design shows a down arrow on the circle; tint by status
     final arrowColor = item.status == _TxStatus.completed
         ? Colors.green
         : item.status == _TxStatus.cancelled
-            ? Colors.red
-            : brandOrange;
+        ? Colors.red
+        : brandOrange;
 
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: double.infinity,
-        padding: EdgeInsets.symmetric(horizontal: w * 0.04, vertical: h * 0.014),
+        padding: EdgeInsets.symmetric(
+          horizontal: w * 0.04,
+          vertical: h * 0.014,
+        ),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(18),
@@ -623,11 +843,12 @@ class _TxCard extends StatelessWidget {
             Container(
               width: w * 0.10,
               height: w * 0.10,
-              decoration: BoxDecoration(
-                color: arrowBg,
-                shape: BoxShape.circle,
+              decoration: BoxDecoration(color: arrowBg, shape: BoxShape.circle),
+              child: Icon(
+                Icons.arrow_downward_rounded,
+                color: arrowColor,
+                size: w * 0.06,
               ),
-              child: Icon(Icons.arrow_downward_rounded, color: arrowColor, size: w * 0.06),
             ),
             SizedBox(width: w * 0.03),
             Expanded(
@@ -638,7 +859,7 @@ class _TxCard extends StatelessWidget {
                     item.title,
                     style: TextStyle(
                       color: Colors.black,
-                      fontFamily: 'Poppins',
+                      fontFamily: 'Inter',
                       fontWeight: FontWeight.w900,
                       fontSize: w * 0.034,
                     ),
@@ -648,7 +869,7 @@ class _TxCard extends StatelessWidget {
                     item.date,
                     style: TextStyle(
                       color: Colors.black.withOpacity(0.55),
-                      fontFamily: 'Poppins',
+                      fontFamily: 'Inter',
                       fontWeight: FontWeight.w700,
                       fontSize: w * 0.028,
                     ),
@@ -661,7 +882,7 @@ class _TxCard extends StatelessWidget {
               item.amount,
               style: TextStyle(
                 color: amountColor,
-                fontFamily: 'Poppins',
+                fontFamily: 'Inter',
                 fontWeight: FontWeight.w900,
                 fontSize: w * 0.032,
               ),
@@ -705,7 +926,10 @@ class _TransactionDetails extends StatelessWidget {
             color: Colors.white,
             borderRadius: BorderRadius.circular(22),
           ),
-          padding: EdgeInsets.symmetric(horizontal: w * 0.06, vertical: h * 0.02),
+          padding: EdgeInsets.symmetric(
+            horizontal: w * 0.06,
+            vertical: h * 0.02,
+          ),
           child: Column(
             children: [
               Text(
@@ -732,7 +956,7 @@ class _TransactionDetails extends StatelessWidget {
             ],
           ),
         ),
-        SizedBox(height: h * 0.018),
+        SizedBox(height: h * 0.050),
         SizedBox(
           width: double.infinity,
           height: h * 0.065,
@@ -741,20 +965,22 @@ class _TransactionDetails extends StatelessWidget {
             style: OutlinedButton.styleFrom(
               side: BorderSide(color: brandOrange, width: 2),
               backgroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30),
+              ),
             ),
             child: Text(
               "Contact Support",
               style: TextStyle(
                 color: brandOrange,
-                fontFamily: 'Poppins',
+                fontFamily: 'Inter',
                 fontWeight: FontWeight.w900,
                 fontSize: w * 0.036,
               ),
             ),
           ),
         ),
-        SizedBox(height: h * 0.012),
+        SizedBox(height: h * 0.04),
         SizedBox(
           width: double.infinity,
           height: h * 0.065,
@@ -763,13 +989,15 @@ class _TransactionDetails extends StatelessWidget {
             style: ElevatedButton.styleFrom(
               elevation: 0,
               backgroundColor: brandOrange,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30),
+              ),
             ),
             child: Text(
               "Download Receipt",
               style: TextStyle(
                 color: Colors.white,
-                fontFamily: 'Poppins',
+                fontFamily: 'Inter',
                 fontWeight: FontWeight.w900,
                 fontSize: w * 0.036,
               ),
@@ -792,7 +1020,7 @@ class _TransactionDetails extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 color: Colors.black.withOpacity(0.80),
-                fontFamily: 'Poppins',
+                fontFamily: 'Inter',
                 fontWeight: FontWeight.w800,
                 fontSize: w * 0.030,
               ),
@@ -805,7 +1033,7 @@ class _TransactionDetails extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
               color: Colors.black.withOpacity(0.75),
-              fontFamily: 'Poppins',
+              fontFamily: 'Inter',
               fontWeight: FontWeight.w800,
               fontSize: w * 0.030,
             ),
@@ -836,10 +1064,7 @@ class _HeaderRow extends StatelessWidget {
   final String title;
   final VoidCallback onBack;
 
-  const _HeaderRow({
-    required this.title,
-    required this.onBack,
-  });
+  const _HeaderRow({required this.title, required this.onBack});
 
   @override
   Widget build(BuildContext context) {
@@ -856,7 +1081,11 @@ class _HeaderRow extends StatelessWidget {
               color: Colors.white,
               borderRadius: BorderRadius.circular(15),
             ),
-            child: Icon(Icons.chevron_left, color: Colors.black, size: w * 0.10),
+            child: Icon(
+              Icons.chevron_left,
+              color: Colors.black,
+              size: w * 0.10,
+            ),
           ),
         ),
         SizedBox(width: w * 0.05),
@@ -867,32 +1096,30 @@ class _HeaderRow extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
               color: Colors.white,
-              fontFamily: 'AbrilFatface',
+              fontFamily: 'Montserrat',
               fontSize: w * 0.055,
             ),
           ),
         ),
         SizedBox(width: w * 0.03),
-
         Container(
-          width: w * 0.10,
-          height: w * 0.10,
-          decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.black12),
-          child: ClipOval(
-            child: Image.asset(
-              'assets/images/person.png',
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Icon(Icons.person, size: w * 0.055),
-            ),
+          width: 40,
+          height: 40,
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            shape: BoxShape.circle,
           ),
+          child: const Icon(Icons.person, color: Colors.black),
         ),
-        SizedBox(width: w * 0.02),
-
+        const SizedBox(width: 10),
         Container(
-          width: w * 0.10,
-          height: w * 0.10,
-          decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.white),
-          child: Icon(Icons.notifications_none_rounded, color: Colors.black, size: w * 0.06),
+          width: 40,
+          height: 40,
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(Icons.notifications, color: Colors.black),
         ),
       ],
     );
@@ -922,64 +1149,10 @@ class _DashedLinePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _DashedLinePainter oldDelegate) => oldDelegate.color != color;
+  bool shouldRepaint(covariant _DashedLinePainter oldDelegate) =>
+      oldDelegate.color != color;
 }
 
 // ===================== MODELS =====================
 
 enum _ActionMode { none, deposit, withdraw }
-
-enum _TxType { deposit, withdraw }
-
-enum _TxStatus { pending, completed, cancelled }
-
-class _TxItem {
-  final _TxType type;
-  final _TxStatus status;
-
-  final String title;
-  final String date;
-  final String amount;
-
-  final String txDate;
-  final String txTime;
-  final String txId;
-  final String transferType;
-  final String from;
-  final String to;
-
-  const _TxItem({
-    required this.type,
-    required this.status,
-    required this.title,
-    required this.date,
-    required this.amount,
-    required this.txDate,
-    required this.txTime,
-    required this.txId,
-    required this.transferType,
-    required this.from,
-    required this.to,
-  });
-}
-
-
-
-
-void showIncomingCall(BuildContext context) {
-  IncomingCallOverlayService.instance.show(
-    context: context,
-    businessName: 'Business Name',
-    subtitle: 'Incoming voice call',
-    timeText: '9:45AM',
-    avatarImage: const AssetImage('assets/images/person.png'), // or NetworkImage(...)
-    onDecline: () {
-      // TODO: send "declined" to backend
-      debugPrint('Declined');
-    },
-    onAnswer: () {
-      // TODO: navigate to call screen
-      debugPrint('Answered');
-    },
-  );
-}
