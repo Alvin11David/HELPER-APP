@@ -166,14 +166,14 @@ class _RuleRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: 8, left: 16),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(
             Icons.info_outline,
             color: Colors.white.withOpacity(0.9),
-            size: 18,
+            size: 20,
           ),
           const SizedBox(width: 8),
           Expanded(
@@ -182,8 +182,8 @@ class _RuleRow extends StatelessWidget {
               style: TextStyle(
                 color: Colors.white.withOpacity(0.9),
                 fontFamily: 'Inter',
-                fontWeight: FontWeight.w600,
-                fontSize: 12,
+                fontWeight: FontWeight.w900,
+                fontSize: 14,
                 height: 1.25,
               ),
             ),
