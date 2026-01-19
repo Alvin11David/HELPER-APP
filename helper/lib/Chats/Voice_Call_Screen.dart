@@ -73,12 +73,15 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       GestureDetector(
-                        onTap: () => setState(() => _volumeClicked = !_volumeClicked),
+                        onTap: () =>
+                            setState(() => _volumeClicked = !_volumeClicked),
                         child: Container(
                           width: 40,
                           height: 40,
                           decoration: BoxDecoration(
-                            color: _volumeClicked ? Color(0xFFFFA10D) : Colors.white,
+                            color: _volumeClicked
+                                ? Color(0xFFFFA10D)
+                                : Colors.white,
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
@@ -93,7 +96,9 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
                           width: 40,
                           height: 40,
                           decoration: BoxDecoration(
-                            color: _micClicked ? Color(0xFFFFA10D) : Colors.white,
+                            color: _micClicked
+                                ? Color(0xFFFFA10D)
+                                : Colors.white,
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
