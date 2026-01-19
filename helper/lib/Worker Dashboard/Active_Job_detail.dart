@@ -117,8 +117,8 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           color: Colors.white,
-              fontFamily: 'Montserrat',
-              fontSize: w * 0.055,
+                          fontFamily: 'Montserrat',
+                          fontSize: w * 0.055,
                         ),
                       ),
                     ),
