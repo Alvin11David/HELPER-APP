@@ -602,7 +602,7 @@ class _TabChip extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: w * 0.24,
+        width: w * 0.26,
         height: 34,
         alignment: Alignment.center,
         decoration: BoxDecoration(
