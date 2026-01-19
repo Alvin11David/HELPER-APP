@@ -1013,9 +1013,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
       child: Container(
         height: boxH,
         width: double.infinity,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(18),
-        ),
+        decoration: BoxDecoration(borderRadius: BorderRadius.circular(18)),
         child: CustomPaint(
           painter: _DashedBorderPainter(
             color: Colors.white.withOpacity(0.75),
