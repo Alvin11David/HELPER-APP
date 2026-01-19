@@ -432,34 +432,6 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
       key: const ValueKey('phase2'),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            _label("Job Location", w),
-            const Spacer(),
-            Text(
-              "Tap the map to select",
-              style: TextStyle(
-                color: Colors.white.withOpacity(0.75),
-                fontFamily: 'Inter',
-                fontWeight: FontWeight.w600,
-                fontSize: w * 0.030,
-              ),
-            ),
-          ],
-        ),
-        SizedBox(height: h * 0.010),
-        _mapPlaceholder(
-          w: w,
-          h: h,
-          heightFactor: 0.28,
-          onTapPick: () {
-            setState(() => _pickedJobLocation = "Kampala");
-            _toast("Picked job location (placeholder)");
-          },
-        ),
-
-        SizedBox(height: h * 0.018),
-
         _label("Number of Workers", w),
         SizedBox(height: h * 0.010),
         _pillDropdown(
