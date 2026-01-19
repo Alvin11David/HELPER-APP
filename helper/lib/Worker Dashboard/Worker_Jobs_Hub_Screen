@@ -3,11 +3,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 
-/// ✅ Suggested file name:
-/// worker_jobs_hub_screen.dart
-///
-/// Suggested class name:
-/// WorkerJobsHubScreen
+
 
 class WorkerJobsHubScreen extends StatefulWidget {
   const WorkerJobsHubScreen({super.key});
