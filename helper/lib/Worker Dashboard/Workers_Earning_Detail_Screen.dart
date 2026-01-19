@@ -113,7 +113,7 @@ class _WorkerEarningsScreenState extends State<WorkerEarningsScreen> {
                         ),
                       ),
                     ),
-                    SizedBox(width: w * 0.04),
+                    SizedBox(width: w * 0.05),
                     Expanded(
                       child: Text(
                         "Earnings",
@@ -122,17 +122,33 @@ class _WorkerEarningsScreenState extends State<WorkerEarningsScreen> {
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: w * 0.055,
-                          fontFamily: 'AbrilFatface',
+                          fontFamily: 'Montserrat',
                           letterSpacing: 0.2,
                         ),
                       ),
                     ),
-                    SizedBox(width: w * 0.02),
-                    const _TopAvatar(),
-                    SizedBox(width: w * 0.02),
-                    _TopIcon(
-                      icon: Icons.notifications_none_rounded,
-                      onTap: () {},
+                    SizedBox(width: w * 0.03),
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.person, color: Colors.black),
+                    ),
+                    const SizedBox(width: 10),
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.notifications,
+                        color: Colors.black,
+                      ),
                     ),
                   ],
                 ),
