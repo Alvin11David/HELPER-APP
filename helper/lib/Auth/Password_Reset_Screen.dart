@@ -196,6 +196,7 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
                         SizedBox(height: h * 0.02),
                         // Use named arguments here
                         _PillInput(
+                          null,
                           controller: _passwordCtrl!,
                           hint: 'Enter Your Password',
                           icon: Icons.lock_rounded,
@@ -233,6 +234,7 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
                         ),
                         SizedBox(height: h * 0.02),
                         _PillInput(
+                          null,
                           controller: _confirmCtrl!,
                           hint: 'Confirm Your Password',
                           icon: Icons.lock_rounded,
@@ -508,14 +510,14 @@ class _PillInput extends StatelessWidget {
 
   final double contentFontSize;
 
-  const _PillInput({
+  const _PillInput(this.validator, {
     required this.controller,
     required this.hint,
     required this.icon,
     required this.keyboardType,
     required this.contentFontSize,
     this.obscure = false,
-    this.suffix, this.validator,
+    this.suffix,
   });
 
   @override
@@ -587,3 +589,4 @@ class _PillInput extends StatelessWidget {
     );
   }
 }
+
