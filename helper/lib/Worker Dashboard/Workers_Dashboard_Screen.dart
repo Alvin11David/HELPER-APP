@@ -44,7 +44,11 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                   const SizedBox(height: 130),
                   const SizedBox(height: 2),
                   Padding(
-                    padding: const EdgeInsets.only(bottom: 8, left: 16, right: 16),
+                    padding: const EdgeInsets.only(
+                      bottom: 8,
+                      left: 16,
+                      right: 16,
+                    ),
                     child: Row(
                       children: [
                         Icon(
@@ -188,6 +192,38 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(Icons.tune, color: Colors.black),
+                    ),
+                  ],
+                ),
+              ),
+              Positioned(
+                top: 125,
+                left: w * 0.04,
+                right: w * 0.04,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Pending Jobs',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: w * 0.045,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
+                      child: Text(
+                        'View All',
+                        style: TextStyle(
+                          color: Color(0xFFF79F1A),
+                          fontSize: w * 0.04,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ],
                 ),
