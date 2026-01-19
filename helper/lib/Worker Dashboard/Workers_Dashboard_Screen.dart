@@ -392,7 +392,7 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                 left: w * 0.05,
                 right: w * 0.04,
                 child: Container(
-                  height: 120,
+                  height: 170,
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(25),
@@ -524,7 +524,7 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                 ),
               ),
               Positioned(
-                top: screenWidth * 0.5 + 330,
+                top: screenWidth * 0.5 + 380,
                 left: w * 0.05,
                 right: w * 0.04,
                 child: Row(
@@ -556,7 +556,7 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                 ),
               ),
               Positioned(
-                top: screenWidth * 0.5 + 360,
+                top: screenWidth * 0.5 + 410,
                 left: w * 0.05,
                 right: w * 0.04,
                 child: Container(
