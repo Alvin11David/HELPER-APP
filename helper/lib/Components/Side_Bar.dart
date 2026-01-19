@@ -11,6 +11,7 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
   bool _isOpen = false;
+  int _selectedIndex = -1;
 
   @override
   void initState() {
@@ -159,147 +160,227 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                           color: Colors.black,
                         ),
                         const SizedBox(height: 20),
-                        Padding(
-                          padding: EdgeInsets.only(left: 8, right: 8),
-                          child: Row(
-                            children: [
-                              Icon(Icons.home, color: Colors.black.withOpacity(0.6)),
-                              SizedBox(width: 15),
-                              Text(
-                                "Home",
-                                style: TextStyle(
-                                  color: Colors.black,
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
+                        GestureDetector(
+                          onTap: () => setState(() => _selectedIndex = 0),
+                          child: Padding(
+                            padding: EdgeInsets.only(left: 8, right: 8),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.home,
+                                  color: _selectedIndex == 0
+                                      ? Colors.orange
+                                      : Colors.black.withOpacity(0.6),
                                 ),
-                              ),
-                            ],
+                                SizedBox(width: 15),
+                                Text(
+                                  "Home",
+                                  style: TextStyle(
+                                    color: _selectedIndex == 0
+                                        ? Colors.orange
+                                        : Colors.black,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                         const SizedBox(height: 20),
-                        Padding(
-                          padding: EdgeInsets.only(left: 8, right: 8),
-                          child: Row(
-                            children: [
-                              Icon(Icons.receipt_long, color: Colors.black.withOpacity(0.6)),
-                              SizedBox(width: 15),
-                              Text(
-                                "My Jobs",
-                                style: TextStyle(
-                                  color: Colors.black,
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
+                        GestureDetector(
+                          onTap: () => setState(() => _selectedIndex = 1),
+                          child: Padding(
+                            padding: EdgeInsets.only(left: 8, right: 8),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.receipt_long,
+                                  color: _selectedIndex == 1
+                                      ? Colors.orange
+                                      : Colors.black.withOpacity(0.6),
                                 ),
-                              ),
-                            ],
+                                SizedBox(width: 15),
+                                Text(
+                                  "My Jobs",
+                                  style: TextStyle(
+                                    color: _selectedIndex == 1
+                                        ? Colors.orange
+                                        : Colors.black,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                         const SizedBox(height: 20),
-                        Padding(
-                          padding: EdgeInsets.only(left: 8, right: 8),
-                          child: Row(
-                            children: [
-                              Icon(Icons.calendar_today_rounded, color: Colors.black.withOpacity(0.6)),
-                              SizedBox(width: 15),
-                              Text(
-                                "Availability & Schedule",
-                                style: TextStyle(
-                                  color: Colors.black,
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
+                        GestureDetector(
+                          onTap: () => setState(() => _selectedIndex = 2),
+                          child: Padding(
+                            padding: EdgeInsets.only(left: 8, right: 8),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.calendar_today_rounded,
+                                  color: _selectedIndex == 2
+                                      ? Colors.orange
+                                      : Colors.black.withOpacity(0.6),
                                 ),
-                              ),
-                            ],
+                                SizedBox(width: 15),
+                                Text(
+                                  "Availability & Schedule",
+                                  style: TextStyle(
+                                    color: _selectedIndex == 2
+                                        ? Colors.orange
+                                        : Colors.black,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                         const SizedBox(height: 20),
-                        Padding(
-                          padding: EdgeInsets.only(left: 8, right: 8),
-                          child: Row(
-                            children: [
-                              Icon(Icons.star, color: Colors.black.withOpacity(0.6)),
-                              SizedBox(width: 15),
-                              Text(
-                                "Ratings & Reviews",
-                                style: TextStyle(
-                                  color: Colors.black,
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
+                        GestureDetector(
+                          onTap: () => setState(() => _selectedIndex = 3),
+                          child: Padding(
+                            padding: EdgeInsets.only(left: 8, right: 8),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.star,
+                                  color: _selectedIndex == 3
+                                      ? Colors.orange
+                                      : Colors.black.withOpacity(0.6),
                                 ),
-                              ),
-                            ],
+                                SizedBox(width: 15),
+                                Text(
+                                  "Ratings & Reviews",
+                                  style: TextStyle(
+                                    color: _selectedIndex == 3
+                                        ? Colors.orange
+                                        : Colors.black,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                         const SizedBox(height: 20),
-                        Padding(
-                          padding: EdgeInsets.only(left: 8, right: 8),
-                          child: Row(
-                            children: [
-                              Icon(Icons.support_agent, color: Colors.black.withOpacity(0.6)),
-                              SizedBox(width: 15),
-                              Text(
-                                "Support",
-                                style: TextStyle(
-                                  color: Colors.black,
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
+                        GestureDetector(
+                          onTap: () => setState(() => _selectedIndex = 4),
+                          child: Padding(
+                            padding: EdgeInsets.only(left: 8, right: 8),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.support_agent,
+                                  color: _selectedIndex == 4
+                                      ? Colors.orange
+                                      : Colors.black.withOpacity(0.6),
                                 ),
-                              ),
-                            ],
+                                SizedBox(width: 15),
+                                Text(
+                                  "Support",
+                                  style: TextStyle(
+                                    color: _selectedIndex == 4
+                                        ? Colors.orange
+                                        : Colors.black,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                         const SizedBox(height: 20),
-                        Padding(
-                          padding: EdgeInsets.only(left: 8, right: 8),
-                          child: Row(
-                            children: [
-                              Icon(Icons.person, color: Colors.black.withOpacity(0.6)),
-                              SizedBox(width: 15),
-                              Text(
-                                "Profile",
-                                style: TextStyle(
-                                  color: Colors.black,
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
+                        GestureDetector(
+                          onTap: () => setState(() => _selectedIndex = 5),
+                          child: Padding(
+                            padding: EdgeInsets.only(left: 8, right: 8),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.person,
+                                  color: _selectedIndex == 5
+                                      ? Colors.orange
+                                      : Colors.black.withOpacity(0.6),
                                 ),
-                              ),
-                            ],
+                                SizedBox(width: 15),
+                                Text(
+                                  "Profile",
+                                  style: TextStyle(
+                                    color: _selectedIndex == 5
+                                        ? Colors.orange
+                                        : Colors.black,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                         const SizedBox(height: 20),
-                        Padding(
-                          padding: EdgeInsets.only(left: 8, right: 8),
-                          child: Row(
-                            children: [
-                              Icon(Icons.receipt, color: Colors.black.withOpacity(0.6)),
-                              SizedBox(width: 15),
-                              Text(
-                                "Privacy Policy",
-                                style: TextStyle(
-                                  color: Colors.black,
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
+                        GestureDetector(
+                          onTap: () => setState(() => _selectedIndex = 6),
+                          child: Padding(
+                            padding: EdgeInsets.only(left: 8, right: 8),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.receipt,
+                                  color: _selectedIndex == 6
+                                      ? Colors.orange
+                                      : Colors.black.withOpacity(0.6),
                                 ),
-                              ),
-                            ],
+                                SizedBox(width: 15),
+                                Text(
+                                  "Privacy Policy",
+                                  style: TextStyle(
+                                    color: _selectedIndex == 6
+                                        ? Colors.orange
+                                        : Colors.black,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                         const SizedBox(height: 20),
-                        Padding(
-                          padding: EdgeInsets.only(left: 8, right: 8),
-                          child: Row(
-                            children: [
-                              Icon(Icons.logout, color: Colors.black.withOpacity(0.6)),
-                              SizedBox(width: 15),
-                              Text(
-                                "Log Out",
-                                style: TextStyle(
-                                  color: Colors.black,
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
+                        GestureDetector(
+                          onTap: () => setState(() => _selectedIndex = 7),
+                          child: Padding(
+                            padding: EdgeInsets.only(left: 8, right: 8),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.logout,
+                                  color: _selectedIndex == 7
+                                      ? Colors.orange
+                                      : Colors.black.withOpacity(0.6),
                                 ),
-                              ),
-                            ],
+                                SizedBox(width: 15),
+                                Text(
+                                  "Log Out",
+                                  style: TextStyle(
+                                    color: _selectedIndex == 7
+                                        ? Colors.orange
+                                        : Colors.black,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ],
