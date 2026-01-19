@@ -417,7 +417,29 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                               style: TextStyle(
                                 color: Color(0xFFFFA10D),
                                 fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            const Text(
+                              'Job Type:',
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontSize: 14,
                                 fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const Spacer(),
+                            Text(
+                              'Type',
+                              style: TextStyle(
+                                color: Color(0xFFFFA10D),
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                           ],
