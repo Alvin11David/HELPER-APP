@@ -124,12 +124,27 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                       ),
                     ),
                     SizedBox(width: w * 0.03),
-                    _TopAvatar(w: w),
-                    SizedBox(width: w * 0.025),
-                    _TopIcon(
-                      w: w,
-                      icon: Icons.notifications_none_rounded,
-                      onTap: () {},
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.person, color: Colors.black),
+                    ),
+                    const SizedBox(width: 10),
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.notifications,
+                        color: Colors.black,
+                      ),
                     ),
                   ],
                 ),
