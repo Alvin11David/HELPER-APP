@@ -24,9 +24,9 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
 
   // Flutterwave configuration
   final String publicKey =
-      "FLWPUBK_TEST-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX-X"; // Replace with your Flutterwave public key
+      "5c4c1ba4-9c72-45c8-90b0-b29e9c6a4597"; // Test Client ID
   final String encryptionKey =
-      "FLWSECK_TESTXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"; // Replace with your Flutterwave encryption key
+      "0lT5zNJgnxHOm2PyOYZxQKL7yk0MC9Uodyo3Z/I3DE4="; // Test Encryption Key
 
   @override
   void dispose() {
@@ -274,7 +274,9 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
                               child: Text(
                                 _paymentStatus,
                                 style: TextStyle(
-                                  color: _paymentStatus == 'Paid' ? Colors.green : Colors.black,
+                                  color: _paymentStatus == 'Paid'
+                                      ? Colors.green
+                                      : Colors.black,
                                   fontSize: screenWidth * 0.04,
                                   fontWeight: FontWeight.bold,
                                 ),
