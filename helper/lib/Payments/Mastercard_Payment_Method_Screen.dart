@@ -21,6 +21,7 @@ class _MasterCardPaymentMethodScreenState
   bool isChecked = false;
   bool _isDimming = false; // State to track if the screen should dim
   bool _showOverlay = false; // State to control the overlay visibility
+  bool _isPaymentSuccessful = false; // State to track payment status
   final Duration _overlayAnimDuration = Duration(milliseconds: 300);
 
   void _handlePayment() async {

@@ -285,7 +285,9 @@ class _VisaPaymentMethodScreenState extends State<VisaPaymentMethodScreen> {
                               width: screenWidth * (94 / 340),
                               height: screenWidth * (28 / 340),
                               decoration: BoxDecoration(
-                                color: _isPaymentSuccessful ? Colors.green : Colors.white,
+                                color: _isPaymentSuccessful
+                                    ? Colors.green
+                                    : Colors.white,
                                 borderRadius: BorderRadius.circular(30),
                                 boxShadow: [
                                   BoxShadow(
@@ -300,7 +302,9 @@ class _VisaPaymentMethodScreenState extends State<VisaPaymentMethodScreen> {
                               child: Text(
                                 _isPaymentSuccessful ? 'Paid' : 'Not Paid',
                                 style: TextStyle(
-                                  color: _isPaymentSuccessful ? Colors.white : Colors.black,
+                                  color: _isPaymentSuccessful
+                                      ? Colors.white
+                                      : Colors.black,
                                   fontSize: screenWidth * 0.04,
                                   fontWeight: FontWeight.bold,
                                 ),
