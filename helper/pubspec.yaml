@@ -56,8 +56,10 @@ dependencies:
   intl: ^0.19.0
   # For image picking
   image_picker: ^1.0.4
-  # Flutterwave payment
-  flutterwave: ^1.0.0
+  # Webview for Flutterwave payment
+  webview_flutter: ^4.13.1
+  # Flutterwave standard SDK
+  flutterwave_standard: ^1.1.0
 
 dev_dependencies:
   flutter_test:

@@ -1,7 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutterwave/flutterwave.dart';
+import 'package:flutterwave_standard/flutterwave.dart';
 
 class MasterCardPaymentMethodScreen extends StatefulWidget {
   const MasterCardPaymentMethodScreen({super.key});
@@ -23,50 +23,63 @@ class _MasterCardPaymentMethodScreenState
   bool _showOverlay = false; // State to control the overlay visibility
   final Duration _overlayAnimDuration = Duration(milliseconds: 300);
 
-  // Flutterwave configuration
-  final String publicKey = "5c4c1ba4-9c72-45c8-90b0-b29e9c6a4597";
-  final String encryptionKey = "0lT5zNJgnxHOm2PyOYZxQKL7yk0MC9Uodyo3Z/I3DE4=";
-  final String currency = "UGX";
-  final double amount = 25000.0;
-
   void _handlePayment() async {
-    // For demo purposes, using placeholder customer details
-    // In real app, get from user profile or input
-    final String email = "test@example.com";
-    final String fullName = "Test User";
-    final String phoneNumber = "+256700000000";
+    // Flutterwave standard SDK configuration
+    final String publicKey =
+        "FLWPUBK_TEST-5c4c1ba4-9c72-45c8-90b0-b29e9c6a4597-X"; // Using your client ID as public key
+    final String txRef = "txn_${DateTime.now().millisecondsSinceEpoch}";
+    final String amount = "25000";
+    final String currency = "UGX";
+    final String customerEmail = "test@example.com";
+    final String customerName = "Test User";
+    final String customerPhone = "+256700000000";
 
-    final config = FlutterwaveConfig(
+    final Customer customer = Customer(
+      name: customerName,
+      phoneNumber: customerPhone,
+      email: customerEmail,
+    );
+
+    final Flutterwave flutterwave = Flutterwave(
       publicKey: publicKey,
-      encryptionKey: encryptionKey,
-      amount: amount,
       currency: currency,
-      email: email,
-      fullName: fullName,
-      txRef: "txn_${DateTime.now().millisecondsSinceEpoch}",
-      isDebugMode: true, // Sandbox mode
-      phoneNumber: phoneNumber,
+      redirectUrl: "https://example.com/callback",
+      txRef: txRef,
+      amount: amount,
+      customer: customer,
+      paymentOptions: "card, mobilemoneyuganda",
+      customization: Customization(title: "Helper Payment"),
+      isTestMode: true,
     );
 
     try {
-      final response = await FlutterwaveCheckout().charge(config);
-      if (response.status == "successful") {
+      final ChargeResponse response = await flutterwave.charge(context);
+
+      if (response.success == true) {
         // Payment successful
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text("Payment successful!")));
-        // Navigate to dashboard or next screen
-        // Navigator.of(context).pushReplacementNamed('/dashboard');
-      } else {
-        // Payment failed
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Payment failed: ${response.status}")),
+          const SnackBar(
+            content: Text('Payment successful!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.of(context).pushReplacementNamed('/dashboard');
+      } else {
+        // Payment failed or cancelled
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Payment failed or was cancelled'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
-    } catch (error) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Payment error: $error")));
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Payment error: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -840,10 +853,10 @@ class _MasterCardPaymentMethodScreenState
                           child: ElevatedButton(
                             onPressed: _handlePayment,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFDF8800),
-                              disabledBackgroundColor: const Color(
-                                0xFFDF8800,
-                              ).withOpacity(0.6),
+                              backgroundColor: Colors.white,
+                              disabledBackgroundColor: Colors.white.withOpacity(
+                                0.6,
+                              ),
                               elevation: 0,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(30),
@@ -855,18 +868,18 @@ class _MasterCardPaymentMethodScreenState
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text(
-                                    'Go To Dashboard',
+                                    'Pay Now',
                                     style: TextStyle(
                                       fontSize: screenWidth * 0.045,
                                       fontWeight: FontWeight.bold,
-                                      color: Colors.white,
+                                      color: Colors.black,
                                       fontFamily: 'AbrilFatface',
                                     ),
                                   ),
                                   SizedBox(width: screenWidth * 0.02),
                                   Icon(
-                                    Icons.arrow_forward_rounded,
-                                    color: Colors.white,
+                                    Icons.payment,
+                                    color: Colors.black,
                                     size: screenHeight * 0.035,
                                   ),
                                 ],
