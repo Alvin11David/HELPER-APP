@@ -486,9 +486,7 @@ class _ForgotPasswordOTPScreenState extends State<ForgotPasswordOTPScreen> {
                               ],
                             ),
                             child: Text(
-                              widget.isPhoneVerification
-                                  ? 'Enter the 6-digit code sent to ${widget.emailOrPhone?.replaceFirst('+256', '+256 ')}'
-                                  : 'Enter the 6-digit code sent to your email',
+                              'Enter the 6-digit code sent to ${widget.emailOrPhone}',
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: screenWidth * 0.04,
