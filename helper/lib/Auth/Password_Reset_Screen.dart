@@ -284,7 +284,7 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
                           hint: 'Enter Your Password',
                           icon: Icons.lock_rounded,
                           keyboardType: TextInputType.visiblePassword,
-                          contentFontSize: 16,
+                          contentFontSize: 14,
                           obscure: _obscurePass!,
                           suffix: IconButton(
                             onPressed: () =>
@@ -322,7 +322,7 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
                           hint: 'Confirm Your Password',
                           icon: Icons.lock_rounded,
                           keyboardType: TextInputType.visiblePassword,
-                          contentFontSize: 16,
+                          contentFontSize: 14,
                           obscure: _obscureConfirm!,
                           suffix: IconButton(
                             onPressed: () => setState(
