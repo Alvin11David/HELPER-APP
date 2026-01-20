@@ -2,6 +2,8 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutterwave_standard/flutterwave.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class MtnPaymentMethodScreen extends StatefulWidget {
   const MtnPaymentMethodScreen({super.key});
@@ -21,6 +23,32 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
   void dispose() {
     _cardNumberController.dispose();
     super.dispose();
+  }
+
+  Future<void> _savePhoneNumber(String phoneNumber) async {
+    try {
+      final User? currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser != null) {
+        // Save to user's saved payment methods
+        await FirebaseFirestore.instance
+            .collection('Saved Payment Methods')
+            .doc(currentUser.uid)
+            .collection('MTN Numbers')
+            .add({
+              'phoneNumber': phoneNumber,
+              'savedAt': FieldValue.serverTimestamp(),
+              'type': 'MTN',
+              'isActive': true,
+            });
+
+        print('Phone number saved successfully: $phoneNumber');
+      } else {
+        print('No authenticated user found');
+      }
+    } catch (e) {
+      print('Error saving phone number: $e');
+      // Don't show error to user as this is not critical
+    }
   }
 
   Future<void> _processPayment() async {
@@ -98,6 +126,12 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
             backgroundColor: Colors.green,
           ),
         );
+
+        // Save phone number if checkbox is checked
+        if (isChecked) {
+          await _savePhoneNumber(phoneNumber);
+        }
+
         return;
       }
 
@@ -108,6 +142,11 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
           _isDimming = true;
           _showOverlay = true;
         });
+
+        // Save phone number if checkbox is checked
+        if (isChecked) {
+          await _savePhoneNumber(phoneNumber);
+        }
       } else {
         // Payment failed or cancelled
         ScaffoldMessenger.of(context).showSnackBar(
@@ -615,7 +654,7 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
                             ),
                           ),
                         ),
-                        SizedBox(height: screenHeight * 0.04),
+                        SizedBox(height: screenHeight * 0.01),
                         Text(
                           'Welcome to Helper!',
                           textAlign: TextAlign.center,
