@@ -1,7 +1,10 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:flutterwave_standard/flutterwave.dart';
+import 'package:flutterwave_standard/core/flutterwave.dart';
+import 'package:flutterwave_standard/models/requests/customer.dart';
+import 'package:flutterwave_standard/models/requests/customizations.dart';
+import 'package:flutterwave_standard/models/responses/charge_response.dart';
 
 class AirtelPaymentMethodScreen extends StatefulWidget {
   const AirtelPaymentMethodScreen({super.key});
