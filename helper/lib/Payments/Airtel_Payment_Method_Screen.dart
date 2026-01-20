@@ -17,10 +17,70 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
   bool _isDimming = false; // State to track if the screen should dim
   bool _showOverlay = false; // State to control the overlay visibility
   final Duration _overlayAnimDuration = Duration(milliseconds: 300);
+
+  // Flutterwave configuration
+  final String publicKey = "FLWPUBK_TEST-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX-X"; // Replace with your Flutterwave public key
+  final String encryptionKey = "FLWSECK_TESTXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"; // Replace with your Flutterwave encryption key
+
   @override
   void dispose() {
     _cardNumberController.dispose();
     super.dispose();
+  }
+
+  void _handlePayment() async {
+    final phoneNumber = _cardNumberController.text.trim();
+    if (phoneNumber.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter your Airtel phone number')),
+      );
+      return;
+    }
+
+    // Generate a unique transaction reference
+    final txRef = "helper_reg_${DateTime.now().millisecondsSinceEpoch}";
+
+    final Customer customer = Customer(
+      name: "Helper User", // You might want to get this from user data
+      phoneNumber: phoneNumber,
+      email: "user@example.com", // Replace with actual email if available
+    );
+
+    final Flutterwave flutterwave = Flutterwave(
+      context: context,
+      publicKey: publicKey,
+      txRef: txRef,
+      amount: "25000",
+      customer: customer,
+      paymentOptions: "mobilemoneyuganda",
+      customization: Customization(
+        title: "Helper Registration Payment",
+        description: "Payment for Helper app registration",
+      ),
+      redirectUrl: "https://your-redirect-url.com", // Optional
+      isTestMode: true, // Set to false for production
+      currency: "UGX",
+    );
+
+    try {
+      final ChargeResponse response = await flutterwave.charge();
+      if (response.success == true) {
+        // Payment successful
+        setState(() {
+          _isDimming = true;
+          _showOverlay = true;
+        });
+      } else {
+        // Payment failed
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Payment failed: ${response.message}')),
+        );
+      }
+    } catch (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('An error occurred during payment')),
+      );
+    }
   }
 
   @override
