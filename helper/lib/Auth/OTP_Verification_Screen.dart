@@ -41,7 +41,8 @@ class OTPVerificationScreen extends StatefulWidget {
   const OTPVerificationScreen({
     super.key,
     this.isPhoneVerification = true, // default to phone
-    this.emailOrPhone, required String initialVerificationId,
+    this.emailOrPhone,
+    required String initialVerificationId,
   });
 
   @override
