@@ -46,7 +46,8 @@ class ForgotPasswordOTPScreen extends StatefulWidget {
   });
 
   @override
-  State<ForgotPasswordOTPScreen> createState() => _ForgotPasswordOTPScreenState();
+  State<ForgotPasswordOTPScreen> createState() =>
+      _ForgotPasswordOTPScreenState();
 }
 
 class _ForgotPasswordOTPScreenState extends State<ForgotPasswordOTPScreen> {
@@ -491,7 +492,7 @@ class _ForgotPasswordOTPScreenState extends State<ForgotPasswordOTPScreen> {
                                 color: Colors.white,
                                 fontSize: screenWidth * 0.04,
                                 fontWeight: FontWeight.w500,
-                                fontFamily: 'Poppins',
+                                fontFamily: 'Inter',
                               ),
                               textAlign: TextAlign.center,
                             ),

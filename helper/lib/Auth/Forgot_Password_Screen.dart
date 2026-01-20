@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'Sign_In_Screen.dart';
+import 'Forgot_Password_OTP_Screen.dart';
 
 class DashedLinePainter extends CustomPainter {
   final Color color;
@@ -55,10 +56,23 @@ class _ForgotYourPasswordScreenState extends State<ForgotYourPasswordScreen> {
     setState(() => _loading = true);
 
     // TODO: send reset OTP then navigate
-    await Future.delayed(const Duration(milliseconds: 700));
+    final identifier = _identifierCtrl.text.trim();
+    final isPhone = !identifier.contains(
+      '@',
+    ); // simple check: if no @, assume phone
 
     if (!mounted) return;
     setState(() => _loading = false);
+
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => ForgotPasswordOTPScreen(
+          isPhoneVerification: isPhone,
+          emailOrPhone: identifier,
+          initialVerificationId: '',
+        ),
+      ),
+    );
   }
 
   @override
