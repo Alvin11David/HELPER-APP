@@ -388,7 +388,6 @@ class _SignInScreenState extends State<SignInScreen> {
                           ),
                         ),
                       ),
-
                       SizedBox(height: h * 0.03),
 
                       _GlassPill(
@@ -599,7 +598,8 @@ class _SignInScreenState extends State<SignInScreen> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => const PhoneNumberEmailAddressScreen(),
+                                  builder: (context) =>
+                                      const PhoneNumberEmailAddressScreen(),
                                 ),
                               );
                             },

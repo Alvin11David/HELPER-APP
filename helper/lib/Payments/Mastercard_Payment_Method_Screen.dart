@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutterwave_standard/flutterwave.dart';
 
 class MasterCardPaymentMethodScreen extends StatefulWidget {
   const MasterCardPaymentMethodScreen({super.key});
