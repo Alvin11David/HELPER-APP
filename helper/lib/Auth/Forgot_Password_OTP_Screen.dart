@@ -8,6 +8,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:helper/Payments/Registration_Payment_Screen.dart';
 import 'Sign_In_Screen.dart';
+import 'Password_Reset_Screen.dart';
 
 class DashedLinePainter extends CustomPainter {
   final Color color;
@@ -332,10 +333,10 @@ class _ForgotPasswordOTPScreenState extends State<ForgotPasswordOTPScreen> {
                   const SnackBar(content: Text('OTP verified successfully!')),
                 );
                 print('OTP verified successfully for: ${widget.emailOrPhone}');
-                // Navigate to RegistrationPaymentScreen
+                // Navigate to PasswordResetScreen for forgot password
                 Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (context) => const RegistrationPaymentScreen(),
+                    builder: (context) => const PasswordResetScreen(),
                   ),
                 );
               }
