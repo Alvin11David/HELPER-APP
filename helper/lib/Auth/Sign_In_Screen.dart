@@ -6,6 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'OTP_Verification_Screen.dart';
+import 'Phone_Number_&_Email_Address_Screen.dart';
 
 class _UgandaPhoneFormatter extends TextInputFormatter {
   @override
@@ -388,19 +389,6 @@ class _SignInScreenState extends State<SignInScreen> {
                         ),
                       ),
 
-                      SizedBox(height: h * 0.018),
-
-                      _StepIndicator(
-                        width: w,
-                        activeIndex: 0,
-                        labels: const [
-                          'Phone/Email',
-                          'Verify',
-                          'Payment Details',
-                        ],
-                        accent: _brandOrange,
-                      ),
-
                       SizedBox(height: h * 0.03),
 
                       _GlassPill(
@@ -589,6 +577,44 @@ class _SignInScreenState extends State<SignInScreen> {
                             ),
                           ),
                         ),
+
+                      SizedBox(height: h * 0.03),
+
+                      // ✅ spaced & Sign In smaller
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'Don\'t have an account?',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.9),
+                              fontSize: w * 0.037,
+                              fontFamily: 'Poppins',
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          SizedBox(width: w * 0.02), // spacing
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const PhoneNumberEmailAddressScreen(),
+                                ),
+                              );
+                            },
+                            child: Text(
+                              'Sign Up',
+                              style: TextStyle(
+                                color: _brandOrange,
+                                fontSize: w * 0.032, // smaller
+                                fontFamily: 'Montserrat',
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
 
                       SizedBox(height: h * 0.03),
                     ],
