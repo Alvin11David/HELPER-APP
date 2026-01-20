@@ -43,6 +43,53 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
     super.dispose();
   }
 
+  Future<void> _loadSavedPhoneNumber() async {
+    try {
+      final User? currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser != null) {
+        final DocumentSnapshot doc = await FirebaseFirestore.instance
+            .collection('Saved Payment Methods')
+            .doc(currentUser.uid)
+            .collection('Airtel Numbers')
+            .doc('latest')
+            .get();
+
+        if (doc.exists && doc.data() != null) {
+          final data = doc.data() as Map<String, dynamic>;
+          setState(() {
+            _savedPhoneNumber = data['phoneNumber'] as String?;
+            if (_savedPhoneNumber != null && _cardNumberController.text.isEmpty) {
+              _cardNumberController.text = _savedPhoneNumber!;
+            }
+          });
+        }
+      }
+    } catch (e) {
+      // Silently handle errors for saved phone number loading
+      print('Error loading saved phone number: $e');
+    }
+  }
+
+  Future<void> _savePhoneNumber(String phoneNumber) async {
+    try {
+      final User? currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser != null) {
+        await FirebaseFirestore.instance
+            .collection('Saved Payment Methods')
+            .doc(currentUser.uid)
+            .collection('Airtel Numbers')
+            .doc('latest')
+            .set({
+          'phoneNumber': phoneNumber,
+          'savedAt': FieldValue.serverTimestamp(),
+          'isActive': true,
+        });
+      }
+    } catch (e) {
+      print('Error saving phone number: $e');
+    }
+  }
+
   void _handlePayment() async {
     String phoneNumber = _cardNumberController.text.trim();
     if (phoneNumber.isEmpty) {
