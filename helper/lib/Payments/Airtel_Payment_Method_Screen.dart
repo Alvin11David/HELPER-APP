@@ -43,9 +43,15 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
     }
 
     // Validate Airtel prefixes
-    if (!phoneNumber.startsWith('070') && !phoneNumber.startsWith('075') && !phoneNumber.startsWith('074')) {
+    if (!phoneNumber.startsWith('070') &&
+        !phoneNumber.startsWith('075') &&
+        !phoneNumber.startsWith('074')) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Invalid Airtel number. Must start with 070, 075, or 074')),
+        const SnackBar(
+          content: Text(
+            'Invalid Airtel number. Must start with 070, 075, or 074',
+          ),
+        ),
       );
       return;
     }
@@ -87,6 +93,7 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
 
     try {
       final ChargeResponse response = await flutterwave.charge(context);
+      print('Flutterwave Response: ${response.toJson()}'); // Add this for debugging
       if (response.success == true) {
         // Payment successful
         setState(() {
@@ -96,10 +103,15 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
       } else {
         // Payment failed
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Payment failed: ${response.status ?? 'Unknown error'}')),
+          SnackBar(
+            content: Text(
+              'Payment failed: ${response.status ?? 'Unknown error'}',
+            ),
+          ),
         );
       }
     } catch (error) {
+      print('Payment Error: $error'); // Add this for debugging
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('An error occurred during payment')),
       );
