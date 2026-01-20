@@ -6,7 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'OTP_Verification_Screen.dart';
-import 'Sign_In_Screen.dart';
+import 'Phone_Number_&_Email_Address_Screen.dart';
 
 class _UgandaPhoneFormatter extends TextInputFormatter {
   @override
@@ -68,25 +68,20 @@ class DashedLinePainter extends CustomPainter {
 
 enum _AuthMode { phone, email }
 
-class PhoneNumberEmailAddressScreen extends StatefulWidget {
-  const PhoneNumberEmailAddressScreen({super.key});
+class SignInScreen extends StatefulWidget {
+  const SignInScreen({super.key});
 
   @override
-  State<PhoneNumberEmailAddressScreen> createState() =>
-      _PhoneNumberEmailAddressScreenState();
+  State<SignInScreen> createState() => _SignInScreenState();
 }
 
-class _PhoneNumberEmailAddressScreenState
-    extends State<PhoneNumberEmailAddressScreen> {
+class _SignInScreenState extends State<SignInScreen> {
   static const _brandOrange = Color(0xFFFFA10D);
   static const _pureWhite = Color(0xFFFFFFFF);
 
   _AuthMode _mode = _AuthMode.phone;
 
   final _formKey = GlobalKey<FormState>();
-
-  // ✅ Added full names controller
-  final _fullNameCtrl = TextEditingController();
 
   final _phoneCtrl = TextEditingController(text: '+256 ');
   final _emailCtrl = TextEditingController();
@@ -99,7 +94,6 @@ class _PhoneNumberEmailAddressScreenState
 
   @override
   void dispose() {
-    _fullNameCtrl.dispose(); // ✅ added
     _phoneCtrl.dispose();
     _emailCtrl.dispose();
     _passwordCtrl.dispose();
@@ -125,7 +119,7 @@ class _PhoneNumberEmailAddressScreenState
     setState(() => _loading = true);
 
     if (_mode == _AuthMode.phone) {
-      // Save full name and phone number to Firestore
+      // Check if phone number exists in Sign Up collection
       try {
         String phoneNumber = _phoneCtrl.text.trim();
 
@@ -146,14 +140,6 @@ class _PhoneNumberEmailAddressScreenState
         phoneNumber = phoneNumber.replaceAll(' ', '');
         print('Formatted phone number: $phoneNumber');
 
-        // Store user data temporarily (will be confirmed after OTP verification)
-        await FirebaseFirestore.instance.collection('Sign Up').add({
-          'fullName': _fullNameCtrl.text.trim(),
-          'phoneNumber': phoneNumber, // Store with country code
-          'timestamp': FieldValue.serverTimestamp(),
-          'verified': false, // Will be updated after verification
-        });
-
         // Check if phone number is valid for Uganda
         if (!phoneNumber.startsWith('+256') || phoneNumber.length != 13) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -163,6 +149,23 @@ class _PhoneNumberEmailAddressScreenState
           return;
         }
 
+        // Check if user exists
+        QuerySnapshot userQuery = await FirebaseFirestore.instance
+            .collection('Sign Up')
+            .where('phoneNumber', isEqualTo: phoneNumber)
+            .get();
+
+        if (userQuery.docs.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Phone number not found. Please sign up first.'),
+            ),
+          );
+          setState(() => _loading = false);
+          return;
+        }
+
+        // User exists, proceed with OTP verification
         // Send OTP via Firebase Auth (SMS)
         await FirebaseAuth.instance.verifyPhoneNumber(
           phoneNumber: phoneNumber,
@@ -236,20 +239,32 @@ class _PhoneNumberEmailAddressScreenState
         return;
       }
     } else {
-      // Save full name, email, and password to Firestore for email registration
+      // Check if email and password match in Sign Up collection
       try {
         String email = _emailCtrl.text.trim();
-        String otpCode = _generateOTP();
+        String password = _passwordCtrl.text.trim();
 
-        // Store user data
-        await FirebaseFirestore.instance.collection('Sign Up').add({
-          'fullName': _fullNameCtrl.text.trim(),
-          'email': email,
-          'password': _passwordCtrl
-              .text, // Note: In production, hash passwords before storing
-          'timestamp': FieldValue.serverTimestamp(),
-          'verified': false, // Will be updated after verification
-        });
+        // Check if user exists with matching email and password
+        QuerySnapshot userQuery = await FirebaseFirestore.instance
+            .collection('Sign Up')
+            .where('email', isEqualTo: email)
+            .where('password', isEqualTo: password)
+            .get();
+
+        if (userQuery.docs.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Invalid email or password. Please check your credentials.',
+              ),
+            ),
+          );
+          setState(() => _loading = false);
+          return;
+        }
+
+        // User exists, proceed with OTP verification
+        String otpCode = _generateOTP();
 
         // Generate and store OTP code
         await FirebaseFirestore.instance.collection('OTP Codes').doc(email).set(
@@ -299,7 +314,7 @@ class _PhoneNumberEmailAddressScreenState
         // Handle error, maybe show a snackbar
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Error saving data: $e')));
+        ).showSnackBar(SnackBar(content: Text('Error logging in: $e')));
         setState(() => _loading = false);
         return;
       }
@@ -364,7 +379,7 @@ class _PhoneNumberEmailAddressScreenState
                       Align(
                         alignment: Alignment.centerLeft,
                         child: Text(
-                          'Get Started Now',
+                          'Sign In',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: w * 0.09,
@@ -373,20 +388,6 @@ class _PhoneNumberEmailAddressScreenState
                           ),
                         ),
                       ),
-
-                      SizedBox(height: h * 0.018),
-
-                      _StepIndicator(
-                        width: w,
-                        activeIndex: 0,
-                        labels: const [
-                          'Phone/Email',
-                          'Verify',
-                          'Payment Details',
-                        ],
-                        accent: _brandOrange,
-                      ),
-
                       SizedBox(height: h * 0.03),
 
                       _GlassPill(
@@ -444,12 +445,10 @@ class _PhoneNumberEmailAddressScreenState
                         child: _mode == _AuthMode.phone
                             ? _PhoneBlock(
                                 key: const ValueKey('phoneBlock'),
-                                fullNameCtrl: _fullNameCtrl,
                                 phoneCtrl: _phoneCtrl,
                               )
                             : _EmailBlock(
                                 key: const ValueKey('emailBlock'),
-                                fullNameCtrl: _fullNameCtrl,
                                 emailCtrl: _emailCtrl,
                                 passwordCtrl: _passwordCtrl,
                                 obscure: _obscure,
@@ -585,7 +584,7 @@ class _PhoneNumberEmailAddressScreenState
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            'Already have an account?',
+                            'Don\'t have an account?',
                             style: TextStyle(
                               color: Colors.white.withOpacity(0.9),
                               fontSize: w * 0.037,
@@ -599,12 +598,13 @@ class _PhoneNumberEmailAddressScreenState
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => const SignInScreen(),
+                                  builder: (context) =>
+                                      const PhoneNumberEmailAddressScreen(),
                                 ),
                               );
                             },
                             child: Text(
-                              'Sign In',
+                              'Sign Up',
                               style: TextStyle(
                                 color: _brandOrange,
                                 fontSize: w * 0.032, // smaller
@@ -656,14 +656,9 @@ class _PhoneNumberEmailAddressScreenState
 // --------------------- Blocks ---------------------
 
 class _PhoneBlock extends StatelessWidget {
-  final TextEditingController fullNameCtrl;
   final TextEditingController phoneCtrl;
 
-  const _PhoneBlock({
-    super.key,
-    required this.fullNameCtrl,
-    required this.phoneCtrl,
-  });
+  const _PhoneBlock({super.key, required this.phoneCtrl});
 
   @override
   Widget build(BuildContext context) {
@@ -673,32 +668,6 @@ class _PhoneBlock extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ✅ Full Names
-        Text(
-          'Full Names',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: w * 0.040,
-            fontWeight: FontWeight.bold,
-            fontFamily: 'Inter',
-          ),
-        ),
-        SizedBox(height: h * 0.012),
-        _PillInput(
-          controller: fullNameCtrl,
-          hint: 'Enter Your Full Names',
-          icon: Icons.person_rounded,
-          keyboardType: TextInputType.name,
-          contentFontSize: w * 0.038,
-          validator: (v) {
-            final t = (v ?? '').trim();
-            if (t.isEmpty) return 'Full names are required';
-            if (t.length < 3) return 'Enter valid names';
-            return null;
-          },
-        ),
-        SizedBox(height: h * 0.018),
-
         // Phone Number
         Text(
           'Phone Number',
@@ -748,7 +717,6 @@ class _PhoneBlock extends StatelessWidget {
 }
 
 class _EmailBlock extends StatelessWidget {
-  final TextEditingController fullNameCtrl;
   final TextEditingController emailCtrl;
   final TextEditingController passwordCtrl;
   final bool obscure;
@@ -756,7 +724,6 @@ class _EmailBlock extends StatelessWidget {
 
   const _EmailBlock({
     super.key,
-    required this.fullNameCtrl,
     required this.emailCtrl,
     required this.passwordCtrl,
     required this.obscure,
@@ -771,32 +738,6 @@ class _EmailBlock extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ✅ Full Names
-        Text(
-          'Full Names',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: w * 0.040,
-            fontWeight: FontWeight.bold,
-            fontFamily: 'Inter',
-          ),
-        ),
-        SizedBox(height: h * 0.012),
-        _PillInput(
-          controller: fullNameCtrl,
-          hint: 'Enter Your Full Names',
-          icon: Icons.person_rounded,
-          keyboardType: TextInputType.name,
-          contentFontSize: w * 0.038,
-          validator: (v) {
-            final t = (v ?? '').trim();
-            if (t.isEmpty) return 'Full names are required';
-            if (t.length < 3) return 'Enter valid names';
-            return null;
-          },
-        ),
-        SizedBox(height: h * 0.018),
-
         // Email
         Text(
           'Email',
