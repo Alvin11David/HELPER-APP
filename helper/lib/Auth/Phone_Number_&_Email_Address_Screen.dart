@@ -289,7 +289,8 @@ class _PhoneNumberEmailAddressScreenState
           MaterialPageRoute(
             builder: (context) => OTPVerificationScreen(
               isPhoneVerification: false,
-              emailOrPhone: email, initialVerificationId: '',
+              emailOrPhone: email,
+              initialVerificationId: '',
             ),
           ),
         );
@@ -576,6 +577,44 @@ class _PhoneNumberEmailAddressScreenState
                             ),
                           ),
                         ),
+
+                      SizedBox(height: h * 0.12),
+
+                      // ✅ spaced & Sign In smaller
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'Already have an account?',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.9),
+                              fontSize: w * 0.037,
+                              fontFamily: 'Poppins',
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          SizedBox(width: w * 0.02), // spacing
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const SignInScreen(),
+                                ),
+                              );
+                            },
+                            child: Text(
+                              'Sign In',
+                              style: TextStyle(
+                                color: _brandOrange,
+                                fontSize: w * 0.032, // smaller
+                                fontFamily: 'Montserrat',
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
 
                       SizedBox(height: h * 0.03),
                     ],
