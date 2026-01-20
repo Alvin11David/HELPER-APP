@@ -8,6 +8,7 @@ import 'dart:math' as math;
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'Sign_In_Screen.dart';
 
 class DashedLinePainter extends CustomPainter {
   final Color color;
@@ -482,7 +483,11 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
                         SizedBox(width: screenWidth * 0.02),
                         GestureDetector(
                           onTap: () {
-                            // TODO: navigate to sign in
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => SignInScreen(),
+                              ),
+                            );
                           },
                           child: Text(
                             'Sign In',

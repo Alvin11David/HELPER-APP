@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/gestures.dart';
@@ -9,6 +8,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:helper/Payments/Registration_Payment_Screen.dart';
 import 'Sign_In_Screen.dart';
+import 'Password_Reset_Screen.dart';
 
 class DashedLinePainter extends CustomPainter {
   final Color color;
@@ -35,10 +35,10 @@ class DashedLinePainter extends CustomPainter {
   bool shouldRepaint(DashedLinePainter oldDelegate) => false;
 }
 
-class OTPVerificationScreen extends StatefulWidget {
+class ForgotPasswordOTPScreen extends StatefulWidget {
   final bool isPhoneVerification; // true for phone, false for email
   final String? emailOrPhone; // Email or phone number for OTP verification
-  const OTPVerificationScreen({
+  const ForgotPasswordOTPScreen({
     super.key,
     this.isPhoneVerification = true, // default to phone
     this.emailOrPhone,
@@ -46,10 +46,11 @@ class OTPVerificationScreen extends StatefulWidget {
   });
 
   @override
-  State<OTPVerificationScreen> createState() => _OTPVerificationScreenState();
+  State<ForgotPasswordOTPScreen> createState() =>
+      _ForgotPasswordOTPScreenState();
 }
 
-class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
+class _ForgotPasswordOTPScreenState extends State<ForgotPasswordOTPScreen> {
   static const _brandOrange = Color(0xFFFFA10D);
   final int _otpLength = 6;
   late List<TextEditingController> _controllers;
@@ -110,7 +111,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
           String otpCode = _generateOTP();
           // Update OTP in Firestore
           await FirebaseFirestore.instance
-              .collection('OTP Codes')
+              .collection('Forgot Password OTP')
               .doc(widget.emailOrPhone!)
               .set({
                 'phone': widget.emailOrPhone!,
@@ -145,7 +146,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
 
           // Update OTP in Firestore
           await FirebaseFirestore.instance
-              .collection('OTP Codes')
+              .collection('Forgot Password OTP')
               .doc(widget.emailOrPhone!)
               .set({
                 'email': widget.emailOrPhone!,
@@ -222,7 +223,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
           // Phone verification using stored OTP
           // Get the stored OTP from Firestore
           DocumentSnapshot otpDoc = await FirebaseFirestore.instance
-              .collection('OTP Codes')
+              .collection('Forgot Password OTP')
               .doc(widget.emailOrPhone!)
               .get();
 
@@ -294,7 +295,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
           // Email verification using stored OTP
           // Get the stored OTP from Firestore
           DocumentSnapshot otpDoc = await FirebaseFirestore.instance
-              .collection('OTP Codes')
+              .collection('Forgot Password OTP')
               .doc(widget.emailOrPhone!)
               .get();
 
@@ -332,10 +333,11 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
                   const SnackBar(content: Text('OTP verified successfully!')),
                 );
                 print('OTP verified successfully for: ${widget.emailOrPhone}');
-                // Navigate to RegistrationPaymentScreen
+                // Navigate to PasswordResetScreen for forgot password
                 Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (context) => const RegistrationPaymentScreen(),
+                    builder: (context) =>
+                        PasswordResetScreen(email: widget.emailOrPhone),
                   ),
                 );
               }
@@ -449,8 +451,8 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
                     // ✅ circle #1 filled orange
                     _MiniStep123(
                       width: w,
-                      accent: _brandOrange,
-                      activeIndex: 0,
+                      accent: const Color.fromRGBO(255, 161, 13, 1),
+                      activeIndex: 1,
                     ),
                     SizedBox(height: screenHeight * 0.04),
                     Center(
@@ -486,14 +488,12 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
                               ],
                             ),
                             child: Text(
-                              widget.isPhoneVerification
-                                  ? 'Enter the 6-digit code sent to ${widget.emailOrPhone?.replaceFirst('+256', '+256 ')}'
-                                  : 'Enter the 6-digit code sent to your email',
+                              'Enter the 6-digit code sent to ${widget.emailOrPhone}',
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: screenWidth * 0.04,
                                 fontWeight: FontWeight.w500,
-                                fontFamily: 'Poppins',
+                                fontFamily: 'Inter',
                               ),
                               textAlign: TextAlign.center,
                             ),
@@ -711,7 +711,7 @@ class _MiniStep123 extends StatelessWidget {
     final lineW = width * 0.18;
 
     Widget circle(int index) {
-      final active = index == activeIndex;
+      final active = index <= activeIndex;
       return Container(
         width: dotSize,
         height: dotSize,
@@ -753,7 +753,7 @@ class _MiniStep123 extends StatelessWidget {
               child: circle(0),
             ),
             SizedBox(height: width * 0.01),
-            num('Phone'),
+            num('1'),
           ],
         ),
         SizedBox(width: width * 0.02),
@@ -766,7 +766,7 @@ class _MiniStep123 extends StatelessWidget {
               child: circle(1),
             ),
             SizedBox(height: width * 0.01),
-            num('Verify'),
+            num('2'),
           ],
         ),
         SizedBox(width: width * 0.02),
@@ -779,7 +779,7 @@ class _MiniStep123 extends StatelessWidget {
               child: circle(2),
             ),
             SizedBox(height: width * 0.01),
-            num('Payment'),
+            num('3'),
           ],
         ),
       ],

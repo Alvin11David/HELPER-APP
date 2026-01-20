@@ -1,6 +1,12 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutterwave_standard/core/flutterwave.dart';
+import 'package:flutterwave_standard/models/requests/customer.dart';
+import 'package:flutterwave_standard/models/requests/customizations.dart';
+import 'package:flutterwave_standard/models/responses/charge_response.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class AirtelPaymentMethodScreen extends StatefulWidget {
   const AirtelPaymentMethodScreen({super.key});
@@ -16,17 +22,162 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
   bool _isDimming = false; // State to track if the screen should dim
   bool _showOverlay = false; // State to control the overlay visibility
   final Duration _overlayAnimDuration = Duration(milliseconds: 300);
+  String _paymentStatus = 'Not Paid'; // State for payment status
+  String? _savedPhoneNumber;
+
+  // Flutterwave configuration
+  final String publicKey =
+      "FLWPUBK_TEST-5c4c1ba4-9c72-45c8-90b0-b29e9c6a4597-X"; 
+  final String encryptionKey =
+      "0lT5zNJgnxHOm2PyOYZxQKL7yk0MC9Uodyo3Z/I3DE4="; // Test Encryption Key
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedPhoneNumber();
+  }
+
   @override
   void dispose() {
     _cardNumberController.dispose();
     super.dispose();
   }
 
+  Future<void> _loadSavedPhoneNumber() async {
+    try {
+      final User? currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser != null) {
+        final DocumentSnapshot doc = await FirebaseFirestore.instance
+            .collection('Saved Payment Methods')
+            .doc(currentUser.uid)
+            .collection('Airtel Numbers')
+            .doc('latest')
+            .get();
+
+        if (doc.exists && doc.data() != null) {
+          final data = doc.data() as Map<String, dynamic>;
+          setState(() {
+            _savedPhoneNumber = data['phoneNumber'] as String?;
+            if (_savedPhoneNumber != null && _cardNumberController.text.isEmpty) {
+              _cardNumberController.text = _savedPhoneNumber!;
+            }
+          });
+        }
+      }
+    } catch (e) {
+      // Silently handle errors for saved phone number loading
+      print('Error loading saved phone number: $e');
+    }
+  }
+
+  Future<void> _savePhoneNumber(String phoneNumber) async {
+    try {
+      final User? currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser != null) {
+        await FirebaseFirestore.instance
+            .collection('Saved Payment Methods')
+            .doc(currentUser.uid)
+            .collection('Airtel Numbers')
+            .doc('latest')
+            .set({
+          'phoneNumber': phoneNumber,
+          'savedAt': FieldValue.serverTimestamp(),
+          'isActive': true,
+        });
+      }
+    } catch (e) {
+      print('Error saving phone number: $e');
+    }
+  }
+
+  void _handlePayment() async {
+    String phoneNumber = _cardNumberController.text.trim();
+    if (phoneNumber.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter your Airtel phone number')),
+      );
+      return;
+    }
+
+    // Validate Airtel prefixes using regex
+    RegExp airtelRegex = RegExp(r'^(070[0-9]|075[0-9]|074[0-2])\d{6}$');
+    if (!airtelRegex.hasMatch(phoneNumber)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Invalid Airtel number. Must be a valid 10-digit Airtel Uganda number',
+          ),
+        ),
+      );
+      return;
+    }
+
+    // Convert to +256 format
+    String convertedPhoneNumber = '+256' + phoneNumber.substring(1);
+
+    // Generate a unique transaction reference
+    final txRef = "helper_reg_${DateTime.now().millisecondsSinceEpoch}";
+
+    final Customer customer = Customer(
+      name: "Helper User", // You might want to get this from user data
+      phoneNumber: convertedPhoneNumber,
+      email: "user@example.com", // Replace with actual email if available
+    );
+
+    final Flutterwave flutterwave = Flutterwave(
+      publicKey: publicKey,
+      txRef: txRef,
+      amount: "25000",
+      customer: customer,
+      paymentOptions: "mobilemoneyuganda",
+      customization: Customization(
+        title: "Helper Registration Payment",
+        description: "Payment for Helper app registration",
+      ),
+      redirectUrl: "https://your-redirect-url.com", // Optional
+      isTestMode: true, // Set to false for production
+      currency: "UGX",
+    );
+
+    try {
+      final ChargeResponse response = await flutterwave.charge(context);
+      print(
+        'Flutterwave Response: ${response.toJson()}',
+      ); // Add this for debugging
+      if (response.success == true) {
+        // Payment successful
+        setState(() {
+          _isDimming = true;
+          _showOverlay = true;
+          _paymentStatus = 'Paid';
+        });
+
+        // Save phone number if checkbox is checked
+        if (isChecked) {
+          await _savePhoneNumber(phoneNumber);
+        }
+      } else {
+        // Payment failed
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Payment failed: ${response.status ?? 'Unknown error'}',
+            ),
+          ),
+        );
+      }
+    } catch (error) {
+      print('Payment Error: $error'); // Add this for debugging
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('An error occurred during payment')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final double screenWidth = MediaQuery.of(context).size.width;
     final double screenHeight = MediaQuery.of(context).size.height;
-
 
     return Scaffold(
       body: Stack(
@@ -182,9 +333,11 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
                               ),
                               alignment: Alignment.center,
                               child: Text(
-                                'Not Paid', // Change this to 'Not Paid', 'Pending', etc. as needed
+                                _paymentStatus,
                                 style: TextStyle(
-                                  color: Colors.black,
+                                  color: _paymentStatus == 'Paid'
+                                      ? Colors.green
+                                      : Colors.black,
                                   fontSize: screenWidth * 0.04,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -219,7 +372,7 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
                         SizedBox(height: screenHeight * 0.012),
                         Container(
                           width: screenWidth * (347 / 375),
-                          height: 35,
+                          height: 40,
                           padding: EdgeInsets.symmetric(
                             horizontal: screenWidth * 0.04,
                           ),
@@ -235,6 +388,8 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
                             children: [
                               Expanded(
                                 child: TextField(
+                                  controller: _cardNumberController,
+                                  keyboardType: TextInputType.number,
                                   style: TextStyle(
                                     color: Colors.black,
                                     fontSize: screenWidth * 0.04,
@@ -307,13 +462,7 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
                         ),
                         SizedBox(height: screenHeight * 0.05),
                         GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              _isDimming = true; // Trigger the dimming effect
-                              _showOverlay =
-                                  true; // Show the overlay permanently
-                            });
-                          },
+                          onTap: _handlePayment,
                           child: Container(
                             width: screenWidth * 0.93,
                             height: screenHeight * 0.07,

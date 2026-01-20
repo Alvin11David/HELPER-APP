@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
+import 'package:flutter/gestures.dart';
+import '../Auth/Sign_In_Screen.dart';
 
 class RoleSelectionScreen extends StatelessWidget {
   const RoleSelectionScreen({super.key});
@@ -350,6 +352,14 @@ class RoleSelectionScreen extends StatelessWidget {
                             fontWeight: FontWeight.bold,
                             fontFamily: 'Montserrat',
                           ),
+                          recognizer: TapGestureRecognizer()
+                            ..onTap = () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => SignInScreen(),
+                                ),
+                              );
+                            },
                         ),
                       ],
                     ),
