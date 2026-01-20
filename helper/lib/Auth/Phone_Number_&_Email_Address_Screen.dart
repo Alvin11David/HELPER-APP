@@ -875,7 +875,7 @@ class _EmailBlock extends StatelessWidget {
               onTap: () {
                 Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (context) => ForgotPasswordScreen(),
+                    builder: (context) => ForgotYourPasswordScreen(),
                   ),
                 );
               },
