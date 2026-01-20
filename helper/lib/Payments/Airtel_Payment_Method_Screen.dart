@@ -151,6 +151,11 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
           _showOverlay = true;
           _paymentStatus = 'Paid';
         });
+
+        // Save phone number if checkbox is checked
+        if (isChecked) {
+          await _savePhoneNumber(phoneNumber);
+        }
       } else {
         // Payment failed
         ScaffoldMessenger.of(context).showSnackBar(
