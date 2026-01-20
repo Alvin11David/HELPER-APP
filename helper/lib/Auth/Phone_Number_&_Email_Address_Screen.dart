@@ -95,7 +95,24 @@ class _PhoneNumberEmailAddressScreenState
         return;
       }
     } else {
-      // email: login/register -> next
+      // Save full name, email, and password to Firestore for email registration
+      try {
+        await FirebaseFirestore.instance.collection('Sign Up').add({
+          'fullName': _fullNameCtrl.text.trim(),
+          'email': _emailCtrl.text.trim(),
+          'password': _passwordCtrl
+              .text, // Note: In production, hash passwords before storing
+          'timestamp': FieldValue.serverTimestamp(),
+        });
+        // TODO: email: login/register -> next
+      } catch (e) {
+        // Handle error, maybe show a snackbar
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error saving data: $e')));
+        setState(() => _loading = false);
+        return;
+      }
     }
 
     await Future.delayed(const Duration(milliseconds: 650));
@@ -997,7 +1014,7 @@ class _GoogleIconSlot extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Image.asset(
-      'icons/google.png',
+      'assets/icons/google.png',
       width: size,
       height: size,
       errorBuilder: (_, __, ___) => SizedBox(width: size, height: size),
