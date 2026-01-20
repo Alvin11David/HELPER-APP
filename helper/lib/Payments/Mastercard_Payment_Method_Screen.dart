@@ -19,8 +19,8 @@ class _MasterCardPaymentMethodScreenState
   final TextEditingController _cvvController = TextEditingController();
 
   bool isChecked = false;
-  bool _isDimming = false; // State to track if the screen should dim
-  bool _showOverlay = false; // State to control the overlay visibility
+  final bool _isDimming = false; // State to track if the screen should dim
+  final bool _showOverlay = false; // State to control the overlay visibility
   final Duration _overlayAnimDuration = Duration(milliseconds: 300);
 
   void _handlePayment() async {

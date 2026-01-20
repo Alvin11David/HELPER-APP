@@ -11,7 +11,7 @@ class RegistrationPaymentScreen extends StatefulWidget {
 }
 
 class _RegistrationPaymentScreenState extends State<RegistrationPaymentScreen> {
-  bool _isMasterCardSelected = false;
+  final bool _isMasterCardSelected = false;
   bool _isVisaCardSelected = false;
   bool _isMtnCardSelected = false;
   bool _isPaypalSelected = false;

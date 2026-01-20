@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:helper/Auth/Phone_Number_&_Email_Address_Screen.dart';
 import 'dart:async';
-import 'Role_Selection_Screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});

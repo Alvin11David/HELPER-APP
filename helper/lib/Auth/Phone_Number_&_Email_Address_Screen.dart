@@ -1,12 +1,22 @@
+// ignore_for_file: depend_on_referenced_packages
+
 import 'dart:ui';
 import 'dart:math';
+
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+
 import 'OTP_Verification_Screen.dart';
 import 'Sign_In_Screen.dart';
+
+// ✅ CHANGE THIS import to your real dashboard file path
+import 'package:helper/Worker Dashboard/workers_dashboard_screen.dart';
 
 class _UgandaPhoneFormatter extends TextInputFormatter {
   @override
@@ -14,7 +24,6 @@ class _UgandaPhoneFormatter extends TextInputFormatter {
     TextEditingValue oldValue,
     TextEditingValue newValue,
   ) {
-    // If the text is empty or doesn't start with "+256 ", reset to "+256 "
     if (newValue.text.isEmpty || !newValue.text.startsWith('+256 ')) {
       return const TextEditingValue(
         text: '+256 ',
@@ -22,17 +31,12 @@ class _UgandaPhoneFormatter extends TextInputFormatter {
       );
     }
 
-    // Extract the digits after "+256 "
-    final digitsOnly = newValue.text
-        .substring(5)
-        .replaceAll(RegExp(r'[^0-9]'), '');
+    final digitsOnly =
+        newValue.text.substring(5).replaceAll(RegExp(r'[^0-9]'), '');
 
-    // Limit to 9 digits
-    final limitedDigits = digitsOnly.length > 9
-        ? digitsOnly.substring(0, 9)
-        : digitsOnly;
+    final limitedDigits =
+        digitsOnly.length > 9 ? digitsOnly.substring(0, 9) : digitsOnly;
 
-    // Construct the final text
     final formattedText = '+256 $limitedDigits';
 
     return TextEditingValue(
@@ -85,9 +89,7 @@ class _PhoneNumberEmailAddressScreenState
 
   final _formKey = GlobalKey<FormState>();
 
-  // ✅ Added full names controller
   final _fullNameCtrl = TextEditingController();
-
   final _phoneCtrl = TextEditingController(text: '+256 ');
   final _emailCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
@@ -95,11 +97,11 @@ class _PhoneNumberEmailAddressScreenState
   bool _obscure = true;
   bool _loading = false;
 
-  String? _verificationId; // For phone verification
+  String? _verificationId;
 
   @override
   void dispose() {
-    _fullNameCtrl.dispose(); // ✅ added
+    _fullNameCtrl.dispose();
     _phoneCtrl.dispose();
     _emailCtrl.dispose();
     _passwordCtrl.dispose();
@@ -112,10 +114,18 @@ class _PhoneNumberEmailAddressScreenState
     setState(() => _mode = m);
   }
 
+  void _toast(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg, style: const TextStyle(fontFamily: 'Inter')),
+        backgroundColor: Colors.black.withOpacity(0.85),
+      ),
+    );
+  }
+
   String _generateOTP() {
-    Random random = Random();
-    return (100000 + random.nextInt(900000))
-        .toString(); // Generates 6-digit code
+    final random = Random();
+    return (100000 + random.nextInt(900000)).toString();
   }
 
   Future<void> _onContinue() async {
@@ -125,165 +135,143 @@ class _PhoneNumberEmailAddressScreenState
     setState(() => _loading = true);
 
     if (_mode == _AuthMode.phone) {
-      // Save full name and phone number to Firestore
       try {
         String phoneNumber = _phoneCtrl.text.trim();
 
-        // Validate phone number format
         if (!phoneNumber.startsWith('+256 ') || phoneNumber.length != 14) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Please enter a valid phone number in format +256 XXXXXXXXX',
-              ),
-            ),
-          );
+          _toast('Please enter a valid phone number in format +256 XXXXXXXXX');
           setState(() => _loading = false);
           return;
         }
 
-        // Remove space for Firebase Auth (should be +256XXXXXXXXX)
         phoneNumber = phoneNumber.replaceAll(' ', '');
-        print('Formatted phone number: $phoneNumber');
 
-        // Store user data temporarily (will be confirmed after OTP verification)
+        if (!phoneNumber.startsWith('+256') || phoneNumber.length != 13) {
+          _toast('Invalid phone number format');
+          setState(() => _loading = false);
+          return;
+        }
+
+        // ✅ (OPTIONAL) prevent duplicates before writing
+        final already = await FirebaseFirestore.instance
+            .collection('Sign Up')
+            .where('phoneNumber', isEqualTo: phoneNumber)
+            .limit(1)
+            .get();
+
+        if (already.docs.isNotEmpty) {
+          _toast('Phone number already registered. Please sign in.');
+          setState(() => _loading = false);
+          return;
+        }
+
+        // ✅ store pre-verification record (verified=false)
         await FirebaseFirestore.instance.collection('Sign Up').add({
+          'provider': 'phone',
           'fullName': _fullNameCtrl.text.trim(),
-          'phoneNumber': phoneNumber, // Store with country code
+          'phoneNumber': phoneNumber,
+          'email': '',
+          'photoUrl': '',
           'timestamp': FieldValue.serverTimestamp(),
-          'verified': false, // Will be updated after verification
+          'verified': false,
         });
 
-        // Check if phone number is valid for Uganda
-        if (!phoneNumber.startsWith('+256') || phoneNumber.length != 13) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Invalid phone number format')),
-          );
-          setState(() => _loading = false);
-          return;
-        }
-
-        // Send OTP via Firebase Auth (SMS)
         await FirebaseAuth.instance.verifyPhoneNumber(
           phoneNumber: phoneNumber,
-          verificationCompleted: (PhoneAuthCredential credential) async {
-            // Auto-verification (Android only)
-            print('Auto-verification completed');
-            // You can automatically sign in here if desired
-          },
+          verificationCompleted: (PhoneAuthCredential credential) async {},
           verificationFailed: (FirebaseAuthException e) {
-            print('Phone verification failed: ${e.message}');
-            print('Error code: ${e.code}');
-            print('Phone number attempted: $phoneNumber');
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    'SMS verification failed: ${e.message ?? "Unknown error"}',
-                  ),
-                ),
-              );
-              setState(() => _loading = false);
-            }
+            if (!mounted) return;
+            _toast('SMS verification failed: ${e.message ?? "Unknown error"}');
+            setState(() => _loading = false);
           },
           codeSent: (String verificationId, int? resendToken) {
-            print('SMS code sent to $phoneNumber');
             _verificationId = verificationId;
 
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('SMS sent to your phone!')),
-              );
+            if (!mounted) return;
+            _toast('SMS sent to your phone!');
 
-              // Navigate to OTP Verification Screen
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => OTPVerificationScreen(
-                    isPhoneVerification: true,
-                    emailOrPhone: phoneNumber,
-                    initialVerificationId:
-                        verificationId, // Pass verification ID
-                  ),
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => OTPVerificationScreen(
+                  isPhoneVerification: true,
+                  emailOrPhone: phoneNumber,
+                  initialVerificationId: verificationId,
                 ),
-              ).then((_) {
-                // Reset loading when returning from verification screen
-                if (mounted) setState(() => _loading = false);
-              });
-            }
+              ),
+            ).then((_) {
+              if (mounted) setState(() => _loading = false);
+            });
           },
           codeAutoRetrievalTimeout: (String verificationId) {
-            print('Auto-retrieval timeout');
             _verificationId = verificationId;
           },
           timeout: const Duration(seconds: 60),
         );
 
-        // Don't set loading to false here - it will be handled in callbacks
         return;
       } catch (e) {
-        // Handle error, maybe show a snackbar
-        print('Error initiating phone verification: $e');
-        print('Error type: ${e.runtimeType}');
-        if (e is FirebaseAuthException) {
-          print('Firebase Auth error code: ${e.code}');
-          print('Firebase Auth error message: ${e.message}');
-        }
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error sending SMS: ${e.toString()}')),
-        );
+        _toast('Error sending SMS: $e');
         setState(() => _loading = false);
         return;
       }
     } else {
-      // Save full name, email, and password to Firestore for email registration
+      // EMAIL SIGN UP (your current flow)
       try {
-        String email = _emailCtrl.text.trim();
-        String otpCode = _generateOTP();
+        final fullName = _fullNameCtrl.text.trim();
+        final email = _emailCtrl.text.trim();
+        final password = _passwordCtrl.text.trim();
 
-        // Store user data
-        await FirebaseFirestore.instance.collection('Sign Up').add({
-          'fullName': _fullNameCtrl.text.trim(),
-          'email': email,
-          'password': _passwordCtrl
-              .text, // Note: In production, hash passwords before storing
-          'timestamp': FieldValue.serverTimestamp(),
-          'verified': false, // Will be updated after verification
-        });
+        // ✅ prevent duplicates before writing
+        final already = await FirebaseFirestore.instance
+            .collection('Sign Up')
+            .where('email', isEqualTo: email)
+            .limit(1)
+            .get();
 
-        // Generate and store OTP code
-        await FirebaseFirestore.instance.collection('OTP Codes').doc(email).set(
-          {
-            'email': email,
-            'otpCode': otpCode,
-            'timestamp': FieldValue.serverTimestamp(),
-            'expiresAt': Timestamp.fromDate(
-              DateTime.now().add(const Duration(minutes: 10)),
-            ), // OTP expires in 10 minutes
-          },
-        );
-
-        // Send OTP code to email address via Firebase Cloud Function
-        try {
-          final result = await FirebaseFunctions.instance
-              .httpsCallable('sendOTPEmail')
-              .call({'email': email, 'otpCode': otpCode});
-          print('OTP email sent successfully: ${result.data}');
-          if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('OTP sent to your email!')),
-          );
-        } catch (e) {
-          print('Error sending OTP email: $e');
-          if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to send OTP email: $e')),
-          );
-          // Still proceed to verification screen, as OTP is stored
+        if (already.docs.isNotEmpty) {
+          _toast('Email already registered. Please sign in.');
+          setState(() => _loading = false);
+          return;
         }
 
-        // Navigate to OTP Verification Screen
+        final otpCode = _generateOTP();
+
+        await FirebaseFirestore.instance.collection('Sign Up').add({
+          'provider': 'email',
+          'fullName': fullName,
+          'email': email,
+          'password': password, // NOTE: hash later in production
+          'phoneNumber': '',
+          'photoUrl': '',
+          'timestamp': FieldValue.serverTimestamp(),
+          'verified': false,
+        });
+
+        await FirebaseFirestore.instance.collection('OTP Codes').doc(email).set({
+          'email': email,
+          'otpCode': otpCode,
+          'timestamp': FieldValue.serverTimestamp(),
+          'expiresAt': Timestamp.fromDate(
+            DateTime.now().add(const Duration(minutes: 10)),
+          ),
+        });
+
+        try {
+          await FirebaseFunctions.instance.httpsCallable('sendOTPEmail').call({
+            'email': email,
+            'otpCode': otpCode,
+          });
+          if (!mounted) return;
+          _toast('OTP sent to your email!');
+        } catch (e) {
+          if (!mounted) return;
+          _toast('Failed to send OTP email (still saved OTP).');
+        }
+
         if (!mounted) return;
+        setState(() => _loading = false);
+
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -296,18 +284,99 @@ class _PhoneNumberEmailAddressScreenState
         );
         return;
       } catch (e) {
-        // Handle error, maybe show a snackbar
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error saving data: $e')));
+        _toast('Error saving data: $e');
         setState(() => _loading = false);
         return;
       }
     }
   }
 
-  void _onGoogle() {
-    // TODO: google sign-in
+  // ==========================================================
+  // ✅ GOOGLE SIGN UP / SIGN IN (ANDROID + WEB) using FirebaseAuth
+  // Saves to Firestore "Sign Up" collection (provider="google")
+  // Then navigates to WorkersDashboardScreen()
+  // ==========================================================
+  Future<void> _onGoogle() async {
+    if (_loading) return;
+    FocusScope.of(context).unfocus();
+    setState(() => _loading = true);
+
+    try {
+      UserCredential userCred;
+
+      if (kIsWeb) {
+        final provider = GoogleAuthProvider();
+        provider.addScope('email');
+        provider.setCustomParameters({'prompt': 'select_account'});
+        userCred = await FirebaseAuth.instance.signInWithPopup(provider);
+      } else {
+        final GoogleSignIn googleSignIn = GoogleSignIn(scopes: ['email']);
+        final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+
+        if (googleUser == null) {
+          // user cancelled
+          setState(() => _loading = false);
+          return;
+        }
+
+        final GoogleSignInAuthentication googleAuth =
+            await googleUser.authentication;
+
+        final credential = GoogleAuthProvider.credential(
+          accessToken: googleAuth.accessToken,
+          idToken: googleAuth.idToken,
+        );
+
+        userCred = await FirebaseAuth.instance.signInWithCredential(credential);
+      }
+
+      final user = userCred.user;
+      if (user == null) throw Exception('Google sign-in failed (no user).');
+
+      // ✅ save to Firestore (Sign Up collection)
+      await _saveGoogleUserToFirestore(user);
+
+      if (!mounted) return;
+      setState(() => _loading = false);
+
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const WorkersDashboardScreen()),
+        (_) => false,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      _toast('Google sign-in failed: $e');
+      setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _saveGoogleUserToFirestore(User user) async {
+    final col = FirebaseFirestore.instance.collection('Sign Up');
+
+    // ✅ Use uid as document ID (stable)
+    final docRef = col.doc(user.uid);
+    final snap = await docRef.get();
+
+    final payload = <String, dynamic>{
+      'uid': user.uid,
+      'provider': 'google',
+      'email': user.email ?? '',
+      'fullName': user.displayName ?? '',
+      'photoUrl': user.photoURL ?? '',
+      'phoneNumber': user.phoneNumber ?? '',
+      'verified': true, // google is already verified by Firebase
+      'updatedAt': FieldValue.serverTimestamp(),
+    };
+
+    if (!snap.exists) {
+      await docRef.set({
+        ...payload,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    } else {
+      await docRef.set(payload, SetOptions(merge: true));
+    }
   }
 
   @override
@@ -337,7 +406,6 @@ class _PhoneNumberEmailAddressScreenState
                     children: [
                       SizedBox(height: h * 0.02),
 
-                      // Top bar
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -379,11 +447,7 @@ class _PhoneNumberEmailAddressScreenState
                       _StepIndicator(
                         width: w,
                         activeIndex: 0,
-                        labels: const [
-                          'Phone/Email',
-                          'Verify',
-                          'Payment Details',
-                        ],
+                        labels: const ['Phone/Email', 'Verify', 'Payment Details'],
                         accent: _brandOrange,
                       ),
 
@@ -423,22 +487,15 @@ class _PhoneNumberEmailAddressScreenState
                         switchInCurve: Curves.easeOut,
                         switchOutCurve: Curves.easeIn,
                         transitionBuilder: (child, anim) {
-                          final slide =
-                              Tween<Offset>(
-                                begin: const Offset(0.02, 0),
-                                end: Offset.zero,
-                              ).animate(
-                                CurvedAnimation(
-                                  parent: anim,
-                                  curve: Curves.easeOut,
-                                ),
-                              );
+                          final slide = Tween<Offset>(
+                            begin: const Offset(0.02, 0),
+                            end: Offset.zero,
+                          ).animate(
+                            CurvedAnimation(parent: anim, curve: Curves.easeOut),
+                          );
                           return FadeTransition(
                             opacity: anim,
-                            child: SlideTransition(
-                              position: slide,
-                              child: child,
-                            ),
+                            child: SlideTransition(position: slide, child: child),
                           );
                         },
                         child: _mode == _AuthMode.phone
@@ -460,7 +517,6 @@ class _PhoneNumberEmailAddressScreenState
 
                       SizedBox(height: h * 0.025),
 
-                      // Continue (white)
                       SizedBox(
                         width: double.infinity,
                         height: h * 0.062,
@@ -468,9 +524,8 @@ class _PhoneNumberEmailAddressScreenState
                           onPressed: _loading ? null : _onContinue,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: _pureWhite,
-                            disabledBackgroundColor: _pureWhite.withOpacity(
-                              0.6,
-                            ),
+                            disabledBackgroundColor:
+                                _pureWhite.withOpacity(0.6),
                             elevation: 0,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(30),
@@ -485,32 +540,31 @@ class _PhoneNumberEmailAddressScreenState
                                     color: Colors.black,
                                   ),
                                 )
-                              : Center(
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(
-                                        'Continue',
-                                        style: TextStyle(
-                                          fontSize: w * 0.045,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.black,
-                                          fontFamily: 'Inter',
-                                        ),
-                                      ),
-                                      SizedBox(width: w * 0.02),
-                                      Icon(
-                                        Icons.arrow_forward_rounded,
+                              : Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      'Continue',
+                                      style: TextStyle(
+                                        fontSize: w * 0.045,
+                                        fontWeight: FontWeight.bold,
                                         color: Colors.black,
-                                        size: h * 0.035,
+                                        fontFamily: 'Inter',
                                       ),
-                                    ],
-                                  ),
+                                    ),
+                                    SizedBox(width: w * 0.02),
+                                    Icon(
+                                      Icons.arrow_forward_rounded,
+                                      color: Colors.black,
+                                      size: h * 0.035,
+                                    ),
+                                  ],
                                 ),
                         ),
                       ),
 
+                      // ✅ We show Google button in EMAIL mode (your design)
                       if (_mode == _AuthMode.email) ...[
                         SizedBox(height: h * 0.02),
                         _OrDivider(),
@@ -520,7 +574,7 @@ class _PhoneNumberEmailAddressScreenState
                           width: double.infinity,
                           height: h * 0.062,
                           child: ElevatedButton(
-                            onPressed: _onGoogle,
+                            onPressed: _loading ? null : _onGoogle,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: _pureWhite,
                               elevation: 0,
@@ -580,7 +634,6 @@ class _PhoneNumberEmailAddressScreenState
 
                       SizedBox(height: h * 0.03),
 
-                      // ✅ spaced & Sign In smaller
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -593,7 +646,7 @@ class _PhoneNumberEmailAddressScreenState
                               fontWeight: FontWeight.w500,
                             ),
                           ),
-                          SizedBox(width: w * 0.02), // spacing
+                          SizedBox(width: w * 0.02),
                           GestureDetector(
                             onTap: () {
                               Navigator.push(
@@ -607,7 +660,7 @@ class _PhoneNumberEmailAddressScreenState
                               'Sign In',
                               style: TextStyle(
                                 color: _brandOrange,
-                                fontSize: w * 0.032, // smaller
+                                fontSize: w * 0.032,
                                 fontFamily: 'Montserrat',
                                 fontWeight: FontWeight.w800,
                               ),
@@ -622,7 +675,6 @@ class _PhoneNumberEmailAddressScreenState
                 ),
               ),
 
-              // Back button overlay
               Positioned(
                 top: h * 0.04,
                 left: w * 0.04,
@@ -673,7 +725,6 @@ class _PhoneBlock extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ✅ Full Names
         Text(
           'Full Names',
           style: TextStyle(
@@ -698,8 +749,6 @@ class _PhoneBlock extends StatelessWidget {
           },
         ),
         SizedBox(height: h * 0.018),
-
-        // Phone Number
         Text(
           'Phone Number',
           style: TextStyle(
@@ -720,12 +769,12 @@ class _PhoneBlock extends StatelessWidget {
           validator: (v) {
             final t = (v ?? '').trim();
             if (t.isEmpty) return 'Phone number is required';
-            if (!t.startsWith('+256 '))
-              return 'Phone number must start with +256';
+            if (!t.startsWith('+256 ')) return 'Phone number must start with +256';
             final digits = t.substring(5);
             if (digits.length != 9) return 'Enter exactly 9 digits after +256';
-            if (!RegExp(r'^[0-9]{9}$').hasMatch(digits))
+            if (!RegExp(r'^[0-9]{9}$').hasMatch(digits)) {
               return 'Enter valid 9-digit number';
+            }
             return null;
           },
         ),
@@ -771,7 +820,6 @@ class _EmailBlock extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ✅ Full Names
         Text(
           'Full Names',
           style: TextStyle(
@@ -796,8 +844,6 @@ class _EmailBlock extends StatelessWidget {
           },
         ),
         SizedBox(height: h * 0.018),
-
-        // Email
         Text(
           'Email',
           style: TextStyle(
@@ -823,8 +869,6 @@ class _EmailBlock extends StatelessWidget {
           },
         ),
         SizedBox(height: h * 0.018),
-
-        // Password
         Text(
           'Password',
           style: TextStyle(
@@ -856,7 +900,6 @@ class _EmailBlock extends StatelessWidget {
             return null;
           },
         ),
-
         SizedBox(height: h * 0.014),
         Row(
           children: [
@@ -871,9 +914,7 @@ class _EmailBlock extends StatelessWidget {
             ),
             const Spacer(),
             GestureDetector(
-              onTap: () {
-                // TODO: forgot password
-              },
+              onTap: () {},
               child: Text(
                 'Forgot Password?',
                 style: TextStyle(
@@ -1231,7 +1272,7 @@ class _OrDivider extends StatelessWidget {
   }
 }
 
-// --------------------- Google icon slot (safe placeholder) ---------------------
+// --------------------- Google icon slot ---------------------
 
 class _GoogleIconSlot extends StatelessWidget {
   final double size;
