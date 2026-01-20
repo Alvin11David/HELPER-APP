@@ -36,13 +36,10 @@ class DashedLinePainter extends CustomPainter {
 class OTPVerificationScreen extends StatefulWidget {
   final bool isPhoneVerification; // true for phone, false for email
   final String? emailOrPhone; // Email or phone number for OTP verification
-  final String? initialVerificationId; // For Firebase Auth phone verification
-
   const OTPVerificationScreen({
     super.key,
     this.isPhoneVerification = true, // default to phone
-    this.emailOrPhone,
-    this.initialVerificationId,
+    this.emailOrPhone, required String initialVerificationId,
   });
 
   @override
@@ -59,7 +56,6 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
   bool _isButtonEnabled = false;
   bool _isLoading = false;
   Timer? _timer;
-  String? _currentVerificationId;
 
   @override
   void initState() {
@@ -69,7 +65,6 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
       (index) => TextEditingController(),
     );
     _focusNodes = List.generate(_otpLength, (index) => FocusNode());
-    _currentVerificationId = widget.initialVerificationId;
     _startCountdown();
   }
 
@@ -108,37 +103,39 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
 
       try {
         if (widget.isPhoneVerification && widget.emailOrPhone != null) {
-          // Resend SMS via Firebase Auth
-          await FirebaseAuth.instance.verifyPhoneNumber(
-            phoneNumber: widget.emailOrPhone!,
-            verificationCompleted: (PhoneAuthCredential credential) async {
-              print('Auto-verification completed on resend');
-            },
-            verificationFailed: (FirebaseAuthException e) {
-              print('Phone verification failed on resend: ${e.message}');
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Failed to resend SMS: ${e.message}')),
-                );
-              }
-            },
-            codeSent: (String verificationId, int? resendToken) {
-              print('SMS code resent to ${widget.emailOrPhone}');
-              // Update verification ID for the resent code
-              setState(() {
-                _currentVerificationId = verificationId;
+          // Generate OTP for phone
+          String otpCode = _generateOTP();
+          // Update OTP in Firestore
+          await FirebaseFirestore.instance
+              .collection('OTP Codes')
+              .doc(widget.emailOrPhone!)
+              .set({
+                'phone': widget.emailOrPhone!,
+                'otpCode': otpCode,
+                'timestamp': FieldValue.serverTimestamp(),
+                'expiresAt': Timestamp.fromDate(
+                  DateTime.now().add(const Duration(minutes: 10)),
+                ),
               });
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('SMS resent successfully!')),
-                );
-              }
-            },
-            codeAutoRetrievalTimeout: (String verificationId) {
-              print('Auto-retrieval timeout on resend');
-            },
-            timeout: const Duration(seconds: 60),
-          );
+          // Send SMS via Cloud Function
+          try {
+            final result = await FirebaseFunctions.instance
+                .httpsCallable('sendSMSOTP')
+                .call({'phone': widget.emailOrPhone!, 'otpCode': otpCode});
+            print('SMS OTP resent successfully');
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('SMS resent successfully!')),
+              );
+            }
+          } catch (e) {
+            print('Error resending SMS OTP: $e');
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Failed to resend SMS: $e')),
+              );
+            }
+          }
         } else if (!widget.isPhoneVerification && widget.emailOrPhone != null) {
           // Resend email OTP
           String otpCode = _generateOTP();
@@ -218,46 +215,75 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
     String otp = _controllers.map((controller) => controller.text).join();
     if (otp.length == _otpLength && widget.emailOrPhone != null) {
       try {
-        if (widget.isPhoneVerification && _currentVerificationId != null) {
-          // Phone verification using Firebase Auth
-          PhoneAuthCredential credential = PhoneAuthProvider.credential(
-            verificationId: _currentVerificationId!,
-            smsCode: otp,
-          );
+        if (widget.isPhoneVerification) {
+          // Phone verification using stored OTP
+          // Get the stored OTP from Firestore
+          DocumentSnapshot otpDoc = await FirebaseFirestore.instance
+              .collection('OTP Codes')
+              .doc(widget.emailOrPhone!)
+              .get();
 
-          try {
-            // Sign in with the credential
-            await FirebaseAuth.instance.signInWithCredential(credential);
+          if (otpDoc.exists) {
+            String storedOTP = otpDoc['otpCode'];
+            Timestamp expiresAt = otpDoc['expiresAt'];
 
-            // Update user data in Firestore to mark as verified
-            QuerySnapshot userDocs = await FirebaseFirestore.instance
-                .collection('Sign Up')
-                .where('phoneNumber', isEqualTo: widget.emailOrPhone!)
-                .where('verified', isEqualTo: false)
-                .get();
-
-            if (userDocs.docs.isNotEmpty) {
-              await userDocs.docs.first.reference.update({'verified': true});
+            // Check if OTP is expired
+            if (expiresAt.toDate().isBefore(DateTime.now())) {
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('OTP has expired. Please request a new one.'),
+                  ),
+                );
+              }
+              return;
             }
 
+            // Check if entered OTP matches stored OTP
+            if (otp == storedOTP) {
+              // OTP is correct - update user data to mark as verified
+              QuerySnapshot userDocs = await FirebaseFirestore.instance
+                  .collection('Sign Up')
+                  .where('phoneNumber', isEqualTo: widget.emailOrPhone!)
+                  .where('verified', isEqualTo: false)
+                  .get();
+
+              if (userDocs.docs.isNotEmpty) {
+                await userDocs.docs.first.reference.update({'verified': true});
+              }
+
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Phone number verified successfully!'),
+                  ),
+                );
+                print(
+                  'Phone verified successfully for: ${widget.emailOrPhone}',
+                );
+                // Navigate to RegistrationPaymentScreen
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const RegistrationPaymentScreen(),
+                  ),
+                );
+              }
+            } else {
+              // OTP is incorrect
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Invalid OTP. Please try again.'),
+                  ),
+                );
+              }
+            }
+          } else {
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('Phone number verified successfully!'),
+                  content: Text('OTP not found. Please request a new one.'),
                 ),
-              );
-              print('Phone verified successfully for: ${widget.emailOrPhone}');
-              // Navigate to RegistrationPaymentScreen
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => const RegistrationPaymentScreen(),
-                ),
-              );
-            }
-          } catch (e) {
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Invalid SMS code. Please try again.')),
               );
             }
           }

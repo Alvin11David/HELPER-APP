@@ -288,7 +288,7 @@ class _PhoneNumberEmailAddressScreenState
           MaterialPageRoute(
             builder: (context) => OTPVerificationScreen(
               isPhoneVerification: false,
-              emailOrPhone: email,
+              emailOrPhone: email, initialVerificationId: '',
             ),
           ),
         );
