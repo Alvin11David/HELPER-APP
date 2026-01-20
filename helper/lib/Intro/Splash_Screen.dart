@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:helper/Auth/Phone_Number_&_Email_Address_Screen.dart';
 import 'dart:async';
 import 'Role_Selection_Screen.dart';
 
@@ -23,7 +24,7 @@ class _SplashScreenState extends State<SplashScreen> {
     Timer(const Duration(seconds: 5), () {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const RoleSelectionScreen()),
+        MaterialPageRoute(builder: (context) => const PhoneNumberEmailAddressScreen()),
       );
     });
   }
