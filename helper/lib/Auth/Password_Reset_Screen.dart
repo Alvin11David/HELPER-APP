@@ -74,7 +74,7 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text(
-                'Password reset email sent! Please check your email.',
+                'Password reset link sent! Please check your email and follow the instructions.',
               ),
             ),
           );
