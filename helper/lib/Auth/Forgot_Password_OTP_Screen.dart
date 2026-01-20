@@ -295,7 +295,7 @@ class _ForgotPasswordOTPScreenState extends State<ForgotPasswordOTPScreen> {
           // Email verification using stored OTP
           // Get the stored OTP from Firestore
           DocumentSnapshot otpDoc = await FirebaseFirestore.instance
-              .collection('OTP Codes')
+              .collection('Forgot Password OTP')
               .doc(widget.emailOrPhone!)
               .get();
 
