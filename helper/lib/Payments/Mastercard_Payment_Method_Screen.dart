@@ -98,6 +98,7 @@ class _MasterCardPaymentMethodScreenState
     final double screenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       body: Stack(
         children: [
           SafeArea(
@@ -628,13 +629,7 @@ class _MasterCardPaymentMethodScreenState
 
                         // Pay button (same pattern)
                         GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              _isDimming = true; // Trigger the dimming effect
-                              _showOverlay =
-                                  true; // Show the overlay permanently
-                            });
-                          },
+                          onTap: _handlePayment,
                           child: Container(
                             width: screenWidth * 0.93,
                             height: screenHeight * 0.07,
@@ -853,7 +848,7 @@ class _MasterCardPaymentMethodScreenState
                           child: ElevatedButton(
                             onPressed: _handlePayment,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.white,
+                              backgroundColor: Colors.orange,
                               disabledBackgroundColor: Colors.white.withOpacity(
                                 0.6,
                               ),
@@ -868,18 +863,18 @@ class _MasterCardPaymentMethodScreenState
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text(
-                                    'Pay Now',
+                                    'Go To Dashboard',
                                     style: TextStyle(
                                       fontSize: screenWidth * 0.045,
                                       fontWeight: FontWeight.bold,
-                                      color: Colors.black,
+                                      color: Colors.white,
                                       fontFamily: 'AbrilFatface',
                                     ),
                                   ),
                                   SizedBox(width: screenWidth * 0.02),
                                   Icon(
-                                    Icons.payment,
-                                    color: Colors.black,
+                                    Icons.arrow_forward,
+                                    color: Colors.white,
                                     size: screenHeight * 0.035,
                                   ),
                                 ],
