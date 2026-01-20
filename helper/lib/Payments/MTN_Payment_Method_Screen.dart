@@ -242,7 +242,7 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
                               width: screenWidth * (94 / 340),
                               height: screenWidth * (28 / 340),
                               decoration: BoxDecoration(
-                                color: Colors.white,
+                                color: _isPaymentSuccessful ? Colors.green : Colors.white,
                                 borderRadius: BorderRadius.circular(30),
                                 boxShadow: [
                                   BoxShadow(
@@ -255,9 +255,9 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
                               ),
                               alignment: Alignment.center,
                               child: Text(
-                                'Not Paid', // Change this to 'Not Paid', 'Pending', etc. as needed
+                                _isPaymentSuccessful ? 'Paid' : 'Not Paid',
                                 style: TextStyle(
-                                  color: Colors.black,
+                                  color: _isPaymentSuccessful ? Colors.white : Colors.black,
                                   fontSize: screenWidth * 0.04,
                                   fontWeight: FontWeight.bold,
                                 ),
