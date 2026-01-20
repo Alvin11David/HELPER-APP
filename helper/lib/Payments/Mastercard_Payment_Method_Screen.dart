@@ -290,7 +290,7 @@ class _MasterCardPaymentMethodScreenState
                         SizedBox(height: screenHeight * 0.012),
                         Container(
                           width: screenWidth * (347 / 375),
-                          height: 35,
+                          height: 40,
                           padding: EdgeInsets.symmetric(
                             horizontal: screenWidth * 0.04,
                           ),
@@ -380,7 +380,7 @@ class _MasterCardPaymentMethodScreenState
                         SizedBox(height: screenHeight * 0.012),
                         Container(
                           width: screenWidth * (347 / 375),
-                          height: 35,
+                          height: 40,
                           padding: EdgeInsets.symmetric(
                             horizontal: screenWidth * 0.04,
                           ),
@@ -448,7 +448,7 @@ class _MasterCardPaymentMethodScreenState
                                 SizedBox(height: screenHeight * 0.012),
                                 Container(
                                   width: screenWidth * (122 / 375),
-                                  height: 35,
+                                  height: 40,
                                   padding: EdgeInsets.symmetric(
                                     horizontal: screenWidth * 0.04,
                                   ),
@@ -523,7 +523,7 @@ class _MasterCardPaymentMethodScreenState
                                 SizedBox(height: screenHeight * 0.012),
                                 Container(
                                   width: screenWidth * (211 / 375),
-                                  height: 35,
+                                  height: 40,
                                   padding: EdgeInsets.symmetric(
                                     horizontal: screenWidth * 0.04,
                                   ),
