@@ -24,7 +24,7 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
 
   // Flutterwave configuration
   final String publicKey =
-      "FLWPUBK_TEST-5c4c1ba4-9c72-45c8-90b0-b29e9c6a4597-X"; // Test Public Key
+      "FLWPUBK_TEST-5c4c1ba4-9c72-45c8-90b0-b29e9c6a4597-X"; 
   final String encryptionKey =
       "0lT5zNJgnxHOm2PyOYZxQKL7yk0MC9Uodyo3Z/I3DE4="; // Test Encryption Key
 
