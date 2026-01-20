@@ -24,6 +24,70 @@ class _MasterCardPaymentMethodScreenState
   final Duration _overlayAnimDuration = Duration(milliseconds: 300);
 
   void _handlePayment() async {
+    // Validation
+    String cardNumber = _cardNumberController.text.replaceAll(' ', '');
+    String cardHolder = _cardHolderController.text.trim();
+    String expiry = _expiryController.text.trim();
+    String cvv = _cvvController.text.trim();
+
+    if (cardNumber.isEmpty ||
+        cardNumber.length < 13 ||
+        cardNumber.length > 19) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter a valid card number (13-19 digits)'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (cardHolder.isEmpty || !RegExp(r'^[a-zA-Z\s]+$').hasMatch(cardHolder)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter a valid card holder name (letters only)'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (expiry.isEmpty || !RegExp(r'^\d{2}/\d{2}$').hasMatch(expiry)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter expiry date in MM/YY format'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    // Check if expiry is not expired
+    List<String> parts = expiry.split('/');
+    int month = int.tryParse(parts[0]) ?? 0;
+    int year = int.tryParse('20${parts[1]}') ?? 0;
+    DateTime now = DateTime.now();
+    DateTime expiryDate = DateTime(year, month + 1, 0); // Last day of month
+    if (expiryDate.isBefore(now) || month < 1 || month > 12) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Card has expired or invalid expiry date'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (cvv.isEmpty || cvv.length != 3 || !RegExp(r'^\d{3}$').hasMatch(cvv)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter a valid 3-digit CVV'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     // Flutterwave standard SDK configuration
     final String publicKey =
         "FLWPUBK_TEST-5c4c1ba4-9c72-45c8-90b0-b29e9c6a4597-X"; // Using your client ID as public key
