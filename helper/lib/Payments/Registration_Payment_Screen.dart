@@ -478,9 +478,13 @@ class _RegistrationPaymentScreenState extends State<RegistrationPaymentScreen> {
                     SizedBox(height: screenHeight * 0.02),
                     GestureDetector(
                       onTap: () {
-                        setState(() {
-                          _isAirtelCardSelected = !_isAirtelCardSelected;
-                        });
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                const AirtelPaymentMethodScreen(),
+                          ),
+                        );
                       },
                       child: Container(
                         width: screenWidth * 0.91,
