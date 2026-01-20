@@ -111,7 +111,7 @@ class _ForgotPasswordOTPScreenState extends State<ForgotPasswordOTPScreen> {
           String otpCode = _generateOTP();
           // Update OTP in Firestore
           await FirebaseFirestore.instance
-              .collection('OTP Codes')
+              .collection('Forgot Password OTP')
               .doc(widget.emailOrPhone!)
               .set({
                 'phone': widget.emailOrPhone!,
@@ -146,7 +146,7 @@ class _ForgotPasswordOTPScreenState extends State<ForgotPasswordOTPScreen> {
 
           // Update OTP in Firestore
           await FirebaseFirestore.instance
-              .collection('OTP Codes')
+              .collection('Forgot Password OTP')
               .doc(widget.emailOrPhone!)
               .set({
                 'email': widget.emailOrPhone!,

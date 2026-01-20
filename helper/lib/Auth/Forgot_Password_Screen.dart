@@ -106,9 +106,9 @@ class _ForgotYourPasswordScreenState extends State<ForgotYourPasswordScreen> {
       print('Error sending OTP: $e');
       if (mounted) {
         setState(() => _loading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to send OTP: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to send OTP: $e')));
       }
     }
   }
