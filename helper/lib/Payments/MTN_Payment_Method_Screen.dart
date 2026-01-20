@@ -19,6 +19,51 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
   bool _showOverlay = false; // State to control the overlay visibility
   bool _isPaymentSuccessful = false; // State to track payment status
   final Duration _overlayAnimDuration = Duration(milliseconds: 300);
+  List<String> _savedPhoneNumbers = [];
+  bool _isLoadingSavedNumbers = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedPhoneNumbers();
+  }
+
+  Future<void> _loadSavedPhoneNumbers() async {
+    try {
+      final User? currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser != null) {
+        final QuerySnapshot snapshot = await FirebaseFirestore.instance
+            .collection('Saved Payment Methods')
+            .doc(currentUser.uid)
+            .collection('MTN Numbers')
+            .where('isActive', isEqualTo: true)
+            .orderBy('savedAt', descending: true)
+            .get();
+
+        setState(() {
+          _savedPhoneNumbers = snapshot.docs
+              .map((doc) => doc['phoneNumber'] as String)
+              .toList();
+          
+          // Pre-fill with the most recent phone number
+          if (_savedPhoneNumbers.isNotEmpty) {
+            _cardNumberController.text = _savedPhoneNumbers.first;
+          }
+          
+          _isLoadingSavedNumbers = false;
+        });
+      } else {
+        setState(() {
+          _isLoadingSavedNumbers = false;
+        });
+      }
+    } catch (e) {
+      print('Error loading saved phone numbers: $e');
+      setState(() {
+        _isLoadingSavedNumbers = false;
+      });
+    }
+  }
   @override
   void dispose() {
     _cardNumberController.dispose();
