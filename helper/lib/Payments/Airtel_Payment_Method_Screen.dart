@@ -5,6 +5,8 @@ import 'package:flutterwave_standard/core/flutterwave.dart';
 import 'package:flutterwave_standard/models/requests/customer.dart';
 import 'package:flutterwave_standard/models/requests/customizations.dart';
 import 'package:flutterwave_standard/models/responses/charge_response.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class AirtelPaymentMethodScreen extends StatefulWidget {
   const AirtelPaymentMethodScreen({super.key});
@@ -21,12 +23,19 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
   bool _showOverlay = false; // State to control the overlay visibility
   final Duration _overlayAnimDuration = Duration(milliseconds: 300);
   String _paymentStatus = 'Not Paid'; // State for payment status
+  String? _savedPhoneNumber;
 
   // Flutterwave configuration
   final String publicKey =
       "FLWPUBK_TEST-5c4c1ba4-9c72-45c8-90b0-b29e9c6a4597-X"; 
   final String encryptionKey =
       "0lT5zNJgnxHOm2PyOYZxQKL7yk0MC9Uodyo3Z/I3DE4="; // Test Encryption Key
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedPhoneNumber();
+  }
 
   @override
   void dispose() {
