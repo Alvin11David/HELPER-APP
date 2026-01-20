@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class DashedLinePainter extends CustomPainter {
   final Color color;
@@ -76,9 +77,44 @@ class _PhoneNumberEmailAddressScreenState
 
     setState(() => _loading = true);
 
-    // TODO:
-    // phone: send OTP -> navigate to OTPVerificationScreen
-    // email: login/register -> next
+    if (_mode == _AuthMode.phone) {
+      // Save full name and phone number to Firestore
+      try {
+        await FirebaseFirestore.instance.collection('Sign Up').add({
+          'fullName': _fullNameCtrl.text.trim(),
+          'phoneNumber': _phoneCtrl.text.trim(),
+          'timestamp': FieldValue.serverTimestamp(),
+        });
+        // TODO: send OTP -> navigate to OTPVerificationScreen
+      } catch (e) {
+        // Handle error, maybe show a snackbar
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error saving data: $e')));
+        setState(() => _loading = false);
+        return;
+      }
+    } else {
+      // Save full name, email, and password to Firestore for email registration
+      try {
+        await FirebaseFirestore.instance.collection('Sign Up').add({
+          'fullName': _fullNameCtrl.text.trim(),
+          'email': _emailCtrl.text.trim(),
+          'password': _passwordCtrl
+              .text, // Note: In production, hash passwords before storing
+          'timestamp': FieldValue.serverTimestamp(),
+        });
+        // TODO: email: login/register -> next
+      } catch (e) {
+        // Handle error, maybe show a snackbar
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error saving data: $e')));
+        setState(() => _loading = false);
+        return;
+      }
+    }
+
     await Future.delayed(const Duration(milliseconds: 650));
 
     if (!mounted) return;
@@ -132,7 +168,7 @@ class _PhoneNumberEmailAddressScreenState
                               color: Colors.white,
                               fontSize: w * 0.05,
                               fontWeight: FontWeight.bold,
-                              fontFamily: 'Poppins',
+                              fontFamily: 'Inter',
                             ),
                           ),
                         ],
@@ -182,7 +218,7 @@ class _PhoneNumberEmailAddressScreenState
                             color: Colors.white,
                             fontSize: w * 0.04,
                             fontWeight: FontWeight.w600,
-                            fontFamily: 'Poppins',
+                            fontFamily: 'Inter',
                           ),
                         ),
                       ),
@@ -214,7 +250,10 @@ class _PhoneNumberEmailAddressScreenState
                               );
                           return FadeTransition(
                             opacity: anim,
-                            child: SlideTransition(position: slide, child: child),
+                            child: SlideTransition(
+                              position: slide,
+                              child: child,
+                            ),
                           );
                         },
                         child: _mode == _AuthMode.phone
@@ -244,7 +283,9 @@ class _PhoneNumberEmailAddressScreenState
                           onPressed: _loading ? null : _onContinue,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: _pureWhite,
-                            disabledBackgroundColor: _pureWhite.withOpacity(0.6),
+                            disabledBackgroundColor: _pureWhite.withOpacity(
+                              0.6,
+                            ),
                             elevation: 0,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(30),
@@ -270,7 +311,7 @@ class _PhoneNumberEmailAddressScreenState
                                           fontSize: w * 0.045,
                                           fontWeight: FontWeight.bold,
                                           color: Colors.black,
-                                          fontFamily: 'Poppins',
+                                          fontFamily: 'Inter',
                                         ),
                                       ),
                                       SizedBox(width: w * 0.02),
@@ -313,7 +354,7 @@ class _PhoneNumberEmailAddressScreenState
                                   style: TextStyle(
                                     fontSize: w * 0.042,
                                     fontWeight: FontWeight.w800,
-                                    fontFamily: 'Poppins',
+                                    fontFamily: 'Inter',
                                     color: Colors.black,
                                   ),
                                 ),
@@ -346,7 +387,7 @@ class _PhoneNumberEmailAddressScreenState
                                 color: Colors.white.withOpacity(0.75),
                                 fontSize: w * 0.032,
                                 fontWeight: FontWeight.w600,
-                                fontFamily: 'Poppins',
+                                fontFamily: 'Inter',
                               ),
                             ),
                           ),
@@ -416,7 +457,7 @@ class _PhoneBlock extends StatelessWidget {
             color: Colors.white,
             fontSize: w * 0.040,
             fontWeight: FontWeight.bold,
-            fontFamily: 'Poppins',
+            fontFamily: 'Inter',
           ),
         ),
         SizedBox(height: h * 0.012),
@@ -442,7 +483,7 @@ class _PhoneBlock extends StatelessWidget {
             color: Colors.white,
             fontSize: w * 0.040,
             fontWeight: FontWeight.bold,
-            fontFamily: 'Poppins',
+            fontFamily: 'Inter',
           ),
         ),
         SizedBox(height: h * 0.012),
@@ -471,7 +512,7 @@ class _PhoneBlock extends StatelessWidget {
               color: Colors.white.withOpacity(0.85),
               fontSize: w * 0.035,
               fontWeight: FontWeight.w600,
-              fontFamily: 'Poppins',
+              fontFamily: 'Inter',
             ),
           ),
         ),
@@ -511,7 +552,7 @@ class _EmailBlock extends StatelessWidget {
             color: Colors.white,
             fontSize: w * 0.040,
             fontWeight: FontWeight.bold,
-            fontFamily: 'Poppins',
+            fontFamily: 'Inter',
           ),
         ),
         SizedBox(height: h * 0.012),
@@ -537,7 +578,7 @@ class _EmailBlock extends StatelessWidget {
             color: Colors.white,
             fontSize: w * 0.040,
             fontWeight: FontWeight.bold,
-            fontFamily: 'Poppins',
+            fontFamily: 'Inter',
           ),
         ),
         SizedBox(height: h * 0.012),
@@ -564,7 +605,7 @@ class _EmailBlock extends StatelessWidget {
             color: Colors.white,
             fontSize: w * 0.040,
             fontWeight: FontWeight.bold,
-            fontFamily: 'Poppins',
+            fontFamily: 'Inter',
           ),
         ),
         SizedBox(height: h * 0.012),
@@ -599,7 +640,7 @@ class _EmailBlock extends StatelessWidget {
                 color: Colors.white.withOpacity(0.85),
                 fontSize: w * 0.035,
                 fontWeight: FontWeight.w600,
-                fontFamily: 'Poppins',
+                fontFamily: 'Inter',
               ),
             ),
             const Spacer(),
@@ -613,7 +654,7 @@ class _EmailBlock extends StatelessWidget {
                   color: Colors.white.withOpacity(0.85),
                   fontSize: w * 0.035,
                   fontWeight: FontWeight.w600,
-                  fontFamily: 'Poppins',
+                  fontFamily: 'Inter',
                 ),
               ),
             ),
@@ -701,7 +742,7 @@ class _StepIndicator extends StatelessWidget {
                       color: accent,
                       fontSize: width * 0.032,
                       fontWeight: FontWeight.w700,
-                      fontFamily: 'Poppins',
+                      fontFamily: 'Inter',
                     ),
                   ),
                 ),
@@ -782,7 +823,7 @@ class _SmoothAuthSwitch extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: w * 0.044,
                                 fontWeight: FontWeight.w900,
-                                fontFamily: 'Poppins',
+                                fontFamily: 'Inter',
                                 color: mode == _AuthMode.phone
                                     ? Colors.black
                                     : Colors.white,
@@ -815,7 +856,7 @@ class _SmoothAuthSwitch extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: w * 0.044,
                                 fontWeight: FontWeight.w900,
-                                fontFamily: 'Poppins',
+                                fontFamily: 'Inter',
                                 color: mode == _AuthMode.email
                                     ? Colors.black
                                     : Colors.white,
@@ -900,7 +941,7 @@ class _PillInput extends StatelessWidget {
                 color: Colors.white,
                 fontSize: contentFontSize,
                 fontWeight: FontWeight.w700,
-                fontFamily: 'Poppins',
+                fontFamily: 'Inter',
               ),
               cursorColor: const Color(0xFFFFA10D),
               decoration: InputDecoration(
@@ -909,7 +950,7 @@ class _PillInput extends StatelessWidget {
                   color: Colors.white.withOpacity(0.55),
                   fontSize: contentFontSize,
                   fontWeight: FontWeight.w600,
-                  fontFamily: 'Poppins',
+                  fontFamily: 'Inter',
                 ),
                 border: InputBorder.none,
                 isCollapsed: true,
@@ -952,7 +993,7 @@ class _OrDivider extends StatelessWidget {
               color: Colors.white.withOpacity(0.7),
               fontSize: w * 0.035,
               fontWeight: FontWeight.w700,
-              fontFamily: 'Poppins',
+              fontFamily: 'Inter',
             ),
           ),
         ),
@@ -973,7 +1014,7 @@ class _GoogleIconSlot extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Image.asset(
-      'icons/google.png',
+      'assets/icons/google.png',
       width: size,
       height: size,
       errorBuilder: (_, __, ___) => SizedBox(width: size, height: size),
@@ -1058,4 +1099,3 @@ class _CircleIconButton extends StatelessWidget {
     );
   }
 }
-
