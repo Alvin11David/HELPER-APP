@@ -30,7 +30,12 @@ class DashedLinePainter extends CustomPainter {
 }
 
 class OTPVerificationScreen extends StatefulWidget {
-  const OTPVerificationScreen({super.key});
+  final bool isPhoneVerification; // true for phone, false for email
+
+  const OTPVerificationScreen({
+    super.key,
+    this.isPhoneVerification = true, // default to phone
+  });
 
   @override
   State<OTPVerificationScreen> createState() => _OTPVerificationScreenState();
@@ -233,13 +238,14 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
                             ],
                           ),
                           child: Text(
-                            'Enter the 6-digit code sent to your',
+                            'Enter the 6-digit code sent to your ${widget.isPhoneVerification ? 'phone number' : 'email'}',
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: screenWidth * 0.04,
                               fontWeight: FontWeight.w500,
                               fontFamily: 'Poppins',
                             ),
+                            textAlign: TextAlign.center,
                           ),
                         ),
                       ),
@@ -275,7 +281,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
                           width: otpBoxWidth,
                           height: otpBoxHeight,
                           margin: EdgeInsets.symmetric(
-                            horizontal: screenWidth * 0.02,
+                            horizontal: screenWidth * 0.01,
                           ),
                           decoration: BoxDecoration(
                             border: Border.all(color: Colors.white, width: 1),

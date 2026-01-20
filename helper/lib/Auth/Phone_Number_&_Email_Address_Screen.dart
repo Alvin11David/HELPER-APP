@@ -91,7 +91,8 @@ class _PhoneNumberEmailAddressScreenState
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => const OTPVerificationScreen(),
+            builder: (context) =>
+                const OTPVerificationScreen(isPhoneVerification: true),
           ),
         );
         return;
@@ -118,7 +119,8 @@ class _PhoneNumberEmailAddressScreenState
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => const OTPVerificationScreen(),
+            builder: (context) =>
+                const OTPVerificationScreen(isPhoneVerification: false),
           ),
         );
         return;
