@@ -4,7 +4,42 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'OTP_Verification_Screen.dart';
+
+class _UgandaPhoneFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    // If the text is empty or doesn't start with "+256 ", reset to "+256 "
+    if (newValue.text.isEmpty || !newValue.text.startsWith('+256 ')) {
+      return const TextEditingValue(
+        text: '+256 ',
+        selection: TextSelection.collapsed(offset: 5),
+      );
+    }
+
+    // Extract the digits after "+256 "
+    final digitsOnly = newValue.text
+        .substring(5)
+        .replaceAll(RegExp(r'[^0-9]'), '');
+
+    // Limit to 9 digits
+    final limitedDigits = digitsOnly.length > 9
+        ? digitsOnly.substring(0, 9)
+        : digitsOnly;
+
+    // Construct the final text
+    final formattedText = '+256 $limitedDigits';
+
+    return TextEditingValue(
+      text: formattedText,
+      selection: TextSelection.collapsed(offset: formattedText.length),
+    );
+  }
+}
 
 class DashedLinePainter extends CustomPainter {
   final Color color;
@@ -52,12 +87,14 @@ class _PhoneNumberEmailAddressScreenState
   // ✅ Added full names controller
   final _fullNameCtrl = TextEditingController();
 
-  final _phoneCtrl = TextEditingController();
+  final _phoneCtrl = TextEditingController(text: '+256 ');
   final _emailCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
 
   bool _obscure = true;
   bool _loading = false;
+
+  String? _verificationId; // For phone verification
 
   @override
   void dispose() {
@@ -90,47 +127,109 @@ class _PhoneNumberEmailAddressScreenState
       // Save full name and phone number to Firestore
       try {
         String phoneNumber = _phoneCtrl.text.trim();
-        String otpCode = _generateOTP();
 
+        // Validate phone number format
+        if (!phoneNumber.startsWith('+256 ') || phoneNumber.length != 14) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Please enter a valid phone number in format +256 XXXXXXXXX',
+              ),
+            ),
+          );
+          setState(() => _loading = false);
+          return;
+        }
+
+        // Remove space for Firebase Auth (should be +256XXXXXXXXX)
+        phoneNumber = phoneNumber.replaceAll(' ', '');
+        print('Formatted phone number: $phoneNumber');
+
+        // Store user data temporarily (will be confirmed after OTP verification)
         await FirebaseFirestore.instance.collection('Sign Up').add({
           'fullName': _fullNameCtrl.text.trim(),
-          'phoneNumber': phoneNumber,
+          'phoneNumber': phoneNumber, // Store with country code
           'timestamp': FieldValue.serverTimestamp(),
+          'verified': false, // Will be updated after verification
         });
 
-        // Generate and store OTP code
-        await FirebaseFirestore.instance
-            .collection('OTP Codes')
-            .doc(phoneNumber)
-            .set({
-              'phoneNumber': phoneNumber,
-              'otpCode': otpCode,
-              'timestamp': FieldValue.serverTimestamp(),
-              'expiresAt': Timestamp.fromDate(
-                DateTime.now().add(const Duration(minutes: 10)),
-              ), // OTP expires in 10 minutes
-            });
+        // Check if phone number is valid for Uganda
+        if (!phoneNumber.startsWith('+256') || phoneNumber.length != 13) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Invalid phone number format')),
+          );
+          setState(() => _loading = false);
+          return;
+        }
 
-        // TODO: Send OTP code to phone number via SMS
-        print('OTP Code for $phoneNumber: $otpCode'); // For testing purposes
+        // Send OTP via Firebase Auth (SMS)
+        await FirebaseAuth.instance.verifyPhoneNumber(
+          phoneNumber: phoneNumber,
+          verificationCompleted: (PhoneAuthCredential credential) async {
+            // Auto-verification (Android only)
+            print('Auto-verification completed');
+            // You can automatically sign in here if desired
+          },
+          verificationFailed: (FirebaseAuthException e) {
+            print('Phone verification failed: ${e.message}');
+            print('Error code: ${e.code}');
+            print('Phone number attempted: $phoneNumber');
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    'SMS verification failed: ${e.message ?? "Unknown error"}',
+                  ),
+                ),
+              );
+              setState(() => _loading = false);
+            }
+          },
+          codeSent: (String verificationId, int? resendToken) {
+            print('SMS code sent to $phoneNumber');
+            _verificationId = verificationId;
 
-        // Navigate to OTP Verification Screen
-        if (!mounted) return;
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => OTPVerificationScreen(
-              isPhoneVerification: true,
-              emailOrPhone: phoneNumber,
-            ),
-          ),
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('SMS sent to your phone!')),
+              );
+
+              // Navigate to OTP Verification Screen
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => OTPVerificationScreen(
+                    isPhoneVerification: true,
+                    emailOrPhone: phoneNumber,
+                    verificationId: verificationId, // Pass verification ID
+                  ),
+                ),
+              ).then((_) {
+                // Reset loading when returning from verification screen
+                if (mounted) setState(() => _loading = false);
+              });
+            }
+          },
+          codeAutoRetrievalTimeout: (String verificationId) {
+            print('Auto-retrieval timeout');
+            _verificationId = verificationId;
+          },
+          timeout: const Duration(seconds: 60),
         );
+
+        // Don't set loading to false here - it will be handled in callbacks
         return;
       } catch (e) {
         // Handle error, maybe show a snackbar
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error saving data: $e')));
+        print('Error initiating phone verification: $e');
+        print('Error type: ${e.runtimeType}');
+        if (e is FirebaseAuthException) {
+          print('Firebase Auth error code: ${e.code}');
+          print('Firebase Auth error message: ${e.message}');
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error sending SMS: ${e.toString()}')),
+        );
         setState(() => _loading = false);
         return;
       }
@@ -147,6 +246,7 @@ class _PhoneNumberEmailAddressScreenState
           'password': _passwordCtrl
               .text, // Note: In production, hash passwords before storing
           'timestamp': FieldValue.serverTimestamp(),
+          'verified': false, // Will be updated after verification
         });
 
         // Generate and store OTP code
@@ -463,7 +563,7 @@ class _PhoneNumberEmailAddressScreenState
                               ),
                             ),
                             child: Text(
-                              'Your phone number is safe and will not be shared',
+                              'Your phone number is safe and will not be shared. Standard SMS charges may apply.',
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 color: Colors.white.withOpacity(0.75),
@@ -571,17 +671,20 @@ class _PhoneBlock extends StatelessWidget {
         SizedBox(height: h * 0.012),
         _PillInput(
           controller: phoneCtrl,
-          hint: 'Enter Your Phone Number',
+          hint: '+256 712345678',
           icon: Icons.phone_rounded,
           keyboardType: TextInputType.phone,
-          inputFormatters: [
-            FilteringTextInputFormatter.allow(RegExp(r'[0-9+]')),
-          ],
+          inputFormatters: [_UgandaPhoneFormatter()],
           contentFontSize: w * 0.038,
           validator: (v) {
             final t = (v ?? '').trim();
             if (t.isEmpty) return 'Phone number is required';
-            if (t.length < 9) return 'Enter a valid number';
+            if (!t.startsWith('+256 '))
+              return 'Phone number must start with +256';
+            final digits = t.substring(5);
+            if (digits.length != 9) return 'Enter exactly 9 digits after +256';
+            if (!RegExp(r'^[0-9]{9}$').hasMatch(digits))
+              return 'Enter valid 9-digit number';
             return null;
           },
         ),
