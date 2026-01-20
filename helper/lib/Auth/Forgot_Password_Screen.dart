@@ -52,27 +52,65 @@ class _ForgotYourPasswordScreenState extends State<ForgotYourPasswordScreen> {
     super.dispose();
   }
 
+  String _generateOTP() {
+    // Generate a 6-digit OTP
+    return (100000 + (DateTime.now().millisecondsSinceEpoch % 900000))
+        .toString();
+  }
+
   Future<void> _onSubmit() async {
     FocusScope.of(context).unfocus();
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
     setState(() => _loading = true);
 
-    // TODO: send reset OTP then navigate
+    // Send reset OTP then navigate
     final identifier = _identifierCtrl.text.trim();
 
-    if (!mounted) return;
-    setState(() => _loading = false);
+    try {
+      // Generate OTP
+      String otpCode = _generateOTP();
 
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => ForgotPasswordOTPScreen(
-          isPhoneVerification: false, // email verification
-          emailOrPhone: identifier,
-          initialVerificationId: '',
+      // Store OTP in Firestore
+      await FirebaseFirestore.instance
+          .collection('Forgot Password OTP')
+          .doc(identifier)
+          .set({
+            'email': identifier,
+            'otpCode': otpCode,
+            'timestamp': FieldValue.serverTimestamp(),
+            'expiresAt': Timestamp.fromDate(
+              DateTime.now().add(const Duration(minutes: 10)),
+            ),
+          });
+
+      // Send email via Cloud Function
+      final result = await FirebaseFunctions.instance
+          .httpsCallable('sendOTPEmail')
+          .call({'email': identifier, 'otpCode': otpCode});
+      print('OTP email sent successfully');
+
+      if (!mounted) return;
+      setState(() => _loading = false);
+
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => ForgotPasswordOTPScreen(
+            isPhoneVerification: false, // email verification
+            emailOrPhone: identifier,
+            initialVerificationId: '',
+          ),
         ),
-      ),
-    );
+      );
+    } catch (e) {
+      print('Error sending OTP: $e');
+      if (mounted) {
+        setState(() => _loading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to send OTP: $e')),
+        );
+      }
+    }
   }
 
   @override
