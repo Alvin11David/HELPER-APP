@@ -328,6 +328,7 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
                               Expanded(
                                 child: TextField(
                                   controller: _cardNumberController,
+                                  keyboardType: TextInputType.number,
                                   style: TextStyle(
                                     color: Colors.black,
                                     fontSize: screenWidth * 0.04,
