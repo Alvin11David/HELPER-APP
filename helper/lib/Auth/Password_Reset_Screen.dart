@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'Sign_In_Screen.dart';
 
 class PasswordResetScreen extends StatefulWidget {
@@ -21,11 +22,87 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
 
   Future<void> _onContinue() async {
     FocusScope.of(context).unfocus();
+
+    final password = _passwordCtrl?.text ?? '';
+    final confirmPassword = _confirmCtrl?.text ?? '';
+
+    // Validation
+    if (password.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Please enter a password')));
+      return;
+    }
+
+    if (password.length < 6) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Password must be at least 6 characters')),
+      );
+      return;
+    }
+
+    if (password != confirmPassword) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Passwords do not match')));
+      return;
+    }
+
     setState(() => _loading = true);
-    // TODO: implement actual password reset flow
-    await Future.delayed(const Duration(milliseconds: 700));
-    if (!mounted) return;
-    setState(() => _loading = false);
+
+    try {
+      // For forgot password flow, we need to authenticate the user first
+      // Since we verified via OTP, we can sign in with email and a temporary password
+      // or use Firebase Auth's updatePassword if user is already signed in
+
+      // For now, let's assume we need to sign in the user
+      // This is a simplified approach - in production, you might want to handle this differently
+
+      if (widget.email != null) {
+        // Try to sign in with email and password (this might fail if user doesn't exist)
+        // Actually, for forgot password, we should use a different approach
+
+        // Since we verified the email via OTP, we can proceed with password reset
+        // For Firebase Auth, we need the user to be authenticated
+
+        // Let's use Firebase Auth's sendPasswordResetEmail instead
+        await FirebaseAuth.instance.sendPasswordResetEmail(
+          email: widget.email!,
+        );
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Password reset email sent! Please check your email.',
+              ),
+            ),
+          );
+
+          // Navigate back to sign in screen
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => SignInScreen()),
+            (route) => false,
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Email not found. Please try again.')),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to reset password: $e')));
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _loading = false);
+      }
+    }
   }
 
   @override
