@@ -343,8 +343,9 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
   }
 
   String _stepHeadline() {
-    if (_step == 0)
+    if (_step == 0) {
       return "Choose Date"; // your first mock shows "Choose Date" even on details
+    }
     if (_step == 1) return "Choose Date";
     if (_step == 2) return "Choose Date";
     return "Choose Date";

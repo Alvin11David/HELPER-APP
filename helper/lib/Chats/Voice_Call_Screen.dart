@@ -3,6 +3,8 @@ import 'package:helper/Chats/overlays/incoming_call_overlay_service.dart';
 import 'package:helper/main.dart';
 
 class VoiceCallScreen extends StatefulWidget {
+  const VoiceCallScreen({super.key});
+
   @override
   _VoiceCallScreenState createState() => _VoiceCallScreenState();
 }

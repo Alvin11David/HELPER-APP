@@ -4,6 +4,8 @@ import 'dart:io';
 import 'Voice_Call_Screen.dart';
 
 class ChatScreen extends StatefulWidget {
+  const ChatScreen({super.key});
+
   @override
   _ChatScreenState createState() => _ChatScreenState();
 }
@@ -269,7 +271,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                         int displayHour = hour == 0
                                             ? 12
                                             : (hour > 12 ? hour - 12 : hour);
-                                        return '${displayHour}:${minute} ${period}';
+                                        return '$displayHour:$minute $period';
                                       }(),
                                       'isSent': true,
                                     });
@@ -302,7 +304,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                 int displayHour = hour == 0
                                     ? 12
                                     : (hour > 12 ? hour - 12 : hour);
-                                return '${displayHour}:${minute} ${period}';
+                                return '$displayHour:$minute $period';
                               }(),
                               'isSent': true,
                             });
