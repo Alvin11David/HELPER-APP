@@ -20,6 +20,7 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
   bool _isDimming = false; // State to track if the screen should dim
   bool _showOverlay = false; // State to control the overlay visibility
   final Duration _overlayAnimDuration = Duration(milliseconds: 300);
+  String _paymentStatus = 'Not Paid'; // State for payment status
 
   // Flutterwave configuration
   final String publicKey =
@@ -42,24 +43,15 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
       return;
     }
 
-    // Validate Airtel prefixes
-    if (!phoneNumber.startsWith('070') &&
-        !phoneNumber.startsWith('075') &&
-        !phoneNumber.startsWith('074')) {
+    // Validate Airtel prefixes using regex
+    RegExp airtelRegex = RegExp(r'^(070[0-9]|075[0-9]|074[0-2])\d{6}$');
+    if (!airtelRegex.hasMatch(phoneNumber)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            'Invalid Airtel number. Must start with 070, 075, or 074',
+            'Invalid Airtel number. Must be a valid 10-digit Airtel Uganda number',
           ),
         ),
-      );
-      return;
-    }
-
-    // Validate length
-    if (phoneNumber.length != 10) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Phone number must be 10 digits')),
       );
       return;
     }
@@ -93,7 +85,9 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
 
     try {
       final ChargeResponse response = await flutterwave.charge(context);
-      print('Flutterwave Response: ${response.toJson()}'); // Add this for debugging
+      print(
+        'Flutterwave Response: ${response.toJson()}',
+      ); // Add this for debugging
       if (response.success == true) {
         // Payment successful
         setState(() {
