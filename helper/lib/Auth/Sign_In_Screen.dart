@@ -118,7 +118,7 @@ class _SignInScreenState extends State<SignInScreen> {
     setState(() => _loading = true);
 
     if (_mode == _AuthMode.phone) {
-      // Save full name and phone number to Firestore
+      // Check if phone number exists in Sign Up collection
       try {
         String phoneNumber = _phoneCtrl.text.trim();
 
@@ -139,13 +139,6 @@ class _SignInScreenState extends State<SignInScreen> {
         phoneNumber = phoneNumber.replaceAll(' ', '');
         print('Formatted phone number: $phoneNumber');
 
-        // Store user data temporarily (will be confirmed after OTP verification)
-        await FirebaseFirestore.instance.collection('Sign Up').add({
-          'phoneNumber': phoneNumber, // Store with country code
-          'timestamp': FieldValue.serverTimestamp(),
-          'verified': false, // Will be updated after verification
-        });
-
         // Check if phone number is valid for Uganda
         if (!phoneNumber.startsWith('+256') || phoneNumber.length != 13) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -155,6 +148,21 @@ class _SignInScreenState extends State<SignInScreen> {
           return;
         }
 
+        // Check if user exists
+        QuerySnapshot userQuery = await FirebaseFirestore.instance
+            .collection('Sign Up')
+            .where('phoneNumber', isEqualTo: phoneNumber)
+            .get();
+
+        if (userQuery.docs.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Phone number not found. Please sign up first.')),
+          );
+          setState(() => _loading = false);
+          return;
+        }
+
+        // User exists, proceed with OTP verification
         // Send OTP via Firebase Auth (SMS)
         await FirebaseAuth.instance.verifyPhoneNumber(
           phoneNumber: phoneNumber,
@@ -228,19 +236,28 @@ class _SignInScreenState extends State<SignInScreen> {
         return;
       }
     } else {
-      // Save full name, email, and password to Firestore for email registration
+      // Check if email and password match in Sign Up collection
       try {
         String email = _emailCtrl.text.trim();
-        String otpCode = _generateOTP();
+        String password = _passwordCtrl.text.trim();
 
-        // Store user data
-        await FirebaseFirestore.instance.collection('Sign Up').add({
-          'email': email,
-          'password': _passwordCtrl
-              .text, // Note: In production, hash passwords before storing
-          'timestamp': FieldValue.serverTimestamp(),
-          'verified': false, // Will be updated after verification
-        });
+        // Check if user exists with matching email and password
+        QuerySnapshot userQuery = await FirebaseFirestore.instance
+            .collection('Sign Up')
+            .where('email', isEqualTo: email)
+            .where('password', isEqualTo: password)
+            .get();
+
+        if (userQuery.docs.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Invalid email or password. Please check your credentials.')),
+          );
+          setState(() => _loading = false);
+          return;
+        }
+
+        // User exists, proceed with OTP verification
+        String otpCode = _generateOTP();
 
         // Generate and store OTP code
         await FirebaseFirestore.instance.collection('OTP Codes').doc(email).set(
@@ -290,7 +307,7 @@ class _SignInScreenState extends State<SignInScreen> {
         // Handle error, maybe show a snackbar
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Error saving data: $e')));
+        ).showSnackBar(SnackBar(content: Text('Error logging in: $e')));
         setState(() => _loading = false);
         return;
       }
