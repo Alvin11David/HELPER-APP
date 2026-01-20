@@ -93,6 +93,7 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
         setState(() {
           _isDimming = true;
           _showOverlay = true;
+          _paymentStatus = 'Paid';
         });
       } else {
         // Payment failed
@@ -271,9 +272,9 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
                               ),
                               alignment: Alignment.center,
                               child: Text(
-                                'Not Paid', // Change this to 'Not Paid', 'Pending', etc. as needed
+                                _paymentStatus,
                                 style: TextStyle(
-                                  color: Colors.black,
+                                  color: _paymentStatus == 'Paid' ? Colors.green : Colors.black,
                                   fontSize: screenWidth * 0.04,
                                   fontWeight: FontWeight.bold,
                                 ),
