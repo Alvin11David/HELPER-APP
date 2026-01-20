@@ -282,9 +282,13 @@ class _RegistrationPaymentScreenState extends State<RegistrationPaymentScreen> {
                     SizedBox(height: screenHeight * 0.02),
                     GestureDetector(
                       onTap: () {
-                        setState(() {
-                          _isVisaCardSelected = !_isVisaCardSelected;
-                        });
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                const VisaPaymentMethodScreen(),
+                          ),
+                        );
                       },
                       child: Container(
                         width: screenWidth * 0.91,
