@@ -59,13 +59,6 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
       // This is a simplified approach - in production, you might want to handle this differently
 
       if (widget.email != null) {
-        // Try to sign in with email and password (this might fail if user doesn't exist)
-        // Actually, for forgot password, we should use a different approach
-
-        // Since we verified the email via OTP, we can proceed with password reset
-        // For Firebase Auth, we need the user to be authenticated
-
-        // Let's use Firebase Auth's sendPasswordResetEmail instead
         await FirebaseAuth.instance.sendPasswordResetEmail(
           email: widget.email!,
         );
@@ -250,7 +243,7 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
                                 color: Colors.white,
                                 fontSize: screenWidth * 0.04,
                                 fontWeight: FontWeight.w500,
-                                fontFamily: 'Poppins',
+                                fontFamily: 'Inter',
                               ),
                             ),
                           ),
@@ -269,7 +262,7 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
                               color: Colors.white,
                               fontSize: w * 0.04,
                               fontWeight: FontWeight.bold,
-                              fontFamily: 'Poppins',
+                              fontFamily: 'Inter',
                             ),
                           ),
                         ),
@@ -308,7 +301,7 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
                               color: Colors.white,
                               fontSize: w * 0.04,
                               fontWeight: FontWeight.bold,
-                              fontFamily: 'Poppins',
+                              fontFamily: 'Inter',
                             ),
                           ),
                         ),
@@ -373,7 +366,7 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
                                         fontSize: w * 0.045,
                                         fontWeight: FontWeight.bold,
                                         color: Colors.black,
-                                        fontFamily: 'Poppins',
+                                        fontFamily: 'Inter',
                                       ),
                                     ),
                                     SizedBox(width: w * 0.02),
@@ -398,7 +391,7 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
                                 color: Colors.white,
                                 fontSize: screenWidth * 0.04,
                                 fontWeight: FontWeight.w500,
-                                fontFamily: 'Poppins',
+                                fontFamily: 'Inter',
                               ),
                             ),
                             TextSpan(
@@ -515,7 +508,7 @@ class _StepIndicator extends StatelessWidget {
                     color: accent,
                     fontSize: width * 0.032,
                     fontWeight: FontWeight.w700,
-                    fontFamily: 'Poppins',
+                    fontFamily: 'Inter',
                   ),
                 ),
               ),
@@ -532,7 +525,7 @@ class _StepIndicator extends StatelessWidget {
                     color: accent,
                     fontSize: width * 0.032,
                     fontWeight: FontWeight.w700,
-                    fontFamily: 'Poppins',
+                    fontFamily: 'Inter',
                   ),
                 ),
               ),
@@ -549,7 +542,7 @@ class _StepIndicator extends StatelessWidget {
                     color: accent,
                     fontSize: width * 0.032,
                     fontWeight: FontWeight.w700,
-                    fontFamily: 'Poppins',
+                    fontFamily: 'Inter',
                   ),
                 ),
               ),
@@ -646,7 +639,7 @@ class _PillInput extends StatelessWidget {
                 color: Colors.white,
                 fontSize: contentFontSize,
                 fontWeight: FontWeight.w700,
-                fontFamily: 'Poppins', // ✅ requested
+                fontFamily: 'Inter', // ✅ requested
               ),
               cursorColor: const Color(0xFFFFA10D),
               decoration: InputDecoration(
@@ -655,7 +648,7 @@ class _PillInput extends StatelessWidget {
                   color: Colors.white.withOpacity(0.55),
                   fontSize: contentFontSize * 0.9,
                   fontWeight: FontWeight.w600,
-                  fontFamily: 'Poppins', // ✅ requested
+                  fontFamily: 'Inter', // ✅ requested
                 ),
                 border: InputBorder.none,
                 isCollapsed: true,
