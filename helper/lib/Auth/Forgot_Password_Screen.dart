@@ -207,7 +207,9 @@ class _ForgotYourPasswordScreenState extends State<ForgotYourPasswordScreen> {
                         contentFontSize: w * 0.038,
                         validator: (v) {
                           final t = (v ?? '').trim();
-                          if (t.isEmpty) return 'Email or phone is required';
+                          if (t.isEmpty) return 'Please enter a valid email address';
+                          final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+$');
+                          if (!emailRegex.hasMatch(t)) return 'Please enter a valid email address';
                           return null;
                         },
                       ),
