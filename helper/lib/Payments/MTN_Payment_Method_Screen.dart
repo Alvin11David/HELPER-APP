@@ -317,6 +317,7 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
                             children: [
                               Expanded(
                                 child: TextField(
+                                  controller: _cardNumberController,
                                   style: TextStyle(
                                     color: Colors.black,
                                     fontSize: screenWidth * 0.04,
@@ -336,6 +337,7 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
                                     contentPadding: EdgeInsets.zero,
                                   ),
                                   cursorColor: Colors.black,
+                                  keyboardType: TextInputType.phone,
                                 ),
                               ),
                               SizedBox(width: screenWidth * 0.02),
