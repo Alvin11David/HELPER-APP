@@ -43,6 +43,14 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
       return;
     }
 
+    // Format phone number for Flutterwave (ensure international format)
+    String formattedPhone = cleanPhone;
+    if (formattedPhone.startsWith('0')) {
+      formattedPhone = '256${formattedPhone.substring(1)}';
+    } else if (!formattedPhone.startsWith('256')) {
+      formattedPhone = '256$formattedPhone';
+    }
+
     // Flutterwave standard SDK configuration
     final String publicKey =
         "FLWPUBK_TEST-5c4c1ba4-9c72-45c8-90b0-b29e9c6a4597-X"; // Using test key
@@ -52,7 +60,7 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
     final String customerEmail =
         "user@example.com"; // You might want to get this from user data
     final String customerName = "MTN User";
-    final String customerPhone = phoneNumber;
+    final String customerPhone = formattedPhone;
 
     final Customer customer = Customer(
       name: customerName,
@@ -67,7 +75,7 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
       txRef: txRef,
       amount: amount,
       customer: customer,
-      paymentOptions: "mobilemoneyuganda",
+      paymentOptions: "mobilemoneyuganda,mobilemoney",
       customization: Customization(title: "Helper MTN Payment"),
       isTestMode: true,
     );
