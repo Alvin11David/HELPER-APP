@@ -24,6 +24,77 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
     super.dispose();
   }
 
+  Future<void> _processPayment() async {
+    final String phoneNumber = _cardNumberController.text.trim();
+
+    // Basic validation
+    if (phoneNumber.isEmpty || !RegExp(r'^\+?256\d{9}$').hasMatch(phoneNumber.replaceAll(' ', ''))) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter a valid MTN phone number'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    // Flutterwave standard SDK configuration
+    final String publicKey =
+        "FLWPUBK_TEST-5c4c1ba4-9c72-45c8-90b0-b29e9c6a4597-X"; // Using test key
+    final String txRef = "mtn_txn_${DateTime.now().millisecondsSinceEpoch}";
+    final String amount = "25000";
+    final String currency = "UGX";
+    final String customerEmail = "user@example.com"; // You might want to get this from user data
+    final String customerName = "MTN User";
+    final String customerPhone = phoneNumber;
+
+    final Customer customer = Customer(
+      name: customerName,
+      phoneNumber: customerPhone,
+      email: customerEmail,
+    );
+
+    final Flutterwave flutterwave = Flutterwave(
+      publicKey: publicKey,
+      currency: currency,
+      redirectUrl: "https://example.com/callback",
+      txRef: txRef,
+      amount: amount,
+      customer: customer,
+      paymentOptions: "mobilemoneyuganda",
+      customization: Customization(title: "Helper MTN Payment"),
+      isTestMode: true,
+    );
+
+    try {
+      final ChargeResponse response = await flutterwave.charge(context);
+
+      if (response.success == true) {
+        // Payment successful - show success overlay
+        setState(() {
+          _isPaymentSuccessful = true;
+          _isDimming = true;
+          _showOverlay = true;
+        });
+      } else {
+        // Payment failed or cancelled
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Payment failed or was cancelled'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Payment error: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final double screenWidth = MediaQuery.of(context).size.width;
@@ -309,13 +380,7 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
                         ),
                         SizedBox(height: screenHeight * 0.05),
                         GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              _isDimming = true; // Trigger the dimming effect
-                              _showOverlay =
-                                  true; // Show the overlay permanently
-                            });
-                          },
+                          onTap: _processPayment,
                           child: Container(
                             width: screenWidth * 0.93,
                             height: screenHeight * 0.07,
