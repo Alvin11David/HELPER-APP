@@ -3,10 +3,12 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/gestures.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:helper/Payments/Registration_Payment_Screen.dart';
+import 'Sign_In_Screen.dart';
 
 class DashedLinePainter extends CustomPainter {
   final Color color;
@@ -667,6 +669,14 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
                                 fontWeight: FontWeight.bold,
                                 fontFamily: 'Montserrat',
                               ),
+                              recognizer: TapGestureRecognizer()
+                                ..onTap = () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (context) => SignInScreen(),
+                                    ),
+                                  );
+                                },
                             ),
                           ],
                         ),
