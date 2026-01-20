@@ -420,7 +420,7 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
                     ),
                   ),
                   Positioned(
-                    bottom: screenHeight * 0.03,
+                    bottom: MediaQuery.of(context).viewInsets.bottom + screenHeight * 0.03,
                     left: screenWidth * 0.05,
                     right: screenWidth * 0.05,
                     child: Center(
