@@ -368,13 +368,7 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
                         ),
                         SizedBox(height: screenHeight * 0.05),
                         GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              _isDimming = true; // Trigger the dimming effect
-                              _showOverlay =
-                                  true; // Show the overlay permanently
-                            });
-                          },
+                          onTap: _handlePayment,
                           child: Container(
                             width: screenWidth * 0.93,
                             height: screenHeight * 0.07,
