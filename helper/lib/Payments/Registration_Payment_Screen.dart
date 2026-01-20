@@ -352,7 +352,8 @@ class _RegistrationPaymentScreenState extends State<RegistrationPaymentScreen> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const MTNPaymentMethodScreen(),
+                            builder: (context) =>
+                                const MtnPaymentMethodScreen(),
                           ),
                         );
                       },

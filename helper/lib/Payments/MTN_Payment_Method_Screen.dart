@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutterwave_standard/flutterwave.dart';
 
 class MtnPaymentMethodScreen extends StatefulWidget {
   const MtnPaymentMethodScreen({super.key});
@@ -15,6 +16,7 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
   bool isChecked = false;
   bool _isDimming = false; // State to track if the screen should dim
   bool _showOverlay = false; // State to control the overlay visibility
+  bool _isPaymentSuccessful = false; // State to track payment status
   final Duration _overlayAnimDuration = Duration(milliseconds: 300);
   @override
   void dispose() {
@@ -219,7 +221,7 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
                         SizedBox(height: screenHeight * 0.012),
                         Container(
                           width: screenWidth * (347 / 375),
-                          height: 35,
+                          height: 40,
                           padding: EdgeInsets.symmetric(
                             horizontal: screenWidth * 0.04,
                           ),
