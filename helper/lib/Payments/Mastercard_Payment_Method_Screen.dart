@@ -909,7 +909,9 @@ class _MasterCardPaymentMethodScreenState
                           width: double.infinity,
                           height: screenHeight * 0.062,
                           child: ElevatedButton(
-                            onPressed: _handlePayment,
+                            onPressed: () {
+                              // TODO: Navigate to dashboard
+                            },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.orange,
                               disabledBackgroundColor: Colors.white.withOpacity(
