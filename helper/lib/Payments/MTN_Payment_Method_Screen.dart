@@ -7,8 +7,7 @@ class MtnPaymentMethodScreen extends StatefulWidget {
   const MtnPaymentMethodScreen({super.key});
 
   @override
-  State<MtnPaymentMethodScreen> createState() =>
-      _MtnPaymentMethodScreenState();
+  State<MtnPaymentMethodScreen> createState() => _MtnPaymentMethodScreenState();
 }
 
 class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
@@ -28,7 +27,11 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
     final String phoneNumber = _cardNumberController.text.trim();
 
     // Basic validation
-    if (phoneNumber.isEmpty || !RegExp(r'^(\+256\d{9}|0\d{9}|\d{9})$').hasMatch(phoneNumber.replaceAll(' ', ''))) {
+    final String cleanPhone = phoneNumber
+        .replaceAll(' ', '')
+        .replaceAll('+', '');
+    if (phoneNumber.isEmpty ||
+        !RegExp(r'^(256\d{9}|0\d{9}|\d{9})$').hasMatch(cleanPhone)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please enter a valid MTN phone number'),
@@ -44,7 +47,8 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
     final String txRef = "mtn_txn_${DateTime.now().millisecondsSinceEpoch}";
     final String amount = "25000";
     final String currency = "UGX";
-    final String customerEmail = "user@example.com"; // You might want to get this from user data
+    final String customerEmail =
+        "user@example.com"; // You might want to get this from user data
     final String customerName = "MTN User";
     final String customerPhone = phoneNumber;
 
@@ -99,7 +103,6 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
   Widget build(BuildContext context) {
     final double screenWidth = MediaQuery.of(context).size.width;
     final double screenHeight = MediaQuery.of(context).size.height;
-
 
     return Scaffold(
       body: Stack(
@@ -242,7 +245,9 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
                               width: screenWidth * (94 / 340),
                               height: screenWidth * (28 / 340),
                               decoration: BoxDecoration(
-                                color: _isPaymentSuccessful ? Colors.green : Colors.white,
+                                color: _isPaymentSuccessful
+                                    ? Colors.green
+                                    : Colors.white,
                                 borderRadius: BorderRadius.circular(30),
                                 boxShadow: [
                                   BoxShadow(
@@ -257,7 +262,9 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
                               child: Text(
                                 _isPaymentSuccessful ? 'Paid' : 'Not Paid',
                                 style: TextStyle(
-                                  color: _isPaymentSuccessful ? Colors.white : Colors.black,
+                                  color: _isPaymentSuccessful
+                                      ? Colors.white
+                                      : Colors.black,
                                   fontSize: screenWidth * 0.04,
                                   fontWeight: FontWeight.bold,
                                 ),
