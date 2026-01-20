@@ -207,7 +207,7 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
                     SizedBox(height: h * 0.023),
                     _StepIndicator(
                       width: w,
-                      activeIndex: 0,
+                      activeIndex: 2,
                       labels: const ['1', '2', '3'],
                       accent: brandOrange,
                     ),

@@ -451,8 +451,8 @@ class _ForgotPasswordOTPScreenState extends State<ForgotPasswordOTPScreen> {
                     // ✅ circle #1 filled orange
                     _MiniStep123(
                       width: w,
-                      accent: _brandOrange,
-                      activeIndex: 0,
+                      accent: const Color.fromRGBO(255, 161, 13, 1),
+                      activeIndex: 1,
                     ),
                     SizedBox(height: screenHeight * 0.04),
                     Center(
@@ -711,7 +711,7 @@ class _MiniStep123 extends StatelessWidget {
     final lineW = width * 0.18;
 
     Widget circle(int index) {
-      final active = index == activeIndex;
+      final active = index <= activeIndex;
       return Container(
         width: dotSize,
         height: dotSize,
