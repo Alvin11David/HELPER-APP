@@ -1,7 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutterwave_standard/flutterwave.dart';
+import 'package:flutterwave/flutterwave.dart';
 
 class MasterCardPaymentMethodScreen extends StatefulWidget {
   const MasterCardPaymentMethodScreen({super.key});
@@ -22,6 +22,53 @@ class _MasterCardPaymentMethodScreenState
   bool _isDimming = false; // State to track if the screen should dim
   bool _showOverlay = false; // State to control the overlay visibility
   final Duration _overlayAnimDuration = Duration(milliseconds: 300);
+
+  // Flutterwave configuration
+  final String publicKey = "5c4c1ba4-9c72-45c8-90b0-b29e9c6a4597";
+  final String encryptionKey = "0lT5zNJgnxHOm2PyOYZxQKL7yk0MC9Uodyo3Z/I3DE4=";
+  final String currency = "UGX";
+  final double amount = 25000.0;
+
+  void _handlePayment() async {
+    // For demo purposes, using placeholder customer details
+    // In real app, get from user profile or input
+    final String email = "test@example.com";
+    final String fullName = "Test User";
+    final String phoneNumber = "+256700000000";
+
+    final config = FlutterwaveConfig(
+      publicKey: publicKey,
+      encryptionKey: encryptionKey,
+      amount: amount,
+      currency: currency,
+      email: email,
+      fullName: fullName,
+      txRef: "txn_${DateTime.now().millisecondsSinceEpoch}",
+      isDebugMode: true, // Sandbox mode
+      phoneNumber: phoneNumber,
+    );
+
+    try {
+      final response = await FlutterwaveCheckout().charge(config);
+      if (response.status == "successful") {
+        // Payment successful
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text("Payment successful!")));
+        // Navigate to dashboard or next screen
+        // Navigator.of(context).pushReplacementNamed('/dashboard');
+      } else {
+        // Payment failed
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Payment failed: ${response.status}")),
+        );
+      }
+    } catch (error) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Payment error: $error")));
+    }
+  }
 
   @override
   void dispose() {
@@ -791,9 +838,7 @@ class _MasterCardPaymentMethodScreenState
                           width: double.infinity,
                           height: screenHeight * 0.062,
                           child: ElevatedButton(
-                            onPressed: () {
-                              // TODO: Handle continue action
-                            },
+                            onPressed: _handlePayment,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFFDF8800),
                               disabledBackgroundColor: const Color(
