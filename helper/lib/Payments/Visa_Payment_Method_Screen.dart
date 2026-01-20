@@ -1,6 +1,9 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutterwave_standard/flutterwave.dart';
+import 'package:flutterwave_standard/models/requests/customer.dart';
+import 'package:flutterwave_standard/models/requests/customizations.dart';
 
 class VisaPaymentMethodScreen extends StatefulWidget {
   const VisaPaymentMethodScreen({super.key});
@@ -28,6 +31,111 @@ class _VisaPaymentMethodScreenState extends State<VisaPaymentMethodScreen> {
     _expiryController.dispose();
     _cvvController.dispose();
     super.dispose();
+  }
+
+  Future<void> _processPayment() async {
+    final String cardNumber = _cardNumberController.text.replaceAll(' ', '');
+    final String cardHolder = _cardHolderController.text;
+    final String expiry = _expiryController.text;
+    final String cvv = _cvvController.text;
+
+    // Basic validation
+    if (cardNumber.isEmpty || cardNumber.length < 13) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter a valid card number'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (cardHolder.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter the card holder name'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (expiry.isEmpty || !RegExp(r'^\d{2}/\d{2}$').hasMatch(expiry)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter a valid expiry date (MM/YY)'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (cvv.isEmpty || cvv.length != 3 || !RegExp(r'^\d{3}$').hasMatch(cvv)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter a valid 3-digit CVV'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    // Flutterwave standard SDK configuration
+    final String publicKey =
+        "FLWPUBK_TEST-5c4c1ba4-9c72-45c8-90b0-b29e9c6a4597-X"; // Using test key
+    final String txRef = "visa_txn_${DateTime.now().millisecondsSinceEpoch}";
+    final String amount = "25000";
+    final String currency = "UGX";
+    final String customerEmail =
+        "user@example.com"; // You might want to get this from user data
+    final String customerName = cardHolder;
+    final String customerPhone =
+        "+256700000000"; // You might want to get this from user data
+
+    final Customer customer = Customer(
+      name: customerName,
+      phoneNumber: customerPhone,
+      email: customerEmail,
+    );
+
+    final Flutterwave flutterwave = Flutterwave(
+      publicKey: publicKey,
+      currency: currency,
+      redirectUrl: "https://example.com/callback",
+      txRef: txRef,
+      amount: amount,
+      customer: customer,
+      paymentOptions: "card, mobilemoneyuganda",
+      customization: Customization(title: "Helper Registration Payment"),
+      isTestMode: true,
+    );
+
+    try {
+      final ChargeResponse response = await flutterwave.charge(context);
+
+      if (response.success == true) {
+        // Payment successful - show success overlay
+        setState(() {
+          _isDimming = true;
+          _showOverlay = true;
+        });
+      } else {
+        // Payment failed or cancelled
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Payment failed or was cancelled'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Payment error: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   @override
@@ -566,13 +674,7 @@ class _VisaPaymentMethodScreenState extends State<VisaPaymentMethodScreen> {
 
                         // Pay button (same pattern)
                         GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              _isDimming = true; // Trigger the dimming effect
-                              _showOverlay =
-                                  true; // Show the overlay permanently
-                            });
-                          },
+                          onTap: _processPayment,
                           child: Container(
                             width: screenWidth * 0.93,
                             height: screenHeight * 0.07,
