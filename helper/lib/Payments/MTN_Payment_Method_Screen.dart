@@ -26,15 +26,17 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
   Future<void> _processPayment() async {
     final String phoneNumber = _cardNumberController.text.trim();
 
-    // Basic validation
+    // Basic validation - MTN Uganda prefixes: 077, 078, 076, 079, 031, 039
     final String cleanPhone = phoneNumber
         .replaceAll(' ', '')
         .replaceAll('+', '');
-    if (phoneNumber.isEmpty ||
-        !RegExp(r'^(256\d{9}|0\d{9}|\d{9})$').hasMatch(cleanPhone)) {
+    final RegExp mtnRegex = RegExp(
+      r'^(256(77|78|76|79|31|39)\d{7}|0(77|78|76|79|31|39)\d{7}|(77|78|76|79|31|39)\d{7})$',
+    );
+    if (phoneNumber.isEmpty || !mtnRegex.hasMatch(cleanPhone)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please enter a valid MTN phone number'),
+          content: Text('Please enter a valid MTN Uganda phone number'),
           backgroundColor: Colors.red,
         ),
       );
