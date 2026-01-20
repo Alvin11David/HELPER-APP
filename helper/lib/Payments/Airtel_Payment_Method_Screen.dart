@@ -34,7 +34,7 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
   }
 
   void _handlePayment() async {
-    final phoneNumber = _cardNumberController.text.trim();
+    String phoneNumber = _cardNumberController.text.trim();
     if (phoneNumber.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please enter your Airtel phone number')),
@@ -42,12 +42,31 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
       return;
     }
 
+    // Validate Airtel prefixes
+    if (!phoneNumber.startsWith('070') && !phoneNumber.startsWith('075') && !phoneNumber.startsWith('074')) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Invalid Airtel number. Must start with 070, 075, or 074')),
+      );
+      return;
+    }
+
+    // Validate length
+    if (phoneNumber.length != 10) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Phone number must be 10 digits')),
+      );
+      return;
+    }
+
+    // Convert to +256 format
+    String convertedPhoneNumber = '+256' + phoneNumber.substring(1);
+
     // Generate a unique transaction reference
     final txRef = "helper_reg_${DateTime.now().millisecondsSinceEpoch}";
 
     final Customer customer = Customer(
       name: "Helper User", // You might want to get this from user data
-      phoneNumber: phoneNumber,
+      phoneNumber: convertedPhoneNumber,
       email: "user@example.com", // Replace with actual email if available
     );
 
