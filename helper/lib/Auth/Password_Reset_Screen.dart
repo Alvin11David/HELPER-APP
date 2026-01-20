@@ -331,6 +331,14 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
                               fontWeight: FontWeight.bold,
                               fontFamily: 'Montserrat',
                             ),
+                            recognizer: TapGestureRecognizer()
+                              ..onTap = () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) => SignInScreen(),
+                                  ),
+                                );
+                              },
                           ),
                         ],
                       ),
