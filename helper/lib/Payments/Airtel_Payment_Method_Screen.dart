@@ -219,7 +219,7 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
                         SizedBox(height: screenHeight * 0.012),
                         Container(
                           width: screenWidth * (347 / 375),
-                          height: 35,
+                          height: 40,
                           padding: EdgeInsets.symmetric(
                             horizontal: screenWidth * 0.04,
                           ),
