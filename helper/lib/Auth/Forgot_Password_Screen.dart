@@ -84,11 +84,12 @@ class _ForgotYourPasswordScreenState extends State<ForgotYourPasswordScreen> {
           });
 
       // Send email via Cloud Function
-      print('About to call sendForgotPasswordOTPEmail with email: $identifier, otpCode: $otpCode');
-      await FirebaseFunctions.instance.httpsCallable('sendForgotPasswordOTPEmail').call({
-        'email': identifier,
-        'otpCode': otpCode,
-      });
+      print(
+        'About to call sendForgotPasswordOTPEmail with email: $identifier, otpCode: $otpCode',
+      );
+      await FirebaseFunctions.instance
+          .httpsCallable('sendForgotPasswordOTPEmail')
+          .call({'email': identifier, 'otpCode': otpCode});
       print('sendForgotPasswordOTPEmail call completed successfully');
       print('Forgot Password OTP email sent successfully');
 

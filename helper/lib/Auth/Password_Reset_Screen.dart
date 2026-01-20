@@ -2,7 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'Sign_In_Screen.dart';
 
 class PasswordResetScreen extends StatefulWidget {
@@ -51,32 +51,42 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
     setState(() => _loading = true);
 
     try {
-      // For forgot password flow, we need to authenticate the user first
-      // Since we verified via OTP, we can sign in with email and a temporary password
-      // or use Firebase Auth's updatePassword if user is already signed in
-
-      // For now, let's assume we need to sign in the user
-      // This is a simplified approach - in production, you might want to handle this differently
-
       if (widget.email != null) {
-        await FirebaseAuth.instance.sendPasswordResetEmail(
-          email: widget.email!,
-        );
+        // Update the password in Firestore Sign Up collection
+        final userQuery = await FirebaseFirestore.instance
+            .collection('Sign Up')
+            .where('email', isEqualTo: widget.email!)
+            .get();
 
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Password reset link sent! Please check your email and follow the instructions.',
+        if (userQuery.docs.isNotEmpty) {
+          // Update the password field in the user's document
+          await userQuery.docs.first.reference.update({
+            'password': password, // Note: In production, hash the password
+          });
+
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                  'Password updated successfully! Please sign in with your new password.',
+                ),
               ),
-            ),
-          );
+            );
 
-          // Navigate back to sign in screen
-          Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (context) => SignInScreen()),
-            (route) => false,
-          );
+            // Navigate back to sign in screen
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (context) => SignInScreen()),
+              (route) => false,
+            );
+          }
+        } else {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('User not found. Please try again.'),
+              ),
+            );
+          }
         }
       } else {
         if (mounted) {
