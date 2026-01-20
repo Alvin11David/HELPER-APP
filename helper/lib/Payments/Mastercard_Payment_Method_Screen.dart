@@ -121,14 +121,12 @@ class _MasterCardPaymentMethodScreenState
       final ChargeResponse response = await flutterwave.charge(context);
 
       if (response.success == true) {
-        // Payment successful
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Payment successful!'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        Navigator.of(context).pushReplacementNamed('/dashboard');
+        // Payment successful - show success overlay
+        setState(() {
+          _isPaymentSuccessful = true;
+          _isDimming = true;
+          _showOverlay = true;
+        });
       } else {
         // Payment failed or cancelled
         ScaffoldMessenger.of(context).showSnackBar(
