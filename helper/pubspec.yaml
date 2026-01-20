@@ -46,6 +46,8 @@ dependencies:
   firebase_auth: ^5.0.0
   # Cloud Firestore
   cloud_firestore: ^5.0.0
+  # Cloud Functions
+  cloud_functions: ^5.0.0
   # Shared preferences
   shared_preferences: ^2.2.2
   # Google Maps
