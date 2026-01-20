@@ -19,80 +19,65 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
   bool _showOverlay = false; // State to control the overlay visibility
   bool _isPaymentSuccessful = false; // State to track payment status
   final Duration _overlayAnimDuration = Duration(milliseconds: 300);
-  List<String> _savedPhoneNumbers = [];
-  bool _isLoadingSavedNumbers = true;
+  String? _savedPhoneNumber;
 
   @override
   void initState() {
     super.initState();
-    _loadSavedPhoneNumbers();
+    _loadSavedPhoneNumber();
   }
 
-  Future<void> _loadSavedPhoneNumbers() async {
-    try {
-      final User? currentUser = FirebaseAuth.instance.currentUser;
-      if (currentUser != null) {
-        final QuerySnapshot snapshot = await FirebaseFirestore.instance
-            .collection('Saved Payment Methods')
-            .doc(currentUser.uid)
-            .collection('MTN Numbers')
-            .where('isActive', isEqualTo: true)
-            .orderBy('savedAt', descending: true)
-            .get();
-
-        setState(() {
-          _savedPhoneNumbers = snapshot.docs
-              .map((doc) => doc['phoneNumber'] as String)
-              .toList();
-          
-          // Pre-fill with the most recent phone number
-          if (_savedPhoneNumbers.isNotEmpty) {
-            _cardNumberController.text = _savedPhoneNumbers.first;
-          }
-          
-          _isLoadingSavedNumbers = false;
-        });
-      } else {
-        setState(() {
-          _isLoadingSavedNumbers = false;
-        });
-      }
-    } catch (e) {
-      print('Error loading saved phone numbers: $e');
-      setState(() {
-        _isLoadingSavedNumbers = false;
-      });
-    }
-  }
   @override
   void dispose() {
     _cardNumberController.dispose();
     super.dispose();
   }
 
+  Future<void> _loadSavedPhoneNumber() async {
+    try {
+      final User? currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser != null) {
+        final DocumentSnapshot doc = await FirebaseFirestore.instance
+            .collection('Saved Payment Methods')
+            .doc(currentUser.uid)
+            .collection('MTN Numbers')
+            .doc('latest')
+            .get();
+
+        if (doc.exists && doc.data() != null) {
+          final data = doc.data() as Map<String, dynamic>;
+          setState(() {
+            _savedPhoneNumber = data['phoneNumber'] as String?;
+            if (_savedPhoneNumber != null &&
+                _cardNumberController.text.isEmpty) {
+              _cardNumberController.text = _savedPhoneNumber!;
+            }
+          });
+        }
+      }
+    } catch (e) {
+      // Silently handle errors for saved phone number loading
+      print('Error loading saved phone number: $e');
+    }
+  }
+
   Future<void> _savePhoneNumber(String phoneNumber) async {
     try {
       final User? currentUser = FirebaseAuth.instance.currentUser;
       if (currentUser != null) {
-        // Save to user's saved payment methods
         await FirebaseFirestore.instance
             .collection('Saved Payment Methods')
             .doc(currentUser.uid)
             .collection('MTN Numbers')
-            .add({
+            .doc('latest')
+            .set({
               'phoneNumber': phoneNumber,
               'savedAt': FieldValue.serverTimestamp(),
-              'type': 'MTN',
               'isActive': true,
             });
-
-        print('Phone number saved successfully: $phoneNumber');
-      } else {
-        print('No authenticated user found');
       }
     } catch (e) {
       print('Error saving phone number: $e');
-      // Don't show error to user as this is not critical
     }
   }
 
