@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'OTP_Verification_Screen.dart';
 
 class DashedLinePainter extends CustomPainter {
   final Color color;
@@ -85,7 +86,15 @@ class _PhoneNumberEmailAddressScreenState
           'phoneNumber': _phoneCtrl.text.trim(),
           'timestamp': FieldValue.serverTimestamp(),
         });
-        // TODO: send OTP -> navigate to OTPVerificationScreen
+        // Navigate to OTP Verification Screen
+        if (!mounted) return;
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const OTPVerificationScreen(),
+          ),
+        );
+        return;
       } catch (e) {
         // Handle error, maybe show a snackbar
         ScaffoldMessenger.of(
@@ -104,7 +113,15 @@ class _PhoneNumberEmailAddressScreenState
               .text, // Note: In production, hash passwords before storing
           'timestamp': FieldValue.serverTimestamp(),
         });
-        // TODO: email: login/register -> next
+        // Navigate to OTP Verification Screen
+        if (!mounted) return;
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const OTPVerificationScreen(),
+          ),
+        );
+        return;
       } catch (e) {
         // Handle error, maybe show a snackbar
         ScaffoldMessenger.of(
@@ -114,11 +131,6 @@ class _PhoneNumberEmailAddressScreenState
         return;
       }
     }
-
-    await Future.delayed(const Duration(milliseconds: 650));
-
-    if (!mounted) return;
-    setState(() => _loading = false);
   }
 
   void _onGoogle() {
