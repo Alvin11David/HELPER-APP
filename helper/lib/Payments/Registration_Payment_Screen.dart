@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'Mastercard_Payment_Method_Screen.dart';
+import 'Visa_Payment_Method_Screen.dart';
+import 'MTN_Payment_Method_Screen.dart';
 
 class RegistrationPaymentScreen extends StatefulWidget {
   const RegistrationPaymentScreen({super.key});
@@ -281,9 +283,13 @@ class _RegistrationPaymentScreenState extends State<RegistrationPaymentScreen> {
                     SizedBox(height: screenHeight * 0.02),
                     GestureDetector(
                       onTap: () {
-                        setState(() {
-                          _isVisaCardSelected = !_isVisaCardSelected;
-                        });
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                const VisaPaymentMethodScreen(),
+                          ),
+                        );
                       },
                       child: Container(
                         width: screenWidth * 0.91,
@@ -343,9 +349,13 @@ class _RegistrationPaymentScreenState extends State<RegistrationPaymentScreen> {
                     SizedBox(height: screenHeight * 0.02),
                     GestureDetector(
                       onTap: () {
-                        setState(() {
-                          _isMtnCardSelected = !_isMtnCardSelected;
-                        });
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                const MtnPaymentMethodScreen(),
+                          ),
+                        );
                       },
                       child: Container(
                         width: screenWidth * 0.91,

@@ -21,6 +21,7 @@ class _MasterCardPaymentMethodScreenState
   bool isChecked = false;
   bool _isDimming = false; // State to track if the screen should dim
   bool _showOverlay = false; // State to control the overlay visibility
+  bool _isPaymentSuccessful = false; // State to track payment status
   final Duration _overlayAnimDuration = Duration(milliseconds: 300);
 
   void _handlePayment() async {
@@ -120,14 +121,12 @@ class _MasterCardPaymentMethodScreenState
       final ChargeResponse response = await flutterwave.charge(context);
 
       if (response.success == true) {
-        // Payment successful
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Payment successful!'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        Navigator.of(context).pushReplacementNamed('/dashboard');
+        // Payment successful - show success overlay
+        setState(() {
+          _isPaymentSuccessful = true;
+          _isDimming = true;
+          _showOverlay = true;
+        });
       } else {
         // Payment failed or cancelled
         ScaffoldMessenger.of(context).showSnackBar(
@@ -296,7 +295,7 @@ class _MasterCardPaymentMethodScreenState
                             ],
                           ),
 
-                          // Not Paid pill (same positioning pattern)
+                          // Payment status pill (same positioning pattern)
                           Positioned(
                             bottom: screenWidth * 0.04,
                             right: screenWidth * 0.04,
@@ -304,7 +303,9 @@ class _MasterCardPaymentMethodScreenState
                               width: screenWidth * (94 / 340),
                               height: screenWidth * (28 / 340),
                               decoration: BoxDecoration(
-                                color: Colors.white,
+                                color: _isPaymentSuccessful
+                                    ? Colors.green
+                                    : Colors.white,
                                 borderRadius: BorderRadius.circular(30),
                                 boxShadow: [
                                   BoxShadow(
@@ -317,9 +318,11 @@ class _MasterCardPaymentMethodScreenState
                               ),
                               alignment: Alignment.center,
                               child: Text(
-                                'Not Paid',
+                                _isPaymentSuccessful ? 'Paid' : 'Not Paid',
                                 style: TextStyle(
-                                  color: Colors.black,
+                                  color: _isPaymentSuccessful
+                                      ? Colors.white
+                                      : Colors.black,
                                   fontSize: screenWidth * 0.04,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -910,7 +913,9 @@ class _MasterCardPaymentMethodScreenState
                           width: double.infinity,
                           height: screenHeight * 0.062,
                           child: ElevatedButton(
-                            onPressed: _handlePayment,
+                            onPressed: () {
+                              // TODO: Navigate to dashboard
+                            },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.orange,
                               disabledBackgroundColor: Colors.white.withOpacity(

@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutterwave_standard/flutterwave.dart';
 
 class MtnPaymentMethodScreen extends StatefulWidget {
   const MtnPaymentMethodScreen({super.key});
@@ -15,11 +16,83 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
   bool isChecked = false;
   bool _isDimming = false; // State to track if the screen should dim
   bool _showOverlay = false; // State to control the overlay visibility
+  bool _isPaymentSuccessful = false; // State to track payment status
   final Duration _overlayAnimDuration = Duration(milliseconds: 300);
   @override
   void dispose() {
     _cardNumberController.dispose();
     super.dispose();
+  }
+
+  Future<void> _processPayment() async {
+    final String phoneNumber = _cardNumberController.text.trim();
+
+    // Basic validation
+    if (phoneNumber.isEmpty || !RegExp(r'^(\+256\d{9}|0\d{9}|\d{9})$').hasMatch(phoneNumber.replaceAll(' ', ''))) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter a valid MTN phone number'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    // Flutterwave standard SDK configuration
+    final String publicKey =
+        "FLWPUBK_TEST-5c4c1ba4-9c72-45c8-90b0-b29e9c6a4597-X"; // Using test key
+    final String txRef = "mtn_txn_${DateTime.now().millisecondsSinceEpoch}";
+    final String amount = "25000";
+    final String currency = "UGX";
+    final String customerEmail = "user@example.com"; // You might want to get this from user data
+    final String customerName = "MTN User";
+    final String customerPhone = phoneNumber;
+
+    final Customer customer = Customer(
+      name: customerName,
+      phoneNumber: customerPhone,
+      email: customerEmail,
+    );
+
+    final Flutterwave flutterwave = Flutterwave(
+      publicKey: publicKey,
+      currency: currency,
+      redirectUrl: "https://example.com/callback",
+      txRef: txRef,
+      amount: amount,
+      customer: customer,
+      paymentOptions: "mobilemoneyuganda",
+      customization: Customization(title: "Helper MTN Payment"),
+      isTestMode: true,
+    );
+
+    try {
+      final ChargeResponse response = await flutterwave.charge(context);
+
+      if (response.success == true) {
+        // Payment successful - show success overlay
+        setState(() {
+          _isPaymentSuccessful = true;
+          _isDimming = true;
+          _showOverlay = true;
+        });
+      } else {
+        // Payment failed or cancelled
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Payment failed or was cancelled'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Payment error: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   @override
@@ -169,7 +242,7 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
                               width: screenWidth * (94 / 340),
                               height: screenWidth * (28 / 340),
                               decoration: BoxDecoration(
-                                color: Colors.white,
+                                color: _isPaymentSuccessful ? Colors.green : Colors.white,
                                 borderRadius: BorderRadius.circular(30),
                                 boxShadow: [
                                   BoxShadow(
@@ -182,9 +255,9 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
                               ),
                               alignment: Alignment.center,
                               child: Text(
-                                'Not Paid', // Change this to 'Not Paid', 'Pending', etc. as needed
+                                _isPaymentSuccessful ? 'Paid' : 'Not Paid',
                                 style: TextStyle(
-                                  color: Colors.black,
+                                  color: _isPaymentSuccessful ? Colors.white : Colors.black,
                                   fontSize: screenWidth * 0.04,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -219,7 +292,7 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
                         SizedBox(height: screenHeight * 0.012),
                         Container(
                           width: screenWidth * (347 / 375),
-                          height: 35,
+                          height: 40,
                           padding: EdgeInsets.symmetric(
                             horizontal: screenWidth * 0.04,
                           ),
@@ -307,13 +380,7 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
                         ),
                         SizedBox(height: screenHeight * 0.05),
                         GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              _isDimming = true; // Trigger the dimming effect
-                              _showOverlay =
-                                  true; // Show the overlay permanently
-                            });
-                          },
+                          onTap: _processPayment,
                           child: Container(
                             width: screenWidth * 0.93,
                             height: screenHeight * 0.07,
