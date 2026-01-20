@@ -57,9 +57,6 @@ class _ForgotYourPasswordScreenState extends State<ForgotYourPasswordScreen> {
 
     // TODO: send reset OTP then navigate
     final identifier = _identifierCtrl.text.trim();
-    final isPhone = !identifier.contains(
-      '@',
-    ); // simple check: if no @, assume phone
 
     if (!mounted) return;
     setState(() => _loading = false);
@@ -67,7 +64,7 @@ class _ForgotYourPasswordScreenState extends State<ForgotYourPasswordScreen> {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => ForgotPasswordOTPScreen(
-          isPhoneVerification: isPhone,
+          isPhoneVerification: false, // email verification
           emailOrPhone: identifier,
           initialVerificationId: '',
         ),
