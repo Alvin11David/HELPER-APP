@@ -216,9 +216,12 @@ class _RegistrationPaymentScreenState extends State<RegistrationPaymentScreen> {
                   children: [
                     GestureDetector(
                       onTap: () {
-                        setState(() {
-                          _isMasterCardSelected = !_isMasterCardSelected;
-                        });
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                const MasterCardPaymentMethodScreen(),
+                          ),
+                        );
                       },
                       child: Container(
                         width: screenWidth * 0.91,
