@@ -156,7 +156,9 @@ class _SignInScreenState extends State<SignInScreen> {
 
         if (userQuery.docs.isEmpty) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Phone number not found. Please sign up first.')),
+            const SnackBar(
+              content: Text('Phone number not found. Please sign up first.'),
+            ),
           );
           setState(() => _loading = false);
           return;
@@ -250,7 +252,11 @@ class _SignInScreenState extends State<SignInScreen> {
 
         if (userQuery.docs.isEmpty) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Invalid email or password. Please check your credentials.')),
+            const SnackBar(
+              content: Text(
+                'Invalid email or password. Please check your credentials.',
+              ),
+            ),
           );
           setState(() => _loading = false);
           return;
@@ -372,7 +378,7 @@ class _SignInScreenState extends State<SignInScreen> {
                       Align(
                         alignment: Alignment.centerLeft,
                         child: Text(
-                          'Get Started Now',
+                          'Sign In',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: w * 0.09,
