@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:helper/Payments/Registration_Payment_Screen.dart';
 
 class DashedLinePainter extends CustomPainter {
   final Color color;
@@ -35,13 +36,13 @@ class DashedLinePainter extends CustomPainter {
 class OTPVerificationScreen extends StatefulWidget {
   final bool isPhoneVerification; // true for phone, false for email
   final String? emailOrPhone; // Email or phone number for OTP verification
-  final String? verificationId; // For Firebase Auth phone verification
+  final String? initialVerificationId; // For Firebase Auth phone verification
 
   const OTPVerificationScreen({
     super.key,
     this.isPhoneVerification = true, // default to phone
     this.emailOrPhone,
-    this.verificationId,
+    this.initialVerificationId,
   });
 
   @override
@@ -58,6 +59,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
   bool _isButtonEnabled = false;
   bool _isLoading = false;
   Timer? _timer;
+  String? _currentVerificationId;
 
   @override
   void initState() {
@@ -67,6 +69,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
       (index) => TextEditingController(),
     );
     _focusNodes = List.generate(_otpLength, (index) => FocusNode());
+    _currentVerificationId = widget.initialVerificationId;
     _startCountdown();
   }
 
@@ -121,6 +124,10 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
             },
             codeSent: (String verificationId, int? resendToken) {
               print('SMS code resent to ${widget.emailOrPhone}');
+              // Update verification ID for the resent code
+              setState(() {
+                _currentVerificationId = verificationId;
+              });
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('SMS resent successfully!')),
@@ -211,10 +218,10 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
     String otp = _controllers.map((controller) => controller.text).join();
     if (otp.length == _otpLength && widget.emailOrPhone != null) {
       try {
-        if (widget.isPhoneVerification && widget.verificationId != null) {
+        if (widget.isPhoneVerification && _currentVerificationId != null) {
           // Phone verification using Firebase Auth
           PhoneAuthCredential credential = PhoneAuthProvider.credential(
-            verificationId: widget.verificationId!,
+            verificationId: _currentVerificationId!,
             smsCode: otp,
           );
 
@@ -240,7 +247,12 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
                 ),
               );
               print('Phone verified successfully for: ${widget.emailOrPhone}');
-              // TODO: Navigate to next screen (e.g., payment details or dashboard)
+              // Navigate to RegistrationPaymentScreen
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const RegistrationPaymentScreen(),
+                ),
+              );
             }
           } catch (e) {
             if (mounted) {
@@ -291,7 +303,12 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
                   const SnackBar(content: Text('OTP verified successfully!')),
                 );
                 print('OTP verified successfully for: ${widget.emailOrPhone}');
-                // TODO: Navigate to next screen (e.g., payment details or dashboard)
+                // Navigate to RegistrationPaymentScreen
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const RegistrationPaymentScreen(),
+                  ),
+                );
               }
             } else {
               // OTP is incorrect
@@ -441,7 +458,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
                             ),
                             child: Text(
                               widget.isPhoneVerification
-                                  ? 'Enter the 6-digit code sent to +256${widget.emailOrPhone?.replaceFirst('+256', '')}'
+                                  ? 'Enter the 6-digit code sent to ${widget.emailOrPhone?.replaceFirst('+256', '+256 ')}'
                                   : 'Enter the 6-digit code sent to your email',
                               style: TextStyle(
                                 color: Colors.white,

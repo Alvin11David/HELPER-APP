@@ -201,7 +201,8 @@ class _PhoneNumberEmailAddressScreenState
                   builder: (context) => OTPVerificationScreen(
                     isPhoneVerification: true,
                     emailOrPhone: phoneNumber,
-                    verificationId: verificationId, // Pass verification ID
+                    initialVerificationId:
+                        verificationId, // Pass verification ID
                   ),
                 ),
               ).then((_) {
