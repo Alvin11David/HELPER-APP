@@ -22,8 +22,10 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
   final Duration _overlayAnimDuration = Duration(milliseconds: 300);
 
   // Flutterwave configuration
-  final String publicKey = "FLWPUBK_TEST-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX-X"; // Replace with your Flutterwave public key
-  final String encryptionKey = "FLWSECK_TESTXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"; // Replace with your Flutterwave encryption key
+  final String publicKey =
+      "FLWPUBK_TEST-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX-X"; // Replace with your Flutterwave public key
+  final String encryptionKey =
+      "FLWSECK_TESTXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"; // Replace with your Flutterwave encryption key
 
   @override
   void dispose() {
@@ -50,7 +52,6 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
     );
 
     final Flutterwave flutterwave = Flutterwave(
-      context: context,
       publicKey: publicKey,
       txRef: txRef,
       amount: "25000",
@@ -66,7 +67,7 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
     );
 
     try {
-      final ChargeResponse response = await flutterwave.charge();
+      final ChargeResponse response = await flutterwave.charge(context);
       if (response.success == true) {
         // Payment successful
         setState(() {
@@ -76,7 +77,7 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
       } else {
         // Payment failed
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Payment failed: ${response.message}')),
+          SnackBar(content: Text('Payment failed: ${response.status ?? 'Unknown error'}')),
         );
       }
     } catch (error) {
@@ -90,7 +91,6 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
   Widget build(BuildContext context) {
     final double screenWidth = MediaQuery.of(context).size.width;
     final double screenHeight = MediaQuery.of(context).size.height;
-
 
     return Scaffold(
       body: Stack(
