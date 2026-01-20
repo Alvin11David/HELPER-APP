@@ -309,41 +309,41 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
                               ),
                       ),
                     ),
-                     SizedBox(height: screenHeight * 0.06),
-                  Center(
-                    child: RichText(
-                      text: TextSpan(
-                        children: [
-                          TextSpan(
-                            text: 'Already have an account ',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: screenWidth * 0.04,
-                              fontWeight: FontWeight.w500,
-                              fontFamily: 'Poppins',
+                    SizedBox(height: screenHeight * 0.06),
+                    Center(
+                      child: RichText(
+                        text: TextSpan(
+                          children: [
+                            TextSpan(
+                              text: 'Already have an account ',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: screenWidth * 0.04,
+                                fontWeight: FontWeight.w500,
+                                fontFamily: 'Poppins',
+                              ),
                             ),
-                          ),
-                          TextSpan(
-                            text: 'Sign In',
-                            style: TextStyle(
-                              color: Colors.orange,
-                              fontSize: screenWidth * 0.04,
-                              fontWeight: FontWeight.bold,
-                              fontFamily: 'Montserrat',
+                            TextSpan(
+                              text: 'Sign In',
+                              style: TextStyle(
+                                color: Colors.orange,
+                                fontSize: screenWidth * 0.04,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'Montserrat',
+                              ),
+                              recognizer: TapGestureRecognizer()
+                                ..onTap = () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (context) => SignInScreen(),
+                                    ),
+                                  );
+                                },
                             ),
-                            recognizer: TapGestureRecognizer()
-                              ..onTap = () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (context) => SignInScreen(),
-                                  ),
-                                );
-                              },
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
-                  ),
                   ],
                 ),
               ),
@@ -520,7 +520,8 @@ class _PillInput extends StatelessWidget {
 
   final double contentFontSize;
 
-  const _PillInput(this.validator, {
+  const _PillInput(
+    this.validator, {
     required this.controller,
     required this.hint,
     required this.icon,
@@ -599,4 +600,3 @@ class _PillInput extends StatelessWidget {
     );
   }
 }
-

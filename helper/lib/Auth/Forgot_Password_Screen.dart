@@ -392,7 +392,6 @@ class _MiniStep123 extends StatelessWidget {
   }
 }
 
-
 // --------------------- Input pill ---------------------
 
 class _PillInput extends StatelessWidget {
@@ -414,7 +413,8 @@ class _PillInput extends StatelessWidget {
     required this.icon,
     required this.keyboardType,
     this.contentFontSize = 16.0,
-    this.validator, this.inputFormatters,
+    this.validator,
+    this.inputFormatters,
   });
 
   @override

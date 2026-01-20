@@ -7,6 +7,7 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'OTP_Verification_Screen.dart';
 import 'Sign_In_Screen.dart';
+import 'Forgot_Password_Screen.dart';
 
 class _UgandaPhoneFormatter extends TextInputFormatter {
   @override
