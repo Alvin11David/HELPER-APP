@@ -578,7 +578,7 @@ class _PhoneNumberEmailAddressScreenState
                           ),
                         ),
 
-                      SizedBox(height: h * 0.12),
+                      SizedBox(height: h * 0.03),
 
                       // ✅ spaced & Sign In smaller
                       Row(
