@@ -3,6 +3,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class DashedLinePainter extends CustomPainter {
   final Color color;
@@ -30,7 +31,14 @@ class DashedLinePainter extends CustomPainter {
 }
 
 class OTPVerificationScreen extends StatefulWidget {
-  const OTPVerificationScreen({super.key});
+  final bool isPhoneVerification; // true for phone, false for email
+  final String? emailOrPhone; // Email or phone number for OTP verification
+
+  const OTPVerificationScreen({
+    super.key,
+    this.isPhoneVerification = true, // default to phone
+    this.emailOrPhone,
+  });
 
   @override
   State<OTPVerificationScreen> createState() => _OTPVerificationScreenState();
@@ -114,11 +122,56 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
     super.dispose();
   }
 
-  void _checkOTPAndNavigate() {
+  Future<void> _checkOTPAndNavigate() async {
     String otp = _controllers.map((controller) => controller.text).join();
-    if (otp.length == _otpLength) {
-      // TODO: Add your OTP verification logic here
-      print('OTP entered: $otp');
+    if (otp.length == _otpLength && widget.emailOrPhone != null) {
+      try {
+        // Get the stored OTP from Firestore
+        DocumentSnapshot otpDoc = await FirebaseFirestore.instance
+            .collection('OTP Codes')
+            .doc(widget.emailOrPhone!)
+            .get();
+
+        if (otpDoc.exists) {
+          String storedOTP = otpDoc['otpCode'];
+          Timestamp expiresAt = otpDoc['expiresAt'];
+
+          // Check if OTP is expired
+          if (expiresAt.toDate().isBefore(DateTime.now())) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('OTP has expired. Please request a new one.'),
+              ),
+            );
+            return;
+          }
+
+          // Check if entered OTP matches stored OTP
+          if (otp == storedOTP) {
+            // OTP is correct - navigate to next screen
+            // TODO: Navigate to next screen (e.g., payment details or dashboard)
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('OTP verified successfully!')),
+            );
+            print('OTP verified successfully for: ${widget.emailOrPhone}');
+          } else {
+            // OTP is incorrect
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Invalid OTP. Please try again.')),
+            );
+          }
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('OTP not found. Please request a new one.'),
+            ),
+          );
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error verifying OTP: $e')));
+      }
     }
   }
 
@@ -132,6 +185,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
     return Scaffold(
       body: SafeArea(
         child: Container(
+          constraints: const BoxConstraints.expand(),
           decoration: const BoxDecoration(
             image: DecorationImage(
               image: AssetImage('assets/background/normalscreenbg.png'),
@@ -162,259 +216,262 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
                   ),
                 ),
               ),
-              Column(
-                children: [
-                  SizedBox(height: screenHeight * 0.05),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Image.asset(
-                        'assets/icons/logo.png',
-                        width: screenWidth * 0.09,
-                        height: screenWidth * 0.09,
-                      ),
-                      SizedBox(width: screenWidth * 0.03),
-                      Text(
-                        'Helper',
+              SingleChildScrollView(
+                child: Column(
+                  children: [
+                    SizedBox(height: screenHeight * 0.05),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Image.asset(
+                          'assets/icons/logo.png',
+                          width: screenWidth * 0.09,
+                          height: screenWidth * 0.09,
+                        ),
+                        SizedBox(width: screenWidth * 0.03),
+                        Text(
+                          'Helper',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: screenWidth * 0.055,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: screenHeight * 0.02),
+                    Padding(
+                      padding: EdgeInsets.only(right: screenWidth * 0.15),
+                      child: Text(
+                        'Let\'s get you verified',
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: screenWidth * 0.055,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: screenHeight * 0.02),
-                  Padding(
-                    padding: EdgeInsets.only(right: screenWidth * 0.15),
-                    child: Text(
-                      'Let\'s get you verified',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: screenWidth * 0.08,
-                        fontFamily: 'AbrilFatface',
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: screenHeight * 0.03),
-                  // ✅ circle #1 filled orange
-                  _MiniStep123(width: w, accent: _brandOrange, activeIndex: 0),
-                  SizedBox(height: screenHeight * 0.04),
-                  Center(
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(30),
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                        child: Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: screenWidth * 0.06,
-                            vertical: screenHeight * 0.006,
-                          ),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [
-                                Colors.white.withOpacity(0.25),
-                                Colors.white.withOpacity(0.15),
-                              ],
-                            ),
-                            borderRadius: BorderRadius.circular(30),
-                            border: Border.all(
-                              color: Colors.white.withOpacity(0.4),
-                              width: 2,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.white.withOpacity(0.1),
-                                blurRadius: 15,
-                                spreadRadius: 2,
-                              ),
-                            ],
-                          ),
-                          child: Text(
-                            'Enter the 6-digit code sent to your',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: screenWidth * 0.04,
-                              fontWeight: FontWeight.w500,
-                              fontFamily: 'Poppins',
-                            ),
-                          ),
+                          fontSize: screenWidth * 0.08,
+                          fontFamily: 'AbrilFatface',
                         ),
                       ),
                     ),
-                  ),
-                  SizedBox(height: screenHeight * 0.05),
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(_otpLength + 1, (index) {
-                        // Add separator after 3rd box
-                        if (index == 3) {
-                          return Container(
-                            width: screenWidth * 0.015,
-                            height: screenWidth * 0.015,
-                            margin: EdgeInsets.symmetric(
-                              horizontal: screenWidth * 0.025,
+                    SizedBox(height: screenHeight * 0.03),
+                    // ✅ circle #1 filled orange
+                    _MiniStep123(width: w, accent: _brandOrange, activeIndex: 0),
+                    SizedBox(height: screenHeight * 0.04),
+                    Center(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(30),
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                          child: Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: screenWidth * 0.06,
+                              vertical: screenHeight * 0.006,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  Colors.white.withOpacity(0.25),
+                                  Colors.white.withOpacity(0.15),
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(30),
+                              border: Border.all(
+                                color: Colors.white.withOpacity(0.4),
+                                width: 2,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.white.withOpacity(0.1),
+                                  blurRadius: 15,
+                                  spreadRadius: 2,
+                                ),
+                              ],
                             ),
-                          );
-                        }
-
-                        // Calculate actual OTP box index
-                        final otpIndex = index > 3 ? index - 1 : index;
-                        final otpBoxWidth = screenWidth * 0.12;
-                        final otpBoxHeight = screenWidth * 0.19;
-
-                        return Container(
-                          width: otpBoxWidth,
-                          height: otpBoxHeight,
-                          margin: EdgeInsets.symmetric(
-                            horizontal: screenWidth * 0.02,
-                          ),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.white, width: 1),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Stack(
-                            alignment: Alignment.bottomCenter,
-                            children: [
-                              Positioned(
-                                bottom: otpBoxHeight * 0.15,
-                                child: Container(
-                                  width: otpBoxWidth * 0.5,
-                                  height: 2,
-                                  color: Colors.white,
-                                ),
+                            child: Text(
+                              'Enter the 6-digit code sent to your ${widget.isPhoneVerification ? 'phone number' : 'email'}',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: screenWidth * 0.04,
+                                fontWeight: FontWeight.w500,
+                                fontFamily: 'Poppins',
                               ),
-                              Center(
-                                child: TextFormField(
-                                  controller: _controllers[otpIndex],
-                                  focusNode: _focusNodes[otpIndex],
-                                  textAlign: TextAlign.center,
-                                  keyboardType: TextInputType.number,
-                                  maxLength: 1,
-                                  inputFormatters: [
-                                    FilteringTextInputFormatter.digitsOnly,
-                                    LengthLimitingTextInputFormatter(1),
-                                  ],
-                                  decoration: const InputDecoration(
-                                    counterText: '',
-                                    border: InputBorder.none,
-                                    focusedBorder: InputBorder.none,
-                                    enabledBorder: InputBorder.none,
-                                    contentPadding: EdgeInsets.zero,
-                                  ),
-                                  style: TextStyle(
-                                    fontSize: screenWidth * 0.06,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                    fontFamily: 'Poppins',
-                                    height: 1.0,
-                                  ),
-                                  cursorColor: const Color(0xFFD59A00),
-                                  onChanged: (value) {
-                                    final trimmedValue = value.trim();
-                                    if (trimmedValue.isNotEmpty &&
-                                        otpIndex < _otpLength - 1) {
-                                      _controllers[otpIndex].text =
-                                          trimmedValue;
-                                      _focusNodes[otpIndex].unfocus();
-                                      _focusNodes[otpIndex + 1].requestFocus();
-                                    } else if (trimmedValue.isEmpty &&
-                                        otpIndex > 0) {
-                                      _focusNodes[otpIndex].unfocus();
-                                      _focusNodes[otpIndex - 1].requestFocus();
-                                    }
-                                    _checkOTPAndNavigate();
-                                  },
-                                ),
-                              ),
-                            ],
+                              textAlign: TextAlign.center,
+                            ),
                           ),
-                        );
-                      }),
-                    ),
-                  ),
-                  SizedBox(height: screenHeight * 0.09),
-                  GestureDetector(
-                    onTap: (_isButtonEnabled && !_isLoading)
-                        ? _resendOTP
-                        : null,
-                    child: Container(
-                      width: screenWidth * 0.8,
-                      height: screenHeight * 0.06,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: _isButtonEnabled && !_isLoading
-                              ? [Colors.transparent, Colors.transparent]
-                              : [Colors.white, Colors.white],
-                          stops: [0.0, 0.47],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
                         ),
-                        border: Border.all(color: Color(0xFFFFFFFF), width: 1),
-                        borderRadius: BorderRadius.circular(30),
                       ),
+                    ),
+                    SizedBox(height: screenHeight * 0.05),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.refresh,
-                            color: (_isButtonEnabled && !_isLoading)
-                                ? Colors.white
-                                : Colors.black,
-                            size: screenWidth * 0.06,
+                        children: List.generate(_otpLength + 1, (index) {
+                          // Add separator after 3rd box
+                          if (index == 3) {
+                            return Container(
+                              width: screenWidth * 0.015,
+                              height: screenWidth * 0.015,
+                              margin: EdgeInsets.symmetric(
+                                horizontal: screenWidth * 0.025,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                              ),
+                            );
+                          }
+
+                          // Calculate actual OTP box index
+                          final otpIndex = index > 3 ? index - 1 : index;
+                          final otpBoxWidth = screenWidth * 0.12;
+                          final otpBoxHeight = screenWidth * 0.19;
+
+                          return Container(
+                            width: otpBoxWidth,
+                            height: otpBoxHeight,
+                            margin: EdgeInsets.symmetric(
+                              horizontal: screenWidth * 0.01,
+                            ),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.white, width: 1),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Stack(
+                              alignment: Alignment.bottomCenter,
+                              children: [
+                                Positioned(
+                                  bottom: otpBoxHeight * 0.15,
+                                  child: Container(
+                                    width: otpBoxWidth * 0.5,
+                                    height: 2,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                Center(
+                                  child: TextFormField(
+                                    controller: _controllers[otpIndex],
+                                    focusNode: _focusNodes[otpIndex],
+                                    textAlign: TextAlign.center,
+                                    keyboardType: TextInputType.number,
+                                    maxLength: 1,
+                                    inputFormatters: [
+                                      FilteringTextInputFormatter.digitsOnly,
+                                      LengthLimitingTextInputFormatter(1),
+                                    ],
+                                    decoration: const InputDecoration(
+                                      counterText: '',
+                                      border: InputBorder.none,
+                                      focusedBorder: InputBorder.none,
+                                      enabledBorder: InputBorder.none,
+                                      contentPadding: EdgeInsets.zero,
+                                    ),
+                                    style: TextStyle(
+                                      fontSize: screenWidth * 0.06,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                      fontFamily: 'Poppins',
+                                      height: 1.0,
+                                    ),
+                                    cursorColor: const Color(0xFFD59A00),
+                                    onChanged: (value) {
+                                      final trimmedValue = value.trim();
+                                      if (trimmedValue.isNotEmpty &&
+                                          otpIndex < _otpLength - 1) {
+                                        _controllers[otpIndex].text =
+                                            trimmedValue;
+                                        _focusNodes[otpIndex].unfocus();
+                                        _focusNodes[otpIndex + 1].requestFocus();
+                                      } else if (trimmedValue.isEmpty &&
+                                          otpIndex > 0) {
+                                        _focusNodes[otpIndex].unfocus();
+                                        _focusNodes[otpIndex - 1].requestFocus();
+                                      }
+                                      _checkOTPAndNavigate();
+                                    },
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }),
+                      ),
+                    ),
+                    SizedBox(height: screenHeight * 0.09),
+                    GestureDetector(
+                      onTap: (_isButtonEnabled && !_isLoading)
+                          ? _resendOTP
+                          : null,
+                      child: Container(
+                        width: screenWidth * 0.8,
+                        height: screenHeight * 0.06,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: _isButtonEnabled && !_isLoading
+                                ? [Colors.transparent, Colors.transparent]
+                                : [Colors.white, Colors.white],
+                            stops: [0.0, 0.47],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
                           ),
-                          SizedBox(width: screenWidth * 0.03),
-                          Text(
-                            _countdown > 0 ? '$_countdown' : 'Resend',
-                            style: TextStyle(
-                              fontSize: screenWidth * 0.05,
-                              fontWeight: FontWeight.bold,
+                          border: Border.all(color: Color(0xFFFFFFFF), width: 1),
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.refresh,
                               color: (_isButtonEnabled && !_isLoading)
                                   ? Colors.white
                                   : Colors.black,
-                              fontFamily: 'AbrilFatface',
+                              size: screenWidth * 0.06,
                             ),
-                          ),
-                        ],
+                            SizedBox(width: screenWidth * 0.03),
+                            Text(
+                              _countdown > 0 ? '$_countdown' : 'Resend',
+                              style: TextStyle(
+                                fontSize: screenWidth * 0.05,
+                                fontWeight: FontWeight.bold,
+                                color: (_isButtonEnabled && !_isLoading)
+                                    ? Colors.white
+                                    : Colors.black,
+                                fontFamily: 'Inter',
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                  SizedBox(height: screenHeight * 0.06),
-                  Center(
-                    child: RichText(
-                      text: TextSpan(
-                        children: [
-                          TextSpan(
-                            text: 'Already have an account ',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: screenWidth * 0.04,
-                              fontWeight: FontWeight.w500,
-                              fontFamily: 'Poppins',
+                    SizedBox(height: screenHeight * 0.06),
+                    Center(
+                      child: RichText(
+                        text: TextSpan(
+                          children: [
+                            TextSpan(
+                              text: 'Already have an account ',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: screenWidth * 0.04,
+                                fontWeight: FontWeight.w500,
+                                fontFamily: 'Poppins',
+                              ),
                             ),
-                          ),
-                          TextSpan(
-                            text: 'Sign In',
-                            style: TextStyle(
-                              color: Colors.orange,
-                              fontSize: screenWidth * 0.04,
-                              fontWeight: FontWeight.bold,
-                              fontFamily: 'Montserrat',
+                            TextSpan(
+                              text: 'Sign In',
+                              style: TextStyle(
+                                color: Colors.orange,
+                                fontSize: screenWidth * 0.04,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'Montserrat',
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ],
           ),

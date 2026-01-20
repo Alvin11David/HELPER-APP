@@ -1,7 +1,10 @@
 import 'dart:ui';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
+import 'OTP_Verification_Screen.dart';
 
 class DashedLinePainter extends CustomPainter {
   final Color color;
@@ -71,6 +74,12 @@ class _PhoneNumberEmailAddressScreenState
     setState(() => _mode = m);
   }
 
+  String _generateOTP() {
+    Random random = Random();
+    return (100000 + random.nextInt(900000))
+        .toString(); // Generates 6-digit code
+  }
+
   Future<void> _onContinue() async {
     FocusScope.of(context).unfocus();
     if (!(_formKey.currentState?.validate() ?? false)) return;
@@ -80,12 +89,43 @@ class _PhoneNumberEmailAddressScreenState
     if (_mode == _AuthMode.phone) {
       // Save full name and phone number to Firestore
       try {
+        String phoneNumber = _phoneCtrl.text.trim();
+        String otpCode = _generateOTP();
+
         await FirebaseFirestore.instance.collection('Sign Up').add({
           'fullName': _fullNameCtrl.text.trim(),
-          'phoneNumber': _phoneCtrl.text.trim(),
+          'phoneNumber': phoneNumber,
           'timestamp': FieldValue.serverTimestamp(),
         });
-        // TODO: send OTP -> navigate to OTPVerificationScreen
+
+        // Generate and store OTP code
+        await FirebaseFirestore.instance
+            .collection('OTP Codes')
+            .doc(phoneNumber)
+            .set({
+              'phoneNumber': phoneNumber,
+              'otpCode': otpCode,
+              'timestamp': FieldValue.serverTimestamp(),
+              'expiresAt': Timestamp.fromDate(
+                DateTime.now().add(const Duration(minutes: 10)),
+              ), // OTP expires in 10 minutes
+            });
+
+        // TODO: Send OTP code to phone number via SMS
+        print('OTP Code for $phoneNumber: $otpCode'); // For testing purposes
+
+        // Navigate to OTP Verification Screen
+        if (!mounted) return;
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => OTPVerificationScreen(
+              isPhoneVerification: true,
+              emailOrPhone: phoneNumber,
+            ),
+          ),
+        );
+        return;
       } catch (e) {
         // Handle error, maybe show a snackbar
         ScaffoldMessenger.of(
@@ -97,14 +137,61 @@ class _PhoneNumberEmailAddressScreenState
     } else {
       // Save full name, email, and password to Firestore for email registration
       try {
+        String email = _emailCtrl.text.trim();
+        String otpCode = _generateOTP();
+
+        // Store user data
         await FirebaseFirestore.instance.collection('Sign Up').add({
           'fullName': _fullNameCtrl.text.trim(),
-          'email': _emailCtrl.text.trim(),
+          'email': email,
           'password': _passwordCtrl
               .text, // Note: In production, hash passwords before storing
           'timestamp': FieldValue.serverTimestamp(),
         });
-        // TODO: email: login/register -> next
+
+        // Generate and store OTP code
+        await FirebaseFirestore.instance.collection('OTP Codes').doc(email).set(
+          {
+            'email': email,
+            'otpCode': otpCode,
+            'timestamp': FieldValue.serverTimestamp(),
+            'expiresAt': Timestamp.fromDate(
+              DateTime.now().add(const Duration(minutes: 10)),
+            ), // OTP expires in 10 minutes
+          },
+        );
+
+        // Send OTP code to email address via Firebase Cloud Function
+        try {
+          final result = await FirebaseFunctions.instance
+              .httpsCallable('sendOTPEmail')
+              .call({'email': email, 'otpCode': otpCode});
+          print('OTP email sent successfully: ${result.data}');
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('OTP sent to your email!')),
+          );
+        } catch (e) {
+          print('Error sending OTP email: $e');
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to send OTP email: $e')),
+          );
+          // Still proceed to verification screen, as OTP is stored
+        }
+
+        // Navigate to OTP Verification Screen
+        if (!mounted) return;
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => OTPVerificationScreen(
+              isPhoneVerification: false,
+              emailOrPhone: email,
+            ),
+          ),
+        );
+        return;
       } catch (e) {
         // Handle error, maybe show a snackbar
         ScaffoldMessenger.of(
@@ -114,11 +201,6 @@ class _PhoneNumberEmailAddressScreenState
         return;
       }
     }
-
-    await Future.delayed(const Duration(milliseconds: 650));
-
-    if (!mounted) return;
-    setState(() => _loading = false);
   }
 
   void _onGoogle() {
