@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutterwave_standard/flutterwave.dart';
 
 class MasterCardPaymentMethodScreen extends StatefulWidget {
   const MasterCardPaymentMethodScreen({super.key});
@@ -22,6 +23,130 @@ class _MasterCardPaymentMethodScreenState
   bool _showOverlay = false; // State to control the overlay visibility
   final Duration _overlayAnimDuration = Duration(milliseconds: 300);
 
+  void _handlePayment() async {
+    // Validation
+    String cardNumber = _cardNumberController.text.replaceAll(' ', '');
+    String cardHolder = _cardHolderController.text.trim();
+    String expiry = _expiryController.text.trim();
+    String cvv = _cvvController.text.trim();
+
+    if (cardNumber.isEmpty ||
+        cardNumber.length < 13 ||
+        cardNumber.length > 19) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter a valid card number (13-19 digits)'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (cardHolder.isEmpty || !RegExp(r'^[a-zA-Z\s]+$').hasMatch(cardHolder)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter a valid card holder name (letters only)'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (expiry.isEmpty || !RegExp(r'^\d{2}/\d{2}$').hasMatch(expiry)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter expiry date in MM/YY format'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    // Check if expiry is not expired
+    List<String> parts = expiry.split('/');
+    int month = int.tryParse(parts[0]) ?? 0;
+    int year = int.tryParse('20${parts[1]}') ?? 0;
+    DateTime now = DateTime.now();
+    DateTime expiryDate = DateTime(year, month + 1, 0); // Last day of month
+    if (expiryDate.isBefore(now) || month < 1 || month > 12) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Card has expired or invalid expiry date'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (cvv.isEmpty || cvv.length != 3 || !RegExp(r'^\d{3}$').hasMatch(cvv)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter a valid 3-digit CVV'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    // Flutterwave standard SDK configuration
+    final String publicKey =
+        "FLWPUBK_TEST-5c4c1ba4-9c72-45c8-90b0-b29e9c6a4597-X"; // Using your client ID as public key
+    final String txRef = "txn_${DateTime.now().millisecondsSinceEpoch}";
+    final String amount = "25000";
+    final String currency = "UGX";
+    final String customerEmail = "test@example.com";
+    final String customerName = "Test User";
+    final String customerPhone = "+256700000000";
+
+    final Customer customer = Customer(
+      name: customerName,
+      phoneNumber: customerPhone,
+      email: customerEmail,
+    );
+
+    final Flutterwave flutterwave = Flutterwave(
+      publicKey: publicKey,
+      currency: currency,
+      redirectUrl: "https://example.com/callback",
+      txRef: txRef,
+      amount: amount,
+      customer: customer,
+      paymentOptions: "card, mobilemoneyuganda",
+      customization: Customization(title: "Helper Payment"),
+      isTestMode: true,
+    );
+
+    try {
+      final ChargeResponse response = await flutterwave.charge(context);
+
+      if (response.success == true) {
+        // Payment successful
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Payment successful!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.of(context).pushReplacementNamed('/dashboard');
+      } else {
+        // Payment failed or cancelled
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Payment failed or was cancelled'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Payment error: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   @override
   void dispose() {
     _cardNumberController.dispose();
@@ -37,6 +162,7 @@ class _MasterCardPaymentMethodScreenState
     final double screenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       body: Stack(
         children: [
           SafeArea(
@@ -228,7 +354,7 @@ class _MasterCardPaymentMethodScreenState
                         SizedBox(height: screenHeight * 0.012),
                         Container(
                           width: screenWidth * (347 / 375),
-                          height: 35,
+                          height: 40,
                           padding: EdgeInsets.symmetric(
                             horizontal: screenWidth * 0.04,
                           ),
@@ -318,7 +444,7 @@ class _MasterCardPaymentMethodScreenState
                         SizedBox(height: screenHeight * 0.012),
                         Container(
                           width: screenWidth * (347 / 375),
-                          height: 35,
+                          height: 40,
                           padding: EdgeInsets.symmetric(
                             horizontal: screenWidth * 0.04,
                           ),
@@ -386,7 +512,7 @@ class _MasterCardPaymentMethodScreenState
                                 SizedBox(height: screenHeight * 0.012),
                                 Container(
                                   width: screenWidth * (122 / 375),
-                                  height: 35,
+                                  height: 40,
                                   padding: EdgeInsets.symmetric(
                                     horizontal: screenWidth * 0.04,
                                   ),
@@ -461,7 +587,7 @@ class _MasterCardPaymentMethodScreenState
                                 SizedBox(height: screenHeight * 0.012),
                                 Container(
                                   width: screenWidth * (211 / 375),
-                                  height: 35,
+                                  height: 40,
                                   padding: EdgeInsets.symmetric(
                                     horizontal: screenWidth * 0.04,
                                   ),
@@ -567,13 +693,7 @@ class _MasterCardPaymentMethodScreenState
 
                         // Pay button (same pattern)
                         GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              _isDimming = true; // Trigger the dimming effect
-                              _showOverlay =
-                                  true; // Show the overlay permanently
-                            });
-                          },
+                          onTap: _handlePayment,
                           child: Container(
                             width: screenWidth * 0.93,
                             height: screenHeight * 0.07,
@@ -790,14 +910,12 @@ class _MasterCardPaymentMethodScreenState
                           width: double.infinity,
                           height: screenHeight * 0.062,
                           child: ElevatedButton(
-                            onPressed: () {
-                              // TODO: Handle continue action
-                            },
+                            onPressed: _handlePayment,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFDF8800),
-                              disabledBackgroundColor: const Color(
-                                0xFFDF8800,
-                              ).withOpacity(0.6),
+                              backgroundColor: Colors.orange,
+                              disabledBackgroundColor: Colors.white.withOpacity(
+                                0.6,
+                              ),
                               elevation: 0,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(30),
@@ -819,7 +937,7 @@ class _MasterCardPaymentMethodScreenState
                                   ),
                                   SizedBox(width: screenWidth * 0.02),
                                   Icon(
-                                    Icons.arrow_forward_rounded,
+                                    Icons.arrow_forward,
                                     color: Colors.white,
                                     size: screenHeight * 0.035,
                                   ),

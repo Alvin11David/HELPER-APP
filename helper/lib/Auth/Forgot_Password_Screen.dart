@@ -402,7 +402,6 @@ class _PillInput extends StatelessWidget {
   final double contentFontSize;
 
   const _PillInput({
-    this.suffix,
     required this.controller,
     required this.hint,
     required this.icon,

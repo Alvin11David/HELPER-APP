@@ -1153,16 +1153,14 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
                   Color bg = Colors.transparent;
                   Color txt = Colors.black.withOpacity(0.80);
 
-                  if (inRange) {
-                    bg = edge
-                        ? Colors.redAccent
-                        : Colors.grey.withOpacity(0.20);
-                    txt = edge ? Colors.white : Colors.black;
-                  }
-
                   // match your legend vibe: current day green
                   if (isToday) {
                     bg = Colors.green;
+                    txt = Colors.white;
+                  }
+
+                  if (inRange) {
+                    bg = Colors.orange;
                     txt = Colors.white;
                   }
 
@@ -1196,7 +1194,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _legendDot(w, Colors.redAccent, "Unavailable days"),
+                _legendDot(w, Colors.red, "Unavailable days"),
                 _legendDot(w, Colors.grey.withOpacity(0.35), "Available days"),
                 _legendDot(
                   w,

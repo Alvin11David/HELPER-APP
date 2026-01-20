@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
+import 'Mastercard_Payment_Method_Screen.dart';
 
 class RegistrationPaymentScreen extends StatefulWidget {
   const RegistrationPaymentScreen({super.key});
@@ -126,7 +127,7 @@ class _RegistrationPaymentScreenState extends State<RegistrationPaymentScreen> {
                                     color: Colors.white,
                                     fontSize: screenWidth * 0.04,
                                     fontWeight: FontWeight.w500,
-                                    fontFamily: 'Poppins',
+                                    fontFamily: 'Inter',
                                   ),
                                 ),
                               ],
@@ -143,7 +144,7 @@ class _RegistrationPaymentScreenState extends State<RegistrationPaymentScreen> {
                           color: Colors.white,
                           fontSize: screenWidth * 0.06,
                           fontWeight: FontWeight.w700,
-                          fontFamily: 'Poppins',
+                          fontFamily: 'Inter',
                         ),
                       ),
                     ),
@@ -182,7 +183,7 @@ class _RegistrationPaymentScreenState extends State<RegistrationPaymentScreen> {
                                     color: Colors.black,
                                     fontSize: screenWidth * 0.04,
                                     fontWeight: FontWeight.w500,
-                                    fontFamily: 'Poppins',
+                                    fontFamily: 'Inter',
                                   ),
                                 ),
                               ],
@@ -215,9 +216,12 @@ class _RegistrationPaymentScreenState extends State<RegistrationPaymentScreen> {
                   children: [
                     GestureDetector(
                       onTap: () {
-                        setState(() {
-                          _isMasterCardSelected = !_isMasterCardSelected;
-                        });
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                const MasterCardPaymentMethodScreen(),
+                          ),
+                        );
                       },
                       child: Container(
                         width: screenWidth * 0.91,
@@ -248,7 +252,7 @@ class _RegistrationPaymentScreenState extends State<RegistrationPaymentScreen> {
                                       color: Colors.black,
                                       fontSize: screenWidth * 0.045,
                                       fontWeight: FontWeight.w600,
-                                      fontFamily: 'Poppins',
+                                      fontFamily: 'Inter',
                                     ),
                                   ),
                                 ],
@@ -310,7 +314,7 @@ class _RegistrationPaymentScreenState extends State<RegistrationPaymentScreen> {
                                       color: Colors.black,
                                       fontSize: screenWidth * 0.045,
                                       fontWeight: FontWeight.w600,
-                                      fontFamily: 'Poppins',
+                                      fontFamily: 'Inter',
                                     ),
                                   ),
                                 ],
@@ -372,7 +376,7 @@ class _RegistrationPaymentScreenState extends State<RegistrationPaymentScreen> {
                                       color: Colors.black,
                                       fontSize: screenWidth * 0.045,
                                       fontWeight: FontWeight.w600,
-                                      fontFamily: 'Poppins',
+                                      fontFamily: 'Inter',
                                     ),
                                   ),
                                 ],
@@ -434,7 +438,7 @@ class _RegistrationPaymentScreenState extends State<RegistrationPaymentScreen> {
                                       color: Colors.black,
                                       fontSize: screenWidth * 0.045,
                                       fontWeight: FontWeight.w600,
-                                      fontFamily: 'Poppins',
+                                      fontFamily: 'Inter',
                                     ),
                                   ),
                                 ],
@@ -496,7 +500,7 @@ class _RegistrationPaymentScreenState extends State<RegistrationPaymentScreen> {
                                       color: Colors.black,
                                       fontSize: screenWidth * 0.045,
                                       fontWeight: FontWeight.w600,
-                                      fontFamily: 'Poppins',
+                                      fontFamily: 'Inter',
                                     ),
                                   ),
                                 ],
@@ -571,7 +575,7 @@ class _RegistrationPaymentScreenState extends State<RegistrationPaymentScreen> {
                                 color: Colors.white,
                                 fontSize: screenWidth * 0.03,
                                 fontWeight: FontWeight.w500,
-                                fontFamily: 'Poppins',
+                                fontFamily: 'Inter',
                               ),
                             ),
                           ],
