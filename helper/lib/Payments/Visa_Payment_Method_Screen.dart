@@ -2,8 +2,6 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutterwave_standard/flutterwave.dart';
-import 'package:flutterwave_standard/models/requests/customer.dart';
-import 'package:flutterwave_standard/models/requests/customizations.dart';
 
 class VisaPaymentMethodScreen extends StatefulWidget {
   const VisaPaymentMethodScreen({super.key});
@@ -22,6 +20,7 @@ class _VisaPaymentMethodScreenState extends State<VisaPaymentMethodScreen> {
   bool isChecked = false;
   bool _isDimming = false; // State to track if the screen should dim
   bool _showOverlay = false; // State to control the overlay visibility
+  bool _isPaymentSuccessful = false; // State to track payment status
   final Duration _overlayAnimDuration = Duration(milliseconds: 300);
 
   @override
