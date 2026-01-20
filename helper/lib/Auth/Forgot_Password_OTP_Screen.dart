@@ -336,7 +336,7 @@ class _ForgotPasswordOTPScreenState extends State<ForgotPasswordOTPScreen> {
                 // Navigate to PasswordResetScreen for forgot password
                 Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (context) => const PasswordResetScreen(),
+                    builder: (context) => PasswordResetScreen(email: widget.emailOrPhone),
                   ),
                 );
               }

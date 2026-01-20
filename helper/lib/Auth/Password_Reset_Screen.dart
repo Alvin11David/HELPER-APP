@@ -5,7 +5,8 @@ import 'package:flutter/gestures.dart';
 import 'Sign_In_Screen.dart';
 
 class PasswordResetScreen extends StatefulWidget {
-  const PasswordResetScreen({super.key});
+  final String? email;
+  const PasswordResetScreen({super.key, this.email});
 
   @override
   State<PasswordResetScreen> createState() => _PasswordResetScreenState();
