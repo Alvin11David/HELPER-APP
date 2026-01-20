@@ -873,7 +873,11 @@ class _EmailBlock extends StatelessWidget {
             const Spacer(),
             GestureDetector(
               onTap: () {
-                // TODO: forgot password
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => ForgotPasswordScreen(),
+                  ),
+                );
               },
               child: Text(
                 'Forgot Password?',
