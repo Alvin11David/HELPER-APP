@@ -42,7 +42,7 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
   bool _isButtonEnabled = false;
   bool _isLoading = false;
   int _countdown = 60;
-  final int _otpLength = 6;
+  final int _otpLength = 10;
   bool _showOverlay = false;
   final Duration _overlayAnimDuration = const Duration(milliseconds: 360);
 
@@ -326,13 +326,13 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: List.generate(_otpLength + 1, (index) {
-                        // Add separator after 3rd box
-                        if (index == 3) {
+                        // Add separator after 5th box
+                        if (index == 5) {
                           return Container(
                             width: screenWidth * 0.015,
                             height: screenWidth * 0.015,
                             margin: EdgeInsets.symmetric(
-                              horizontal: screenWidth * 0.025,
+                              horizontal: screenWidth * 0.018,
                             ),
                             decoration: BoxDecoration(
                               color: Colors.white,
@@ -342,34 +342,37 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
                         }
 
                         // Calculate actual OTP box index
-                        final otpIndex = index > 3 ? index - 1 : index;
-                        final otpBoxWidth = screenWidth * 0.12;
-                        final otpBoxHeight = screenWidth * 0.19;
+                        final otpIndex = index > 5 ? index - 1 : index;
+                        // Make the boxes smaller to fit 10 on screen
+                        final otpBoxWidth = screenWidth * 0.075;
+                        final otpBoxHeight = screenWidth * 0.13;
+
+                        if (otpIndex >= _otpLength) return SizedBox.shrink();
 
                         return Container(
                           width: otpBoxWidth,
                           height: otpBoxHeight,
                           margin: EdgeInsets.symmetric(
-                            horizontal: screenWidth * 0.01,
+                            horizontal: screenWidth * 0.006,
                           ),
                           decoration: BoxDecoration(
-                            border: Border.all(color: Colors.white, width: 1.5),
-                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: Colors.white, width: 1.2),
+                            borderRadius: BorderRadius.circular(8),
                           ),
                           child: Stack(
                             alignment: Alignment.bottomCenter,
                             children: [
                               Positioned(
-                                bottom: screenWidth * 0.035,
+                                bottom: screenWidth * 0.02,
                                 child: Container(
                                   width: otpBoxWidth * 0.75,
-                                  height: 1.4,
+                                  height: 1.2,
                                   color: Colors.white.withOpacity(0.9),
                                 ),
                               ),
                               Center(
                                 child: SizedBox(
-                                  width: otpBoxWidth * 0.55,
+                                  width: otpBoxWidth * 0.65,
                                   child: TextField(
                                     controller: _controllers[otpIndex],
                                     focusNode: _focusNodes[otpIndex],
@@ -378,7 +381,7 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
                                     maxLength: 1,
                                     style: TextStyle(
                                       color: Colors.white,
-                                      fontSize: screenWidth * 0.08,
+                                      fontSize: screenWidth * 0.055,
                                       fontWeight: FontWeight.bold,
                                     ),
                                     decoration: const InputDecoration(
