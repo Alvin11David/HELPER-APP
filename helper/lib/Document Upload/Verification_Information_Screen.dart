@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'Document_Upload_screen.dart';
 
 class VerificationInformationScreen extends StatefulWidget {
   const VerificationInformationScreen({super.key});
@@ -245,7 +246,13 @@ class _VerificationInformationScreenState
                               borderRadius: BorderRadius.circular(30),
                             ),
                           ),
-                          onPressed: () {},
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => const DocumentUploadScreen(),
+                              ),
+                            );
+                          },
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
