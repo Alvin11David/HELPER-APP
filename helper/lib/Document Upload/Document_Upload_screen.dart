@@ -103,7 +103,7 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                         ),
                         SizedBox(width: w * 0.03),
                         Text(
-                          'Helper',
+                          'Helper\'s App',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: w * 0.055,
@@ -220,7 +220,8 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                                   SizedBox(width: w * 0.018),
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           'National ID/Passport',
@@ -278,7 +279,8 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                                   SizedBox(width: w * 0.018),
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           'Academic Certificates',
@@ -336,7 +338,8 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                                   SizedBox(width: w * 0.018),
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           'Professional Licenses',
@@ -394,7 +397,8 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                                   SizedBox(width: w * 0.018),
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           'Current Photo(Selfie)',
