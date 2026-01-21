@@ -495,7 +495,7 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
                       style: TextStyle(
                         color: Colors.white.withOpacity(0.9),
                         fontSize: screenWidth * 0.033,
-                        fontFamily: 'Poppins',
+                        fontFamily: 'Inter',
                         fontWeight: FontWeight.w600,
                       ),
                     ),
