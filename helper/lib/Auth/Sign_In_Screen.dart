@@ -707,62 +707,60 @@ class _PhoneBlock extends StatelessWidget {
                 isScrollControlled: true,
                 backgroundColor: Colors.transparent,
                 builder: (context) {
-                  return Padding(
-                    padding: EdgeInsets.only(
+                  return AnimatedContainer(
+                    duration: Duration(milliseconds: 300),
+                    curve: Curves.easeOut,
+                    margin: EdgeInsets.only(
                       left: w * 0.045,
                       right: w * 0.045,
                       bottom: MediaQuery.of(context).viewInsets.bottom,
                     ),
-                    child: AnimatedContainer(
-                      duration: Duration(milliseconds: 300),
-                      curve: Curves.easeOut,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.vertical(
-                            top: Radius.circular(30),
-                          ),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.vertical(
+                          top: Radius.circular(30),
                         ),
-                         width: double.infinity,
-                        child: Padding(
-                          padding: EdgeInsets.all(w * 0.06),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                'Enter Referral Code',
-                                style: TextStyle(
-                                  fontSize: w * 0.05,
-                                  fontWeight: FontWeight.bold,
+                      ),
+                      width: double.infinity,
+                      child: Padding(
+                        padding: EdgeInsets.all(w * 0.06),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'Enter Referral Code',
+                              style: TextStyle(
+                                fontSize: w * 0.05,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            SizedBox(height: h * 0.02),
+                            TextField(
+                              decoration: InputDecoration(
+                                hintText: 'Referral Code',
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(16),
                                 ),
                               ),
-                              SizedBox(height: h * 0.02),
-                              TextField(
-                                decoration: InputDecoration(
-                                  hintText: 'Referral Code',
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
+                            ),
+                            SizedBox(height: h * 0.02),
+                            ElevatedButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: Text('Submit'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.black,
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
                                 ),
                               ),
-                              SizedBox(height: h * 0.02),
-                              ElevatedButton(
-                                onPressed: () => Navigator.pop(context),
-                                child: Text('Submit'),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.black,
-                                  foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
-                                               width: double.infinity,
+                  );
                 },
               );
             },
@@ -874,58 +872,56 @@ class _EmailBlock extends StatelessWidget {
                   isScrollControlled: true,
                   backgroundColor: Colors.transparent,
                   builder: (context) {
-                    return Padding(
-                      padding: EdgeInsets.only(
+                    return AnimatedContainer(
+                      duration: Duration(milliseconds: 300),
+                      curve: Curves.easeOut,
+                      margin: EdgeInsets.only(
                         left: w * 0.045,
                         right: w * 0.045,
                         bottom: MediaQuery.of(context).viewInsets.bottom,
                       ),
-                      child: AnimatedContainer(
-                        duration: Duration(milliseconds: 300),
-                        curve: Curves.easeOut,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.vertical(
-                              top: Radius.circular(30),
-                            ),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.vertical(
+                            top: Radius.circular(30),
                           ),
-                          width: double.infinity,
-                          child: Padding(
-                            padding: EdgeInsets.all(w * 0.06),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  'Enter Referral Code',
-                                  style: TextStyle(
-                                    fontSize: w * 0.05,
-                                    fontWeight: FontWeight.bold,
+                        ),
+                        width: double.infinity,
+                        child: Padding(
+                          padding: EdgeInsets.all(w * 0.06),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'Enter Referral Code',
+                                style: TextStyle(
+                                  fontSize: w * 0.05,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              SizedBox(height: h * 0.02),
+                              TextField(
+                                decoration: InputDecoration(
+                                  hintText: 'Referral Code',
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(16),
                                   ),
                                 ),
-                                SizedBox(height: h * 0.02),
-                                TextField(
-                                  decoration: InputDecoration(
-                                    hintText: 'Referral Code',
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(16),
-                                    ),
+                              ),
+                              SizedBox(height: h * 0.02),
+                              ElevatedButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: Text('Submit'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.black,
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
                                   ),
                                 ),
-                                SizedBox(height: h * 0.02),
-                                ElevatedButton(
-                                  onPressed: () => Navigator.pop(context),
-                                  child: Text('Submit'),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.black,
-                                    foregroundColor: Colors.white,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(16),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
