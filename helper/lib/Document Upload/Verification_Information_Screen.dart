@@ -249,7 +249,8 @@ class _VerificationInformationScreenState
                           onPressed: () {
                             Navigator.of(context).push(
                               MaterialPageRoute(
-                                builder: (context) => const DocumentUploadScreen(),
+                                builder: (context) =>
+                                    const DocumentUploadScreen(),
                               ),
                             );
                           },
