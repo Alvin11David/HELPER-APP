@@ -1,3 +1,4 @@
+import 'National_ID_Passport_Front_Upload_Screen.dart';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -199,7 +200,14 @@ class _NonProfessionalDocumentUploadScreenState
                         child: Column(
                           children: [
                             GestureDetector(
-                              onTap: () => setState(() => _selectedIndex = 0),
+                              onTap: () {
+                                setState(() => _selectedIndex = 0);
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) => const NationalIdPassportFrontUploadScreen(),
+                                  ),
+                                );
+                              },
                               child: Row(
                                 children: [
                                   Container(
