@@ -867,13 +867,80 @@ class _EmailBlock extends StatelessWidget {
         SizedBox(height: h * 0.014),
         Row(
           children: [
-            Text(
-              'Referral Code?',
-              style: TextStyle(
-                color: Colors.white.withOpacity(0.85),
-                fontSize: w * 0.035,
-                fontWeight: FontWeight.w600,
-                fontFamily: 'Inter',
+            GestureDetector(
+              onTap: () {
+                showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  backgroundColor: Colors.transparent,
+                  builder: (context) {
+                    return Padding(
+                      padding: EdgeInsets.only(
+                        left: w * 0.045,
+                        right: w * 0.045,
+                        bottom: MediaQuery.of(context).viewInsets.bottom,
+                      ),
+                      child: AnimatedContainer(
+                        duration: Duration(milliseconds: 300),
+                        curve: Curves.easeOut,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.vertical(
+                              top: Radius.circular(30),
+                            ),
+                          ),
+                          width: double.infinity,
+                          child: Padding(
+                            padding: EdgeInsets.all(w * 0.06),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  'Enter Referral Code',
+                                  style: TextStyle(
+                                    fontSize: w * 0.05,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                SizedBox(height: h * 0.02),
+                                TextField(
+                                  decoration: InputDecoration(
+                                    hintText: 'Referral Code',
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(height: h * 0.02),
+                                ElevatedButton(
+                                  onPressed: () => Navigator.pop(context),
+                                  child: Text('Submit'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.black,
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
+              child: Text(
+                'Referral Code?',
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.85),
+                  fontSize: w * 0.035,
+                  fontWeight: FontWeight.w600,
+                  fontFamily: 'Inter',
+                ),
               ),
             ),
             const Spacer(),
