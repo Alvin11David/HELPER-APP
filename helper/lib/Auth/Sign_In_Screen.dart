@@ -451,6 +451,25 @@ class _SignInScreenState extends State<SignInScreen> {
             );
           },
         );
+      } else {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => ReferralCodeScreen()),
+        );
+      }
+    } else {
+      identifier = _emailCtrl.text.trim();
+      if (identifier.isEmpty) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => ReferralCodeScreen()),
+        );
+        return;
+      }
+      QuerySnapshot query = await FirebaseFirestore.instance
+          .collection('Sign Up')
+          .where('email', isEqualTo: identifier)
+          .get();
       if (query.docs.isNotEmpty) {
         final random = Random();
         final letters = String.fromCharCodes(
@@ -458,12 +477,6 @@ class _SignInScreenState extends State<SignInScreen> {
         );
         final numbers = random.nextInt(100).toString().padLeft(2, '0');
         final referralCode = 'UG$letters$numbers';
-        // Save referral code to Firestore
-        await FirebaseFirestore.instance.collection('Referral Codes').doc(phoneNumber).set({
-          'phoneNumber': phoneNumber,
-          'referralCode': referralCode,
-          'timestamp': FieldValue.serverTimestamp(),
-        });
         showModalBottomSheet(
           context: context,
           isScrollControlled: true,
@@ -497,7 +510,9 @@ class _SignInScreenState extends State<SignInScreen> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      SizedBox(height: MediaQuery.of(context).size.height * 0.02),
+                      SizedBox(
+                        height: MediaQuery.of(context).size.height * 0.02,
+                      ),
                       Text(
                         referralCode,
                         style: TextStyle(
@@ -505,27 +520,6 @@ class _SignInScreenState extends State<SignInScreen> {
                           fontWeight: FontWeight.bold,
                           color: Color(0xFFFFA10D),
                         ),
-                      ),
-                      SizedBox(height: MediaQuery.of(context).size.height * 0.02),
-                      ElevatedButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: Text('Close'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.black,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          },
-        );
-      } else {
                       ),
                       SizedBox(
                         height: MediaQuery.of(context).size.height * 0.02,
@@ -548,81 +542,75 @@ class _SignInScreenState extends State<SignInScreen> {
             );
           },
         );
-      if (query.docs.isNotEmpty) {
-        final random = Random();
-        final letters = String.fromCharCodes(
-          List.generate(2, (_) => random.nextInt(26) + 65),
-        );
-        final numbers = random.nextInt(100).toString().padLeft(2, '0');
-        final referralCode = 'UG$letters$numbers';
-        // Save referral code to Firestore
-        await FirebaseFirestore.instance.collection('Referral Codes').doc(identifier).set({
-          'email': identifier,
-          'referralCode': referralCode,
-          'timestamp': FieldValue.serverTimestamp(),
-        });
-        showModalBottomSheet(
-          context: context,
-          isScrollControlled: true,
-          backgroundColor: Colors.transparent,
-          builder: (context) {
-            return AnimatedContainer(
-              duration: Duration(milliseconds: 300),
-              curve: Curves.easeOut,
-              margin: EdgeInsets.only(
-                left: MediaQuery.of(context).size.width * 0.045,
-                right: MediaQuery.of(context).size.width * 0.045,
-                bottom: MediaQuery.of(context).viewInsets.bottom,
-              ),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
-                ),
-                width: double.infinity,
-                child: Padding(
-                  padding: EdgeInsets.all(
-                    MediaQuery.of(context).size.width * 0.06,
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'Your Referral Code Is:',
-                        style: TextStyle(
-                          fontSize: MediaQuery.of(context).size.width * 0.05,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      SizedBox(height: MediaQuery.of(context).size.height * 0.02),
-                      Text(
-                        referralCode,
-                        style: TextStyle(
-                          fontSize: MediaQuery.of(context).size.width * 0.08,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFFFFA10D),
-                        ),
-                      ),
-                      SizedBox(height: MediaQuery.of(context).size.height * 0.02),
-                      ElevatedButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: Text('Close'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.black,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          },
-        );
       } else {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => ReferralCodeScreen()),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final w = MediaQuery.of(context).size.width;
+    final h = MediaQuery.of(context).size.height;
+
+    final sidePad = w * 0.045;
+
+    return Scaffold(
+      body: SafeArea(
+        child: Container(
+          constraints: const BoxConstraints.expand(),
+          decoration: const BoxDecoration(
+            image: DecorationImage(
+              image: AssetImage('assets/background/normalscreenbg.png'),
+              fit: BoxFit.cover,
+            ),
+          ),
+          child: Stack(
+            children: [
+              SingleChildScrollView(
+                padding: EdgeInsets.symmetric(horizontal: sidePad),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    children: [
+                      SizedBox(height: h * 0.02),
+
+                      // Top bar
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Image.asset(
+                            'assets/icons/logo.png',
+                            width: w * 0.09,
+                            height: w * 0.09,
+                          ),
+                          SizedBox(width: w * 0.02),
+                          Text(
+                            'Helper',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: w * 0.05,
+                              fontWeight: FontWeight.bold,
+                              fontFamily: 'Inter',
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      SizedBox(height: h * 0.05),
+
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'Sign In',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: w * 0.09,
+                            fontFamily: 'AbrilFatface',
+                            height: 1.05,
                           ),
                         ),
                       ),
