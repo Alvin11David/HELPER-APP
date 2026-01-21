@@ -6,7 +6,6 @@ import 'package:flutter/services.dart';
 import 'Sign_In_Screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-
 class DashedLinePainter extends CustomPainter {
   final Color color;
   DashedLinePainter({required this.color});
@@ -141,7 +140,10 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
     }
     setState(() => _isLoading = true);
     try {
-      final doc = await FirebaseFirestore.instance.collection('Referral Codes').doc(code).get();
+      final doc = await FirebaseFirestore.instance
+          .collection('Referral Codes')
+          .doc(code)
+          .get();
       if (doc.exists) {
         // Valid code
         setState(() {
@@ -149,13 +151,15 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
         });
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Invalid referral code. Please try again.')),
+          const SnackBar(
+            content: Text('Invalid referral code. Please try again.'),
+          ),
         );
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error verifying code: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error verifying code: $e')));
     } finally {
       setState(() => _isLoading = false);
     }
@@ -607,16 +611,16 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
                             ),
                           ),
                           Text(
-                              "You have been referred to Helper's App by the $_refCode and You have also received 1,000 UGX on your wallet",
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: Colors.black,
-                                fontSize: screenWidth * 0.045,
-                                fontFamily: 'Montserrat',
-                                fontWeight: FontWeight.w600,
-                                height: 1.4,
-                              ),
+                            "You have been referred to Helper's App by the $_refCode and You have also received 1,000 UGX on your wallet",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontSize: screenWidth * 0.045,
+                              fontFamily: 'Montserrat',
+                              fontWeight: FontWeight.w600,
+                              height: 1.4,
                             ),
+                          ),
                           SizedBox(height: screenHeight * 0.07),
                           SizedBox(
                             width: double.infinity,
