@@ -975,7 +975,7 @@ class _MasterCardPaymentMethodScreenState
                                       fontSize: screenWidth * 0.045,
                                       fontWeight: FontWeight.bold,
                                       color: Colors.white,
-                                      fontFamily: 'AbrilFatface',
+                                      fontFamily: 'Inter',
                                     ),
                                   ),
                                   SizedBox(width: screenWidth * 0.02),

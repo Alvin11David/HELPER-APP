@@ -969,7 +969,7 @@ class _VisaPaymentMethodScreenState extends State<VisaPaymentMethodScreen> {
                                         fontSize: screenWidth * 0.045,
                                         fontWeight: FontWeight.bold,
                                         color: Colors.white,
-                                        fontFamily: 'AbrilFatface',
+                                        fontFamily: 'Inter',
                                       ),
                                     ),
                                   ),

@@ -711,7 +711,7 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
                                         fontSize: screenWidth * 0.045,
                                         fontWeight: FontWeight.bold,
                                         color: Colors.white,
-                                        fontFamily: 'AbrilFatface',
+                                        fontFamily: 'Inter',
                                       ),
                                     ),
                                   ),

@@ -662,7 +662,7 @@ class _PayPalPaymentMethodScreenState extends State<PayPalPaymentMethodScreen> {
                                         fontSize: screenWidth * 0.045,
                                         fontWeight: FontWeight.bold,
                                         color: Colors.white,
-                                        fontFamily: 'AbrilFatface',
+                                        fontFamily: 'Inter',
                                       ),
                                     ),
                                   ),
