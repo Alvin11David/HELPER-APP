@@ -145,9 +145,9 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('User not logged in.')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('User not logged in.')));
         setState(() => _isLoading = false);
         return;
       }
@@ -161,7 +161,9 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
 
       if (query.docs.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Invalid referral code. Please try again.')),
+          const SnackBar(
+            content: Text('Invalid referral code. Please try again.'),
+          ),
         );
         setState(() => _isLoading = false);
         return;
@@ -174,10 +176,16 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
       final refUserPhone = refUser['phoneNumber'] as String?;
       final refUserEmail = refUser['email'] as String?;
 
-      if ((currentUserPhone != null && refUserPhone != null && currentUserPhone == refUserPhone) ||
-          (currentUserEmail != null && refUserEmail != null && currentUserEmail == refUserEmail)) {
+      if ((currentUserPhone != null &&
+              refUserPhone != null &&
+              currentUserPhone == refUserPhone) ||
+          (currentUserEmail != null &&
+              refUserEmail != null &&
+              currentUserEmail == refUserEmail)) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('You cannot use your own referral code.')),
+          const SnackBar(
+            content: Text('You cannot use your own referral code.'),
+          ),
         );
         setState(() => _isLoading = false);
         return;
