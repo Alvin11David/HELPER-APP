@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../Components/Side_Bar.dart';
 
 class WorkersDashboardScreen extends StatefulWidget {
+  const WorkersDashboardScreen({super.key});
+
   @override
   State<WorkersDashboardScreen> createState() => _WorkersDashboardScreenState();
 }
@@ -51,7 +53,7 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
               child: Column(
                 children: [
                   // Fixed header
-                  Container(
+                  SizedBox(
                     height: 60,
                     child: Stack(
                       children: [

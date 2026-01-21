@@ -1,0 +1,807 @@
+// ignore_for_file: depend_on_referenced_packages
+
+import 'dart:ui';
+import 'package:flutter/material.dart';
+
+/// ✅ Suggested file name:
+/// worker_jobs_hub_screen.dart
+///
+/// Suggested class name:
+/// WorkerJobsHubScreen
+
+class WorkerJobsHubScreen extends StatefulWidget {
+  const WorkerJobsHubScreen({super.key});
+
+  @override
+  State<WorkerJobsHubScreen> createState() => _WorkerJobsHubScreenState();
+}
+
+class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
+  static const _brandOrange = Color(0xFFFFA10D);
+
+  int _tab = 0; // 0 pending, 1 active, 2 completed, 3 cancelled
+
+  // Fake data (replace with API later)
+  final List<_JobItem> _jobs = List.generate(
+    7,
+    (i) => _JobItem(
+      employerName: "Employer Name",
+      jobDesc: "Job Description here",
+      payment: "Payment Amount",
+      location: "Location",
+      category: "Category",
+      duration: "Duration",
+      timeRemaining: "Time",
+      specialNotes: "Notes",
+      pricingType: "Hr/Fixed",
+      paymentAmount: "Amount",
+    ),
+  );
+
+  void _setTab(int i) => setState(() => _tab = i);
+
+  String get _title {
+    switch (_tab) {
+      case 0:
+        return "Pending Jobs";
+      case 1:
+        return "Active Jobs";
+      case 2:
+        return "Completed Jobs";
+      default:
+        return "Cancelled Jobs";
+    }
+  }
+
+  String get _helperPillText {
+    switch (_tab) {
+      case 0:
+        return "View all Pending Jobs here";
+      case 1:
+        return "View all active Jobs here";
+      case 2:
+        return "View all completed Jobs here";
+      default:
+        return "View all cancelled Jobs here";
+    }
+  }
+
+  Color _tabChipColor(int i) {
+    if (_tab == i) return _brandOrange;
+    return Colors.white;
+  }
+
+  Color _tabChipTextColor(int i) {
+    if (_tab == i) return Colors.black;
+    return Colors.black.withOpacity(0.75);
+  }
+
+  List<_JobItem> get _filtered {
+    // For now, same list — later filter by status
+    return _jobs;
+  }
+
+  void _openDetails(_JobItem job) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (_) => _JobDetailsSheet(
+        job: job,
+        accent: _brandOrange,
+        onAccept: () {
+          Navigator.pop(context);
+          _toast("Accepted (hook API later)");
+          setState(() => _tab = 1); // jump to Active like your mock
+        },
+        onViewLocation: () {
+          _toast("Open location (hook maps later)");
+        },
+      ),
+    );
+  }
+
+  void _toast(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg, style: const TextStyle(fontFamily: 'Poppins')),
+        backgroundColor: Colors.black.withOpacity(0.85),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final w = MediaQuery.of(context).size.width;
+    final h = MediaQuery.of(context).size.height;
+
+    final sidePad = w * 0.06;
+
+    return Scaffold(
+      body: SafeArea(
+        child: Container(
+          constraints: const BoxConstraints.expand(),
+          decoration: const BoxDecoration(
+            image: DecorationImage(
+              image: AssetImage('assets/background/normalscreenbg.png'),
+              fit: BoxFit.cover,
+            ),
+          ),
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: sidePad),
+            child: Column(
+              children: [
+                SizedBox(height: h * 0.02),
+
+                // Top bar
+                Row(
+                  children: [
+                    GestureDetector(
+                      onTap: () => Navigator.of(context).maybePop(),
+                      child: Container(
+                        width: w * 0.13,
+                        height: w * 0.13,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                        child: Icon(
+                          Icons.chevron_left,
+                          color: Colors.black,
+                          size: w * 0.10,
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: w * 0.04),
+                    Expanded(
+                      child: Text(
+                        _title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: w * 0.055,
+                          fontFamily: 'AbrilFatface',
+                          letterSpacing: 0.2,
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: w * 0.02),
+                    _TopAvatar(w: w),
+                    SizedBox(width: w * 0.02),
+                    _TopIcon(
+                      w: w,
+                      icon: Icons.notifications_none_rounded,
+                      onTap: () {},
+                    ),
+                  ],
+                ),
+
+                SizedBox(height: h * 0.012),
+
+                // Small pill
+                Center(
+                  child: _GlassPill(
+                    radius: 18,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: w * 0.05,
+                      vertical: h * 0.007,
+                    ),
+                    child: Text(
+                      _helperPillText,
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.92),
+                        fontFamily: 'Poppins',
+                        fontWeight: FontWeight.w700,
+                        fontSize: w * 0.03,
+                      ),
+                    ),
+                  ),
+                ),
+
+                SizedBox(height: h * 0.018),
+
+                // Job List header
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    "Job List",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.w900,
+                      fontSize: w * 0.04,
+                    ),
+                  ),
+                ),
+
+                SizedBox(height: h * 0.012),
+
+                // Tabs row
+                Row(
+                  children: [
+                    _TabChip(
+                      text: "Pending",
+                      active: _tab == 0,
+                      bg: _tabChipColor(0),
+                      fg: _tabChipTextColor(0),
+                      onTap: () => _setTab(0),
+                    ),
+                    SizedBox(width: w * 0.02),
+                    _TabChip(
+                      text: "Active",
+                      active: _tab == 1,
+                      bg: _tabChipColor(1),
+                      fg: _tabChipTextColor(1),
+                      onTap: () => _setTab(1),
+                    ),
+                    SizedBox(width: w * 0.02),
+                    _TabChip(
+                      text: "Completed",
+                      active: _tab == 2,
+                      bg: _tabChipColor(2),
+                      fg: _tabChipTextColor(2),
+                      onTap: () => _setTab(2),
+                    ),
+                    SizedBox(width: w * 0.02),
+                    _TabChip(
+                      text: "Cancelled",
+                      active: _tab == 3,
+                      bg: _tabChipColor(3),
+                      fg: _tabChipTextColor(3),
+                      onTap: () => _setTab(3),
+                    ),
+                  ],
+                ),
+
+                SizedBox(height: h * 0.014),
+
+                // List
+                Expanded(
+                  child: ListView.separated(
+                    padding: EdgeInsets.only(bottom: h * 0.02),
+                    itemCount: _filtered.length,
+                    separatorBuilder: (_, __) => SizedBox(height: h * 0.012),
+                    itemBuilder: (context, i) {
+                      final job = _filtered[i];
+                      return _JobCard(
+                        w: w,
+                        h: h,
+                        tab: _tab,
+                        job: job,
+                        onTap: () => _openDetails(job),
+                        onAccept: () {
+                          _toast("Accepted (hook API later)");
+                          setState(() => _tab = 1);
+                        },
+                        onDelete: () => _toast("Deleted (hook API later)"),
+                        onResume: () => _toast("Resume (hook API later)"),
+                        onPause: () => _toast("Pause (hook API later)"),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ------------------------------ Models ------------------------------
+
+class _JobItem {
+  final String employerName;
+  final String jobDesc;
+  final String payment;
+
+  // details
+  final String specialNotes;
+  final String location;
+  final String category;
+  final String duration;
+  final String timeRemaining;
+  final String pricingType;
+  final String paymentAmount;
+
+  _JobItem({
+    required this.employerName,
+    required this.jobDesc,
+    required this.payment,
+    required this.specialNotes,
+    required this.location,
+    required this.category,
+    required this.duration,
+    required this.timeRemaining,
+    required this.pricingType,
+    required this.paymentAmount,
+  });
+}
+
+// ------------------------------ Widgets ------------------------------
+
+class _JobCard extends StatelessWidget {
+  final double w;
+  final double h;
+  final int tab;
+  final _JobItem job;
+  final VoidCallback onTap;
+
+  final VoidCallback onAccept;
+  final VoidCallback onDelete;
+  final VoidCallback onResume;
+  final VoidCallback onPause;
+
+  const _JobCard({
+    required this.w,
+    required this.h,
+    required this.tab,
+    required this.job,
+    required this.onTap,
+    required this.onAccept,
+    required this.onDelete,
+    required this.onResume,
+    required this.onPause,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: w * 0.04, vertical: h * 0.014),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    job.employerName,
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.w900,
+                      fontSize: w * 0.036,
+                    ),
+                  ),
+                  SizedBox(height: h * 0.002),
+                  Text(
+                    job.jobDesc,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: Colors.black.withOpacity(0.65),
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.w700,
+                      fontSize: w * 0.03,
+                    ),
+                  ),
+                  SizedBox(height: h * 0.002),
+                  Text(
+                    job.payment,
+                    style: TextStyle(
+                      color: Colors.black.withOpacity(0.75),
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.w900,
+                      fontSize: w * 0.03,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            SizedBox(width: w * 0.03),
+
+            // Right actions (depends on tab)
+            if (tab == 0) ...[
+              Column(
+                children: [
+                  _TinyPillButton(
+                    w: w,
+                    bg: const Color(0xFF3AD11B),
+                    text: "Accept",
+                    icon: Icons.check_rounded,
+                    onTap: onAccept,
+                  ),
+                  SizedBox(height: h * 0.008),
+                  _TinyPillButton(
+                    w: w,
+                    bg: const Color(0xFFE93B2F),
+                    text: "Delete",
+                    icon: Icons.delete_outline_rounded,
+                    onTap: onDelete,
+                  ),
+                ],
+              ),
+            ] else if (tab == 1) ...[
+              Column(
+                children: [
+                  _TinyPillButton(
+                    w: w,
+                    bg: const Color(0xFF3AD11B),
+                    text: "Resume",
+                    icon: Icons.play_arrow_rounded,
+                    onTap: onResume,
+                  ),
+                  SizedBox(height: h * 0.008),
+                  _TinyPillButton(
+                    w: w,
+                    bg: const Color(0xFFE93B2F),
+                    text: "Pause",
+                    icon: Icons.pause_rounded,
+                    onTap: onPause,
+                  ),
+                ],
+              ),
+            ] else ...[
+              // Completed / Cancelled => 3 dots only like mock
+              Padding(
+                padding: EdgeInsets.only(top: h * 0.012),
+                child: Icon(Icons.more_vert, color: Colors.black, size: w * 0.06),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TinyPillButton extends StatelessWidget {
+  final double w;
+  final Color bg;
+  final String text;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _TinyPillButton({
+    required this.w,
+    required this.bg,
+    required this.text,
+    required this.icon,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: w * 0.035, vertical: w * 0.012),
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: Colors.white, size: w * 0.04),
+            SizedBox(width: w * 0.012),
+            Text(
+              text,
+              style: TextStyle(
+                color: Colors.white,
+                fontFamily: 'Poppins',
+                fontWeight: FontWeight.w900,
+                fontSize: w * 0.028,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TabChip extends StatelessWidget {
+  final String text;
+  final bool active;
+  final Color bg;
+  final Color fg;
+  final VoidCallback onTap;
+
+  const _TabChip({
+    required this.text,
+    required this.active,
+    required this.bg,
+    required this.fg,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          height: 34,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: bg,
+            borderRadius: BorderRadius.circular(999),
+          ),
+          child: Text(
+            text,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: fg,
+              fontFamily: 'Poppins',
+              fontWeight: FontWeight.w900,
+              fontSize: 12.5,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ------------------------------ Bottom Sheet ------------------------------
+
+class _JobDetailsSheet extends StatelessWidget {
+  final _JobItem job;
+  final Color accent;
+  final VoidCallback onViewLocation;
+  final VoidCallback onAccept;
+
+  const _JobDetailsSheet({
+    required this.job,
+    required this.accent,
+    required this.onViewLocation,
+    required this.onAccept,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final w = MediaQuery.of(context).size.width;
+    final h = MediaQuery.of(context).size.height;
+
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+        child: Container(
+          padding: EdgeInsets.fromLTRB(w * 0.06, h * 0.02, w * 0.06, h * 0.03),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 60,
+                height: 6,
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(99),
+                ),
+              ),
+              SizedBox(height: h * 0.014),
+              Text(
+                "Job Details",
+                style: TextStyle(
+                  color: Colors.black,
+                  fontFamily: 'AbrilFatface',
+                  fontSize: w * 0.055,
+                ),
+              ),
+              SizedBox(height: h * 0.012),
+
+              _detailRow(w, "Employer Name:", "Name"),
+              _detailRow(w, "Employer Special Notes:", job.specialNotes),
+              _detailRow(w, "Job Description:", "Description"),
+              _detailRow(w, "Job Location:", job.location, valueColor: accent),
+              _detailRow(w, "Job Category:", job.category),
+              _detailRow(w, "Job Duration:", job.duration),
+              _detailRow(w, "Job Time Remaining:", job.timeRemaining),
+
+              SizedBox(height: h * 0.01),
+              Divider(color: Colors.black.withOpacity(0.15)),
+              _detailRow(w, "Pricing Type", job.pricingType),
+              _detailRow(w, "Payment Amount", job.paymentAmount),
+
+              SizedBox(height: h * 0.018),
+
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: onViewLocation,
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: accent.withOpacity(0.9), width: 1.5),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        padding: EdgeInsets.symmetric(vertical: h * 0.016),
+                      ),
+                      child: Text(
+                        "View Location",
+                        style: TextStyle(
+                          color: accent,
+                          fontFamily: 'Poppins',
+                          fontWeight: FontWeight.w900,
+                          fontSize: w * 0.035,
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: w * 0.05),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: onAccept,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: accent,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        padding: EdgeInsets.symmetric(vertical: h * 0.016),
+                      ),
+                      child: Text(
+                        "Accept",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontFamily: 'Poppins',
+                          fontWeight: FontWeight.w900,
+                          fontSize: w * 0.035,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _detailRow(double w, String label, String value, {Color? valueColor}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(
+                color: Colors.black,
+                fontFamily: 'Poppins',
+                fontWeight: FontWeight.w800,
+                fontSize: w * 0.032,
+              ),
+            ),
+          ),
+          SizedBox(width: w * 0.03),
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: valueColor ?? Colors.black.withOpacity(0.75),
+                fontFamily: 'Poppins',
+                fontWeight: FontWeight.w900,
+                fontSize: w * 0.032,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ------------------------------ Top UI ------------------------------
+
+class _TopAvatar extends StatelessWidget {
+  final double w;
+  const _TopAvatar({required this.w});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: w * 0.10,
+      height: w * 0.10,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: Colors.white,
+        border: Border.all(color: Colors.white.withOpacity(0.35)),
+        image: const DecorationImage(
+          image: AssetImage('assets/images/person.png'),
+          fit: BoxFit.cover,
+        ),
+      ),
+    );
+  }
+}
+
+class _TopIcon extends StatelessWidget {
+  final double w;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _TopIcon({
+    required this.w,
+    required this.icon,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: w * 0.10,
+        height: w * 0.10,
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.12),
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.white.withOpacity(0.25)),
+        ),
+        child: Center(
+          child: Icon(icon, color: Colors.white, size: w * 0.06),
+        ),
+      ),
+    );
+  }
+}
+
+// ------------------------------ Glass pill ------------------------------
+
+class _GlassPill extends StatelessWidget {
+  final Widget child;
+  final EdgeInsets padding;
+  final double radius;
+
+  const _GlassPill({
+    required this.child,
+    required this.padding,
+    required this.radius,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(radius),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+        child: Container(
+          padding: padding,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Colors.white.withOpacity(0.22),
+                Colors.white.withOpacity(0.12),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(radius),
+            border: Border.all(color: Colors.white.withOpacity(0.35), width: 1.6),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.white.withOpacity(0.08),
+                blurRadius: 15,
+                spreadRadius: 2,
+              ),
+            ],
+          ),
+          child: child,
+        ),
+      ),
+    );
+  }
+}

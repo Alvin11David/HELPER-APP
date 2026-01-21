@@ -3,6 +3,8 @@ import '../Components/Bottom_Nav_Bar.dart';
 import 'Chat_Screen.dart';
 
 class ChatListScreen extends StatefulWidget {
+  const ChatListScreen({super.key});
+
   @override
   _ChatListScreenState createState() => _ChatListScreenState();
 }
@@ -289,7 +291,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                               ),
                             ),
                           )
-                        : Container(
+                        : SizedBox(
                             height: screenHeight * 0.8,
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,

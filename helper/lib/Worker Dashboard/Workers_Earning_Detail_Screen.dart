@@ -14,8 +14,8 @@ class _WorkerEarningsScreenState extends State<WorkerEarningsScreen> {
   int _tab = 0; // 0 today, 1 week, 2 month, 3 custom
 
   // Fake totals (replace later)
-  String _totalEarnings = "UGX/DOLLARS";
-  String _platformFee = "UGX/DOLLARS";
+  final String _totalEarnings = "UGX/DOLLARS";
+  final String _platformFee = "UGX/DOLLARS";
 
   // Fake summary (replace later)
   final _summaryRows = const [
