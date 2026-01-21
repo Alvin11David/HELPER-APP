@@ -211,8 +211,8 @@ class _VerificationInformationScreenState
                         style: TextStyle(
                           color: const Color.fromRGBO(255, 255, 255, 1),
                           fontSize: screenWidth * 0.06,
-                          fontWeight: FontWeight.w100,
-                          fontFamily: 'AbrilFatface',
+                          fontWeight: FontWeight.w900,
+                          fontFamily: 'Inter',
                         ),
                       ),
                     ),
