@@ -7,12 +7,12 @@ class SelectWorkerTypeScreen extends StatefulWidget {
   const SelectWorkerTypeScreen({super.key});
 
   @override
-  State<SelectWorkerTypeScreen> createState() =>
-      _SelectWorkerTypeScreenState();
+  State<SelectWorkerTypeScreen> createState() => _SelectWorkerTypeScreenState();
 }
 
-class _SelectWorkerTypeScreenState
-    extends State<SelectWorkerTypeScreen> {
+class _SelectWorkerTypeScreenState extends State<SelectWorkerTypeScreen> {
+  // 0: none, 1: professional, 2: non-professional
+  int _selectedWorkerType = 0;
   @override
   Widget build(BuildContext context) {
     final double w = MediaQuery.of(context).size.width;
@@ -155,11 +155,9 @@ class _SelectWorkerTypeScreenState
                     Center(
                       child: GestureDetector(
                         onTap: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) => const VerificationInformationScreen(),
-                            ),
-                          );
+                          setState(() {
+                            _selectedWorkerType = 1;
+                          });
                         },
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(30),
@@ -179,8 +177,10 @@ class _SelectWorkerTypeScreenState
                                 ),
                                 borderRadius: BorderRadius.circular(30),
                                 border: Border.all(
-                                  color: Colors.white.withOpacity(0.4),
-                                  width: 2,
+                                  color: _selectedWorkerType == 1
+                                      ? brandOrange
+                                      : Colors.white.withOpacity(0.4),
+                                  width: 3,
                                 ),
                                 boxShadow: [
                                   BoxShadow(
@@ -253,78 +253,87 @@ class _SelectWorkerTypeScreenState
                     ),
                     SizedBox(height: screenHeight * 0.03),
                     Center(
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(30),
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                          child: Container(
-                            width: screenWidth * 0.9,
-                            height: screenWidth * 0.9 * (147 / 340),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                colors: [
-                                  Colors.white.withOpacity(0.25),
-                                  Colors.white.withOpacity(0.15),
+                      child: GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _selectedWorkerType = 2;
+                          });
+                        },
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(30),
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                            child: Container(
+                              width: screenWidth * 0.9,
+                              height: screenWidth * 0.9 * (147 / 340),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    Colors.white.withOpacity(0.25),
+                                    Colors.white.withOpacity(0.15),
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.circular(30),
+                                border: Border.all(
+                                  color: _selectedWorkerType == 2
+                                      ? brandOrange
+                                      : Colors.white.withOpacity(0.4),
+                                  width: 3,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.white.withOpacity(0.1),
+                                    blurRadius: 15,
+                                    spreadRadius: 2,
+                                  ),
                                 ],
                               ),
-                              borderRadius: BorderRadius.circular(30),
-                              border: Border.all(
-                                color: Colors.white.withOpacity(0.4),
-                                width: 2,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.white.withOpacity(0.1),
-                                  blurRadius: 15,
-                                  spreadRadius: 2,
-                                ),
-                              ],
-                            ),
-                            child: Stack(
-                              children: [
-                                Positioned(
-                                  top: screenWidth * 0.03,
-                                  right: screenWidth * 0.05,
-                                  child: Text(
-                                    'Non-Professional Worker',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: screenWidth * 0.05,
-                                      fontWeight: FontWeight.w600,
-                                      fontFamily: 'Montserrat',
-                                    ),
-                                  ),
-                                ),
-                                Positioned(
-                                  top: screenWidth * 0.13,
-                                  right: screenWidth * 0.1,
-                                  child: SizedBox(
-                                    width: screenWidth * 0.35,
+                              child: Stack(
+                                children: [
+                                  Positioned(
+                                    top: screenWidth * 0.03,
+                                    right: screenWidth * 0.05,
                                     child: Text(
-                                      '"General Labour,\ncleaning,\nloading, delivery etc"',
-                                      textAlign: TextAlign.center,
+                                      'Non-Professional Worker',
                                       style: TextStyle(
                                         color: Colors.white,
-                                        fontSize: screenWidth * 0.036,
-                                        fontWeight: FontWeight.w200,
-                                        fontFamily: 'Poppins',
+                                        fontSize: screenWidth * 0.05,
+                                        fontWeight: FontWeight.w600,
+                                        fontFamily: 'Montserrat',
                                       ),
                                     ),
                                   ),
-                                ),
-                                Positioned(
-                                  left: -screenWidth * 0.01,
-                                  top: -screenWidth * 0.02,
-                                  child: Image.asset(
-                                    'assets/images/nonprofessional.png',
-                                    width: screenWidth * 0.54,
-                                    height: screenWidth * 0.54,
-                                    fit: BoxFit.contain,
+                                  Positioned(
+                                    top: screenWidth * 0.13,
+                                    right: screenWidth * 0.1,
+                                    child: SizedBox(
+                                      width: screenWidth * 0.35,
+                                      child: Text(
+                                        '"General Labour,\ncleaning,\nloading, delivery etc"',
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: screenWidth * 0.036,
+                                          fontWeight: FontWeight.w200,
+                                          fontFamily: 'Poppins',
+                                        ),
+                                      ),
+                                    ),
                                   ),
-                                ),
-                              ],
+                                  Positioned(
+                                    left: -screenWidth * 0.01,
+                                    top: -screenWidth * 0.02,
+                                    child: Image.asset(
+                                      'assets/images/nonprofessional.png',
+                                      width: screenWidth * 0.54,
+                                      height: screenWidth * 0.54,
+                                      fit: BoxFit.contain,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
