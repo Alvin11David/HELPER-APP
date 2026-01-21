@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutterwave_standard/flutterwave.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:helper/Intro/Role_Selection_Screen.dart';
 
 class MtnPaymentMethodScreen extends StatefulWidget {
   const MtnPaymentMethodScreen({super.key});
@@ -718,13 +719,23 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Text(
-                                    'Go To Dashboard',
-                                    style: TextStyle(
-                                      fontSize: screenWidth * 0.045,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
-                                      fontFamily: 'AbrilFatface',
+                                  GestureDetector(
+                                    onTap: () {
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              const RoleSelectionScreen(),
+                                        ),
+                                      );
+                                    },
+                                    child: Text(
+                                      'Go To Role Selection',
+                                      style: TextStyle(
+                                        fontSize: screenWidth * 0.045,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                        fontFamily: 'Inter',
+                                      ),
                                     ),
                                   ),
                                   SizedBox(width: screenWidth * 0.02),

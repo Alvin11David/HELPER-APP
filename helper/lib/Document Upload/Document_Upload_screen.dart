@@ -103,7 +103,7 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                         ),
                         SizedBox(width: w * 0.03),
                         Text(
-                          'Helper',
+                          'Helper\'s App',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: w * 0.055,
@@ -175,7 +175,7 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                                 color: const Color.fromRGBO(255, 255, 255, 1),
                                 fontSize: screenWidth * 0.04,
                                 fontWeight: FontWeight.w500,
-                                fontFamily: 'Poppins',
+                                fontFamily: 'Inter',
                               ),
                               textAlign: TextAlign.center,
                             ),
@@ -218,27 +218,33 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                                     ),
                                   ),
                                   SizedBox(width: w * 0.018),
-                                  Text(
-                                    'National ID/Passport',
-                                    style: TextStyle(
-                                      color: _selectedIndex == 0
-                                          ? const Color(0xFFFBBC04)
-                                          : Colors.black,
-                                      fontSize: screenWidth * 0.032,
-                                      fontWeight: FontWeight.w800,
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'National ID/Passport',
+                                          style: TextStyle(
+                                            color: _selectedIndex == 0
+                                                ? const Color(0xFFFBBC04)
+                                                : Colors.black,
+                                            fontSize: screenWidth * 0.032,
+                                            fontWeight: FontWeight.w800,
+                                          ),
+                                        ),
+                                        Text(
+                                          'Not Verified',
+                                          style: TextStyle(
+                                            color: _selectedIndex == 0
+                                                ? const Color(0xFFFBBC04)
+                                                : Colors.black54,
+                                            fontSize: screenWidth * 0.035,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
-                                  SizedBox(width: w * 0.06),
-                                  Text(
-                                    'Not Verified',
-                                    style: TextStyle(
-                                      color: _selectedIndex == 0
-                                          ? const Color(0xFFFBBC04)
-                                          : Colors.black54,
-                                      fontSize: screenWidth * 0.035,
-                                    ),
-                                  ),
-                                  SizedBox(width: w * 0.0),
                                   Icon(
                                     Icons.chevron_right,
                                     color: _selectedIndex == 0
@@ -270,28 +276,34 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                                       ),
                                     ),
                                   ),
-                                  SizedBox(width: w * 0.02),
-                                  Text(
-                                    'Academic Certificates',
-                                    style: TextStyle(
-                                      color: _selectedIndex == 1
-                                          ? const Color(0xFFFBBC04)
-                                          : Colors.black,
-                                      fontSize: screenWidth * 0.032,
-                                      fontWeight: FontWeight.w800,
+                                  SizedBox(width: w * 0.018),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Academic Certificates',
+                                          style: TextStyle(
+                                            color: _selectedIndex == 1
+                                                ? const Color(0xFFFBBC04)
+                                                : Colors.black,
+                                            fontSize: screenWidth * 0.032,
+                                            fontWeight: FontWeight.w800,
+                                          ),
+                                        ),
+                                        Text(
+                                          'Not Verified',
+                                          style: TextStyle(
+                                            color: _selectedIndex == 1
+                                                ? const Color(0xFFFBBC04)
+                                                : Colors.black54,
+                                            fontSize: screenWidth * 0.035,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
-                                  SizedBox(width: w * 0.06),
-                                  Text(
-                                    'Not Verified',
-                                    style: TextStyle(
-                                      color: _selectedIndex == 1
-                                          ? const Color(0xFFFBBC04)
-                                          : Colors.black54,
-                                      fontSize: screenWidth * 0.035,
-                                    ),
-                                  ),
-                                  SizedBox(width: w * 0.0),
                                   Icon(
                                     Icons.chevron_right,
                                     color: _selectedIndex == 1
@@ -323,28 +335,34 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                                       ),
                                     ),
                                   ),
-                                  SizedBox(width: w * 0.02),
-                                  Text(
-                                    'Professional Licenses',
-                                    style: TextStyle(
-                                      color: _selectedIndex == 2
-                                          ? const Color(0xFFFBBC04)
-                                          : Colors.black,
-                                      fontSize: screenWidth * 0.032,
-                                      fontWeight: FontWeight.w800,
+                                  SizedBox(width: w * 0.018),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Professional Licenses',
+                                          style: TextStyle(
+                                            color: _selectedIndex == 2
+                                                ? const Color(0xFFFBBC04)
+                                                : Colors.black,
+                                            fontSize: screenWidth * 0.032,
+                                            fontWeight: FontWeight.w800,
+                                          ),
+                                        ),
+                                        Text(
+                                          'Not Verified',
+                                          style: TextStyle(
+                                            color: _selectedIndex == 2
+                                                ? const Color(0xFFFBBC04)
+                                                : Colors.black54,
+                                            fontSize: screenWidth * 0.035,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
-                                  SizedBox(width: w * 0.06),
-                                  Text(
-                                    'Not Verified',
-                                    style: TextStyle(
-                                      color: _selectedIndex == 2
-                                          ? const Color(0xFFFBBC04)
-                                          : Colors.black54,
-                                      fontSize: screenWidth * 0.035,
-                                    ),
-                                  ),
-                                  SizedBox(width: w * 0.0),
                                   Icon(
                                     Icons.chevron_right,
                                     color: _selectedIndex == 2
@@ -376,28 +394,34 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                                       ),
                                     ),
                                   ),
-                                  SizedBox(width: w * 0.02),
-                                  Text(
-                                    'Current Photo(Selfie)',
-                                    style: TextStyle(
-                                      color: _selectedIndex == 3
-                                          ? const Color(0xFFFBBC04)
-                                          : Colors.black,
-                                      fontSize: screenWidth * 0.032,
-                                      fontWeight: FontWeight.w800,
+                                  SizedBox(width: w * 0.018),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Current Photo(Selfie)',
+                                          style: TextStyle(
+                                            color: _selectedIndex == 3
+                                                ? const Color(0xFFFBBC04)
+                                                : Colors.black,
+                                            fontSize: screenWidth * 0.032,
+                                            fontWeight: FontWeight.w800,
+                                          ),
+                                        ),
+                                        Text(
+                                          'Not Verified',
+                                          style: TextStyle(
+                                            color: _selectedIndex == 3
+                                                ? const Color(0xFFFBBC04)
+                                                : Colors.black54,
+                                            fontSize: screenWidth * 0.035,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
-                                  SizedBox(width: w * 0.06),
-                                  Text(
-                                    'Not Verified',
-                                    style: TextStyle(
-                                      color: _selectedIndex == 3
-                                          ? const Color(0xFFFBBC04)
-                                          : Colors.black54,
-                                      fontSize: screenWidth * 0.035,
-                                    ),
-                                  ),
-                                  SizedBox(width: w * 0.0),
                                   Icon(
                                     Icons.chevron_right,
                                     color: _selectedIndex == 3

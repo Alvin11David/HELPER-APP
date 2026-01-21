@@ -1,27 +1,60 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'Verification_Information_Screen.dart';
-import 'Non_Professional_Document_Upload_Screen.dart';
 
-class SelectWorkerTypeScreen extends StatefulWidget {
-  const SelectWorkerTypeScreen({super.key});
+class NonProfessionalDocumentUploadScreen extends StatefulWidget {
+  const NonProfessionalDocumentUploadScreen({super.key});
 
   @override
-  State<SelectWorkerTypeScreen> createState() => _SelectWorkerTypeScreenState();
+  State<NonProfessionalDocumentUploadScreen> createState() =>
+      _NonProfessionalDocumentUploadScreenState();
 }
 
-class _SelectWorkerTypeScreenState extends State<SelectWorkerTypeScreen> {
-  // 0: none, 1: professional, 2: non-professional
-  int _selectedWorkerType = 0;
+class _NonProfessionalDocumentUploadScreenState
+    extends State<NonProfessionalDocumentUploadScreen> {
+  bool _loading = false;
+  int _selectedIndex = -1;
+  final _formKey = GlobalKey<FormState>();
+
+  Future<void> _onContinue() async {
+    FocusScope.of(context).unfocus();
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+
+    setState(() => _loading = true);
+
+    // TODO:
+    // phone: send OTP -> navigate to OTPVerificationScreen
+    // email: login/register -> next
+    await Future.delayed(const Duration(milliseconds: 650));
+
+    if (!mounted) return;
+    setState(() => _loading = false);
+  }
+
   @override
   Widget build(BuildContext context) {
     final double w = MediaQuery.of(context).size.width;
     final double h = MediaQuery.of(context).size.height;
-
     double screenWidth = MediaQuery.of(context).size.width;
     double screenHeight = MediaQuery.of(context).size.height;
     const brandOrange = Color(0xFFFFA10D);
+    bool loading = false;
+    final formKey = GlobalKey<FormState>();
+
+    Future<void> onContinue() async {
+      FocusScope.of(context).unfocus();
+      if (!(formKey.currentState?.validate() ?? false)) return;
+
+      setState(() => loading = true);
+
+      // TODO:
+      // phone: send OTP -> navigate to OTPVerificationScreen
+      // email: login/register -> next
+      await Future.delayed(const Duration(milliseconds: 650));
+
+      if (!mounted) return;
+      setState(() => loading = false);
+    }
 
     return Scaffold(
       body: SafeArea(
@@ -72,7 +105,7 @@ class _SelectWorkerTypeScreenState extends State<SelectWorkerTypeScreen> {
                         ),
                         SizedBox(width: w * 0.03),
                         Text(
-                          'Helper',
+                          'Helper\'s App',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: w * 0.055,
@@ -86,7 +119,7 @@ class _SelectWorkerTypeScreenState extends State<SelectWorkerTypeScreen> {
                     Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
-                        'What type of worker\nare you?',
+                        'Upload Verification\nDocuments',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: w * 0.085,
@@ -95,7 +128,6 @@ class _SelectWorkerTypeScreenState extends State<SelectWorkerTypeScreen> {
                         ),
                       ),
                     ),
-
                     SizedBox(height: h * 0.023),
                     _StepIndicator(
                       width: w,
@@ -111,7 +143,7 @@ class _SelectWorkerTypeScreenState extends State<SelectWorkerTypeScreen> {
                           filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
                           child: Container(
                             padding: EdgeInsets.symmetric(
-                              horizontal: screenWidth * 0.06,
+                              horizontal: screenWidth * 0.04,
                               vertical: screenHeight * 0.004,
                             ),
                             decoration: BoxDecoration(
@@ -137,219 +169,205 @@ class _SelectWorkerTypeScreenState extends State<SelectWorkerTypeScreen> {
                               ],
                             ),
                             child: Text(
-                              'Kindly select your role',
-                              maxLines: 1,
+                              'Please provide the following documents\nto verify your profile',
+                              maxLines: 2,
                               softWrap: false,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                 color: const Color.fromRGBO(255, 255, 255, 1),
                                 fontSize: screenWidth * 0.04,
                                 fontWeight: FontWeight.w500,
-                                fontFamily: 'Poppins',
+                                fontFamily: 'Inter',
                               ),
+                              textAlign: TextAlign.center,
                             ),
                           ),
                         ),
                       ),
                     ),
-                    SizedBox(height: screenHeight * 0.03),
-                    Center(
-                      child: GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _selectedWorkerType = 1;
-                          });
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  const VerificationInformationScreen(),
+                    SizedBox(height: h * 0.05),
+                    Container(
+                      width: 361,
+                      height: 120,
+                      padding: EdgeInsets.all(w * 0.04),
+                      alignment: Alignment.topCenter,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(25),
+                      ),
+                      child: SingleChildScrollView(
+                        child: Column(
+                          children: [
+                            GestureDetector(
+                              onTap: () => setState(() => _selectedIndex = 0),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 36,
+                                    height: 36,
+                                    decoration: BoxDecoration(
+                                      color: _selectedIndex == 0
+                                          ? const Color(0xFFFBBC04)
+                                          : const Color(0xFFD9D9D9),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Center(
+                                      child: Image.asset(
+                                        'assets/icons/nationalid.png',
+                                        width: 20,
+                                        height: 20,
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(width: w * 0.018),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'National ID/Passport',
+                                          style: TextStyle(
+                                            color: _selectedIndex == 0
+                                                ? const Color(0xFFFBBC04)
+                                                : Colors.black,
+                                            fontSize: screenWidth * 0.032,
+                                            fontWeight: FontWeight.w800,
+                                          ),
+                                        ),
+                                        Text(
+                                          'Not Verified',
+                                          style: TextStyle(
+                                            color: _selectedIndex == 0
+                                                ? const Color(0xFFFBBC04)
+                                                : Colors.black54,
+                                            fontSize: screenWidth * 0.035,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Icon(
+                                    Icons.chevron_right,
+                                    color: _selectedIndex == 0
+                                        ? const Color(0xFFFBBC04)
+                                        : Colors.black54,
+                                  ),
+                                ],
+                              ),
                             ),
-                          );
-                        },
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(30),
-                          child: BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                            child: Container(
-                              width: screenWidth * 0.9,
-                              height: screenWidth * 0.9 * (147 / 340),
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                  colors: [
-                                    Colors.white.withOpacity(0.25),
-                                    Colors.white.withOpacity(0.15),
+                            SizedBox(height: h * 0.03),
+                            GestureDetector(
+                              onTap: () => setState(() => _selectedIndex = 3),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 36,
+                                    height: 36,
+                                    decoration: BoxDecoration(
+                                      color: _selectedIndex == 3
+                                          ? const Color(0xFFFBBC04)
+                                          : const Color(0xFFD9D9D9),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Center(
+                                      child: Icon(
+                                        Icons.camera,
+                                        color: Colors.black,
+                                        size: 20,
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(width: w * 0.018),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Current Photo(Selfie)',
+                                          style: TextStyle(
+                                            color: _selectedIndex == 3
+                                                ? const Color(0xFFFBBC04)
+                                                : Colors.black,
+                                            fontSize: screenWidth * 0.032,
+                                            fontWeight: FontWeight.w800,
+                                          ),
+                                        ),
+                                        Text(
+                                          'Not Verified',
+                                          style: TextStyle(
+                                            color: _selectedIndex == 3
+                                                ? const Color(0xFFFBBC04)
+                                                : Colors.black54,
+                                            fontSize: screenWidth * 0.035,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Icon(
+                                    Icons.chevron_right,
+                                    color: _selectedIndex == 3
+                                        ? const Color(0xFFFBBC04)
+                                        : Colors.black54,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: h * 0.06),
+                    // Continue (white)
+                    SizedBox(
+                      width: double.infinity,
+                      height: h * 0.062,
+                      child: ElevatedButton(
+                        onPressed: loading ? null : onContinue,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Color(0XFFFBBC04),
+                          disabledBackgroundColor: Color(
+                            0XFFFBBC04,
+                          ).withOpacity(0.6),
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                        ),
+                        child: loading
+                            ? SizedBox(
+                                width: h * 0.03,
+                                height: h * 0.03,
+                                child: const CircularProgressIndicator(
+                                  strokeWidth: 3,
+                                  color: Colors.black,
+                                ),
+                              )
+                            : Center(
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      'Continue',
+                                      style: TextStyle(
+                                        fontSize: w * 0.045,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black,
+                                        fontFamily: 'Poppins',
+                                      ),
+                                    ),
+                                    SizedBox(width: w * 0.02),
+                                    Icon(
+                                      Icons.arrow_forward_rounded,
+                                      color: Colors.black,
+                                      size: h * 0.035,
+                                    ),
                                   ],
                                 ),
-                                borderRadius: BorderRadius.circular(30),
-                                border: Border.all(
-                                  color: _selectedWorkerType == 1
-                                      ? brandOrange
-                                      : Colors.white.withOpacity(0.4),
-                                  width: 3,
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.white.withOpacity(0.1),
-                                    blurRadius: 15,
-                                    spreadRadius: 2,
-                                  ),
-                                ],
                               ),
-                              child: Stack(
-                                children: [
-                                  Positioned(
-                                    top: screenWidth * 0.03,
-                                    left: screenWidth * 0.05,
-                                    child: Text(
-                                      'Professional Worker',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: screenWidth * 0.055,
-                                        fontWeight: FontWeight.w600,
-                                        fontFamily: 'Montserrat',
-                                      ),
-                                    ),
-                                  ),
-                                  Positioned(
-                                    top: screenWidth * 0.11,
-                                    left: screenWidth * 0.04,
-                                    child: SizedBox(
-                                      width: screenWidth * 0.35,
-                                      child: Text(
-                                        '"Skilled and licensed\nprofessionals e.g Drivers, Electricians, Nurses etc"',
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: screenWidth * 0.035,
-                                          fontWeight: FontWeight.w200,
-                                          fontFamily: 'AbrilFatface',
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  Positioned(
-                                    right: -screenWidth * 0.0,
-                                    top: 0,
-                                    child: Image.asset(
-                                      'assets/images/professional.png',
-                                      width: screenWidth * 0.5,
-                                      height: screenWidth * 0.5,
-                                      fit: BoxFit.contain,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: screenHeight * 0.03),
-                    Center(
-                      child: Text(
-                        'OR',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: screenWidth * 0.05,
-                          fontWeight: FontWeight.bold,
-                          fontFamily: 'Poppins',
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: screenHeight * 0.03),
-                    Center(
-                      child: GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _selectedWorkerType = 2;
-                          });
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  const NonProfessionalDocumentUploadScreen(),
-                            ),
-                          );
-                        },
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(30),
-                          child: BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                            child: Container(
-                              width: screenWidth * 0.9,
-                              height: screenWidth * 0.9 * (147 / 340),
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                  colors: [
-                                    Colors.white.withOpacity(0.25),
-                                    Colors.white.withOpacity(0.15),
-                                  ],
-                                ),
-                                borderRadius: BorderRadius.circular(30),
-                                border: Border.all(
-                                  color: _selectedWorkerType == 2
-                                      ? brandOrange
-                                      : Colors.white.withOpacity(0.4),
-                                  width: 3,
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.white.withOpacity(0.1),
-                                    blurRadius: 15,
-                                    spreadRadius: 2,
-                                  ),
-                                ],
-                              ),
-                              child: Stack(
-                                children: [
-                                  Positioned(
-                                    top: screenWidth * 0.03,
-                                    right: screenWidth * 0.05,
-                                    child: Text(
-                                      'Non-Professional Worker',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: screenWidth * 0.05,
-                                        fontWeight: FontWeight.w600,
-                                        fontFamily: 'Montserrat',
-                                      ),
-                                    ),
-                                  ),
-                                  Positioned(
-                                    top: screenWidth * 0.13,
-                                    right: screenWidth * 0.1,
-                                    child: SizedBox(
-                                      width: screenWidth * 0.35,
-                                      child: Text(
-                                        '"General Labour,\ncleaning,\nloading, delivery etc"',
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: screenWidth * 0.036,
-                                          fontWeight: FontWeight.w200,
-                                          fontFamily: 'Poppins',
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  Positioned(
-                                    left: -screenWidth * 0.01,
-                                    top: -screenWidth * 0.02,
-                                    child: Image.asset(
-                                      'assets/images/nonprofessional.png',
-                                      width: screenWidth * 0.54,
-                                      height: screenWidth * 0.54,
-                                      fit: BoxFit.contain,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
                       ),
                     ),
                   ],

@@ -2,18 +2,17 @@ import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'Document_Upload_screen.dart';
 
-class VerificationInformationScreen extends StatefulWidget {
-  const VerificationInformationScreen({super.key});
+class NonProfessionalWorkerVerificationInformationScreen extends StatefulWidget {
+  const NonProfessionalWorkerVerificationInformationScreen({super.key});
 
   @override
-  State<VerificationInformationScreen> createState() =>
-      _VerificationInformationScreenState();
+  State<NonProfessionalWorkerVerificationInformationScreen> createState() =>
+      _NonProfessionalWorkerVerificationInformationScreenState();
 }
 
-class _VerificationInformationScreenState
-    extends State<VerificationInformationScreen>
+class _NonProfessionalWorkerVerificationInformationScreenState
+    extends State<NonProfessionalWorkerVerificationInformationScreen>
     with TickerProviderStateMixin {
   final PageController _pageController = PageController(initialPage: 0);
   int _currentPage = 0;
@@ -246,14 +245,7 @@ class _VerificationInformationScreenState
                               borderRadius: BorderRadius.circular(30),
                             ),
                           ),
-                          onPressed: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    const DocumentUploadScreen(),
-                              ),
-                            );
-                          },
+                          onPressed: () {},
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
