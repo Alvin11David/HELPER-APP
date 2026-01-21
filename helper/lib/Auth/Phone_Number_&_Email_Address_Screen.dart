@@ -125,8 +125,17 @@ class _PhoneNumberEmailAddressScreenState
 
     setState(() => _loading = true);
 
+    // Generate a referral code (e.g., random 6 uppercase letters/numbers)
+    String generateReferralCode() {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      final rand = Random();
+      return List.generate(
+        6,
+        (index) => chars[rand.nextInt(chars.length)],
+      ).join();
+    }
+
     if (_mode == _AuthMode.phone) {
-      // Save full name and phone number to Firestore
       try {
         String phoneNumber = _phoneCtrl.text.trim();
 
@@ -147,13 +156,28 @@ class _PhoneNumberEmailAddressScreenState
         phoneNumber = phoneNumber.replaceAll(' ', '');
         print('Formatted phone number: $phoneNumber');
 
+        // Generate referral code
+        String referralCode = generateReferralCode();
+
         // Store user data temporarily (will be confirmed after OTP verification)
         await FirebaseFirestore.instance.collection('Sign Up').add({
           'fullName': _fullNameCtrl.text.trim(),
           'phoneNumber': phoneNumber, // Store with country code
           'timestamp': FieldValue.serverTimestamp(),
           'verified': false, // Will be updated after verification
+          'referralCode': referralCode, // Save referral code to user
         });
+
+        // Save referral code to Referral Codes collection
+        await FirebaseFirestore.instance
+            .collection('Referral Codes')
+            .doc(referralCode)
+            .set({
+              'referralCode': referralCode,
+              'phoneNumber': phoneNumber,
+              'fullName': _fullNameCtrl.text.trim(),
+              'createdAt': FieldValue.serverTimestamp(),
+            });
 
         // Check if phone number is valid for Uganda
         if (!phoneNumber.startsWith('+256') || phoneNumber.length != 13) {
@@ -168,12 +192,10 @@ class _PhoneNumberEmailAddressScreenState
         await FirebaseAuth.instance.verifyPhoneNumber(
           phoneNumber: phoneNumber,
           verificationCompleted: (PhoneAuthCredential credential) async {
-            // Auto-verification (Android only)
             print('Auto-verification completed');
-            // You can automatically sign in here if desired
           },
           verificationFailed: (FirebaseAuthException e) {
-            print('Phone verification failed: ${e.message}');
+            print('Phone verification failed: [31m${e.message}[0m');
             print('Error code: ${e.code}');
             print('Phone number attempted: $phoneNumber');
             if (mounted) {
@@ -196,19 +218,16 @@ class _PhoneNumberEmailAddressScreenState
                 const SnackBar(content: Text('SMS sent to your phone!')),
               );
 
-              // Navigate to OTP Verification Screen
               Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (context) => OTPVerificationScreen(
                     isPhoneVerification: true,
                     emailOrPhone: phoneNumber,
-                    initialVerificationId:
-                        verificationId, // Pass verification ID
+                    initialVerificationId: verificationId,
                   ),
                 ),
               ).then((_) {
-                // Reset loading when returning from verification screen
                 if (mounted) setState(() => _loading = false);
               });
             }
@@ -220,10 +239,8 @@ class _PhoneNumberEmailAddressScreenState
           timeout: const Duration(seconds: 60),
         );
 
-        // Don't set loading to false here - it will be handled in callbacks
         return;
       } catch (e) {
-        // Handle error, maybe show a snackbar
         print('Error initiating phone verification: $e');
         print('Error type: ${e.runtimeType}');
         if (e is FirebaseAuthException) {
@@ -237,10 +254,12 @@ class _PhoneNumberEmailAddressScreenState
         return;
       }
     } else {
-      // Save full name, email, and password to Firestore for email registration
       try {
         String email = _emailCtrl.text.trim();
         String otpCode = _generateOTP();
+
+        // Generate referral code
+        String referralCode = generateReferralCode();
 
         // Store user data
         await FirebaseFirestore.instance.collection('Sign Up').add({
@@ -250,21 +269,33 @@ class _PhoneNumberEmailAddressScreenState
               .text, // Note: In production, hash passwords before storing
           'timestamp': FieldValue.serverTimestamp(),
           'verified': false, // Will be updated after verification
+          'referralCode': referralCode, // Save referral code to user
         });
 
-        // Generate and store OTP code
-        await FirebaseFirestore.instance.collection('OTP Codes').doc(email).set(
-          {
-            'email': email,
-            'otpCode': otpCode,
-            'timestamp': FieldValue.serverTimestamp(),
-            'expiresAt': Timestamp.fromDate(
-              DateTime.now().add(const Duration(minutes: 10)),
-            ), // OTP expires in 10 minutes
-          },
-        );
+        // Save referral code to Referral Codes collection
+        await FirebaseFirestore.instance
+            .collection('Referral Codes')
+            .doc(referralCode)
+            .set({
+              'referralCode': referralCode,
+              'email': email,
+              'fullName': _fullNameCtrl.text.trim(),
+              'createdAt': FieldValue.serverTimestamp(),
+            });
 
-        // Send OTP code to email address via Firebase Cloud Function
+        // Generate and store OTP code
+        await FirebaseFirestore.instance
+            .collection('OTP Codes')
+            .doc(email)
+            .set({
+              'email': email,
+              'otpCode': otpCode,
+              'timestamp': FieldValue.serverTimestamp(),
+              'expiresAt': Timestamp.fromDate(
+                DateTime.now().add(const Duration(minutes: 10)),
+              ),
+            });
+
         try {
           final result = await FirebaseFunctions.instance
               .httpsCallable('sendOTPEmail')
@@ -280,10 +311,8 @@ class _PhoneNumberEmailAddressScreenState
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Failed to send OTP email: $e')),
           );
-          // Still proceed to verification screen, as OTP is stored
         }
 
-        // Navigate to OTP Verification Screen
         if (!mounted) return;
         Navigator.push(
           context,
@@ -297,7 +326,6 @@ class _PhoneNumberEmailAddressScreenState
         );
         return;
       } catch (e) {
-        // Handle error, maybe show a snackbar
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('Error saving data: $e')));
