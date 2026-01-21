@@ -1,7 +1,12 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutterwave_standard/flutterwave.dart';
+import 'package:flutterwave_standard/core/flutterwave.dart';
+import 'package:flutterwave_standard/models/requests/customer.dart';
+import 'package:flutterwave_standard/models/requests/customizations.dart';
+import 'package:flutterwave_standard/models/responses/charge_response.dart';
+
+import 'package:shared_preferences/shared_preferences.dart';
 
 class VisaPaymentMethodScreen extends StatefulWidget {
   const VisaPaymentMethodScreen({super.key});
@@ -17,6 +22,37 @@ class _VisaPaymentMethodScreenState extends State<VisaPaymentMethodScreen> {
   final TextEditingController _expiryController = TextEditingController();
   final TextEditingController _cvvController = TextEditingController();
 
+  static const String _kVisaCardNumberKey = 'visa_card_number';
+  static const String _kVisaCardHolderKey = 'visa_card_holder';
+  static const String _kVisaExpiryKey = 'visa_expiry';
+  static const String _kVisaCVVKey = 'visa_cvv';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedCardData();
+    _cardNumberController.addListener(_saveCardData);
+    _cardHolderController.addListener(_saveCardData);
+    _expiryController.addListener(_saveCardData);
+    _cvvController.addListener(_saveCardData);
+  }
+
+  Future<void> _loadSavedCardData() async {
+    final prefs = await SharedPreferences.getInstance();
+    _cardNumberController.text = prefs.getString(_kVisaCardNumberKey) ?? '';
+    _cardHolderController.text = prefs.getString(_kVisaCardHolderKey) ?? '';
+    _expiryController.text = prefs.getString(_kVisaExpiryKey) ?? '';
+    _cvvController.text = prefs.getString(_kVisaCVVKey) ?? '';
+  }
+
+  Future<void> _saveCardData() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_kVisaCardNumberKey, _cardNumberController.text);
+    await prefs.setString(_kVisaCardHolderKey, _cardHolderController.text);
+    await prefs.setString(_kVisaExpiryKey, _expiryController.text);
+    await prefs.setString(_kVisaCVVKey, _cvvController.text);
+  }
+
   bool isChecked = false;
   bool _isDimming = false; // State to track if the screen should dim
   bool _showOverlay = false; // State to control the overlay visibility
@@ -25,6 +61,10 @@ class _VisaPaymentMethodScreenState extends State<VisaPaymentMethodScreen> {
 
   @override
   void dispose() {
+    _cardNumberController.removeListener(_saveCardData);
+    _cardHolderController.removeListener(_saveCardData);
+    _expiryController.removeListener(_saveCardData);
+    _cvvController.removeListener(_saveCardData);
     _cardNumberController.dispose();
     _cardHolderController.dispose();
     _expiryController.dispose();
