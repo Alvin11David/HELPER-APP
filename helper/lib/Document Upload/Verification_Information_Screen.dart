@@ -171,7 +171,7 @@ class _VerificationInformationScreenState
                         ),
                         SizedBox(width: w * 0.03),
                         Text(
-                          'Helper',
+                          'Helper\'s App',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: w * 0.055,
