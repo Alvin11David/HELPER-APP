@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:ui';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/gestures.dart';
@@ -40,8 +41,7 @@ class OTPVerificationScreen extends StatefulWidget {
   const OTPVerificationScreen({
     super.key,
     this.isPhoneVerification = true, // default to phone
-    this.emailOrPhone,
-    required String initialVerificationId,
+    this.emailOrPhone, required String initialVerificationId,
   });
 
   @override
@@ -58,6 +58,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
   bool _isButtonEnabled = false;
   bool _isLoading = false;
   Timer? _timer;
+  String? _verificationId; // For Firebase phone auth
 
   @override
   void initState() {
@@ -67,7 +68,61 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
       (index) => TextEditingController(),
     );
     _focusNodes = List.generate(_otpLength, (index) => FocusNode());
+    if (widget.isPhoneVerification && widget.emailOrPhone != null) {
+      _startPhoneVerification(widget.emailOrPhone!);
+    }
     _startCountdown();
+  }
+
+  void _startPhoneVerification(String phoneNumber) async {
+    setState(() => _isLoading = true);
+    await FirebaseAuth.instance.verifyPhoneNumber(
+      phoneNumber: phoneNumber,
+      timeout: const Duration(seconds: 60),
+      verificationCompleted: (PhoneAuthCredential credential) async {
+        // Auto-retrieval or instant verification
+        try {
+          await FirebaseAuth.instance.signInWithCredential(credential);
+          if (mounted) {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => const RegistrationPaymentScreen(),
+              ),
+            );
+          }
+        } catch (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Auto-verification failed: $e')),
+            );
+          }
+        }
+      },
+      verificationFailed: (FirebaseAuthException e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Verification failed: ${e.message}')),
+          );
+        }
+        setState(() => _isLoading = false);
+      },
+      codeSent: (String verificationId, int? resendToken) {
+        setState(() {
+          _verificationId = verificationId;
+          _isLoading = false;
+        });
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('OTP sent to your phone.')),
+          );
+        }
+      },
+      codeAutoRetrievalTimeout: (String verificationId) {
+        setState(() {
+          _verificationId = verificationId;
+        });
+      },
+    );
   }
 
   void _startCountdown() {
@@ -218,80 +273,34 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
     if (otp.length == _otpLength && widget.emailOrPhone != null) {
       try {
         if (widget.isPhoneVerification) {
-          // Phone verification using stored OTP
-          // Get the stored OTP from Firestore
-          DocumentSnapshot otpDoc = await FirebaseFirestore.instance
-              .collection('OTP Codes')
-              .doc(widget.emailOrPhone!)
-              .get();
-
-          if (otpDoc.exists) {
-            String storedOTP = otpDoc['otpCode'];
-            Timestamp expiresAt = otpDoc['expiresAt'];
-
-            // Check if OTP is expired
-            if (expiresAt.toDate().isBefore(DateTime.now())) {
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('OTP has expired. Please request a new one.'),
-                  ),
-                );
-              }
-              return;
-            }
-
-            // Check if entered OTP matches stored OTP
-            if (otp == storedOTP) {
-              // OTP is correct - update user data to mark as verified
-              QuerySnapshot userDocs = await FirebaseFirestore.instance
-                  .collection('Sign Up')
-                  .where('phoneNumber', isEqualTo: widget.emailOrPhone!)
-                  .where('verified', isEqualTo: false)
-                  .get();
-
-              if (userDocs.docs.isNotEmpty) {
-                await userDocs.docs.first.reference.update({'verified': true});
-              }
-
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Phone number verified successfully!'),
-                  ),
-                );
-                print(
-                  'Phone verified successfully for: ${widget.emailOrPhone}',
-                );
-                // Navigate to RegistrationPaymentScreen
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => const RegistrationPaymentScreen(),
-                  ),
-                );
-              }
-            } else {
-              // OTP is incorrect
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Invalid OTP. Please try again.'),
-                  ),
-                );
-              }
-            }
-          } else {
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('OTP not found. Please request a new one.'),
-                ),
-              );
-            }
+          // Use Firebase phone auth
+          if (_verificationId == null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('No verification ID. Please resend OTP.'),
+              ),
+            );
+            return;
+          }
+          final credential = PhoneAuthProvider.credential(
+            verificationId: _verificationId!,
+            smsCode: otp,
+          );
+          await FirebaseAuth.instance.signInWithCredential(credential);
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Phone number verified successfully!'),
+              ),
+            );
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => const RegistrationPaymentScreen(),
+              ),
+            );
           }
         } else {
-          // Email verification using stored OTP
-          // Get the stored OTP from Firestore
+          // Email verification using stored OTP (unchanged)
           DocumentSnapshot otpDoc = await FirebaseFirestore.instance
               .collection('OTP Codes')
               .doc(widget.emailOrPhone!)

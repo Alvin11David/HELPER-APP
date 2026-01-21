@@ -255,7 +255,7 @@ class _ForgotYourPasswordScreenState extends State<ForgotYourPasswordScreen> {
                             return 'Please enter a valid email address';
                           }
                           return null;
-                        },
+                        }, obscure: false,
                       ),
 
                       SizedBox(height: h * 0.05),
@@ -473,9 +473,13 @@ class _PillInput extends StatelessWidget {
     this.contentFontSize = 16.0,
     this.validator,
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
     this.inputFormatters,
 >>>>>>> 471e8036e44ef2563c1cbded648c421a861cf700
+=======
+    this.inputFormatters, required this.obscure, this.suffix,
+>>>>>>> 3f164284aacd06766eab331bc31cdc9ab8cffcb4
   });
 
   @override

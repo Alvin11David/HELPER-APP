@@ -1,14 +1,12 @@
-// referral_code_screen.dart
-// ✅ Matches your design + keeps your required header structure (Stack + back button + centered logo)
-// ✅ Glassmorphism pills + dashed OTP-style boxes (like your OTP screen)
-// ✅ AbrilFatface for headings, Poppins for body
-
 import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
 import 'Sign_In_Screen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class DashedLinePainter extends CustomPainter {
   final Color color;
@@ -42,11 +40,12 @@ class ReferralCodeScreen extends StatefulWidget {
 }
 
 class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
+  bool _showHowToUse = false;
   static const _brandOrange = Color(0xFFFFA10D);
   bool _isButtonEnabled = false;
   bool _isLoading = false;
   int _countdown = 60;
-  final int _otpLength = 6;
+  final int _otpLength = 10;
   bool _showOverlay = false;
   final Duration _overlayAnimDuration = const Duration(milliseconds: 360);
 
@@ -134,9 +133,75 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
 
   String get _refCode => _controllers.map((e) => e.text).join();
 
-  void _onShare() {
-    // TODO: share referral code
-    // print(_refCode);
+  void _onVerify() async {
+    final code = _refCode.trim().toUpperCase();
+    if (code.length != _otpLength) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a 10-digit referral code.')),
+      );
+      return;
+    }
+    setState(() => _isLoading = true);
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('User not logged in.')));
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      // Find a user in 'Sign Up' with this referral code
+      final query = await FirebaseFirestore.instance
+          .collection('Sign Up')
+          .where('referralCode', isEqualTo: code)
+          .limit(1)
+          .get();
+
+      if (query.docs.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Invalid referral code. Please try again.'),
+          ),
+        );
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      final refUser = query.docs.first.data();
+      // Check if the referral code belongs to the current user
+      final currentUserPhone = user.phoneNumber;
+      final currentUserEmail = user.email;
+      final refUserPhone = refUser['phoneNumber'] as String?;
+      final refUserEmail = refUser['email'] as String?;
+
+      if ((currentUserPhone != null &&
+              refUserPhone != null &&
+              currentUserPhone == refUserPhone) ||
+          (currentUserEmail != null &&
+              refUserEmail != null &&
+              currentUserEmail == refUserEmail)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('You cannot use your own referral code.'),
+          ),
+        );
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      // Valid code and not user's own
+      setState(() {
+        _showOverlay = true;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error verifying code: $e')));
+    } finally {
+      setState(() => _isLoading = false);
+    }
   }
 
   void _onSkip() {
@@ -144,7 +209,15 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
   }
 
   void _onHowToUse() {
-    // TODO: show instructions / open modal
+    setState(() {
+      _showHowToUse = true;
+    });
+  }
+
+  void _closeHowToUse() {
+    setState(() {
+      _showHowToUse = false;
+    });
   }
 
   @override
@@ -300,13 +373,13 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: List.generate(_otpLength + 1, (index) {
-                        // Add separator after 3rd box
-                        if (index == 3) {
+                        // Add separator after 5th box
+                        if (index == 5) {
                           return Container(
                             width: screenWidth * 0.015,
                             height: screenWidth * 0.015,
                             margin: EdgeInsets.symmetric(
-                              horizontal: screenWidth * 0.025,
+                              horizontal: screenWidth * 0.018,
                             ),
                             decoration: BoxDecoration(
                               color: Colors.white,
@@ -316,34 +389,37 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
                         }
 
                         // Calculate actual OTP box index
-                        final otpIndex = index > 3 ? index - 1 : index;
-                        final otpBoxWidth = screenWidth * 0.12;
-                        final otpBoxHeight = screenWidth * 0.19;
+                        final otpIndex = index > 5 ? index - 1 : index;
+                        // Make the boxes fit 10 on screen
+                        final otpBoxWidth = screenWidth * 0.079;
+                        final otpBoxHeight = screenWidth * 0.17;
+
+                        if (otpIndex >= _otpLength) return SizedBox.shrink();
 
                         return Container(
                           width: otpBoxWidth,
                           height: otpBoxHeight,
                           margin: EdgeInsets.symmetric(
-                            horizontal: screenWidth * 0.01,
+                            horizontal: screenWidth * 0.005,
                           ),
                           decoration: BoxDecoration(
-                            border: Border.all(color: Colors.white, width: 1.5),
-                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: Colors.white, width: 1.2),
+                            borderRadius: BorderRadius.circular(8),
                           ),
                           child: Stack(
                             alignment: Alignment.bottomCenter,
                             children: [
                               Positioned(
-                                bottom: screenWidth * 0.035,
+                                bottom: screenWidth * 0.02,
                                 child: Container(
                                   width: otpBoxWidth * 0.75,
-                                  height: 1.4,
+                                  height: 1.2,
                                   color: Colors.white.withOpacity(0.9),
                                 ),
                               ),
                               Center(
                                 child: SizedBox(
-                                  width: otpBoxWidth * 0.55,
+                                  width: otpBoxWidth * 0.65,
                                   child: TextField(
                                     controller: _controllers[otpIndex],
                                     focusNode: _focusNodes[otpIndex],
@@ -352,7 +428,7 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
                                     maxLength: 1,
                                     style: TextStyle(
                                       color: Colors.white,
-                                      fontSize: screenWidth * 0.08,
+                                      fontSize: screenWidth * 0.055,
                                       fontWeight: FontWeight.bold,
                                     ),
                                     decoration: const InputDecoration(
@@ -389,7 +465,7 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
                     width: screenWidth * 0.88,
                     height: screenHeight * 0.062,
                     child: ElevatedButton(
-                      onPressed: _onShare,
+                      onPressed: _onVerify,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
                         elevation: 0,
@@ -401,7 +477,7 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            'Share',
+                            'Verify',
                             style: TextStyle(
                               fontSize: screenWidth * 0.045,
                               fontWeight: FontWeight.bold,
@@ -411,7 +487,7 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
                           ),
                           SizedBox(width: screenWidth * 0.03),
                           Icon(
-                            Icons.share_rounded,
+                            Icons.arrow_forward_rounded,
                             color: Colors.black,
                             size: screenHeight * 0.032,
                           ),
@@ -449,15 +525,15 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
                       vertical: screenHeight * 0.010,
                     ),
                     child: Text(
-                      'Your referral code can only be used once',
+                      'You can use your referral code to invite friends and earn rewards.',
                       textAlign: TextAlign.center,
-                      maxLines: 1,
+                      maxLines: 2,
                       softWrap: false,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         color: Colors.white.withOpacity(0.9),
                         fontSize: screenWidth * 0.033,
-                        fontFamily: 'Poppins',
+                        fontFamily: 'Inter',
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -505,18 +581,18 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
                 ],
               ),
 
-              // Dim background overlay
+              // Dim background overlay for overlay or how-to-use
               IgnorePointer(
-                ignoring: !_showOverlay,
+                ignoring: !_showOverlay && !_showHowToUse,
                 child: AnimatedOpacity(
                   duration: _overlayAnimDuration,
                   curve: Curves.easeInOut,
-                  opacity: _showOverlay ? 0.55 : 0.0,
+                  opacity: (_showOverlay || _showHowToUse) ? 0.55 : 0.0,
                   child: Container(color: Colors.black),
                 ),
               ),
 
-              // Sliding white rectangle
+              // Sliding white rectangle for congratulations overlay
               AnimatedPositioned(
                 duration: _overlayAnimDuration,
                 curve: Curves.easeOutCubic,
@@ -585,41 +661,14 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
                             ),
                           ),
                           Text(
-                            'you have earned',
+                            "You have been referred to Helper's App by the $_refCode and You have also received 1,000 UGX on your wallet",
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               color: Colors.black,
                               fontSize: screenWidth * 0.045,
                               fontFamily: 'Montserrat',
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          SizedBox(height: screenHeight * 0.01),
-                          Text(
-                            'UGX 2,500/ & 0.5',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: const Color(0xFFDF8800),
-                              fontSize: screenWidth * 0.055,
-                              fontFamily: 'Montserrat',
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          SizedBox(height: screenHeight * 0.02),
-                          Padding(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: screenWidth * 0.08,
-                            ),
-                            child: Text(
-                              'You have earned yourself a prize of\nUGX 1,000 approximate to \$ 0.5 for using\nthe referral code',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: Colors.black,
-                                fontSize: screenWidth * 0.035,
-                                fontFamily: 'Montserrat',
-                                fontWeight: FontWeight.w500,
-                                height: 1.4,
-                              ),
+                              fontWeight: FontWeight.w600,
+                              height: 1.4,
                             ),
                           ),
                           SizedBox(height: screenHeight * 0.07),
@@ -677,7 +726,88 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
                                     ),
                             ),
                           ),
-                          // Add more content here as needed
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+              // Sliding white rectangle for How To Use with tap outside and drag down to dismiss
+              if (_showHowToUse)
+                Positioned.fill(
+                  child: GestureDetector(
+                    onTap: _closeHowToUse,
+                    behavior: HitTestBehavior.translucent,
+                    child: Container(),
+                  ),
+                ),
+              AnimatedPositioned(
+                duration: _overlayAnimDuration,
+                curve: Curves.easeOutCubic,
+                left: 0,
+                right: 0,
+                bottom: _showHowToUse ? 0 : -sheetHeight,
+                child: AnimatedOpacity(
+                  duration: _overlayAnimDuration,
+                  curve: Curves.easeInOut,
+                  opacity: _showHowToUse ? 1.0 : 0.0,
+                  child: GestureDetector(
+                    onVerticalDragUpdate: (details) {
+                      if (details.primaryDelta != null &&
+                          details.primaryDelta! > 12) {
+                        _closeHowToUse();
+                      }
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.fromLTRB(
+                        24,
+                        24,
+                        24,
+                        24 + bottomInset,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(30),
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.12),
+                            blurRadius: 18,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'How Referral Code Works',
+                                style: TextStyle(
+                                  color: Colors.black,
+                                  fontSize: screenWidth * 0.055,
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: 'Inter',
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 12),
+                          Text(
+                            '• Every Helpers App user has a referral code that can be found on the top of the sidebar and app settings.\n\n• Enter a valid referral code given to you by another Helpers App user.\n\n• The code must be exactly 10 characters.\n\n• After successful registration with a referral code, both you and the referrer receive a reward in your wallet.\n\n• You can share your referral code with others to continue earning rewards.',
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontSize: screenWidth * 0.042,
+                              fontFamily: 'Inter',
+                              height: 1.5,
+                            ),
+                          ),
                         ],
                       ),
                     ),
