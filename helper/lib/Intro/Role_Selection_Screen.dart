@@ -3,7 +3,6 @@ import 'dart:ui';
 import 'package:flutter/gestures.dart';
 import '../Auth/Sign_In_Screen.dart';
 
-
 class RoleSelectionScreen extends StatefulWidget {
   const RoleSelectionScreen({super.key});
 
@@ -42,7 +41,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                     ),
                     SizedBox(width: screenWidth * 0.03),
                     Text(
-                      'Helper',
+                      'Helper\'s App',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: screenWidth * 0.055,
@@ -158,7 +157,9 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                             ),
                             borderRadius: BorderRadius.circular(30),
                             border: Border.all(
-                              color: _selectedRole == 'worker' ? Colors.orange : Colors.white.withOpacity(0.4),
+                              color: _selectedRole == 'worker'
+                                  ? Colors.orange
+                                  : Colors.white.withOpacity(0.4),
                               width: 3,
                             ),
                             boxShadow: [
@@ -256,7 +257,9 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                             ),
                             borderRadius: BorderRadius.circular(30),
                             border: Border.all(
-                              color: _selectedRole == 'employer' ? Colors.orange : Colors.white.withOpacity(0.4),
+                              color: _selectedRole == 'employer'
+                                  ? Colors.orange
+                                  : Colors.white.withOpacity(0.4),
                               width: 3,
                             ),
                             boxShadow: [
