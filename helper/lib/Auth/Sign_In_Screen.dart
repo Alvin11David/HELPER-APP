@@ -5,8 +5,10 @@ import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'OTP_Verification_Screen.dart';
 import 'Phone_Number_&_Email_Address_Screen.dart';
+import 'Referral_Code_Screen.dart';
 
 class _UgandaPhoneFormatter extends TextInputFormatter {
   @override
@@ -76,6 +78,31 @@ class SignInScreen extends StatefulWidget {
 }
 
 class _SignInScreenState extends State<SignInScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _loadLastInputs();
+    _phoneCtrl.addListener(_saveInputs);
+    _emailCtrl.addListener(_saveInputs);
+    _passwordCtrl.addListener(_saveInputs);
+  }
+
+  Future<void> _loadLastInputs() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _phoneCtrl.text = prefs.getString('last_phone') ?? '+256 ';
+      _emailCtrl.text = prefs.getString('last_email') ?? '';
+      _passwordCtrl.text = prefs.getString('last_password') ?? '';
+    });
+  }
+
+  Future<void> _saveInputs() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('last_phone', _phoneCtrl.text);
+    await prefs.setString('last_email', _emailCtrl.text);
+    await prefs.setString('last_password', _passwordCtrl.text);
+  }
+
   static const _brandOrange = Color(0xFFFFA10D);
   static const _pureWhite = Color(0xFFFFFFFF);
 
@@ -94,6 +121,9 @@ class _SignInScreenState extends State<SignInScreen> {
 
   @override
   void dispose() {
+    _phoneCtrl.removeListener(_saveInputs);
+    _emailCtrl.removeListener(_saveInputs);
+    _passwordCtrl.removeListener(_saveInputs);
     _phoneCtrl.dispose();
     _emailCtrl.dispose();
     _passwordCtrl.dispose();
@@ -325,6 +355,202 @@ class _SignInScreenState extends State<SignInScreen> {
     // TODO: google sign-in
   }
 
+  void _onReferralCodeTap() async {
+    String identifier;
+    if (_mode == _AuthMode.phone) {
+      // Use the same phone formatting as in _onContinue
+      String phoneNumber = _phoneCtrl.text.trim();
+      if (!phoneNumber.startsWith('+256 ') || phoneNumber.length != 14) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => ReferralCodeScreen()),
+        );
+        return;
+      }
+      phoneNumber = phoneNumber.replaceAll(' ', '');
+      if (!phoneNumber.startsWith('+256') || phoneNumber.length != 13) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => ReferralCodeScreen()),
+        );
+        return;
+      }
+      QuerySnapshot query = await FirebaseFirestore.instance
+          .collection('Sign Up')
+          .where('phoneNumber', isEqualTo: phoneNumber)
+          .get();
+      if (query.docs.isNotEmpty) {
+        final random = Random();
+        final letters = String.fromCharCodes(
+          List.generate(2, (_) => random.nextInt(26) + 65),
+        );
+        final numbers = random.nextInt(100).toString().padLeft(2, '0');
+        final referralCode = 'UG$letters$numbers';
+        showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (context) {
+            return AnimatedContainer(
+              duration: Duration(milliseconds: 300),
+              curve: Curves.easeOut,
+              margin: EdgeInsets.only(
+                left: MediaQuery.of(context).size.width * 0.045,
+                right: MediaQuery.of(context).size.width * 0.045,
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+              ),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+                ),
+                width: double.infinity,
+                child: Padding(
+                  padding: EdgeInsets.all(
+                    MediaQuery.of(context).size.width * 0.06,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Your Referral Code Is:',
+                        style: TextStyle(
+                          fontSize: MediaQuery.of(context).size.width * 0.05,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(
+                        height: MediaQuery.of(context).size.height * 0.02,
+                      ),
+                      Text(
+                        referralCode,
+                        style: TextStyle(
+                          fontSize: MediaQuery.of(context).size.width * 0.08,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFFFFA10D),
+                        ),
+                      ),
+                      SizedBox(
+                        height: MediaQuery.of(context).size.height * 0.02,
+                      ),
+                      ElevatedButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: Text('Close'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.black,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      } else {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => ReferralCodeScreen()),
+        );
+      }
+    } else {
+      identifier = _emailCtrl.text.trim();
+      if (identifier.isEmpty) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => ReferralCodeScreen()),
+        );
+        return;
+      }
+      QuerySnapshot query = await FirebaseFirestore.instance
+          .collection('Sign Up')
+          .where('email', isEqualTo: identifier)
+          .get();
+      if (query.docs.isNotEmpty) {
+        final random = Random();
+        final letters = String.fromCharCodes(
+          List.generate(2, (_) => random.nextInt(26) + 65),
+        );
+        final numbers = random.nextInt(100).toString().padLeft(2, '0');
+        final referralCode = 'UG$letters$numbers';
+        showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (context) {
+            return AnimatedContainer(
+              duration: Duration(milliseconds: 300),
+              curve: Curves.easeOut,
+              margin: EdgeInsets.only(
+                left: MediaQuery.of(context).size.width * 0.045,
+                right: MediaQuery.of(context).size.width * 0.045,
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+              ),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+                ),
+                width: double.infinity,
+                child: Padding(
+                  padding: EdgeInsets.all(
+                    MediaQuery.of(context).size.width * 0.06,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Your Referral Code Is:',
+                        style: TextStyle(
+                          fontSize: MediaQuery.of(context).size.width * 0.05,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(
+                        height: MediaQuery.of(context).size.height * 0.02,
+                      ),
+                      Text(
+                        referralCode,
+                        style: TextStyle(
+                          fontSize: MediaQuery.of(context).size.width * 0.08,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFFFFA10D),
+                        ),
+                      ),
+                      SizedBox(
+                        height: MediaQuery.of(context).size.height * 0.02,
+                      ),
+                      ElevatedButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: Text('Close'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.black,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      } else {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => ReferralCodeScreen()),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final w = MediaQuery.of(context).size.width;
@@ -389,7 +615,6 @@ class _SignInScreenState extends State<SignInScreen> {
                         ),
                       ),
                       SizedBox(height: h * 0.03),
-
                       _GlassPill(
                         radius: 30,
                         padding: EdgeInsets.symmetric(
@@ -701,13 +926,21 @@ class _PhoneBlock extends StatelessWidget {
         SizedBox(height: h * 0.014),
         Align(
           alignment: Alignment.centerRight,
-          child: Text(
-            'Referral Code?',
-            style: TextStyle(
-              color: Colors.white.withOpacity(0.85),
-              fontSize: w * 0.035,
-              fontWeight: FontWeight.w600,
-              fontFamily: 'Inter',
+          child: GestureDetector(
+            onTap: () {
+              // Call parent's _onReferralCodeTap
+              final state = context
+                  .findAncestorStateOfType<_SignInScreenState>();
+              state?._onReferralCodeTap();
+            },
+            child: Text(
+              'Referral Code?',
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.85),
+                fontSize: w * 0.035,
+                fontWeight: FontWeight.w600,
+                fontFamily: 'Inter',
+              ),
             ),
           ),
         ),
@@ -801,13 +1034,20 @@ class _EmailBlock extends StatelessWidget {
         SizedBox(height: h * 0.014),
         Row(
           children: [
-            Text(
-              'Referral Code?',
-              style: TextStyle(
-                color: Colors.white.withOpacity(0.85),
-                fontSize: w * 0.035,
-                fontWeight: FontWeight.w600,
-                fontFamily: 'Inter',
+            GestureDetector(
+              onTap: () {
+                final state = context
+                    .findAncestorStateOfType<_SignInScreenState>();
+                state?._onReferralCodeTap();
+              },
+              child: Text(
+                'Referral Code?',
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.85),
+                  fontSize: w * 0.035,
+                  fontWeight: FontWeight.w600,
+                  fontFamily: 'Inter',
+                ),
               ),
             ),
             const Spacer(),
