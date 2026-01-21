@@ -3,8 +3,10 @@ import 'dart:math' as math;
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
 import 'Sign_In_Screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class DashedLinePainter extends CustomPainter {
   final Color color;
@@ -135,28 +137,56 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
     final code = _refCode.trim().toUpperCase();
     if (code.length != _otpLength) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a 6-digit referral code.')),
+        const SnackBar(content: Text('Please enter a 10-digit referral code.')),
       );
       return;
     }
     setState(() => _isLoading = true);
     try {
-      final doc = await FirebaseFirestore.instance
-          .collection('Referral Codes')
-          .doc(code)
-          .get();
-      if (doc.exists) {
-        // Valid code
-        setState(() {
-          _showOverlay = true;
-        });
-      } else {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Invalid referral code. Please try again.'),
-          ),
+          const SnackBar(content: Text('User not logged in.')),
         );
+        setState(() => _isLoading = false);
+        return;
       }
+
+      // Find a user in 'Sign Up' with this referral code
+      final query = await FirebaseFirestore.instance
+          .collection('Sign Up')
+          .where('referralCode', isEqualTo: code)
+          .limit(1)
+          .get();
+
+      if (query.docs.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Invalid referral code. Please try again.')),
+        );
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      final refUser = query.docs.first.data();
+      // Check if the referral code belongs to the current user
+      final currentUserPhone = user.phoneNumber;
+      final currentUserEmail = user.email;
+      final refUserPhone = refUser['phoneNumber'] as String?;
+      final refUserEmail = refUser['email'] as String?;
+
+      if ((currentUserPhone != null && refUserPhone != null && currentUserPhone == refUserPhone) ||
+          (currentUserEmail != null && refUserEmail != null && currentUserEmail == refUserEmail)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('You cannot use your own referral code.')),
+        );
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      // Valid code and not user's own
+      setState(() {
+        _showOverlay = true;
+      });
     } catch (e) {
       ScaffoldMessenger.of(
         context,
