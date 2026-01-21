@@ -6,10 +6,12 @@ class NonProfessionalDocumentUploadScreen extends StatefulWidget {
   const NonProfessionalDocumentUploadScreen({super.key});
 
   @override
-  State<NonProfessionalDocumentUploadScreen> createState() => _NonProfessionalDocumentUploadScreenState();
+  State<NonProfessionalDocumentUploadScreen> createState() =>
+      _NonProfessionalDocumentUploadScreenState();
 }
 
-class _NonProfessionalDocumentUploadScreenState extends State<NonProfessionalDocumentUploadScreen> {
+class _NonProfessionalDocumentUploadScreenState
+    extends State<NonProfessionalDocumentUploadScreen> {
   bool _loading = false;
   int _selectedIndex = -1;
   final _formKey = GlobalKey<FormState>();
@@ -186,7 +188,7 @@ class _NonProfessionalDocumentUploadScreenState extends State<NonProfessionalDoc
                     SizedBox(height: h * 0.05),
                     Container(
                       width: 361,
-                      height: 244,
+                      height: 120,
                       padding: EdgeInsets.all(w * 0.04),
                       alignment: Alignment.topCenter,
                       decoration: BoxDecoration(
