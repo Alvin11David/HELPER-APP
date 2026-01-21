@@ -38,7 +38,7 @@ class ReferralCodeScreen extends StatefulWidget {
 }
 
 class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
-    bool _showHowToUse = false;
+  bool _showHowToUse = false;
   static const _brandOrange = Color(0xFFFFA10D);
   bool _isButtonEnabled = false;
   bool _isLoading = false;
@@ -711,7 +711,9 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
                     padding: EdgeInsets.fromLTRB(24, 24, 24, 24 + bottomInset),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(30),
+                      ),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withOpacity(0.12),
@@ -736,15 +738,11 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
                                 fontFamily: 'Inter',
                               ),
                             ),
-                            IconButton(
-                              icon: Icon(Icons.close, color: Colors.black),
-                              onPressed: _closeHowToUse,
-                            ),
                           ],
                         ),
                         SizedBox(height: 12),
                         Text(
-                          '• Enter a valid referral code given to you by another Helper user.\n\n• The code must be exactly 10 characters.\n\n• After successful registration with a referral code, both you and the referrer receive a reward in your wallet.\n\n• Each code can only be used once per new user.\n\n• If you do not have a code, you can skip this step.',
+                          '• Every Helpers App user has a referral code that can be found on the top of the sidebar and app settings.\n\n• Enter a valid referral code given to you by another Helpers App user.\n\n• The code must be exactly 10 characters.\n\n• After successful registration with a referral code, both you and the referrer receive a reward in your wallet.\n\n• You can share your referral code with others to continue earning rewards.',
                           style: TextStyle(
                             color: Colors.black,
                             fontSize: screenWidth * 0.042,
