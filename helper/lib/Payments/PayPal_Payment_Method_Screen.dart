@@ -6,6 +6,8 @@ import 'package:flutterwave_standard/models/requests/customer.dart';
 import 'package:flutterwave_standard/models/requests/customizations.dart';
 import 'package:flutterwave_standard/models/responses/charge_response.dart';
 
+import 'package:shared_preferences/shared_preferences.dart';
+
 class PayPalPaymentMethodScreen extends StatefulWidget {
   const PayPalPaymentMethodScreen({super.key});
 
@@ -16,6 +18,7 @@ class PayPalPaymentMethodScreen extends StatefulWidget {
 
 class _PayPalPaymentMethodScreenState extends State<PayPalPaymentMethodScreen> {
   final TextEditingController _emailController = TextEditingController();
+  static const String _kPayPalEmailKey = 'paypal_email';
   bool isChecked = false;
   bool _isDimming = false; // State to track if the screen should dim
   bool _showOverlay = false; // State to control the overlay visibility
@@ -29,7 +32,25 @@ class _PayPalPaymentMethodScreenState extends State<PayPalPaymentMethodScreen> {
       "0lT5zNJgnxHOm2PyOYZxQKL7yk0MC9Uodyo3Z/I3DE4="; // Test Encryption Key
 
   @override
+  void initState() {
+    super.initState();
+    _loadSavedEmail();
+    _emailController.addListener(_saveEmail);
+  }
+
+  Future<void> _loadSavedEmail() async {
+    final prefs = await SharedPreferences.getInstance();
+    _emailController.text = prefs.getString(_kPayPalEmailKey) ?? '';
+  }
+
+  Future<void> _saveEmail() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_kPayPalEmailKey, _emailController.text);
+  }
+
+  @override
   void dispose() {
+    _emailController.removeListener(_saveEmail);
     _emailController.dispose();
     super.dispose();
   }

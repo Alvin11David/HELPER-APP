@@ -13,8 +13,8 @@ class MasterCardPaymentMethodScreen extends StatefulWidget {
       _MasterCardPaymentMethodScreenState();
 }
 
-
-class _MasterCardPaymentMethodScreenState extends State<MasterCardPaymentMethodScreen> {
+class _MasterCardPaymentMethodScreenState
+    extends State<MasterCardPaymentMethodScreen> {
   final TextEditingController _cardNumberController = TextEditingController();
   final TextEditingController _cardHolderController = TextEditingController();
   final TextEditingController _expiryController = TextEditingController();
