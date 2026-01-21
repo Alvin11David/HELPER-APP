@@ -245,7 +245,14 @@ class _NonProfessionalWorkerVerificationInformationScreenState
                               borderRadius: BorderRadius.circular(30),
                             ),
                           ),
-                          onPressed: () {},
+                          onPressed: () {
+                            Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  const NonProfessionalDocumentUploadScreen(),
+                            ),
+                          );
+                          },
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
