@@ -267,7 +267,8 @@ class _SelectWorkerTypeScreenState extends State<SelectWorkerTypeScreen> {
                           });
                           Navigator.of(context).push(
                             MaterialPageRoute(
-                              builder: (context) => const NonProfessionalDocumentUploadScreen(),
+                              builder: (context) =>
+                                  const NonProfessionalDocumentUploadScreen(),
                             ),
                           );
                         },
