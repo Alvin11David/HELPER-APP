@@ -38,6 +38,7 @@ class ReferralCodeScreen extends StatefulWidget {
 }
 
 class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
+    bool _showHowToUse = false;
   static const _brandOrange = Color(0xFFFFA10D);
   bool _isButtonEnabled = false;
   bool _isLoading = false;
@@ -170,7 +171,15 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
   }
 
   void _onHowToUse() {
-    // TODO: show instructions / open modal
+    setState(() {
+      _showHowToUse = true;
+    });
+  }
+
+  void _closeHowToUse() {
+    setState(() {
+      _showHowToUse = false;
+    });
   }
 
   @override
@@ -534,18 +543,18 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
                 ],
               ),
 
-              // Dim background overlay
+              // Dim background overlay for overlay or how-to-use
               IgnorePointer(
-                ignoring: !_showOverlay,
+                ignoring: !_showOverlay && !_showHowToUse,
                 child: AnimatedOpacity(
                   duration: _overlayAnimDuration,
                   curve: Curves.easeInOut,
-                  opacity: _showOverlay ? 0.55 : 0.0,
+                  opacity: (_showOverlay || _showHowToUse) ? 0.55 : 0.0,
                   child: Container(color: Colors.black),
                 ),
               ),
 
-              // Sliding white rectangle
+              // Sliding white rectangle for congratulations overlay
               AnimatedPositioned(
                 duration: _overlayAnimDuration,
                 curve: Curves.easeOutCubic,
@@ -679,9 +688,71 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
                                     ),
                             ),
                           ),
-                          // Add more content here as needed
                         ],
                       ),
+                    ),
+                  ),
+                ),
+              ),
+
+              // Sliding white rectangle for How To Use
+              AnimatedPositioned(
+                duration: _overlayAnimDuration,
+                curve: Curves.easeOutCubic,
+                left: 0,
+                right: 0,
+                bottom: _showHowToUse ? 0 : -sheetHeight,
+                child: AnimatedOpacity(
+                  duration: _overlayAnimDuration,
+                  curve: Curves.easeInOut,
+                  opacity: _showHowToUse ? 1.0 : 0.0,
+                  child: Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.fromLTRB(24, 24, 24, 24 + bottomInset),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.12),
+                          blurRadius: 18,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'How Referral Code Works',
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontSize: screenWidth * 0.055,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'Inter',
+                              ),
+                            ),
+                            IconButton(
+                              icon: Icon(Icons.close, color: Colors.black),
+                              onPressed: _closeHowToUse,
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 12),
+                        Text(
+                          '• Enter a valid referral code given to you by another Helper user.\n\n• The code must be exactly 10 characters.\n\n• After successful registration with a referral code, both you and the referrer receive a reward in your wallet.\n\n• Each code can only be used once per new user.\n\n• If you do not have a code, you can skip this step.',
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontSize: screenWidth * 0.042,
+                            fontFamily: 'Inter',
+                            height: 1.5,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
