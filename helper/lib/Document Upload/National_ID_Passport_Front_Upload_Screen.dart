@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -244,149 +245,177 @@ class _NationalIdPassportFrontUploadScreenState
                   ),
                 ),
               ),
-              Positioned(
-                top:
-                    MediaQuery.of(context).size.height * 0.16 +
-                    80 +
-                    10 +
-                    44 +
-                    20,
-                left: screenWidth * 0.09,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Image.asset(
-                      'assets/images/front.png',
-                      fit: BoxFit.contain,
-                      width: screenWidth * 0.7,
-                    ),
-                    SizedBox(width: screenWidth * 0.05),
-                    Opacity(
-                      opacity: 0.5,
-                      child: Image.asset(
-                        'assets/images/back.png',
+              if (_selectedImage == null) ...[
+                Positioned(
+                  top:
+                      MediaQuery.of(context).size.height * 0.16 +
+                      80 +
+                      10 +
+                      44 +
+                      20,
+                  left: screenWidth * 0.09,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Image.asset(
+                        'assets/images/front.png',
                         fit: BoxFit.contain,
                         width: screenWidth * 0.7,
                       ),
-                    ),
-                  ],
-                ),
-              ),
-              Positioned(
-                top:
-                    MediaQuery.of(context).size.height * 0.16 +
-                    60 +
-                    10 +
-                    44 +
-                    20 +
-                    200,
-                left: 0,
-                right: 0,
-                child: Text(
-                  'Front Side',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: screenWidth * 0.075,
-                    fontWeight: FontWeight.w500,
-                    fontFamily: 'Inter',
+                      SizedBox(width: screenWidth * 0.05),
+                      Opacity(
+                        opacity: 0.5,
+                        child: Image.asset(
+                          'assets/images/back.png',
+                          fit: BoxFit.contain,
+                          width: screenWidth * 0.7,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ),
-              Positioned(
-                top:
-                    MediaQuery.of(context).size.height * 0.16 +
-                    30 +
-                    10 +
-                    44 +
-                    20 +
-                    200 +
-                    50 +
-                    screenHeight * 0.07,
-                left: screenWidth * 0.05,
-                right: screenWidth * 0.05,
-                child: Column(
-                  children: [
-                    SizedBox(
-                      width: double.infinity,
-                      height: screenHeight * 0.062,
-                      child: ElevatedButton(
-                        onPressed: _pickImageFromGallery,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFDF8800),
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                        ),
-                        child: Center(
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.camera,
-                                color: Colors.white,
-                                size: screenHeight * 0.035,
-                              ),
-                              SizedBox(width: screenWidth * 0.02),
-                              Text(
-                                'Take a photo',
-                                style: TextStyle(
-                                  fontSize: screenWidth * 0.045,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                  fontFamily: 'Inter',
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
+                Positioned(
+                  top:
+                      MediaQuery.of(context).size.height * 0.16 +
+                      60 +
+                      10 +
+                      44 +
+                      20 +
+                      200,
+                  left: 0,
+                  right: 0,
+                  child: Text(
+                    'Front Side',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: screenWidth * 0.075,
+                      fontWeight: FontWeight.w500,
+                      fontFamily: 'Inter',
                     ),
-                    SizedBox(height: screenHeight * 0.03),
-                    SizedBox(
-                      width: double.infinity,
-                      height: screenHeight * 0.062,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          // TODO: Handle continue action
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                        ),
-                        child: Center(
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.photo_library,
-                                color: Colors.black,
-                                size: screenHeight * 0.035,
-                              ),
-                              SizedBox(width: screenWidth * 0.02),
-                              Text(
-                                'Gallery',
-                                style: TextStyle(
-                                  fontSize: screenWidth * 0.045,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black,
-                                  fontFamily: 'Inter',
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
+                Positioned(
+                  top:
+                      MediaQuery.of(context).size.height * 0.16 +
+                      30 +
+                      10 +
+                      44 +
+                      20 +
+                      200 +
+                      50 +
+                      screenHeight * 0.07,
+                  left: screenWidth * 0.05,
+                  right: screenWidth * 0.05,
+                  child: Column(
+                    children: [
+                      SizedBox(
+                        width: double.infinity,
+                        height: screenHeight * 0.062,
+                        child: ElevatedButton(
+                          onPressed: _pickImageFromGallery,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFDF8800),
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                          ),
+                          child: Center(
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.camera,
+                                  color: Colors.white,
+                                  size: screenHeight * 0.035,
+                                ),
+                                SizedBox(width: screenWidth * 0.02),
+                                Text(
+                                  'Take a photo',
+                                  style: TextStyle(
+                                    fontSize: screenWidth * 0.045,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                    fontFamily: 'Inter',
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: screenHeight * 0.04),
+                      SizedBox(
+                        width: double.infinity,
+                        height: screenHeight * 0.062,
+                        child: ElevatedButton(
+                          onPressed: _pickImageFromGallery,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                          ),
+                          child: Center(
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.photo_library,
+                                  color: Colors.black,
+                                  size: screenHeight * 0.035,
+                                ),
+                                SizedBox(width: screenWidth * 0.02),
+                                Text(
+                                  'Gallery',
+                                  style: TextStyle(
+                                    fontSize: screenWidth * 0.045,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black,
+                                    fontFamily: 'Inter',
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ] else ...[
+                Positioned(
+                  top:
+                      MediaQuery.of(context).size.height * 0.16 +
+                      80 +
+                      10 +
+                      44 +
+                      20,
+                  left: screenWidth * 0.09,
+                  child: Container(
+                    width: screenWidth * 0.7,
+                    height: screenWidth * 0.7,
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.white, width: 4),
+                      borderRadius: BorderRadius.circular(20),
+                      color: Colors.black.withOpacity(0.1),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: _selectedImage != null
+                          ? Image.file(
+                              File(_selectedImage!.path),
+                              fit: BoxFit.cover,
+                            )
+                          : null,
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ),
