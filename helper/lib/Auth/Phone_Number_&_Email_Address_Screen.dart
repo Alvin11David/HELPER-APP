@@ -730,19 +730,6 @@ class _PhoneBlock extends StatelessWidget {
             return null;
           },
         ),
-        SizedBox(height: h * 0.014),
-        Align(
-          alignment: Alignment.centerRight,
-          child: Text(
-            'Referral Code?',
-            style: TextStyle(
-              color: Colors.white.withOpacity(0.85),
-              fontSize: w * 0.035,
-              fontWeight: FontWeight.w600,
-              fontFamily: 'Inter',
-            ),
-          ),
-        ),
       ],
     );
   }

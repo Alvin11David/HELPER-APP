@@ -27,7 +27,7 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
 
   // Flutterwave configuration
   final String publicKey =
-      "FLWPUBK_TEST-5c4c1ba4-9c72-45c8-90b0-b29e9c6a4597-X"; 
+      "FLWPUBK_TEST-5c4c1ba4-9c72-45c8-90b0-b29e9c6a4597-X";
   final String encryptionKey =
       "0lT5zNJgnxHOm2PyOYZxQKL7yk0MC9Uodyo3Z/I3DE4="; // Test Encryption Key
 
@@ -58,7 +58,8 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
           final data = doc.data() as Map<String, dynamic>;
           setState(() {
             _savedPhoneNumber = data['phoneNumber'] as String?;
-            if (_savedPhoneNumber != null && _cardNumberController.text.isEmpty) {
+            if (_savedPhoneNumber != null &&
+                _cardNumberController.text.isEmpty) {
               _cardNumberController.text = _savedPhoneNumber!;
             }
           });
@@ -80,10 +81,10 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
             .collection('Airtel Numbers')
             .doc('latest')
             .set({
-          'phoneNumber': phoneNumber,
-          'savedAt': FieldValue.serverTimestamp(),
-          'isActive': true,
-        });
+              'phoneNumber': phoneNumber,
+              'savedAt': FieldValue.serverTimestamp(),
+              'isActive': true,
+            });
       }
     } catch (e) {
       print('Error saving phone number: $e');
