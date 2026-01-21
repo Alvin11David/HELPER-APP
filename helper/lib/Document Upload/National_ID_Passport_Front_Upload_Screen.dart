@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:helper/Document Upload/National_ID_Passport_Front_Scan_Screen.dart';
 
 class NationalIdPassportFrontUploadScreen extends StatefulWidget {
   const NationalIdPassportFrontUploadScreen({super.key});
@@ -313,7 +314,13 @@ class _NationalIdPassportFrontUploadScreenState
                         width: double.infinity,
                         height: screenHeight * 0.062,
                         child: ElevatedButton(
-                          onPressed: _pickImageFromGallery,
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => const NationalIdPassportFrontScanScreen(),
+                              ),
+                            );
+                          },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFFDF8800),
                             elevation: 0,
