@@ -254,7 +254,7 @@ class _VerificationInformationScreenState
                                 style: TextStyle(
                                   color: Colors.black,
                                   fontSize: screenWidth * 0.045,
-                                  fontWeight: FontWeight.bold,
+                                  fontWeight: FontWeight.w900,
                                   fontFamily: "Inter",
                                 ),
                               ),
