@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'Verification_Information_Screen.dart';
 
 class SelectWorkerTypeScreen extends StatefulWidget {
   const SelectWorkerTypeScreen({super.key});
@@ -152,78 +153,87 @@ class _SelectWorkerTypeScreenState
                     ),
                     SizedBox(height: screenHeight * 0.03),
                     Center(
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(30),
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                          child: Container(
-                            width: screenWidth * 0.9,
-                            height: screenWidth * 0.9 * (147 / 340),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                colors: [
-                                  Colors.white.withOpacity(0.25),
-                                  Colors.white.withOpacity(0.15),
+                      child: GestureDetector(
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => const VerificationInformationScreen(),
+                            ),
+                          );
+                        },
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(30),
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                            child: Container(
+                              width: screenWidth * 0.9,
+                              height: screenWidth * 0.9 * (147 / 340),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    Colors.white.withOpacity(0.25),
+                                    Colors.white.withOpacity(0.15),
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.circular(30),
+                                border: Border.all(
+                                  color: Colors.white.withOpacity(0.4),
+                                  width: 2,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.white.withOpacity(0.1),
+                                    blurRadius: 15,
+                                    spreadRadius: 2,
+                                  ),
                                 ],
                               ),
-                              borderRadius: BorderRadius.circular(30),
-                              border: Border.all(
-                                color: Colors.white.withOpacity(0.4),
-                                width: 2,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.white.withOpacity(0.1),
-                                  blurRadius: 15,
-                                  spreadRadius: 2,
-                                ),
-                              ],
-                            ),
-                            child: Stack(
-                              children: [
-                                Positioned(
-                                  top: screenWidth * 0.03,
-                                  left: screenWidth * 0.05,
-                                  child: Text(
-                                    'Professional Worker',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: screenWidth * 0.055,
-                                      fontWeight: FontWeight.w600,
-                                      fontFamily: 'Montserrat',
-                                    ),
-                                  ),
-                                ),
-                                Positioned(
-                                  top: screenWidth * 0.11,
-                                  left: screenWidth * 0.04,
-                                  child: SizedBox(
-                                    width: screenWidth * 0.35,
+                              child: Stack(
+                                children: [
+                                  Positioned(
+                                    top: screenWidth * 0.03,
+                                    left: screenWidth * 0.05,
                                     child: Text(
-                                      '"Skilled and licensed\nprofessionals e.g Drivers, Electricians, Nurses etc"',
-                                      textAlign: TextAlign.center,
+                                      'Professional Worker',
                                       style: TextStyle(
                                         color: Colors.white,
-                                        fontSize: screenWidth * 0.035,
-                                        fontWeight: FontWeight.w200,
-                                        fontFamily: 'AbrilFatface',
+                                        fontSize: screenWidth * 0.055,
+                                        fontWeight: FontWeight.w600,
+                                        fontFamily: 'Montserrat',
                                       ),
                                     ),
                                   ),
-                                ),
-                                Positioned(
-                                  right: -screenWidth * 0.0,
-                                  top: 0,
-                                  child: Image.asset(
-                                    'assets/images/professional.png',
-                                    width: screenWidth * 0.5,
-                                    height: screenWidth * 0.5,
-                                    fit: BoxFit.contain,
+                                  Positioned(
+                                    top: screenWidth * 0.11,
+                                    left: screenWidth * 0.04,
+                                    child: SizedBox(
+                                      width: screenWidth * 0.35,
+                                      child: Text(
+                                        '"Skilled and licensed\nprofessionals e.g Drivers, Electricians, Nurses etc"',
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: screenWidth * 0.035,
+                                          fontWeight: FontWeight.w200,
+                                          fontFamily: 'AbrilFatface',
+                                        ),
+                                      ),
+                                    ),
                                   ),
-                                ),
-                              ],
+                                  Positioned(
+                                    right: -screenWidth * 0.0,
+                                    top: 0,
+                                    child: Image.asset(
+                                      'assets/images/professional.png',
+                                      width: screenWidth * 0.5,
+                                      height: screenWidth * 0.5,
+                                      fit: BoxFit.contain,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
