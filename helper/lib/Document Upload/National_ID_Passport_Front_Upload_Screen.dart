@@ -388,31 +388,57 @@ class _NationalIdPassportFrontUploadScreenState
                   ),
                 ),
               ] else ...[
-                Positioned(
-                  top:
-                      MediaQuery.of(context).size.height * 0.16 +
-                      80 +
-                      10 +
-                      44 +
-                      20,
-                  left: screenWidth * 0.09,
-                  child: Container(
-                    width: screenWidth * 0.7,
-                    height: screenWidth * 0.7,
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.white, width: 4),
-                      borderRadius: BorderRadius.circular(20),
-                      color: Colors.black.withOpacity(0.1),
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(16),
-                      child: _selectedImage != null
-                          ? Image.file(
-                              File(_selectedImage!.path),
-                              fit: BoxFit.cover,
-                            )
-                          : null,
-                    ),
+                SizedBox(height: screenHeight * 0.16 + 80),
+                Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                       const SizedBox(height: 62),
+                      Container(
+                        width: screenWidth * 0.7,
+                        height: screenWidth * 0.7,
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.white, width: 4),
+                          borderRadius: BorderRadius.circular(20),
+                          color: Colors.black.withOpacity(0.1),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(16),
+                          child: _selectedImage != null
+                              ? Image.file(
+                                  File(_selectedImage!.path),
+                                  fit: BoxFit.cover,
+                                )
+                              : null,
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                      SizedBox(
+                        width: screenWidth * 0.9,
+                        height: 48,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            // TODO: Add continue logic
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFDF8800),
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                          ),
+                          child: const Text(
+                            'Continue',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              fontFamily: 'Inter',
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
