@@ -3,7 +3,6 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:helper/Document%20Upload/Non_Professional_Worker_Verification_Information_Screen.dart';
 import 'Verification_Information_Screen.dart';
-import 'Non_Professional_Document_Upload_Screen.dart';
 
 class SelectWorkerTypeScreen extends StatefulWidget {
   const SelectWorkerTypeScreen({super.key});
