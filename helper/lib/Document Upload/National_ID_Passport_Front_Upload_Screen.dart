@@ -114,7 +114,7 @@ class _NationalIdPassportFrontUploadScreenState
                               color: Colors.white,
                               fontSize: screenWidth * 0.04,
                               fontWeight: FontWeight.w500,
-                              fontFamily: 'Poppins',
+                              fontFamily: 'Inter',
                             ),
                             textAlign: TextAlign.center,
                           ),
@@ -179,7 +179,7 @@ class _NationalIdPassportFrontUploadScreenState
                                         Text(
                                           'National ID',
                                           style: TextStyle(
-                                            fontFamily: 'Poppins',
+                                            fontFamily: 'Inter',
                                             fontWeight: FontWeight.w500,
                                             fontSize: 14,
                                             color: selected == 0
@@ -211,7 +211,7 @@ class _NationalIdPassportFrontUploadScreenState
                                         Text(
                                           'Passport',
                                           style: TextStyle(
-                                            fontFamily: 'Poppins',
+                                            fontFamily: 'Inter',
                                             fontWeight: FontWeight.w500,
                                             fontSize: 14,
                                             color: selected == 1
@@ -277,7 +277,7 @@ class _NationalIdPassportFrontUploadScreenState
                     color: Colors.white,
                     fontSize: screenWidth * 0.075,
                     fontWeight: FontWeight.w500,
-                    fontFamily: 'Poppins',
+                    fontFamily: 'Inter',
                   ),
                 ),
               ),
@@ -326,7 +326,7 @@ class _NationalIdPassportFrontUploadScreenState
                                   fontSize: screenWidth * 0.045,
                                   fontWeight: FontWeight.bold,
                                   color: Colors.white,
-                                  fontFamily: 'Poppins',
+                                  fontFamily: 'Inter',
                                 ),
                               ),
                             ],
@@ -366,7 +366,7 @@ class _NationalIdPassportFrontUploadScreenState
                                   fontSize: screenWidth * 0.045,
                                   fontWeight: FontWeight.bold,
                                   color: Colors.black,
-                                  fontFamily: 'Poppins',
+                                  fontFamily: 'Inter',
                                 ),
                               ),
                             ],

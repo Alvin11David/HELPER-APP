@@ -215,7 +215,7 @@ class _NonProfessionalDocumentUploadScreenState
                                     width: 36,
                                     height: 36,
                                     decoration: BoxDecoration(
-                                        color: _selectedRows.contains(0)
+                                      color: _selectedRows.contains(0)
                                           ? const Color(0xFFFBBC04)
                                           : const Color(0xFFD9D9D9),
                                       shape: BoxShape.circle,
@@ -238,8 +238,8 @@ class _NonProfessionalDocumentUploadScreenState
                                           'National ID/Passport',
                                           style: TextStyle(
                                             color: _selectedRows.contains(0)
-                                              ? const Color(0xFFFBBC04)
-                                              : Colors.black,
+                                                ? const Color(0xFFFBBC04)
+                                                : Colors.black,
                                             fontSize: screenWidth * 0.032,
                                             fontWeight: FontWeight.w800,
                                           ),
@@ -248,8 +248,8 @@ class _NonProfessionalDocumentUploadScreenState
                                           'Not Verified',
                                           style: TextStyle(
                                             color: _selectedRows.contains(0)
-                                              ? const Color(0xFFFBBC04)
-                                              : Colors.black54,
+                                                ? const Color(0xFFFBBC04)
+                                                : Colors.black54,
                                             fontSize: screenWidth * 0.035,
                                           ),
                                         ),
@@ -259,8 +259,8 @@ class _NonProfessionalDocumentUploadScreenState
                                   Icon(
                                     Icons.chevron_right,
                                     color: _selectedRows.contains(0)
-                                      ? const Color(0xFFFBBC04)
-                                      : Colors.black54,
+                                        ? const Color(0xFFFBBC04)
+                                        : Colors.black54,
                                   ),
                                 ],
                               ),
@@ -274,7 +274,7 @@ class _NonProfessionalDocumentUploadScreenState
                                     width: 36,
                                     height: 36,
                                     decoration: BoxDecoration(
-                                        color: _selectedRows.contains(3)
+                                      color: _selectedRows.contains(3)
                                           ? const Color(0xFFFBBC04)
                                           : const Color(0xFFD9D9D9),
                                       shape: BoxShape.circle,
@@ -297,8 +297,8 @@ class _NonProfessionalDocumentUploadScreenState
                                           'Current Photo(Selfie)',
                                           style: TextStyle(
                                             color: _selectedRows.contains(3)
-                                              ? const Color(0xFFFBBC04)
-                                              : Colors.black,
+                                                ? const Color(0xFFFBBC04)
+                                                : Colors.black,
                                             fontSize: screenWidth * 0.032,
                                             fontWeight: FontWeight.w800,
                                           ),
@@ -307,8 +307,8 @@ class _NonProfessionalDocumentUploadScreenState
                                           'Not Verified',
                                           style: TextStyle(
                                             color: _selectedRows.contains(3)
-                                              ? const Color(0xFFFBBC04)
-                                              : Colors.black54,
+                                                ? const Color(0xFFFBBC04)
+                                                : Colors.black54,
                                             fontSize: screenWidth * 0.035,
                                           ),
                                         ),
@@ -318,8 +318,8 @@ class _NonProfessionalDocumentUploadScreenState
                                   Icon(
                                     Icons.chevron_right,
                                     color: _selectedRows.contains(3)
-                                      ? const Color(0xFFFBBC04)
-                                      : Colors.black54,
+                                        ? const Color(0xFFFBBC04)
+                                        : Colors.black54,
                                   ),
                                 ],
                               ),
@@ -334,7 +334,12 @@ class _NonProfessionalDocumentUploadScreenState
                       width: double.infinity,
                       height: h * 0.062,
                       child: ElevatedButton(
-                        onPressed: (_selectedRows.contains(0) && _selectedRows.contains(3) && !loading) ? onContinue : null,
+                        onPressed:
+                            (_selectedRows.contains(0) &&
+                                _selectedRows.contains(3) &&
+                                !loading)
+                            ? onContinue
+                            : null,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Color(0XFFFBBC04),
                           disabledBackgroundColor: Color(
