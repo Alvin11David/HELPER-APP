@@ -695,13 +695,23 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Text(
-                                    'Go To Dashboard',
-                                    style: TextStyle(
-                                      fontSize: screenWidth * 0.045,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
-                                      fontFamily: 'AbrilFatface',
+                                  GestureDetector(
+                                    onTap: () {
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              const RoleSelectionScreen(),
+                                        ),
+                                      );
+                                    },
+                                    child: Text(
+                                      'Go To Role Selection',
+                                      style: TextStyle(
+                                        fontSize: screenWidth * 0.045,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                        fontFamily: 'AbrilFatface',
+                                      ),
                                     ),
                                   ),
                                   SizedBox(width: screenWidth * 0.02),
