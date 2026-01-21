@@ -175,7 +175,7 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                                 color: const Color.fromRGBO(255, 255, 255, 1),
                                 fontSize: screenWidth * 0.04,
                                 fontWeight: FontWeight.w500,
-                                fontFamily: 'Poppins',
+                                fontFamily: 'Inter',
                               ),
                               textAlign: TextAlign.center,
                             ),
