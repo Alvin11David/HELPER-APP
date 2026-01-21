@@ -344,7 +344,7 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
                         // Calculate actual OTP box index
                         final otpIndex = index > 5 ? index - 1 : index;
                         // Make the boxes fit 10 on screen
-                        final otpBoxWidth = screenWidth * 0.075;
+                        final otpBoxWidth = screenWidth * 0.079;
                         final otpBoxHeight = screenWidth * 0.17;
 
                         if (otpIndex >= _otpLength) return SizedBox.shrink();
@@ -353,7 +353,7 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
                           width: otpBoxWidth,
                           height: otpBoxHeight,
                           margin: EdgeInsets.symmetric(
-                            horizontal: screenWidth * 0.006,
+                            horizontal: screenWidth * 0.005,
                           ),
                           decoration: BoxDecoration(
                             border: Border.all(color: Colors.white, width: 1.2),
