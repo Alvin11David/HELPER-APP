@@ -255,7 +255,7 @@ class _VerificationInformationScreenState
                                   color: Colors.black,
                                   fontSize: screenWidth * 0.045,
                                   fontWeight: FontWeight.bold,
-                                  fontFamily: "Poppins",
+                                  fontFamily: "Inter",
                                 ),
                               ),
                               SizedBox(width: screenWidth * 0.03),
