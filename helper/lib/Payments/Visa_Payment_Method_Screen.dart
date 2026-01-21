@@ -5,6 +5,7 @@ import 'package:flutterwave_standard/core/flutterwave.dart';
 import 'package:flutterwave_standard/models/requests/customer.dart';
 import 'package:flutterwave_standard/models/requests/customizations.dart';
 import 'package:flutterwave_standard/models/responses/charge_response.dart';
+import 'package:helper/Intro/Role_Selection_Screen.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -953,13 +954,23 @@ class _VisaPaymentMethodScreenState extends State<VisaPaymentMethodScreen> {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Text(
-                                    'Go To Dashboard',
-                                    style: TextStyle(
-                                      fontSize: screenWidth * 0.045,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
-                                      fontFamily: 'AbrilFatface',
+                                  GestureDetector(
+                                    onTap: () {
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              const RoleSelectionScreen(),
+                                        ),
+                                      );
+                                    },
+                                    child: Text(
+                                      'Go To Role Selection',
+                                      style: TextStyle(
+                                        fontSize: screenWidth * 0.045,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                        fontFamily: 'AbrilFatface',
+                                      ),
                                     ),
                                   ),
                                   SizedBox(width: screenWidth * 0.02),
