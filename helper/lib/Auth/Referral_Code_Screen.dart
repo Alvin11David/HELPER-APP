@@ -695,7 +695,15 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
                 ),
               ),
 
-              // Sliding white rectangle for How To Use
+              // Sliding white rectangle for How To Use with tap outside and drag down to dismiss
+              if (_showHowToUse)
+                Positioned.fill(
+                  child: GestureDetector(
+                    onTap: _closeHowToUse,
+                    behavior: HitTestBehavior.translucent,
+                    child: Container(),
+                  ),
+                ),
               AnimatedPositioned(
                 duration: _overlayAnimDuration,
                 curve: Curves.easeOutCubic,
@@ -706,51 +714,58 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
                   duration: _overlayAnimDuration,
                   curve: Curves.easeInOut,
                   opacity: _showHowToUse ? 1.0 : 0.0,
-                  child: Container(
-                    width: double.infinity,
-                    padding: EdgeInsets.fromLTRB(24, 24, 24, 24 + bottomInset),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(30),
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.12),
-                          blurRadius: 18,
-                          offset: const Offset(0, 8),
+                  child: GestureDetector(
+                    onVerticalDragUpdate: (details) {
+                      if (details.primaryDelta != null && details.primaryDelta! > 12) {
+                        _closeHowToUse();
+                      }
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.fromLTRB(24, 24, 24, 24 + bottomInset),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(30),
                         ),
-                      ],
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'How Referral Code Works',
-                              style: TextStyle(
-                                color: Colors.black,
-                                fontSize: screenWidth * 0.055,
-                                fontWeight: FontWeight.bold,
-                                fontFamily: 'Inter',
-                              ),
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: 12),
-                        Text(
-                          '• Every Helpers App user has a referral code that can be found on the top of the sidebar and app settings.\n\n• Enter a valid referral code given to you by another Helpers App user.\n\n• The code must be exactly 10 characters.\n\n• After successful registration with a referral code, both you and the referrer receive a reward in your wallet.\n\n• You can share your referral code with others to continue earning rewards.',
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontSize: screenWidth * 0.042,
-                            fontFamily: 'Inter',
-                            height: 1.5,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.12),
+                            blurRadius: 18,
+                            offset: const Offset(0, 8),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'How Referral Code Works',
+                                style: TextStyle(
+                                  color: Colors.black,
+                                  fontSize: screenWidth * 0.055,
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: 'Inter',
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 12),
+                          Text(
+                            '• Every Helpers App user has a referral code that can be found on the top of the sidebar and app settings.\n\n• Enter a valid referral code given to you by another Helpers App user.\n\n• The code must be exactly 10 characters.\n\n• After successful registration with a referral code, both you and the referrer receive a reward in your wallet.\n\n• You can share your referral code with others to continue earning rewards.',
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontSize: screenWidth * 0.042,
+                              fontFamily: 'Inter',
+                              height: 1.5,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
