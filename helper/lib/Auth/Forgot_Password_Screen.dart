@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -254,7 +253,7 @@ class _ForgotYourPasswordScreenState extends State<ForgotYourPasswordScreen> {
                           if (!emailRegex.hasMatch(t))
                             return 'Please enter a valid email address';
                           return null;
-                        },
+                        }, obscure: false,
                       ),
 
                       SizedBox(height: h * 0.05),
@@ -465,15 +464,13 @@ class _PillInput extends StatelessWidget {
   final double contentFontSize;
 
   const _PillInput({
-    this.obscure = false,
-    this.suffix,
     required this.controller,
     required this.hint,
     required this.icon,
     required this.keyboardType,
     this.contentFontSize = 16.0,
     this.validator,
-    this.inputFormatters,
+    this.inputFormatters, required this.obscure, this.suffix,
   });
 
   @override

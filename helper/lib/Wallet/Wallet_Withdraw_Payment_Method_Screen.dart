@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:helper/Payments/MTN_Airtel_Withdraw_Screen.dart';
 import 'dart:ui';
 import 'package:intl/intl.dart';
-import '../Payments/MTN_Airtel_Deposit_Screen.dart';
 
 class WalletWithdrawPaymentMethodScreen extends StatefulWidget {
   final String amount;

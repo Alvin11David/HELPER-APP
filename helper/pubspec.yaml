@@ -60,6 +60,8 @@ dependencies:
   webview_flutter: ^4.13.1
   # Flutterwave standard SDK
   flutterwave_standard: ^1.1.0
+  # Google Sign-In
+  google_sign_in: ^6.2.1
 
 dev_dependencies:
   flutter_test:
