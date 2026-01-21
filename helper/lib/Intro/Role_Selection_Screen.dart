@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:flutter/gestures.dart';
 import '../Auth/Sign_In_Screen.dart';
+import '../Document Upload/Select_Worker_Type_Screen.dart';
 
 class RoleSelectionScreen extends StatefulWidget {
   const RoleSelectionScreen({super.key});
@@ -138,6 +139,11 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                       setState(() {
                         _selectedRole = 'worker';
                       });
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const SelectWorkerTypeScreen(),
+                        ),
+                      );
                     },
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(30),
