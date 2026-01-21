@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 class NationalIdPassportFrontUploadScreen extends StatefulWidget {
   const NationalIdPassportFrontUploadScreen({super.key});
@@ -12,6 +13,17 @@ class NationalIdPassportFrontUploadScreen extends StatefulWidget {
 class _NationalIdPassportFrontUploadScreenState
     extends State<NationalIdPassportFrontUploadScreen> {
   int selected = 0;
+  XFile? _selectedImage;
+  final ImagePicker _picker = ImagePicker();
+
+  Future<void> _pickImageFromGallery() async {
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      setState(() {
+        _selectedImage = image;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -299,9 +311,7 @@ class _NationalIdPassportFrontUploadScreenState
                       width: double.infinity,
                       height: screenHeight * 0.062,
                       child: ElevatedButton(
-                        onPressed: () {
-                          // TODO: Handle continue action
-                        },
+                        onPressed: _pickImageFromGallery,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFFDF8800),
                           elevation: 0,
