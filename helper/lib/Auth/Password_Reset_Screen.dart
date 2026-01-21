@@ -1,9 +1,13 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'Sign_In_Screen.dart';
 
 class PasswordResetScreen extends StatefulWidget {
-  const PasswordResetScreen({super.key});
+  final String? email;
+  const PasswordResetScreen({super.key, this.email});
 
   @override
   State<PasswordResetScreen> createState() => _PasswordResetScreenState();
@@ -18,11 +22,90 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
 
   Future<void> _onContinue() async {
     FocusScope.of(context).unfocus();
+
+    final password = _passwordCtrl?.text ?? '';
+    final confirmPassword = _confirmCtrl?.text ?? '';
+
+    // Validation
+    if (password.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Please enter a password')));
+      return;
+    }
+
+    if (password.length < 6) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Password must be at least 6 characters')),
+      );
+      return;
+    }
+
+    if (password != confirmPassword) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Passwords do not match')));
+      return;
+    }
+
     setState(() => _loading = true);
-    // TODO: implement actual password reset flow
-    await Future.delayed(const Duration(milliseconds: 700));
-    if (!mounted) return;
-    setState(() => _loading = false);
+
+    try {
+      if (widget.email != null) {
+        // Update the password in Firestore Sign Up collection
+        final userQuery = await FirebaseFirestore.instance
+            .collection('Sign Up')
+            .where('email', isEqualTo: widget.email!)
+            .get();
+
+        if (userQuery.docs.isNotEmpty) {
+          // Update the password field in the user's document
+          await userQuery.docs.first.reference.update({
+            'password': password, // Note: In production, hash the password
+          });
+
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                  'Password updated successfully! Please sign in with your new password.',
+                ),
+              ),
+            );
+
+            // Navigate back to sign in screen
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (context) => SignInScreen()),
+              (route) => false,
+            );
+          }
+        } else {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('User not found. Please try again.'),
+              ),
+            );
+          }
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Email not found. Please try again.')),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to reset password: $e')));
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _loading = false);
+      }
+    }
   }
 
   @override
@@ -124,7 +207,7 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
                     SizedBox(height: h * 0.023),
                     _StepIndicator(
                       width: w,
-                      activeIndex: 0,
+                      activeIndex: 2,
                       labels: const ['1', '2', '3'],
                       accent: brandOrange,
                     ),
@@ -170,7 +253,7 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
                                 color: Colors.white,
                                 fontSize: screenWidth * 0.04,
                                 fontWeight: FontWeight.w500,
-                                fontFamily: 'Poppins',
+                                fontFamily: 'Inter',
                               ),
                             ),
                           ),
@@ -189,7 +272,7 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
                               color: Colors.white,
                               fontSize: w * 0.04,
                               fontWeight: FontWeight.bold,
-                              fontFamily: 'Poppins',
+                              fontFamily: 'Inter',
                             ),
                           ),
                         ),
@@ -201,7 +284,7 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
                           hint: 'Enter Your Password',
                           icon: Icons.lock_rounded,
                           keyboardType: TextInputType.visiblePassword,
-                          contentFontSize: 16,
+                          contentFontSize: 14,
                           obscure: _obscurePass!,
                           suffix: IconButton(
                             onPressed: () =>
@@ -228,7 +311,7 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
                               color: Colors.white,
                               fontSize: w * 0.04,
                               fontWeight: FontWeight.bold,
-                              fontFamily: 'Poppins',
+                              fontFamily: 'Inter',
                             ),
                           ),
                         ),
@@ -239,7 +322,7 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
                           hint: 'Confirm Your Password',
                           icon: Icons.lock_rounded,
                           keyboardType: TextInputType.visiblePassword,
-                          contentFontSize: 16,
+                          contentFontSize: 14,
                           obscure: _obscureConfirm!,
                           suffix: IconButton(
                             onPressed: () => setState(
@@ -293,7 +376,7 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
                                         fontSize: w * 0.045,
                                         fontWeight: FontWeight.bold,
                                         color: Colors.black,
-                                        fontFamily: 'Poppins',
+                                        fontFamily: 'Inter',
                                       ),
                                     ),
                                     SizedBox(width: w * 0.02),
@@ -307,33 +390,41 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
                               ),
                       ),
                     ),
-                     SizedBox(height: screenHeight * 0.06),
-                  Center(
-                    child: RichText(
-                      text: TextSpan(
-                        children: [
-                          TextSpan(
-                            text: 'Already have an account ',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: screenWidth * 0.04,
-                              fontWeight: FontWeight.w500,
-                              fontFamily: 'Poppins',
+                    SizedBox(height: screenHeight * 0.06),
+                    Center(
+                      child: RichText(
+                        text: TextSpan(
+                          children: [
+                            TextSpan(
+                              text: 'Already have an account ',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: screenWidth * 0.04,
+                                fontWeight: FontWeight.w500,
+                                fontFamily: 'Inter',
+                              ),
                             ),
-                          ),
-                          TextSpan(
-                            text: 'Sign In',
-                            style: TextStyle(
-                              color: Colors.orange,
-                              fontSize: screenWidth * 0.04,
-                              fontWeight: FontWeight.bold,
-                              fontFamily: 'Montserrat',
+                            TextSpan(
+                              text: 'Sign In',
+                              style: TextStyle(
+                                color: Colors.orange,
+                                fontSize: screenWidth * 0.04,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'Montserrat',
+                              ),
+                              recognizer: TapGestureRecognizer()
+                                ..onTap = () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (context) => SignInScreen(),
+                                    ),
+                                  );
+                                },
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
-                  ),
                   ],
                 ),
               ),
@@ -427,7 +518,7 @@ class _StepIndicator extends StatelessWidget {
                     color: accent,
                     fontSize: width * 0.032,
                     fontWeight: FontWeight.w700,
-                    fontFamily: 'Poppins',
+                    fontFamily: 'Inter',
                   ),
                 ),
               ),
@@ -444,7 +535,7 @@ class _StepIndicator extends StatelessWidget {
                     color: accent,
                     fontSize: width * 0.032,
                     fontWeight: FontWeight.w700,
-                    fontFamily: 'Poppins',
+                    fontFamily: 'Inter',
                   ),
                 ),
               ),
@@ -461,7 +552,7 @@ class _StepIndicator extends StatelessWidget {
                     color: accent,
                     fontSize: width * 0.032,
                     fontWeight: FontWeight.w700,
-                    fontFamily: 'Poppins',
+                    fontFamily: 'Inter',
                   ),
                 ),
               ),
@@ -510,7 +601,8 @@ class _PillInput extends StatelessWidget {
 
   final double contentFontSize;
 
-  const _PillInput(this.validator, {
+  const _PillInput(
+    this.validator, {
     required this.controller,
     required this.hint,
     required this.icon,
@@ -557,7 +649,7 @@ class _PillInput extends StatelessWidget {
                 color: Colors.white,
                 fontSize: contentFontSize,
                 fontWeight: FontWeight.w700,
-                fontFamily: 'Poppins', // ✅ requested
+                fontFamily: 'Inter', // ✅ requested
               ),
               cursorColor: const Color(0xFFFFA10D),
               decoration: InputDecoration(
@@ -566,7 +658,7 @@ class _PillInput extends StatelessWidget {
                   color: Colors.white.withOpacity(0.55),
                   fontSize: contentFontSize * 0.9,
                   fontWeight: FontWeight.w600,
-                  fontFamily: 'Poppins', // ✅ requested
+                  fontFamily: 'Inter', // ✅ requested
                 ),
                 border: InputBorder.none,
                 isCollapsed: true,
@@ -589,4 +681,3 @@ class _PillInput extends StatelessWidget {
     );
   }
 }
-

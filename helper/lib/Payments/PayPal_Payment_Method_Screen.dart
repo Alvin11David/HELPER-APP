@@ -1,197 +1,106 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:flutterwave_standard/flutterwave.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutterwave_standard/core/flutterwave.dart';
+import 'package:flutterwave_standard/models/requests/customer.dart';
+import 'package:flutterwave_standard/models/requests/customizations.dart';
+import 'package:flutterwave_standard/models/responses/charge_response.dart';
 
-class MtnPaymentMethodScreen extends StatefulWidget {
-  const MtnPaymentMethodScreen({super.key});
+class PayPalPaymentMethodScreen extends StatefulWidget {
+  const PayPalPaymentMethodScreen({super.key});
 
   @override
-  State<MtnPaymentMethodScreen> createState() => _MtnPaymentMethodScreenState();
+  State<PayPalPaymentMethodScreen> createState() =>
+      _PayPalPaymentMethodScreenState();
 }
 
-class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
-  final TextEditingController _cardNumberController = TextEditingController();
+class _PayPalPaymentMethodScreenState extends State<PayPalPaymentMethodScreen> {
+  final TextEditingController _emailController = TextEditingController();
   bool isChecked = false;
   bool _isDimming = false; // State to track if the screen should dim
   bool _showOverlay = false; // State to control the overlay visibility
-  bool _isPaymentSuccessful = false; // State to track payment status
   final Duration _overlayAnimDuration = Duration(milliseconds: 300);
-  String? _savedPhoneNumber;
+  String _paymentStatus = 'Not Paid'; // State for payment status
 
-  @override
-  void initState() {
-    super.initState();
-    _loadSavedPhoneNumber();
-  }
+  // Flutterwave configuration
+  final String publicKey =
+      "FLWPUBK_TEST-5c4c1ba4-9c72-45c8-90b0-b29e9c6a4597-X"; // Test Public Key
+  final String encryptionKey =
+      "0lT5zNJgnxHOm2PyOYZxQKL7yk0MC9Uodyo3Z/I3DE4="; // Test Encryption Key
 
   @override
   void dispose() {
-    _cardNumberController.dispose();
+    _emailController.dispose();
     super.dispose();
   }
 
-  Future<void> _loadSavedPhoneNumber() async {
-    try {
-      final User? currentUser = FirebaseAuth.instance.currentUser;
-      if (currentUser != null) {
-        final DocumentSnapshot doc = await FirebaseFirestore.instance
-            .collection('Saved Payment Methods')
-            .doc(currentUser.uid)
-            .collection('MTN Numbers')
-            .doc('latest')
-            .get();
-
-        if (doc.exists && doc.data() != null) {
-          final data = doc.data() as Map<String, dynamic>;
-          setState(() {
-            _savedPhoneNumber = data['phoneNumber'] as String?;
-            if (_savedPhoneNumber != null &&
-                _cardNumberController.text.isEmpty) {
-              _cardNumberController.text = _savedPhoneNumber!;
-            }
-          });
-        }
-      }
-    } catch (e) {
-      // Silently handle errors for saved phone number loading
-      print('Error loading saved phone number: $e');
-    }
-  }
-
-  Future<void> _savePhoneNumber(String phoneNumber) async {
-    try {
-      final User? currentUser = FirebaseAuth.instance.currentUser;
-      if (currentUser != null) {
-        await FirebaseFirestore.instance
-            .collection('Saved Payment Methods')
-            .doc(currentUser.uid)
-            .collection('MTN Numbers')
-            .doc('latest')
-            .set({
-              'phoneNumber': phoneNumber,
-              'savedAt': FieldValue.serverTimestamp(),
-              'isActive': true,
-            });
-      }
-    } catch (e) {
-      print('Error saving phone number: $e');
-    }
-  }
-
-  Future<void> _processPayment() async {
-    final String phoneNumber = _cardNumberController.text.trim();
-
-    // Basic validation - MTN Uganda prefixes: 077, 078, 076, 079, 031, 039
-    final String cleanPhone = phoneNumber
-        .replaceAll(' ', '')
-        .replaceAll('+', '');
-    final RegExp mtnRegex = RegExp(
-      r'^(256(77|78|76|79|31|39)\d{7}|0(77|78|76|79|31|39)\d{7}|(77|78|76|79|31|39)\d{7})$',
-    );
-    if (phoneNumber.isEmpty || !mtnRegex.hasMatch(cleanPhone)) {
+  void _handlePayment() async {
+    final email = _emailController.text.trim();
+    if (email.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter a valid MTN Uganda phone number'),
-          backgroundColor: Colors.red,
-        ),
+        const SnackBar(content: Text('Please enter your PayPal email')),
       );
       return;
     }
 
-    // Format phone number for Flutterwave (ensure international format)
-    String formattedPhone = cleanPhone;
-    if (formattedPhone.startsWith('0')) {
-      formattedPhone = '256${formattedPhone.substring(1)}';
-    } else if (!formattedPhone.startsWith('256')) {
-      formattedPhone = '256$formattedPhone';
+    // Basic email validation
+    if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(email)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a valid email address')),
+      );
+      return;
     }
 
-    // Flutterwave standard SDK configuration
-    final String publicKey =
-        "FLWPUBK_TEST-5c4c1ba4-9c72-45c8-90b0-b29e9c6a4597-X"; // Using test key
-    final String txRef = "mtn_txn_${DateTime.now().millisecondsSinceEpoch}";
-    final String amount = "25000";
-    final String currency = "UGX";
-    final String customerEmail =
-        "user@example.com"; // You might want to get this from user data
-    final String customerName = "MTN User";
-    final String customerPhone = formattedPhone;
+    // Generate a unique transaction reference
+    final txRef = "helper_reg_${DateTime.now().millisecondsSinceEpoch}";
 
     final Customer customer = Customer(
-      name: customerName,
-      phoneNumber: customerPhone,
-      email: customerEmail,
+      name: "Helper User", // You might want to get this from user data
+      phoneNumber: "", // Not required for PayPal
+      email: email,
     );
 
     final Flutterwave flutterwave = Flutterwave(
       publicKey: publicKey,
-      currency: currency,
-      redirectUrl: "https://example.com/callback",
       txRef: txRef,
-      amount: amount,
+      amount: "25000",
       customer: customer,
-      paymentOptions: "mobilemoneyuganda,mobilemoney",
-      customization: Customization(title: "Helper MTN Payment"),
-      isTestMode: true,
+      paymentOptions: "paypal",
+      customization: Customization(
+        title: "Helper Registration Payment",
+        description: "Payment for Helper app registration",
+      ),
+      redirectUrl: "https://your-redirect-url.com", // Optional
+      isTestMode: true, // Set to false for production
+      currency: "UGX",
     );
 
     try {
       final ChargeResponse response = await flutterwave.charge(context);
-
-      // For testing purposes, simulate success if in test mode and using mobile money
-      const bool isTestMode = true; // Match the Flutterwave config
-      if (response.success != true && isTestMode) {
-        // Simulate successful payment for testing
-        setState(() {
-          _isPaymentSuccessful = true;
-          _isDimming = true;
-          _showOverlay = true;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Test payment simulated successfully!'),
-            backgroundColor: Colors.green,
-          ),
-        );
-
-        // Save phone number if checkbox is checked
-        if (isChecked) {
-          await _savePhoneNumber(phoneNumber);
-        }
-
-        return;
-      }
-
+      print(
+        'Flutterwave Response: ${response.toJson()}',
+      ); // Add this for debugging
       if (response.success == true) {
-        // Payment successful - show success overlay
+        // Payment successful
         setState(() {
-          _isPaymentSuccessful = true;
           _isDimming = true;
           _showOverlay = true;
+          _paymentStatus = 'Paid';
         });
-
-        // Save phone number if checkbox is checked
-        if (isChecked) {
-          await _savePhoneNumber(phoneNumber);
-        }
       } else {
-        // Payment failed or cancelled
+        // Payment failed
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Payment failed or was cancelled'),
-            backgroundColor: Colors.red,
+          SnackBar(
+            content: Text(
+              'Payment failed: ${response.status ?? 'Unknown error'}',
+            ),
           ),
         );
       }
-    } catch (e) {
+    } catch (error) {
+      print('Payment Error: $error'); // Add this for debugging
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Payment error: $e'),
-          backgroundColor: Colors.red,
-        ),
+        const SnackBar(content: Text('An error occurred during payment')),
       );
     }
   }
@@ -270,8 +179,11 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
                         gradient: const LinearGradient(
                           begin: Alignment.centerLeft,
                           end: Alignment.centerRight,
-                          colors: [Color(0xFFFFCB05), Color(0xFFFFFFFF)],
-                          stops: [0.73, 1.2],
+                          colors: [
+                            Color(0xFF0070BA),
+                            Color(0xFF003087),
+                          ], // PayPal colors
+                          stops: [0.0, 1.0],
                         ),
                       ),
                       child: Stack(
@@ -291,7 +203,7 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
                                   ],
                                 ),
                                 child: Image.asset(
-                                  'assets/images/mtn.png',
+                                  'assets/images/paypal.png',
                                   width: screenWidth * 0.15,
                                   fit: BoxFit.contain,
                                 ),
@@ -302,9 +214,9 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
                                 children: [
                                   SizedBox(height: screenHeight * 0.002),
                                   Text(
-                                    'MTN',
+                                    'PayPal',
                                     style: TextStyle(
-                                      color: Colors.black,
+                                      color: Colors.white,
                                       fontSize: screenWidth * 0.055,
                                       fontWeight: FontWeight.bold,
                                       fontFamily: 'Montserrat',
@@ -314,7 +226,7 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
                                   Text(
                                     'Amount',
                                     style: TextStyle(
-                                      color: Colors.black,
+                                      color: Colors.white,
                                       fontSize: screenWidth * 0.045,
                                       fontWeight: FontWeight.w900,
                                       fontFamily: 'Montserrat',
@@ -342,9 +254,7 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
                               width: screenWidth * (94 / 340),
                               height: screenWidth * (28 / 340),
                               decoration: BoxDecoration(
-                                color: _isPaymentSuccessful
-                                    ? Colors.green
-                                    : Colors.white,
+                                color: Colors.white,
                                 borderRadius: BorderRadius.circular(30),
                                 boxShadow: [
                                   BoxShadow(
@@ -357,10 +267,10 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
                               ),
                               alignment: Alignment.center,
                               child: Text(
-                                _isPaymentSuccessful ? 'Paid' : 'Not Paid',
+                                _paymentStatus,
                                 style: TextStyle(
-                                  color: _isPaymentSuccessful
-                                      ? Colors.white
+                                  color: _paymentStatus == 'Paid'
+                                      ? Colors.green
                                       : Colors.black,
                                   fontSize: screenWidth * 0.04,
                                   fontWeight: FontWeight.bold,
@@ -372,7 +282,7 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
                       ),
                     ),
                   ),
-                  // Add Card Number input section below the rectangle
+                  // Add Email input section below the rectangle
                   Positioned(
                     top:
                         screenHeight * 0.14 +
@@ -382,10 +292,9 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Add Card Holder Name input section below the Card Number field
                         SizedBox(height: screenHeight * 0.02),
                         Text(
-                          'Phone Number',
+                          'PayPal Email',
                           style: TextStyle(
                             color: Colors.white,
                             fontFamily: 'PlayfairDisplay',
@@ -412,7 +321,7 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
                             children: [
                               Expanded(
                                 child: TextField(
-                                  controller: _cardNumberController,
+                                  controller: _emailController,
                                   style: TextStyle(
                                     color: Colors.black,
                                     fontSize: screenWidth * 0.04,
@@ -420,7 +329,7 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
                                     fontWeight: FontWeight.w900,
                                   ),
                                   decoration: InputDecoration(
-                                    hintText: 'Enter Your MTN Number',
+                                    hintText: 'Enter Your PayPal Email',
                                     hintStyle: TextStyle(
                                       color: Colors.black54,
                                       fontSize: screenWidth * 0.04,
@@ -432,15 +341,13 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
                                     contentPadding: EdgeInsets.zero,
                                   ),
                                   cursorColor: Colors.black,
-                                  keyboardType: TextInputType.phone,
                                 ),
                               ),
                               SizedBox(width: screenWidth * 0.02),
-                              Icon(Icons.phone, color: Colors.yellow, size: 24),
+                              Icon(Icons.email, color: Colors.blue, size: 24),
                             ],
                           ),
                         ),
-                        // Add Save Card for Future checkbox below the Expires On row
                         SizedBox(height: screenHeight * 0.04),
                         Row(
                           children: [
@@ -474,7 +381,7 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
                             ),
                             SizedBox(width: screenWidth * 0.03),
                             Text(
-                              'Save card for future',
+                              'Save PayPal for future',
                               style: TextStyle(
                                 color: Colors.white,
                                 fontFamily: 'PlayfairDisplay',
@@ -486,7 +393,7 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
                         ),
                         SizedBox(height: screenHeight * 0.05),
                         GestureDetector(
-                          onTap: _processPayment,
+                          onTap: _handlePayment,
                           child: Container(
                             width: screenWidth * 0.93,
                             height: screenHeight * 0.07,
@@ -561,7 +468,7 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
                               children: [
                                 SizedBox(width: screenWidth * 0.02),
                                 Text(
-                                  'Instant Confirmation',
+                                  'Secure payment via PayPal',
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontSize: screenWidth * 0.033,
@@ -673,7 +580,7 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
                             horizontal: screenWidth * 0.08,
                           ),
                           child: Text(
-                            'Your payment of UGX 25,000\nhas been successfully\nreceived.',
+                            'Your payment of UGX 25,000\nhas been successfully\nreceived via PayPal.',
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               color: Colors.black,
@@ -684,7 +591,7 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
                             ),
                           ),
                         ),
-                        SizedBox(height: screenHeight * 0.01),
+                        SizedBox(height: screenHeight * 0.04),
                         Text(
                           'Welcome to Helper!',
                           textAlign: TextAlign.center,

@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'Mastercard_Payment_Method_Screen.dart';
+import 'Visa_Payment_Method_Screen.dart';
+import 'MTN_Payment_Method_Screen.dart';
+import 'Airtel_Payment_Method_Screen.dart';
+import 'PayPal_Payment_Method_Screen.dart';
 
 class RegistrationPaymentScreen extends StatefulWidget {
   const RegistrationPaymentScreen({super.key});
@@ -12,10 +16,10 @@ class RegistrationPaymentScreen extends StatefulWidget {
 
 class _RegistrationPaymentScreenState extends State<RegistrationPaymentScreen> {
   final bool _isMasterCardSelected = false;
-  bool _isVisaCardSelected = false;
-  bool _isMtnCardSelected = false;
-  bool _isPaypalSelected = false;
-  bool _isAirtelCardSelected = false;
+  final bool _isVisaCardSelected = false;
+  final bool _isMtnCardSelected = false;
+  final bool _isPaypalSelected = false;
+  final bool _isAirtelCardSelected = false;
 
   @override
   Widget build(BuildContext context) {
@@ -281,9 +285,13 @@ class _RegistrationPaymentScreenState extends State<RegistrationPaymentScreen> {
                     SizedBox(height: screenHeight * 0.02),
                     GestureDetector(
                       onTap: () {
-                        setState(() {
-                          _isVisaCardSelected = !_isVisaCardSelected;
-                        });
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                const VisaPaymentMethodScreen(),
+                          ),
+                        );
                       },
                       child: Container(
                         width: screenWidth * 0.91,
@@ -343,9 +351,13 @@ class _RegistrationPaymentScreenState extends State<RegistrationPaymentScreen> {
                     SizedBox(height: screenHeight * 0.02),
                     GestureDetector(
                       onTap: () {
-                        setState(() {
-                          _isMtnCardSelected = !_isMtnCardSelected;
-                        });
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                const MtnPaymentMethodScreen(),
+                          ),
+                        );
                       },
                       child: Container(
                         width: screenWidth * 0.91,
@@ -405,9 +417,13 @@ class _RegistrationPaymentScreenState extends State<RegistrationPaymentScreen> {
                     SizedBox(height: screenHeight * 0.02),
                     GestureDetector(
                       onTap: () {
-                        setState(() {
-                          _isPaypalSelected = !_isPaypalSelected;
-                        });
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                const PayPalPaymentMethodScreen(),
+                          ),
+                        );
                       },
                       child: Container(
                         width: screenWidth * 0.91,
@@ -467,9 +483,13 @@ class _RegistrationPaymentScreenState extends State<RegistrationPaymentScreen> {
                     SizedBox(height: screenHeight * 0.02),
                     GestureDetector(
                       onTap: () {
-                        setState(() {
-                          _isAirtelCardSelected = !_isAirtelCardSelected;
-                        });
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                const AirtelPaymentMethodScreen(),
+                          ),
+                        );
                       },
                       child: Container(
                         width: screenWidth * 0.91,

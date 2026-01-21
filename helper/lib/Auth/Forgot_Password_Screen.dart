@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
+import 'Sign_In_Screen.dart';
+import 'Forgot_Password_OTP_Screen.dart';
 
 class DashedLinePainter extends CustomPainter {
   final Color color;
@@ -46,17 +50,69 @@ class _ForgotYourPasswordScreenState extends State<ForgotYourPasswordScreen> {
     super.dispose();
   }
 
+  String _generateOTP() {
+    // Generate a 6-digit OTP
+    return (100000 + (DateTime.now().millisecondsSinceEpoch % 900000))
+        .toString();
+  }
+
   Future<void> _onSubmit() async {
     FocusScope.of(context).unfocus();
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
     setState(() => _loading = true);
 
-    // TODO: send reset OTP then navigate
-    await Future.delayed(const Duration(milliseconds: 700));
+    // Send reset OTP then navigate
+    final identifier = _identifierCtrl.text.trim();
 
-    if (!mounted) return;
-    setState(() => _loading = false);
+    try {
+      // Generate OTP
+      String otpCode = _generateOTP();
+
+      // Store OTP in Firestore
+      await FirebaseFirestore.instance
+          .collection('Forgot Password OTP')
+          .doc(identifier)
+          .set({
+            'email': identifier,
+            'otpCode': otpCode,
+            'timestamp': FieldValue.serverTimestamp(),
+            'expiresAt': Timestamp.fromDate(
+              DateTime.now().add(const Duration(minutes: 10)),
+            ),
+          });
+
+      // Send email via Cloud Function
+      print(
+        'About to call sendForgotPasswordOTPEmail with email: $identifier, otpCode: $otpCode',
+      );
+      await FirebaseFunctions.instance
+          .httpsCallable('sendForgotPasswordOTPEmail')
+          .call({'email': identifier, 'otpCode': otpCode});
+      print('sendForgotPasswordOTPEmail call completed successfully');
+      print('Forgot Password OTP email sent successfully');
+
+      if (!mounted) return;
+      setState(() => _loading = false);
+
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => ForgotPasswordOTPScreen(
+            isPhoneVerification: false, // email verification
+            emailOrPhone: identifier,
+            initialVerificationId: '',
+          ),
+        ),
+      );
+    } catch (e) {
+      print('Error sending OTP: $e');
+      if (mounted) {
+        setState(() => _loading = false);
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to send OTP: $e')));
+      }
+    }
   }
 
   @override
@@ -121,7 +177,7 @@ class _ForgotYourPasswordScreenState extends State<ForgotYourPasswordScreen> {
                               color: Colors.white,
                               fontSize: w * 0.055,
                               fontWeight: FontWeight.bold,
-                              fontFamily: 'Poppins',
+                              fontFamily: 'Inter',
                             ),
                           ),
                         ],
@@ -154,13 +210,13 @@ class _ForgotYourPasswordScreenState extends State<ForgotYourPasswordScreen> {
                       Padding(
                         padding: EdgeInsets.symmetric(horizontal: w * 0.06),
                         child: Text(
-                          'Please enter your email address or\nphone number below to receive an OTP\ncode.',
+                          'Please enter your email address or\nphone number below to receive an OTP code.',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: Colors.white.withOpacity(0.9),
                             fontSize: w * 0.04,
                             fontWeight: FontWeight.w500,
-                            fontFamily: 'Poppins',
+                            fontFamily: 'Inter',
                             height: 1.35,
                           ),
                         ),
@@ -176,7 +232,7 @@ class _ForgotYourPasswordScreenState extends State<ForgotYourPasswordScreen> {
                             color: Colors.white,
                             fontSize: w * 0.04,
                             fontWeight: FontWeight.bold,
-                            fontFamily: 'Poppins',
+                            fontFamily: 'Inter',
                           ),
                         ),
                       ),
@@ -191,7 +247,13 @@ class _ForgotYourPasswordScreenState extends State<ForgotYourPasswordScreen> {
                         contentFontSize: w * 0.038,
                         validator: (v) {
                           final t = (v ?? '').trim();
-                          if (t.isEmpty) return 'Email or phone is required';
+                          if (t.isEmpty) {
+                            return 'Please enter a valid email address';
+                          }
+                          final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+$');
+                          if (!emailRegex.hasMatch(t)) {
+                            return 'Please enter a valid email address';
+                          }
                           return null;
                         },
                       ),
@@ -231,7 +293,7 @@ class _ForgotYourPasswordScreenState extends State<ForgotYourPasswordScreen> {
                                         fontSize: w * 0.045,
                                         fontWeight: FontWeight.bold,
                                         color: Colors.black,
-                                        fontFamily: 'Poppins',
+                                        fontFamily: 'Inter',
                                       ),
                                     ),
                                     SizedBox(width: w * 0.02),
@@ -256,14 +318,18 @@ class _ForgotYourPasswordScreenState extends State<ForgotYourPasswordScreen> {
                             style: TextStyle(
                               color: Colors.white.withOpacity(0.9),
                               fontSize: w * 0.037,
-                              fontFamily: 'Poppins',
+                              fontFamily: 'Inter',
                               fontWeight: FontWeight.w500,
                             ),
                           ),
                           SizedBox(width: w * 0.02), // spacing
                           GestureDetector(
                             onTap: () {
-                              // TODO: navigate to sign in
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => SignInScreen(),
+                                ),
+                              );
                             },
                             child: Text(
                               'Sign In',
@@ -335,7 +401,7 @@ class _MiniStep123 extends StatelessWidget {
         style: TextStyle(
           color: accent,
           fontSize: width * 0.03,
-          fontFamily: 'Poppins',
+          fontFamily: 'Inter',
           fontWeight: FontWeight.w700,
         ),
       );
@@ -352,7 +418,7 @@ class _MiniStep123 extends StatelessWidget {
               child: circle(0),
             ),
             SizedBox(height: width * 0.01),
-            num('Phone'),
+            num('1'),
           ],
         ),
         SizedBox(width: width * 0.02),
@@ -365,7 +431,7 @@ class _MiniStep123 extends StatelessWidget {
               child: circle(1),
             ),
             SizedBox(height: width * 0.01),
-            num('Verify'),
+            num('2'),
           ],
         ),
         SizedBox(width: width * 0.02),
@@ -378,14 +444,13 @@ class _MiniStep123 extends StatelessWidget {
               child: circle(2),
             ),
             SizedBox(height: width * 0.01),
-            num('Payment'),
+            num('3'),
           ],
         ),
       ],
     );
   }
 }
-
 
 // --------------------- Input pill ---------------------
 
@@ -407,6 +472,10 @@ class _PillInput extends StatelessWidget {
     required this.keyboardType,
     this.contentFontSize = 16.0,
     this.validator,
+<<<<<<< HEAD
+=======
+    this.inputFormatters,
+>>>>>>> 471e8036e44ef2563c1cbded648c421a861cf700
   });
 
   @override
@@ -447,7 +516,7 @@ class _PillInput extends StatelessWidget {
                 color: Colors.white,
                 fontSize: contentFontSize,
                 fontWeight: FontWeight.w600,
-                fontFamily: 'Poppins',
+                fontFamily: 'Inter',
               ),
               cursorColor: const Color(0xFFFFA10D),
               decoration: InputDecoration(
@@ -456,7 +525,7 @@ class _PillInput extends StatelessWidget {
                   color: Colors.white.withOpacity(0.65),
                   fontSize: contentFontSize,
                   fontWeight: FontWeight.w600,
-                  fontFamily: 'Poppins',
+                  fontFamily: 'Inter',
                 ),
                 border: InputBorder.none,
                 isCollapsed: true,
