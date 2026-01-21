@@ -607,43 +607,16 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
                             ),
                           ),
                           Text(
-                            'you have earned',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Colors.black,
-                              fontSize: screenWidth * 0.045,
-                              fontFamily: 'Montserrat',
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          SizedBox(height: screenHeight * 0.01),
-                          Text(
-                            'UGX 2,500/ & 0.5',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: const Color(0xFFDF8800),
-                              fontSize: screenWidth * 0.055,
-                              fontFamily: 'Montserrat',
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          SizedBox(height: screenHeight * 0.02),
-                          Padding(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: screenWidth * 0.08,
-                            ),
-                            child: Text(
-                              'You have earned yourself a prize of\nUGX 1,000 approximate to \$ 0.5 for using\nthe referral code',
+                              "You have been referred to Helper's App by the $_refCode and You have also received 1,000 UGX on your wallet",
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 color: Colors.black,
-                                fontSize: screenWidth * 0.035,
+                                fontSize: screenWidth * 0.045,
                                 fontFamily: 'Montserrat',
-                                fontWeight: FontWeight.w500,
+                                fontWeight: FontWeight.w600,
                                 height: 1.4,
                               ),
                             ),
-                          ),
                           SizedBox(height: screenHeight * 0.07),
                           SizedBox(
                             width: double.infinity,
