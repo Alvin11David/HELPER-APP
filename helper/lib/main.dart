@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:helper/Auth/Sign_In_Screen.dart';
 import 'package:helper/Chats/Chat_List_Screen.dart';
 import 'package:helper/Chats/Chat_Screen.dart';
 import 'package:helper/Employer%20Dashboard/All_Categories_Screen.dart';
@@ -64,7 +65,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home:  MtnPaymentMethodScreen(),
+      home:  SignInScreen(),
     );
   }
 }
