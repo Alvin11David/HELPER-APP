@@ -245,7 +245,7 @@ class _VisaPaymentMethodScreenState extends State<VisaPaymentMethodScreen> {
                                   Text(
                                     'Visa Card',
                                     style: TextStyle(
-                                      color: Colors.black,
+                                      color: Colors.white,
                                       fontSize: screenWidth * 0.055,
                                       fontWeight: FontWeight.bold,
                                       fontFamily: 'Montserrat',
@@ -255,7 +255,7 @@ class _VisaPaymentMethodScreenState extends State<VisaPaymentMethodScreen> {
                                   Text(
                                     'Amount',
                                     style: TextStyle(
-                                      color: Colors.black,
+                                      color: Colors.white,
                                       fontSize: screenWidth * 0.045,
                                       fontWeight: FontWeight.w900,
                                       fontFamily: 'Montserrat',
