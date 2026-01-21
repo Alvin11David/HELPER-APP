@@ -327,92 +327,198 @@ class _SignInScreenState extends State<SignInScreen> {
   }
 
   void _onReferralCodeTap() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
-
-    final userDoc = await FirebaseFirestore.instance
-        .collection('Sign Up')
-        .doc(user.uid)
-        .get();
-
-    if (userDoc.exists) {
-      // User is registered, show referral code
-      final random = Random();
-      final letters = String.fromCharCodes(
-        List.generate(2, (_) => random.nextInt(26) + 65),
-      );
-      final numbers = random.nextInt(100).toString().padLeft(2, '0');
-      final referralCode = 'UG$letters$numbers';
-
-      showModalBottomSheet(
-        context: context,
-        isScrollControlled: true,
-        backgroundColor: Colors.transparent,
-        builder: (context) {
-          return AnimatedContainer(
-            duration: Duration(milliseconds: 300),
-            curve: Curves.easeOut,
-            margin: EdgeInsets.only(
-              left: MediaQuery.of(context).size.width * 0.045,
-              right: MediaQuery.of(context).size.width * 0.045,
-              bottom: MediaQuery.of(context).viewInsets.bottom,
-            ),
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(
-                  top: Radius.circular(30),
-                ),
+    String identifier;
+    if (_mode == _AuthMode.phone) {
+      // Use the same phone formatting as in _onContinue
+      String phoneNumber = _phoneCtrl.text.trim();
+      if (!phoneNumber.startsWith('+256 ') || phoneNumber.length != 14) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => ReferralCodeScreen()),
+        );
+        return;
+      }
+      phoneNumber = phoneNumber.replaceAll(' ', '');
+      if (!phoneNumber.startsWith('+256') || phoneNumber.length != 13) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => ReferralCodeScreen()),
+        );
+        return;
+      }
+      QuerySnapshot query = await FirebaseFirestore.instance
+          .collection('Sign Up')
+          .where('phoneNumber', isEqualTo: phoneNumber)
+          .get();
+      if (query.docs.isNotEmpty) {
+        final random = Random();
+        final letters = String.fromCharCodes(
+          List.generate(2, (_) => random.nextInt(26) + 65),
+        );
+        final numbers = random.nextInt(100).toString().padLeft(2, '0');
+        final referralCode = 'UG$letters$numbers';
+        showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (context) {
+            return AnimatedContainer(
+              duration: Duration(milliseconds: 300),
+              curve: Curves.easeOut,
+              margin: EdgeInsets.only(
+                left: MediaQuery.of(context).size.width * 0.045,
+                right: MediaQuery.of(context).size.width * 0.045,
+                bottom: MediaQuery.of(context).viewInsets.bottom,
               ),
-              width: double.infinity,
-              child: Padding(
-                padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.06),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'Your Referral Code Is:',
-                      style: TextStyle(
-                        fontSize: MediaQuery.of(context).size.width * 0.05,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    SizedBox(height: MediaQuery.of(context).size.height * 0.02),
-                    Text(
-                      referralCode,
-                      style: TextStyle(
-                        fontSize: MediaQuery.of(context).size.width * 0.08,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFFFFA10D),
-                      ),
-                    ),
-                    SizedBox(height: MediaQuery.of(context).size.height * 0.02),
-                    ElevatedButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: Text('Close'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.black,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+                ),
+                width: double.infinity,
+                child: Padding(
+                  padding: EdgeInsets.all(
+                    MediaQuery.of(context).size.width * 0.06,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Your Referral Code Is:',
+                        style: TextStyle(
+                          fontSize: MediaQuery.of(context).size.width * 0.05,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                    ),
-                  ],
+                      SizedBox(
+                        height: MediaQuery.of(context).size.height * 0.02,
+                      ),
+                      Text(
+                        referralCode,
+                        style: TextStyle(
+                          fontSize: MediaQuery.of(context).size.width * 0.08,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFFFFA10D),
+                        ),
+                      ),
+                      SizedBox(
+                        height: MediaQuery.of(context).size.height * 0.02,
+                      ),
+                      ElevatedButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: Text('Close'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.black,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          );
-        },
-      );
+            );
+          },
+        );
+      } else {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => ReferralCodeScreen()),
+        );
+      }
     } else {
-      // User is not registered, navigate to ReferralCodeScreen
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => ReferralCodeScreen(),
-        ),
-      );
+      identifier = _emailCtrl.text.trim();
+      if (identifier.isEmpty) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => ReferralCodeScreen()),
+        );
+        return;
+      }
+      QuerySnapshot query = await FirebaseFirestore.instance
+          .collection('Sign Up')
+          .where('email', isEqualTo: identifier)
+          .get();
+      if (query.docs.isNotEmpty) {
+        final random = Random();
+        final letters = String.fromCharCodes(
+          List.generate(2, (_) => random.nextInt(26) + 65),
+        );
+        final numbers = random.nextInt(100).toString().padLeft(2, '0');
+        final referralCode = 'UG$letters$numbers';
+        showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (context) {
+            return AnimatedContainer(
+              duration: Duration(milliseconds: 300),
+              curve: Curves.easeOut,
+              margin: EdgeInsets.only(
+                left: MediaQuery.of(context).size.width * 0.045,
+                right: MediaQuery.of(context).size.width * 0.045,
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+              ),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+                ),
+                width: double.infinity,
+                child: Padding(
+                  padding: EdgeInsets.all(
+                    MediaQuery.of(context).size.width * 0.06,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Your Referral Code Is:',
+                        style: TextStyle(
+                          fontSize: MediaQuery.of(context).size.width * 0.05,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(
+                        height: MediaQuery.of(context).size.height * 0.02,
+                      ),
+                      Text(
+                        referralCode,
+                        style: TextStyle(
+                          fontSize: MediaQuery.of(context).size.width * 0.08,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFFFFA10D),
+                        ),
+                      ),
+                      SizedBox(
+                        height: MediaQuery.of(context).size.height * 0.02,
+                      ),
+                      ElevatedButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: Text('Close'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.black,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      } else {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => ReferralCodeScreen()),
+        );
+      }
     }
   }
 
@@ -793,67 +899,10 @@ class _PhoneBlock extends StatelessWidget {
           alignment: Alignment.centerRight,
           child: GestureDetector(
             onTap: () {
-              showModalBottomSheet(
-                context: context,
-                isScrollControlled: true,
-                backgroundColor: Colors.transparent,
-                builder: (context) {
-                  return AnimatedContainer(
-                    duration: Duration(milliseconds: 300),
-                    curve: Curves.easeOut,
-                    margin: EdgeInsets.only(
-                      left: w * 0.045,
-                      right: w * 0.045,
-                      bottom: MediaQuery.of(context).viewInsets.bottom,
-                    ),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.vertical(
-                          top: Radius.circular(30),
-                        ),
-                      ),
-                      width: double.infinity,
-                      child: Padding(
-                        padding: EdgeInsets.all(w * 0.06),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              'Your Referral Code Is:',
-                              style: TextStyle(
-                                fontSize: w * 0.05,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            SizedBox(height: h * 0.02),
-                            TextField(
-                              decoration: InputDecoration(
-                                hintText: 'Referral Code',
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                              ),
-                            ),
-                            SizedBox(height: h * 0.02),
-                            ElevatedButton(
-                              onPressed: () => Navigator.pop(context),
-                              child: Text('Submit'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.black,
-                                foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              );
+              // Call parent's _onReferralCodeTap
+              final state = context
+                  .findAncestorStateOfType<_SignInScreenState>();
+              state?._onReferralCodeTap();
             },
             child: Text(
               'Referral Code?',
@@ -958,67 +1007,9 @@ class _EmailBlock extends StatelessWidget {
           children: [
             GestureDetector(
               onTap: () {
-                showModalBottomSheet(
-                  context: context,
-                  isScrollControlled: true,
-                  backgroundColor: Colors.transparent,
-                  builder: (context) {
-                    return AnimatedContainer(
-                      duration: Duration(milliseconds: 300),
-                      curve: Curves.easeOut,
-                      margin: EdgeInsets.only(
-                        left: w * 0.045,
-                        right: w * 0.045,
-                        bottom: MediaQuery.of(context).viewInsets.bottom,
-                      ),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.vertical(
-                            top: Radius.circular(30),
-                          ),
-                        ),
-                        width: double.infinity,
-                        child: Padding(
-                          padding: EdgeInsets.all(w * 0.06),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                'Enter Referral Code',
-                                style: TextStyle(
-                                  fontSize: w * 0.05,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              SizedBox(height: h * 0.02),
-                              TextField(
-                                decoration: InputDecoration(
-                                  hintText: 'Referral Code',
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                ),
-                              ),
-                              SizedBox(height: h * 0.02),
-                              ElevatedButton(
-                                onPressed: () => Navigator.pop(context),
-                                child: Text('Submit'),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.black,
-                                  foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                );
+                final state = context
+                    .findAncestorStateOfType<_SignInScreenState>();
+                state?._onReferralCodeTap();
               },
               child: Text(
                 'Referral Code?',
