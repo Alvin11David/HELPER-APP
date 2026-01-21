@@ -1,6 +1,8 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutterwave_standard/flutterwave.dart';
 
 class MasterCardPaymentMethodScreen extends StatefulWidget {
@@ -17,6 +19,37 @@ class _MasterCardPaymentMethodScreenState
   final TextEditingController _cardHolderController = TextEditingController();
   final TextEditingController _expiryController = TextEditingController();
   final TextEditingController _cvvController = TextEditingController();
+
+  static const String _kCardNumberKey = 'mastercard_card_number';
+  static const String _kCardHolderKey = 'mastercard_card_holder';
+  static const String _kExpiryKey = 'mastercard_expiry';
+  static const String _kCVVKey = 'mastercard_cvv';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedCardData();
+    _cardNumberController.addListener(_saveCardData);
+    _cardHolderController.addListener(_saveCardData);
+    _expiryController.addListener(_saveCardData);
+    _cvvController.addListener(_saveCardData);
+  }
+
+  Future<void> _loadSavedCardData() async {
+    final prefs = await SharedPreferences.getInstance();
+    _cardNumberController.text = prefs.getString(_kCardNumberKey) ?? '';
+    _cardHolderController.text = prefs.getString(_kCardHolderKey) ?? '';
+    _expiryController.text = prefs.getString(_kExpiryKey) ?? '';
+    _cvvController.text = prefs.getString(_kCVVKey) ?? '';
+  }
+
+  Future<void> _saveCardData() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_kCardNumberKey, _cardNumberController.text);
+    await prefs.setString(_kCardHolderKey, _cardHolderController.text);
+    await prefs.setString(_kExpiryKey, _expiryController.text);
+    await prefs.setString(_kCVVKey, _cvvController.text);
+  }
 
   bool isChecked = false;
   bool _isDimming = false; // State to track if the screen should dim
@@ -147,7 +180,12 @@ class _MasterCardPaymentMethodScreenState
   }
 
   @override
+  @override
   void dispose() {
+    _cardNumberController.removeListener(_saveCardData);
+    _cardHolderController.removeListener(_saveCardData);
+    _expiryController.removeListener(_saveCardData);
+    _cvvController.removeListener(_saveCardData);
     _cardNumberController.dispose();
     _cardHolderController.dispose();
     _expiryController.dispose();
@@ -937,7 +975,7 @@ class _MasterCardPaymentMethodScreenState
                                       fontSize: screenWidth * 0.045,
                                       fontWeight: FontWeight.bold,
                                       color: Colors.white,
-                                      fontFamily: 'AbrilFatface',
+                                      fontFamily: 'Inter',
                                     ),
                                   ),
                                   SizedBox(width: screenWidth * 0.02),
