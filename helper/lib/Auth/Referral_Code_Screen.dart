@@ -487,9 +487,9 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
                       vertical: screenHeight * 0.010,
                     ),
                     child: Text(
-                      'Your referral code can only be used once',
+                      'You can use your referral code to invite friends and earn rewards.',
                       textAlign: TextAlign.center,
-                      maxLines: 1,
+                      maxLines: 2,
                       softWrap: false,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
@@ -716,13 +716,19 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
                   opacity: _showHowToUse ? 1.0 : 0.0,
                   child: GestureDetector(
                     onVerticalDragUpdate: (details) {
-                      if (details.primaryDelta != null && details.primaryDelta! > 12) {
+                      if (details.primaryDelta != null &&
+                          details.primaryDelta! > 12) {
                         _closeHowToUse();
                       }
                     },
                     child: Container(
                       width: double.infinity,
-                      padding: EdgeInsets.fromLTRB(24, 24, 24, 24 + bottomInset),
+                      padding: EdgeInsets.fromLTRB(
+                        24,
+                        24,
+                        24,
+                        24 + bottomInset,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: const BorderRadius.vertical(
