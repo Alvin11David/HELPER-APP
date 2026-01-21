@@ -345,7 +345,7 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
                         final otpIndex = index > 5 ? index - 1 : index;
                         // Make the boxes fit 10 on screen
                         final otpBoxWidth = screenWidth * 0.075;
-                        final otpBoxHeight = screenWidth * 0.13;
+                        final otpBoxHeight = screenWidth * 0.17;
 
                         if (otpIndex >= _otpLength) return SizedBox.shrink();
 
