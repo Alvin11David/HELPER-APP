@@ -1,14 +1,11 @@
-// referral_code_screen.dart
-// ✅ Matches your design + keeps your required header structure (Stack + back button + centered logo)
-// ✅ Glassmorphism pills + dashed OTP-style boxes (like your OTP screen)
-// ✅ AbrilFatface for headings, Poppins for body
-
 import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'Sign_In_Screen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 
 class DashedLinePainter extends CustomPainter {
   final Color color;
@@ -134,9 +131,34 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
 
   String get _refCode => _controllers.map((e) => e.text).join();
 
-  void _onShare() {
-    // TODO: share referral code
-    // print(_refCode);
+  void _onVerify() async {
+    final code = _refCode.trim().toUpperCase();
+    if (code.length != _otpLength) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a 6-digit referral code.')),
+      );
+      return;
+    }
+    setState(() => _isLoading = true);
+    try {
+      final doc = await FirebaseFirestore.instance.collection('Referral Codes').doc(code).get();
+      if (doc.exists) {
+        // Valid code
+        setState(() {
+          _showOverlay = true;
+        });
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Invalid referral code. Please try again.')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error verifying code: $e')),
+      );
+    } finally {
+      setState(() => _isLoading = false);
+    }
   }
 
   void _onSkip() {
@@ -389,7 +411,7 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
                     width: screenWidth * 0.88,
                     height: screenHeight * 0.062,
                     child: ElevatedButton(
-                      onPressed: _onShare,
+                      onPressed: _onVerify,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
                         elevation: 0,
@@ -401,7 +423,7 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            'Share',
+                            'Verify',
                             style: TextStyle(
                               fontSize: screenWidth * 0.045,
                               fontWeight: FontWeight.bold,
@@ -411,7 +433,7 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
                           ),
                           SizedBox(width: screenWidth * 0.03),
                           Icon(
-                            Icons.share_rounded,
+                            Icons.arrow_forward_rounded,
                             color: Colors.black,
                             size: screenHeight * 0.032,
                           ),
@@ -585,43 +607,16 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
                             ),
                           ),
                           Text(
-                            'you have earned',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Colors.black,
-                              fontSize: screenWidth * 0.045,
-                              fontFamily: 'Montserrat',
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          SizedBox(height: screenHeight * 0.01),
-                          Text(
-                            'UGX 2,500/ & 0.5',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: const Color(0xFFDF8800),
-                              fontSize: screenWidth * 0.055,
-                              fontFamily: 'Montserrat',
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          SizedBox(height: screenHeight * 0.02),
-                          Padding(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: screenWidth * 0.08,
-                            ),
-                            child: Text(
-                              'You have earned yourself a prize of\nUGX 1,000 approximate to \$ 0.5 for using\nthe referral code',
+                              "You have been referred to Helper's App by the $_refCode and You have also received 1,000 UGX on your wallet",
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 color: Colors.black,
-                                fontSize: screenWidth * 0.035,
+                                fontSize: screenWidth * 0.045,
                                 fontFamily: 'Montserrat',
-                                fontWeight: FontWeight.w500,
+                                fontWeight: FontWeight.w600,
                                 height: 1.4,
                               ),
                             ),
-                          ),
                           SizedBox(height: screenHeight * 0.07),
                           SizedBox(
                             width: double.infinity,
