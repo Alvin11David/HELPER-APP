@@ -393,7 +393,7 @@ class _NationalIdPassportFrontUploadScreenState
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                       const SizedBox(height: 62),
+                       const SizedBox(height: 70),
                       Container(
                         width: screenWidth * 0.7,
                         height: screenWidth * 0.7,
