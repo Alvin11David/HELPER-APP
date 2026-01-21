@@ -145,7 +145,7 @@ class _VerificationInformationScreenState
                                 color: Colors.white,
                                 fontSize: screenWidth * 0.03,
                                 fontWeight: FontWeight.w500,
-                                fontFamily: 'Poppins',
+                                fontFamily: 'Inter',
                               ),
                               textAlign: TextAlign.center,
                             ),
@@ -198,7 +198,7 @@ class _VerificationInformationScreenState
                     SizedBox(height: h * 0.039),
                     _StepIndicator(
                       width: w,
-                      activeIndex: 0,
+                      activeIndex: 1,
                       labels: const ['1', '2', '3'],
                       accent: brandOrange,
                     ),

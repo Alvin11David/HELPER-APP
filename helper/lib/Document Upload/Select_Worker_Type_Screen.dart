@@ -160,7 +160,8 @@ class _SelectWorkerTypeScreenState extends State<SelectWorkerTypeScreen> {
                           });
                           Navigator.of(context).push(
                             MaterialPageRoute(
-                              builder: (context) => const VerificationInformationScreen(),
+                              builder: (context) =>
+                                  const VerificationInformationScreen(),
                             ),
                           );
                         },
