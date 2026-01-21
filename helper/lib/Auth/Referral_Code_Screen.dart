@@ -42,7 +42,7 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
   bool _isButtonEnabled = false;
   bool _isLoading = false;
   int _countdown = 60;
-  final int _otpLength = 10;
+  final int _otpLength = 14;
   bool _showOverlay = false;
   final Duration _overlayAnimDuration = const Duration(milliseconds: 360);
 
@@ -332,7 +332,7 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
                             width: screenWidth * 0.015,
                             height: screenWidth * 0.015,
                             margin: EdgeInsets.symmetric(
-                              horizontal: screenWidth * 0.018,
+                              horizontal: screenWidth * 0.012,
                             ),
                             decoration: BoxDecoration(
                               color: Colors.white,
@@ -343,9 +343,9 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
 
                         // Calculate actual OTP box index
                         final otpIndex = index > 5 ? index - 1 : index;
-                        // Make the boxes smaller to fit 10 on screen
-                        final otpBoxWidth = screenWidth * 0.075;
-                        final otpBoxHeight = screenWidth * 0.13;
+                        // Make the boxes smaller to fit 14 on screen
+                        final otpBoxWidth = screenWidth * 0.055;
+                        final otpBoxHeight = screenWidth * 0.10;
 
                         if (otpIndex >= _otpLength) return SizedBox.shrink();
 
@@ -353,26 +353,26 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
                           width: otpBoxWidth,
                           height: otpBoxHeight,
                           margin: EdgeInsets.symmetric(
-                            horizontal: screenWidth * 0.006,
+                            horizontal: screenWidth * 0.003,
                           ),
                           decoration: BoxDecoration(
-                            border: Border.all(color: Colors.white, width: 1.2),
-                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.white, width: 1.0),
+                            borderRadius: BorderRadius.circular(7),
                           ),
                           child: Stack(
                             alignment: Alignment.bottomCenter,
                             children: [
                               Positioned(
-                                bottom: screenWidth * 0.02,
+                                bottom: screenWidth * 0.012,
                                 child: Container(
                                   width: otpBoxWidth * 0.75,
-                                  height: 1.2,
+                                  height: 1.0,
                                   color: Colors.white.withOpacity(0.9),
                                 ),
                               ),
                               Center(
                                 child: SizedBox(
-                                  width: otpBoxWidth * 0.65,
+                                  width: otpBoxWidth * 0.7,
                                   child: TextField(
                                     controller: _controllers[otpIndex],
                                     focusNode: _focusNodes[otpIndex],
@@ -381,7 +381,7 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
                                     maxLength: 1,
                                     style: TextStyle(
                                       color: Colors.white,
-                                      fontSize: screenWidth * 0.055,
+                                      fontSize: screenWidth * 0.04,
                                       fontWeight: FontWeight.bold,
                                     ),
                                     decoration: const InputDecoration(
