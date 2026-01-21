@@ -158,6 +158,11 @@ class _SelectWorkerTypeScreenState extends State<SelectWorkerTypeScreen> {
                           setState(() {
                             _selectedWorkerType = 1;
                           });
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => const VerificationInformationScreen(),
+                            ),
+                          );
                         },
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(30),
