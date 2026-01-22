@@ -4,22 +4,25 @@ import 'dart:ui';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:google_ml_kit/google_ml_kit.dart';
+import 'package:helper/Document%20Upload/National_ID_Passport_Back_Upload_Screen.dart';
 
 class NationalIdPassportBackScanScreen extends StatefulWidget {
-  const NationalIdPassportBackScanScreen({super.key});
+  final int selected; // 0 for National ID, 1 for Passport
+  const NationalIdPassportBackScanScreen({super.key, required this.selected});
 
   @override
   State<NationalIdPassportBackScanScreen> createState() =>
-      _NationalIdPassportFrontScanScreenState();
+      _NationalIdPassportBackScanScreenState();
 }
 
-class _NationalIdPassportFrontScanScreenState
+class _NationalIdPassportBackScanScreenState
     extends State<NationalIdPassportBackScanScreen> {
   late CameraController _controller;
   Future<void>? _initializeControllerFuture;
   XFile? _capturedImage;
   bool _isAnalyzing = false;
-  final bool _isVerifying = false;
+  bool _isVerifying = false;
+  DateTime? _streamStartTime;
   final TextRecognizer _textRecognizer = GoogleMlKit.vision.textRecognizer();
 
   @override
@@ -31,40 +34,31 @@ class _NationalIdPassportFrontScanScreenState
   Future<void> _initializeCamera() async {
     final cameras = await availableCameras();
     final firstCamera = cameras.first;
-
     _controller = CameraController(firstCamera, ResolutionPreset.high);
-
     await _controller.initialize();
+    _streamStartTime = DateTime.now();
     _controller.startImageStream(_processImage);
   }
 
   void _processImage(CameraImage image) async {
     if (_isAnalyzing || _capturedImage != null) return;
-
+    // Wait for 6 seconds after stream starts before allowing capture
+    if (_streamStartTime != null &&
+        DateTime.now().difference(_streamStartTime!).inSeconds < 6) {
+      return;
+    }
     _isAnalyzing = true;
-
     final inputImage = _getInputImageFromCameraImage(image);
     if (inputImage == null) {
-      print('InputImage is null');
       _isAnalyzing = false;
       return;
     }
-
     final brightness = _calculateBrightness(image);
-    print('Brightness: $brightness');
     if (brightness < 0.1) {
-      // Lowered threshold for testing
       _isAnalyzing = false;
       return;
     }
-
-    // final recognizedText = await _textRecognizer.processImage(inputImage);
-    // print('Recognized text: ${recognizedText.text}');
-    // if (recognizedText.text.isNotEmpty) {
-    print('Brightness sufficient, capturing image');
     _captureImage();
-    // }
-
     _isAnalyzing = false;
   }
 
@@ -261,9 +255,7 @@ class _NationalIdPassportFrontScanScreenState
                       ),
                       SizedBox(width: screenWidth * 0.06),
                       Text(
-                        _capturedImage != null
-                            ? 'ID Back Preview'
-                            : 'ID Back',
+                        _capturedImage != null ? 'ID Back Preview' : 'ID Back',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: screenWidth * 0.06,
@@ -275,9 +267,7 @@ class _NationalIdPassportFrontScanScreenState
                   ),
                 ),
                 Positioned(
-                  top:
-                      screenHeight *
-                      0.14, // Adjusted to reduce space from header
+                  top: screenHeight * 0.14,
                   left: screenWidth * 0.10,
                   right: screenWidth * 0.10,
                   child: ClipRRect(
@@ -318,7 +308,7 @@ class _NationalIdPassportFrontScanScreenState
                             Text(
                               _capturedImage != null
                                   ? 'Preview the back of the ID'
-                                  : 'Place the front back of your ID in the frame',
+                                  : 'Place the back part of your ID in the frame',
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: screenWidth * 0.034,
@@ -378,10 +368,31 @@ class _NationalIdPassportFrontScanScreenState
                                 width: double.infinity,
                                 height: screenHeight * 0.062,
                                 child: ElevatedButton(
-                                  onPressed: _isVerifying
+                                  onPressed:
+                                      _isVerifying || _capturedImage == null
                                       ? null
-                                      : () {
-                                          // TODO: Handle continue action
+                                      : () async {
+                                          setState(() {
+                                            _isVerifying = true;
+                                          });
+                                          final result =
+                                              await Navigator.of(context).push(
+                                                MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      NationalIdPassportBackUploadScreen(
+                                                        selected:
+                                                            widget.selected,
+                                                        initialImage:
+                                                            _capturedImage,
+                                                      ),
+                                                ),
+                                              );
+                                          setState(() {
+                                            _isVerifying = false;
+                                          });
+                                          if (result == true) {
+                                            Navigator.of(context).pop(true);
+                                          }
                                         },
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.white,

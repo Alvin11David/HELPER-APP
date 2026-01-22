@@ -1,9 +1,21 @@
-// national_id_passport_upload_screen.dart
+import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:helper/Document Upload/National_ID_Passport_Front_Scan_Screen.dart';
+import 'package:helper/Document Upload/National_ID_Passport_Back_Upload_Screen.dart';
 
 class NationalIdPassportFrontUploadScreen extends StatefulWidget {
-  const NationalIdPassportFrontUploadScreen({super.key});
+  final int selected;
+  final XFile? initialImage;
+  const NationalIdPassportFrontUploadScreen({
+    super.key,
+    required this.selected,
+    this.initialImage,
+  });
 
   @override
   State<NationalIdPassportFrontUploadScreen> createState() =>
@@ -12,7 +24,95 @@ class NationalIdPassportFrontUploadScreen extends StatefulWidget {
 
 class _NationalIdPassportFrontUploadScreenState
     extends State<NationalIdPassportFrontUploadScreen> {
-  int selected = 0;
+  late int selected;
+  XFile? _selectedImage;
+  final ImagePicker _picker = ImagePicker();
+  bool _isUploading = false;
+
+  Future<void> _uploadAndSave() async {
+    if (_selectedImage == null) return;
+    setState(() => _isUploading = true);
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      setState(() => _isUploading = false);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('User not logged in.')));
+      return;
+    }
+    try {
+      final file = File(_selectedImage!.path);
+      final folder = selected == 0 ? 'National IDS' : 'Passport ID';
+      final fileName =
+          '${DateTime.now().millisecondsSinceEpoch}_${user.uid}.jpg';
+      final ref = FirebaseStorage.instance.ref().child('$folder/$fileName');
+      final uploadTask = await ref.putFile(file);
+      final downloadUrl = await uploadTask.ref.getDownloadURL();
+
+      // Save to Firestore under user's collection
+      final docType = selected == 0 ? 'national_id_front' : 'passport_id_front';
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('documents')
+          .doc(docType)
+          .set({
+            'url': downloadUrl,
+            'uploadedAt': FieldValue.serverTimestamp(),
+            'type': docType,
+            'storagePath': '$folder/$fileName',
+          });
+
+      setState(() => _isUploading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Front uploaded! Now upload the back.')),
+      );
+      // Navigate to back upload screen and only pop with true if both are uploaded
+      final result = await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => NationalIdPassportBackUploadScreen(
+            selected: selected,
+            initialImage: null,
+          ),
+        ),
+      );
+      if (result == true) {
+        Navigator.of(
+          context,
+        ).pop(true); // Only mark row orange if both sides uploaded
+      }
+    } catch (e) {
+      setState(() => _isUploading = false);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Upload failed: $e')));
+    }
+  }
+
+  Future<void> _pickImageFromGallery() async {
+    if (_selectedImage != null) return; // Prevent picking if already set
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      setState(() {
+        _selectedImage = image;
+      });
+    }
+  }
+
+  void _removeImage() {
+    setState(() {
+      _selectedImage = null;
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    selected = widget.selected;
+    if (widget.initialImage != null) {
+      _selectedImage = widget.initialImage;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -115,7 +215,7 @@ class _NationalIdPassportFrontUploadScreenState
                               color: Colors.white,
                               fontSize: screenWidth * 0.04,
                               fontWeight: FontWeight.w500,
-                              fontFamily: 'Poppins',
+                              fontFamily: 'Inter',
                             ),
                             textAlign: TextAlign.center,
                           ),
@@ -180,7 +280,7 @@ class _NationalIdPassportFrontUploadScreenState
                                         Text(
                                           'National ID',
                                           style: TextStyle(
-                                            fontFamily: 'Poppins',
+                                            fontFamily: 'Inter',
                                             fontWeight: FontWeight.w500,
                                             fontSize: 14,
                                             color: selected == 0
@@ -212,7 +312,7 @@ class _NationalIdPassportFrontUploadScreenState
                                         Text(
                                           'Passport',
                                           style: TextStyle(
-                                            fontFamily: 'Poppins',
+                                            fontFamily: 'Inter',
                                             fontWeight: FontWeight.w500,
                                             fontSize: 14,
                                             color: selected == 1
@@ -233,151 +333,256 @@ class _NationalIdPassportFrontUploadScreenState
                   ),
                 ),
               ),
-              Positioned(
-                top:
-                    MediaQuery.of(context).size.height * 0.16 +
-                    80 +
-                    10 +
-                    44 +
-                    20,
-                left: screenWidth * 0.09,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Image.asset(
-                      'assets/images/front.png',
-                      fit: BoxFit.contain,
-                      width: screenWidth * 0.7,
-                    ),
-                    SizedBox(width: screenWidth * 0.05),
-                    Opacity(
-                      opacity: 0.5,
-                      child: Image.asset(
-                        'assets/images/back.png',
+              if (_selectedImage == null) ...[
+                Positioned(
+                  top:
+                      MediaQuery.of(context).size.height * 0.16 +
+                      80 +
+                      10 +
+                      44 +
+                      20,
+                  left: screenWidth * 0.09,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Image.asset(
+                        'assets/images/front.png',
                         fit: BoxFit.contain,
                         width: screenWidth * 0.7,
                       ),
-                    ),
-                  ],
-                ),
-              ),
-              Positioned(
-                top:
-                    MediaQuery.of(context).size.height * 0.16 +
-                    60 +
-                    10 +
-                    44 +
-                    20 +
-                    200,
-                left: 0,
-                right: 0,
-                child: Text(
-                  'Front Side',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: screenWidth * 0.075,
-                    fontWeight: FontWeight.w500,
-                    fontFamily: 'Poppins',
+                      SizedBox(width: screenWidth * 0.05),
+                      Opacity(
+                        opacity: 0.5,
+                        child: Image.asset(
+                          'assets/images/back.png',
+                          fit: BoxFit.contain,
+                          width: screenWidth * 0.7,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ),
-              Positioned(
-                top:
-                    MediaQuery.of(context).size.height * 0.16 +
-                    30 +
-                    10 +
-                    44 +
-                    20 +
-                    200 +
-                    50 +
-                    screenHeight * 0.07,
-                left: screenWidth * 0.05,
-                right: screenWidth * 0.05,
-                child: Column(
-                  children: [
-                    SizedBox(
-                      width: double.infinity,
-                      height: screenHeight * 0.062,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          // TODO: Handle continue action
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFDF8800),
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                        ),
-                        child: Center(
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.camera,
-                                color: Colors.white,
-                                size: screenHeight * 0.035,
-                              ),
-                              SizedBox(width: screenWidth * 0.02),
-                              Text(
-                                'Take a photo',
-                                style: TextStyle(
-                                  fontSize: screenWidth * 0.045,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                  fontFamily: 'Poppins',
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
+                Positioned(
+                  top:
+                      MediaQuery.of(context).size.height * 0.16 +
+                      60 +
+                      10 +
+                      44 +
+                      20 +
+                      200,
+                  left: 0,
+                  right: 0,
+                  child: Text(
+                    'Front Side',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: screenWidth * 0.075,
+                      fontWeight: FontWeight.w500,
+                      fontFamily: 'Inter',
                     ),
-                    SizedBox(height: screenHeight * 0.03),
-                    SizedBox(
-                      width: double.infinity,
-                      height: screenHeight * 0.062,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          // TODO: Handle continue action
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                        ),
-                        child: Center(
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.photo_library,
-                                color: Colors.black,
-                                size: screenHeight * 0.035,
-                              ),
-                              SizedBox(width: screenWidth * 0.02),
-                              Text(
-                                'Gallery',
-                                style: TextStyle(
-                                  fontSize: screenWidth * 0.045,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black,
-                                  fontFamily: 'Poppins',
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
+                Positioned(
+                  top:
+                      MediaQuery.of(context).size.height * 0.16 +
+                      30 +
+                      10 +
+                      44 +
+                      20 +
+                      200 +
+                      50 +
+                      screenHeight * 0.07,
+                  left: screenWidth * 0.05,
+                  right: screenWidth * 0.05,
+                  child: Column(
+                    children: [
+                      SizedBox(
+                        width: double.infinity,
+                        height: screenHeight * 0.062,
+                        child: ElevatedButton(
+                          onPressed: _selectedImage != null
+                              ? null
+                              : () {
+                                  Navigator.of(context)
+                                      .push(
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              NationalIdPassportFrontScanScreen(
+                                                selected: selected,
+                                              ),
+                                        ),
+                                      )
+                                      .then((result) {
+                                        if (result is XFile) {
+                                          setState(() {
+                                            _selectedImage = result;
+                                          });
+                                        }
+                                      });
+                                },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFDF8800),
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                          ),
+                          child: Center(
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.camera,
+                                  color: Colors.white,
+                                  size: screenHeight * 0.035,
+                                ),
+                                SizedBox(width: screenWidth * 0.02),
+                                Text(
+                                  'Take a photo',
+                                  style: TextStyle(
+                                    fontSize: screenWidth * 0.045,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                    fontFamily: 'Inter',
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: screenHeight * 0.04),
+                      SizedBox(
+                        width: double.infinity,
+                        height: screenHeight * 0.062,
+                        child: ElevatedButton(
+                          onPressed: _selectedImage != null
+                              ? null
+                              : _pickImageFromGallery,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                          ),
+                          child: Center(
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.photo_library,
+                                  color: Colors.black,
+                                  size: screenHeight * 0.035,
+                                ),
+                                SizedBox(width: screenWidth * 0.02),
+                                Text(
+                                  'Gallery',
+                                  style: TextStyle(
+                                    fontSize: screenWidth * 0.045,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black,
+                                    fontFamily: 'Inter',
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ] else ...[
+                SizedBox(height: screenHeight * 0.16 + 80),
+                Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const SizedBox(height: 70),
+                      Container(
+                        width: screenWidth * 0.9,
+                        height: screenWidth * 0.7,
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.white, width: 4),
+                          borderRadius: BorderRadius.circular(20),
+                          color: Colors.black.withOpacity(0.1),
+                        ),
+                        child: Stack(
+                          children: [
+                            Center(
+                              child: Image.file(
+                                File(_selectedImage!.path),
+                                fit: BoxFit.contain,
+                                width: screenWidth * 0.8,
+                              ),
+                            ),
+                            Positioned(
+                              top: 8,
+                              right: 8,
+                              child: GestureDetector(
+                                onTap: _removeImage,
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withOpacity(0.5),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  padding: const EdgeInsets.all(6),
+                                  child: const Icon(
+                                    Icons.close,
+                                    color: Colors.white,
+                                    size: 20,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                      SizedBox(
+                        width: screenWidth * 0.9,
+                        height: 48,
+                        child: ElevatedButton(
+                          onPressed: (_isUploading || _selectedImage == null)
+                              ? null
+                              : _uploadAndSave,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFDF8800),
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                          ),
+                          child: _isUploading
+                              ? const SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.white,
+                                    ),
+                                    strokeWidth: 3,
+                                  ),
+                                )
+                              : const Text(
+                                  'Continue',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                    fontFamily: 'Inter',
+                                  ),
+                                ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ],
           ),
         ),

@@ -1,3 +1,4 @@
+import 'National_ID_Passport_Front_Upload_Screen.dart';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -13,7 +14,7 @@ class NonProfessionalDocumentUploadScreen extends StatefulWidget {
 class _NonProfessionalDocumentUploadScreenState
     extends State<NonProfessionalDocumentUploadScreen> {
   bool _loading = false;
-  int _selectedIndex = -1;
+  final Set<int> _selectedRows = {};
   final _formKey = GlobalKey<FormState>();
 
   Future<void> _onContinue() async {
@@ -41,6 +42,9 @@ class _NonProfessionalDocumentUploadScreenState
     bool loading = false;
     final formKey = GlobalKey<FormState>();
 
+    // Track verification status for National ID/Passport
+    bool _nationalIdPassportVerified = false;
+
     Future<void> onContinue() async {
       FocusScope.of(context).unfocus();
       if (!(formKey.currentState?.validate() ?? false)) return;
@@ -54,6 +58,21 @@ class _NonProfessionalDocumentUploadScreenState
 
       if (!mounted) return;
       setState(() => loading = false);
+    }
+
+    Future<void> _openNationalIdPassportUpload() async {
+      setState(() => _selectedRows.add(0));
+      final result = await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) =>
+              NationalIdPassportFrontUploadScreen(selected: 0),
+        ),
+      );
+      if (result == true) {
+        setState(() {
+          _nationalIdPassportVerified = true;
+        });
+      }
     }
 
     return Scaffold(
@@ -188,7 +207,7 @@ class _NonProfessionalDocumentUploadScreenState
                     SizedBox(height: h * 0.05),
                     Container(
                       width: 361,
-                      height: 120,
+                      height: 138,
                       padding: EdgeInsets.all(w * 0.04),
                       alignment: Alignment.topCenter,
                       decoration: BoxDecoration(
@@ -199,14 +218,14 @@ class _NonProfessionalDocumentUploadScreenState
                         child: Column(
                           children: [
                             GestureDetector(
-                              onTap: () => setState(() => _selectedIndex = 0),
+                              onTap: _openNationalIdPassportUpload,
                               child: Row(
                                 children: [
                                   Container(
                                     width: 36,
                                     height: 36,
                                     decoration: BoxDecoration(
-                                      color: _selectedIndex == 0
+                                      color: _selectedRows.contains(0)
                                           ? const Color(0xFFFBBC04)
                                           : const Color(0xFFD9D9D9),
                                       shape: BoxShape.circle,
@@ -228,19 +247,25 @@ class _NonProfessionalDocumentUploadScreenState
                                         Text(
                                           'National ID/Passport',
                                           style: TextStyle(
-                                            color: _selectedIndex == 0
+                                            color: _nationalIdPassportVerified
                                                 ? const Color(0xFFFBBC04)
-                                                : Colors.black,
+                                                : (_selectedRows.contains(0)
+                                                      ? const Color(0xFFFBBC04)
+                                                      : Colors.black),
                                             fontSize: screenWidth * 0.032,
                                             fontWeight: FontWeight.w800,
                                           ),
                                         ),
                                         Text(
-                                          'Not Verified',
+                                          _nationalIdPassportVerified
+                                              ? 'Verified'
+                                              : 'Not Verified',
                                           style: TextStyle(
-                                            color: _selectedIndex == 0
+                                            color: _nationalIdPassportVerified
                                                 ? const Color(0xFFFBBC04)
-                                                : Colors.black54,
+                                                : (_selectedRows.contains(0)
+                                                      ? const Color(0xFFFBBC04)
+                                                      : Colors.black54),
                                             fontSize: screenWidth * 0.035,
                                           ),
                                         ),
@@ -249,7 +274,7 @@ class _NonProfessionalDocumentUploadScreenState
                                   ),
                                   Icon(
                                     Icons.chevron_right,
-                                    color: _selectedIndex == 0
+                                    color: _selectedRows.contains(0)
                                         ? const Color(0xFFFBBC04)
                                         : Colors.black54,
                                   ),
@@ -258,14 +283,14 @@ class _NonProfessionalDocumentUploadScreenState
                             ),
                             SizedBox(height: h * 0.03),
                             GestureDetector(
-                              onTap: () => setState(() => _selectedIndex = 3),
+                              onTap: () => setState(() => _selectedRows.add(3)),
                               child: Row(
                                 children: [
                                   Container(
                                     width: 36,
                                     height: 36,
                                     decoration: BoxDecoration(
-                                      color: _selectedIndex == 3
+                                      color: _selectedRows.contains(3)
                                           ? const Color(0xFFFBBC04)
                                           : const Color(0xFFD9D9D9),
                                       shape: BoxShape.circle,
@@ -287,7 +312,7 @@ class _NonProfessionalDocumentUploadScreenState
                                         Text(
                                           'Current Photo(Selfie)',
                                           style: TextStyle(
-                                            color: _selectedIndex == 3
+                                            color: _selectedRows.contains(3)
                                                 ? const Color(0xFFFBBC04)
                                                 : Colors.black,
                                             fontSize: screenWidth * 0.032,
@@ -297,7 +322,7 @@ class _NonProfessionalDocumentUploadScreenState
                                         Text(
                                           'Not Verified',
                                           style: TextStyle(
-                                            color: _selectedIndex == 3
+                                            color: _selectedRows.contains(3)
                                                 ? const Color(0xFFFBBC04)
                                                 : Colors.black54,
                                             fontSize: screenWidth * 0.035,
@@ -308,7 +333,7 @@ class _NonProfessionalDocumentUploadScreenState
                                   ),
                                   Icon(
                                     Icons.chevron_right,
-                                    color: _selectedIndex == 3
+                                    color: _selectedRows.contains(3)
                                         ? const Color(0xFFFBBC04)
                                         : Colors.black54,
                                   ),
@@ -325,7 +350,12 @@ class _NonProfessionalDocumentUploadScreenState
                       width: double.infinity,
                       height: h * 0.062,
                       child: ElevatedButton(
-                        onPressed: loading ? null : onContinue,
+                        onPressed:
+                            (_selectedRows.contains(0) &&
+                                _selectedRows.contains(3) &&
+                                !loading)
+                            ? onContinue
+                            : null,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Color(0XFFFBBC04),
                           disabledBackgroundColor: Color(
