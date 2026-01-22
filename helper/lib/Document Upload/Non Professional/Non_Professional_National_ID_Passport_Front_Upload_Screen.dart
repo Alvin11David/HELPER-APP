@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:helper/Document%20Upload/Non%20Professional/Non_Professional_National_ID_Passport_Back_Upload_Screen.dart';
+import 'package:helper/Document%20Upload/Non%20Professional/Non_Professional_National_ID_Passport_Front_Scan_Screen.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -512,7 +513,7 @@ class _NonProfessionalNationalIdPassportFrontUploadScreenState
                                       .push(
                                         MaterialPageRoute(
                                           builder: (context) =>
-                                              NationalIdPassportFrontScanScreen(
+                                              NonProfessionalNationalIdPassportFrontScanScreen(
                                                 selected: selected,
                                               ),
                                         ),
