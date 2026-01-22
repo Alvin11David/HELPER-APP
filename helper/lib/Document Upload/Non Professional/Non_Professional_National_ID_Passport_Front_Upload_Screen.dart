@@ -10,7 +10,8 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:helper/Document Upload/National_ID_Passport_Front_Scan_Screen.dart';
 import 'package:helper/Document Upload/National_ID_Passport_Back_Upload_Screen.dart';
 
-class NonProfessionalNationalIdPassportFrontUploadScreen extends StatefulWidget {
+class NonProfessionalNationalIdPassportFrontUploadScreen
+    extends StatefulWidget {
   final int selected;
   final XFile? initialImage;
   const NonProfessionalNationalIdPassportFrontUploadScreen({
@@ -48,7 +49,9 @@ class _NonProfessionalNationalIdPassportFrontUploadScreenState
     }
     try {
       final file = File(_selectedImage!.path);
-      final folder = selected == 0 ? 'Non Professional Workers National IDS' : 'Non Professional Workers Passport ID';
+      final folder = selected == 0
+          ? 'Non Professional Workers National IDS'
+          : 'Non Professional Workers Passport ID';
       final fileName =
           '${DateTime.now().millisecondsSinceEpoch}_${user.uid}.jpg';
       final ref = FirebaseStorage.instance.ref().child('$folder/$fileName');
@@ -77,10 +80,11 @@ class _NonProfessionalNationalIdPassportFrontUploadScreenState
       // Navigate to back upload screen and only pop with true if both are uploaded
       final result = await Navigator.of(context).push(
         MaterialPageRoute(
-          builder: (context) => NonProfessionalNationalIdPassportBackUploadScreen(
-            selected: selected,
-            initialImage: null,
-          ),
+          builder: (context) =>
+              NonProfessionalNationalIdPassportBackUploadScreen(
+                selected: selected,
+                initialImage: null,
+              ),
         ),
       );
       if (result == true) {
