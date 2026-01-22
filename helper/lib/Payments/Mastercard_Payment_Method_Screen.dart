@@ -1,9 +1,12 @@
 import 'dart:ui';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutterwave_standard/flutterwave.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:helper/Intro/Role_Selection_Screen.dart';
 
 class MasterCardPaymentMethodScreen extends StatefulWidget {
   const MasterCardPaymentMethodScreen({super.key});
@@ -57,7 +60,7 @@ class _MasterCardPaymentMethodScreenState
   bool _isPaymentSuccessful = false; // State to track payment status
   final Duration _overlayAnimDuration = Duration(milliseconds: 300);
 
-  void _handlePayment() async {
+  Future<void> _processPayment() async {
     // Validation
     String cardNumber = _cardNumberController.text.replaceAll(' ', '');
     String cardHolder = _cardHolderController.text.trim();
@@ -122,49 +125,94 @@ class _MasterCardPaymentMethodScreenState
       return;
     }
 
-    // Flutterwave standard SDK configuration
-    final String publicKey =
-        "FLWPUBK_TEST-5c4c1ba4-9c72-45c8-90b0-b29e9c6a4597-X"; // Using your client ID as public key
-    final String txRef = "txn_${DateTime.now().millisecondsSinceEpoch}";
-    final String amount = "25000";
-    final String currency = "UGX";
-    final String customerEmail = "test@example.com";
-    final String customerName = "Test User";
-    final String customerPhone = "+256700000000";
+    // Get current user
+    final User? currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('User not authenticated'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
 
-    final Customer customer = Customer(
-      name: customerName,
-      phoneNumber: customerPhone,
-      email: customerEmail,
-    );
-
-    final Flutterwave flutterwave = Flutterwave(
-      publicKey: publicKey,
-      currency: currency,
-      redirectUrl: "https://example.com/callback",
-      txRef: txRef,
-      amount: amount,
-      customer: customer,
-      paymentOptions: "card, mobilemoneyuganda",
-      customization: Customization(title: "Helper Payment"),
-      isTestMode: true,
-    );
+    // RELWORX API configuration
+    const String apiKey = "2902144e65b9a7.v3wxxu9iseWHI-dQzOh7Gg";
+    const String baseUrl = "https://payments.relworx.com/api";
+    const String accountNo =
+        "YOUR_BUSINESS_ACCOUNT_NO"; // TODO: Replace with actual account number
+    final String reference =
+        "reg_fee_${DateTime.now().millisecondsSinceEpoch}_${currentUser.uid}";
+    const double amount = 25000.0;
+    const String currency = "UGX";
+    const String webhookUrl =
+        "https://us-central1-helperapp-46849.cloudfunctions.net/relworxWebhook";
 
     try {
-      final ChargeResponse response = await flutterwave.charge(context);
+      // Show loading indicator
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Initiating payment request...'),
+          backgroundColor: Colors.blue,
+        ),
+      );
 
-      if (response.success == true) {
-        // Payment successful - show success overlay
+      final response = await http.post(
+        Uri.parse('$baseUrl/card/request-payment'),
+        headers: {
+          'Authorization': 'Bearer $apiKey',
+          'Content-Type': 'application/json',
+          'Accept': 'application/vnd.relworx.v2',
+        },
+        body: jsonEncode({
+          'account_no': accountNo,
+          'reference': reference,
+          'card_number': cardNumber,
+          'card_holder': cardHolder,
+          'expiry_month': parts[0],
+          'expiry_year': '20${parts[1]}',
+          'cvv': cvv,
+          'currency': currency,
+          'amount': amount,
+          'description': 'Registration Fee Payment',
+          'webhook_url': webhookUrl,
+        }),
+      );
+
+      final responseData = jsonDecode(response.body);
+
+      if (response.statusCode == 200 && responseData['success'] == true) {
+        // Payment request successful - show pending status
         setState(() {
-          _isPaymentSuccessful = true;
+          _isPaymentSuccessful = false; // Wait for webhook confirmation
           _isDimming = true;
           _showOverlay = true;
         });
-      } else {
-        // Payment failed or cancelled
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Payment failed or was cancelled'),
+            content: Text(
+              'Payment request sent successfully! Please wait for confirmation.',
+            ),
+            backgroundColor: Colors.blue,
+          ),
+        );
+
+        // Save card details if checkbox is checked
+        if (isChecked) {
+          await _saveCardData();
+        }
+
+        // Start listening for payment status updates
+        _listenForPaymentStatus(reference);
+      } else {
+        // Payment request failed
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Payment request failed: ${responseData['message'] ?? 'Unknown error'}',
+            ),
             backgroundColor: Colors.red,
           ),
         );
@@ -177,6 +225,53 @@ class _MasterCardPaymentMethodScreenState
         ),
       );
     }
+  }
+
+  void _listenForPaymentStatus(String reference) {
+    final paymentRef = FirebaseFirestore.instance
+        .collection('Payments')
+        .doc(reference);
+
+    paymentRef.snapshots().listen((snapshot) {
+      if (snapshot.exists) {
+        final data = snapshot.data();
+        final status = data?['status'];
+
+        if (status == 'success') {
+          setState(() {
+            _isPaymentSuccessful = true;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Payment completed successfully!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          // Navigate to role selection after a short delay to show success
+          Future.delayed(const Duration(seconds: 2), () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => const RoleSelectionScreen(),
+              ),
+            );
+          });
+        } else if (status == 'failed') {
+          setState(() {
+            _isPaymentSuccessful = false;
+            _showOverlay = false; // Hide overlay on failure
+            _isDimming = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Payment failed: ${data?['message'] ?? 'Unknown error'}',
+              ),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    });
   }
 
   @override
@@ -734,7 +829,7 @@ class _MasterCardPaymentMethodScreenState
 
                         // Pay button (same pattern)
                         GestureDetector(
-                          onTap: _handlePayment,
+                          onTap: _processPayment,
                           child: Container(
                             width: screenWidth * 0.93,
                             height: screenHeight * 0.07,
@@ -899,7 +994,9 @@ class _MasterCardPaymentMethodScreenState
                         ),
                         SizedBox(height: screenHeight * 0.0),
                         Text(
-                          'Account Created',
+                          _isPaymentSuccessful
+                              ? 'Account Created'
+                              : 'Payment Pending',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: Colors.black,
@@ -909,7 +1006,7 @@ class _MasterCardPaymentMethodScreenState
                           ),
                         ),
                         Text(
-                          'Successfully',
+                          _isPaymentSuccessful ? 'Successfully' : 'Please Wait',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: Colors.black,
@@ -924,7 +1021,9 @@ class _MasterCardPaymentMethodScreenState
                             horizontal: screenWidth * 0.08,
                           ),
                           child: Text(
-                            'Your payment of UGX 25,000\nhas been successfully\nreceived.',
+                            _isPaymentSuccessful
+                                ? 'Your payment of UGX 25,000\nhas been successfully\nreceived.'
+                                : 'Please wait while we process\nyour card payment.\nThis may take a few moments.',
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               color: Colors.black,
@@ -951,12 +1050,21 @@ class _MasterCardPaymentMethodScreenState
                           width: double.infinity,
                           height: screenHeight * 0.062,
                           child: ElevatedButton(
-                            onPressed: () {
-                              // TODO: Navigate to dashboard
-                            },
+                            onPressed: _isPaymentSuccessful
+                                ? () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            const RoleSelectionScreen(),
+                                      ),
+                                    );
+                                  }
+                                : null, // Disable button if payment not successful
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.orange,
-                              disabledBackgroundColor: Colors.white.withOpacity(
+                              backgroundColor: _isPaymentSuccessful
+                                  ? const Color(0xFFDF8800)
+                                  : Colors.grey,
+                              disabledBackgroundColor: Colors.grey.withOpacity(
                                 0.6,
                               ),
                               elevation: 0,
@@ -970,7 +1078,9 @@ class _MasterCardPaymentMethodScreenState
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text(
-                                    'Go To Dashboard',
+                                    _isPaymentSuccessful
+                                        ? 'Go To Role Selection'
+                                        : 'Processing Payment...',
                                     style: TextStyle(
                                       fontSize: screenWidth * 0.045,
                                       fontWeight: FontWeight.bold,
