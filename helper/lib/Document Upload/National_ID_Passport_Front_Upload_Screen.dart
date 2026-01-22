@@ -99,7 +99,28 @@ class _NationalIdPassportFrontUploadScreenState
     }
   }
 
-  void _removeImage() {
+  void _removeImage() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final docType = selected == 0 ? 'national_id_front' : 'passport_id_front';
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('documents')
+          .doc(docType)
+          .get();
+      if (doc.exists) {
+        final data = doc.data() as Map<String, dynamic>;
+        final storagePath = data['storagePath'];
+        await FirebaseStorage.instance.ref().child(storagePath).delete();
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .collection('documents')
+            .doc(docType)
+            .delete();
+      }
+    }
     setState(() {
       _selectedImage = null;
     });
