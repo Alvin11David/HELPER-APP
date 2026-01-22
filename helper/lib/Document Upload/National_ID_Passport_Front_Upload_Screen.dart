@@ -70,7 +70,10 @@ class _NationalIdPassportFrontUploadScreenState
       // Navigate to back upload screen and only pop with true if both are uploaded
       final result = await Navigator.of(context).push(
         MaterialPageRoute(
-          builder: (context) => NationalIdPassportBackUploadScreen(),
+          builder: (context) => NationalIdPassportBackUploadScreen(
+            selected: selected,
+            initialImage: null,
+          ),
         ),
       );
       if (result == true) {

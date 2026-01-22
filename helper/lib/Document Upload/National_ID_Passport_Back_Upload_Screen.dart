@@ -9,7 +9,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 
 class NationalIdPassportBackUploadScreen extends StatefulWidget {
-  const NationalIdPassportBackUploadScreen({super.key});
+  final int selected;
+  final XFile? initialImage;
+  const NationalIdPassportBackUploadScreen({
+    super.key,
+    required this.selected,
+    this.initialImage,
+  });
 
   @override
   State<NationalIdPassportBackUploadScreen> createState() =>
@@ -18,10 +24,19 @@ class NationalIdPassportBackUploadScreen extends StatefulWidget {
 
 class _NationalIdPassportBackUploadScreenState
     extends State<NationalIdPassportBackUploadScreen> {
-  int selected = 0;
+  late int selected;
   final ImagePicker _picker = ImagePicker();
   XFile? _selectedImage;
   bool _isUploading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    selected = widget.selected;
+    if (widget.initialImage != null) {
+      _selectedImage = widget.initialImage;
+    }
+  }
 
   Future<void> _pickImageFromGallery() async {
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
@@ -369,7 +384,9 @@ class _NationalIdPassportBackUploadScreenState
                             Navigator.of(context).push(
                               MaterialPageRoute(
                                 builder: (context) =>
-                                    NationalIdPassportBackScanScreen(),
+                                    NationalIdPassportBackScanScreen(
+                                      selected: selected,
+                                    ),
                               ),
                             );
                           },
