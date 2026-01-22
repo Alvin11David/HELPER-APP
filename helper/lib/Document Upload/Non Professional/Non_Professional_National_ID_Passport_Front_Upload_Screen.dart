@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:helper/Document%20Upload/Non%20Professional/Non_Professional_National_ID_Passport_Back_Upload_Screen.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -74,7 +75,7 @@ class _NonProfessionalNationalIdPassportFrontUploadScreenState
       // Navigate to back upload screen and only pop with true if both are uploaded
       final result = await Navigator.of(context).push(
         MaterialPageRoute(
-          builder: (context) => NationalIdPassportBackUploadScreen(
+          builder: (context) => NonProfessionalNationalIdPassportBackUploadScreen(
             selected: selected,
             initialImage: null,
           ),
