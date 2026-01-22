@@ -2,6 +2,9 @@ import 'dart:ui';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 class SelfieCaptureScreen extends StatefulWidget {
   const SelfieCaptureScreen({super.key});
@@ -30,6 +33,51 @@ class _SelfieCaptureScreenState extends State<SelfieCaptureScreen> {
       setState(() {
         _selectedImage = image;
       });
+    }
+  }
+
+  Future<void> _uploadSelfie() async {
+    if (_selectedImage == null) return;
+
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('User not logged in.')));
+      return;
+    }
+
+    try {
+      final file = File(_selectedImage!.path);
+      final fileName =
+          '${DateTime.now().millisecondsSinceEpoch}_${user.uid}.jpg';
+      final ref = FirebaseStorage.instance.ref().child('Selfies/$fileName');
+      final uploadTask = await ref.putFile(file);
+      final downloadUrl = await uploadTask.ref.getDownloadURL();
+
+      // Save to Firestore under user's collection
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('documents')
+          .doc('selfie')
+          .set({
+            'url': downloadUrl,
+            'uploadedAt': FieldValue.serverTimestamp(),
+            'type': 'selfie',
+            'storagePath': 'Selfies/$fileName',
+          });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Selfie uploaded successfully!')),
+      );
+
+      // Navigate back
+      Navigator.of(context).pop(true);
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Upload failed: $e')));
     }
   }
 
@@ -207,7 +255,10 @@ class _SelfieCaptureScreenState extends State<SelfieCaptureScreen> {
                                   decoration: BoxDecoration(
                                     color: Colors.transparent,
                                     borderRadius: BorderRadius.circular(22),
-                                    border: Border.all(color: Colors.white, width: 2),
+                                    border: Border.all(
+                                      color: Colors.white,
+                                      width: 2,
+                                    ),
                                   ),
                                   child: ClipRRect(
                                     borderRadius: BorderRadius.circular(20),
@@ -228,10 +279,7 @@ class _SelfieCaptureScreenState extends State<SelfieCaptureScreen> {
 
                                 // Orange Continue button
                                 GestureDetector(
-                                  onTap: () {
-                                    // TODO: handle continue, perhaps navigate back with image
-                                    Navigator.of(context).pop(_selectedImage);
-                                  },
+                                  onTap: _uploadSelfie,
                                   child: Container(
                                     width: w * 0.9,
                                     height: 54,
@@ -254,7 +302,10 @@ class _SelfieCaptureScreenState extends State<SelfieCaptureScreen> {
                                           color: Colors.white,
                                           fontFamily: 'Poppins',
                                           fontWeight: FontWeight.w800,
-                                          fontSize: (w * 0.040).clamp(14.0, 16.0),
+                                          fontSize: (w * 0.040).clamp(
+                                            14.0,
+                                            16.0,
+                                          ),
                                         ),
                                       ),
                                     ),
