@@ -22,6 +22,7 @@ class _NationalIdPassportFrontScanScreenState
   XFile? _capturedImage;
   bool _isAnalyzing = false;
   bool _isVerifying = false;
+  DateTime? _streamStartTime;
   final TextRecognizer _textRecognizer = GoogleMlKit.vision.textRecognizer();
 
   @override
@@ -37,11 +38,18 @@ class _NationalIdPassportFrontScanScreenState
     _controller = CameraController(firstCamera, ResolutionPreset.high);
 
     await _controller.initialize();
+    _streamStartTime = DateTime.now();
     _controller.startImageStream(_processImage);
   }
 
   void _processImage(CameraImage image) async {
     if (_isAnalyzing || _capturedImage != null) return;
+
+    // Wait for 6 seconds after stream starts before allowing capture
+    if (_streamStartTime != null &&
+        DateTime.now().difference(_streamStartTime!).inSeconds < 6) {
+      return;
+    }
 
     _isAnalyzing = true;
 
