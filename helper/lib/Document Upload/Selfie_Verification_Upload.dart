@@ -1,17 +1,36 @@
 import 'dart:ui';
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
-class SelfieCaptureScreen extends StatelessWidget {
+class SelfieCaptureScreen extends StatefulWidget {
   const SelfieCaptureScreen({super.key});
 
-  static const _brandYellow = Color(0xFFFFC700);
+  @override
+  State<SelfieCaptureScreen> createState() => _SelfieCaptureScreenState();
+}
 
-  void _takePhoto() {
-    // TODO: integrate camera
+class _SelfieCaptureScreenState extends State<SelfieCaptureScreen> {
+  static const _brandYellow = Color(0xFFFFC700);
+  final ImagePicker _picker = ImagePicker();
+  XFile? _selectedImage;
+
+  void _takePhoto() async {
+    final XFile? image = await _picker.pickImage(source: ImageSource.camera);
+    if (image != null) {
+      setState(() {
+        _selectedImage = image;
+      });
+    }
   }
 
-  void _openGallery() {
-    // TODO: integrate gallery
+  void _openGallery() async {
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      setState(() {
+        _selectedImage = image;
+      });
+    }
   }
 
   @override
@@ -124,7 +143,7 @@ class SelfieCaptureScreen extends StatelessWidget {
                                           textAlign: TextAlign.center,
                                           style: TextStyle(
                                             color: Colors.white,
-                                            fontFamily: 'AbrilFatface',
+                                            fontFamily: 'Inter',
                                             fontSize: 13,
                                             fontWeight: FontWeight.w600,
                                             height: 1.15,
@@ -139,45 +158,109 @@ class SelfieCaptureScreen extends StatelessWidget {
                               SizedBox(
                                 height: h * 0.05,
                               ), // space before selfie frame (important)
-                              // Framed preview with person.png
-                              _PreviewFrame(
-                                height: (h * 0.40).clamp(260.0, 360.0),
-                                child: Padding(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: w * 0.06,
-                                    vertical: h * 0.02,
-                                  ),
-                                  child: Image.asset(
-                                    'assets/images/person.png',
-                                    fit: BoxFit.contain,
+
+                              if (_selectedImage == null) ...[
+                                // Framed preview with person.png
+                                _PreviewFrame(
+                                  height: (h * 0.40).clamp(260.0, 360.0),
+                                  child: Padding(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: w * 0.06,
+                                      vertical: h * 0.02,
+                                    ),
+                                    child: Image.asset(
+                                      'assets/images/person.png',
+                                      fit: BoxFit.contain,
+                                    ),
                                   ),
                                 ),
-                              ),
 
-                              SizedBox(
-                                height: h * 0.06,
-                              ), // space before buttons (important)
-                              // Take a photo button (yellow)
-                              _PrimaryButton(
-                                text: 'Take a photo',
-                                icon: Icons.photo_camera_rounded,
-                                onTap: _takePhoto,
-                                background: _brandYellow,
-                                textColor: Colors.black,
-                                iconColor: Colors.black,
-                              ),
+                                SizedBox(
+                                  height: h * 0.06,
+                                ), // space before buttons (important)
+                                // Take a photo button (yellow)
+                                _PrimaryButton(
+                                  text: 'Take a photo',
+                                  icon: Icons.photo_camera_rounded,
+                                  onTap: _takePhoto,
+                                  background: _brandYellow,
+                                  textColor: Colors.black,
+                                  iconColor: Colors.black,
+                                ),
 
-                              SizedBox(height: h * 0.018),
+                                SizedBox(height: h * 0.018),
 
-                              // Gallery button (white)
-                              _PrimaryButton(
-                                text: 'Gallery',
-                                icon: Icons.photo_library_rounded,
-                                onTap: _openGallery,
-                                background: Colors.white,
-                                textColor: Colors.black,
-                                iconColor: Colors.black,
-                              ),
+                                // Gallery button (white)
+                                _PrimaryButton(
+                                  text: 'Gallery',
+                                  icon: Icons.photo_library_rounded,
+                                  onTap: _openGallery,
+                                  background: Colors.white,
+                                  textColor: Colors.black,
+                                  iconColor: Colors.black,
+                                ),
+                              ] else ...[
+                                // White stroke rectangle with selected image
+                                Container(
+                                  width: double.infinity,
+                                  height: (h * 0.40).clamp(260.0, 360.0),
+                                  decoration: BoxDecoration(
+                                    color: Colors.transparent,
+                                    borderRadius: BorderRadius.circular(22),
+                                    border: Border.all(color: Colors.white, width: 2),
+                                  ),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(20),
+                                    child: Padding(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: w * 0.06,
+                                        vertical: h * 0.02,
+                                      ),
+                                      child: Image.file(
+                                        File(_selectedImage!.path),
+                                        fit: BoxFit.contain,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+
+                                SizedBox(height: h * 0.06),
+
+                                // Orange Continue button
+                                GestureDetector(
+                                  onTap: () {
+                                    // TODO: handle continue, perhaps navigate back with image
+                                    Navigator.of(context).pop(_selectedImage);
+                                  },
+                                  child: Container(
+                                    width: w * 0.9,
+                                    height: 54,
+                                    decoration: BoxDecoration(
+                                      color: _brandYellow,
+                                      borderRadius: BorderRadius.circular(30),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.16),
+                                          blurRadius: 12,
+                                          spreadRadius: 1,
+                                          offset: const Offset(0, 8),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        'Continue',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontFamily: 'Poppins',
+                                          fontWeight: FontWeight.w800,
+                                          fontSize: (w * 0.040).clamp(14.0, 16.0),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ],
                           ),
                         ),

@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'Selfie_Verification_Upload.dart';
 
 class NonProfessionalDocumentUploadScreen extends StatefulWidget {
   const NonProfessionalDocumentUploadScreen({super.key});
@@ -68,6 +69,14 @@ class _NonProfessionalDocumentUploadScreenState
         ),
       );
       // No need to set local state, Firestore will update
+    }
+
+    Future<void> _openSelfieUpload() async {
+      setState(() => _selectedRows.add(3));
+      final result = await Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (context) => SelfieCaptureScreen()));
+      // Handle result if needed
     }
 
     return Scaffold(
@@ -329,7 +338,7 @@ class _NonProfessionalDocumentUploadScreenState
                             ),
                             SizedBox(height: h * 0.03),
                             GestureDetector(
-                              onTap: () => setState(() => _selectedRows.add(3)),
+                              onTap: _openSelfieUpload,
                               child: Row(
                                 children: [
                                   Container(
