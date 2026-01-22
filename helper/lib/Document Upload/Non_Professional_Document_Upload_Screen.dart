@@ -200,16 +200,16 @@ class _NonProfessionalDocumentUploadScreenState
                         child: Column(
                           children: [
                             GestureDetector(
-                              onTap: () async {
-                                final result = await Navigator.of(context).push(
+                              onTap: () {
+                                setState(() => _selectedRows.add(0));
+                                Navigator.of(context).push(
                                   MaterialPageRoute(
                                     builder: (context) =>
-                                        const NationalIdPassportFrontUploadScreen(),
+                                        NationalIdPassportFrontUploadScreen(
+                                          selected: 0,
+                                        ),
                                   ),
                                 );
-                                if (result == true) {
-                                  setState(() => _selectedRows.add(0));
-                                }
                               },
                               child: Row(
                                 children: [

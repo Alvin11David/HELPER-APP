@@ -9,7 +9,13 @@ import 'package:helper/Document Upload/National_ID_Passport_Front_Scan_Screen.da
 import 'package:helper/Document Upload/National_ID_Passport_Back_Upload_Screen.dart';
 
 class NationalIdPassportFrontUploadScreen extends StatefulWidget {
-  const NationalIdPassportFrontUploadScreen({super.key});
+  final int selected;
+  final XFile? initialImage;
+  const NationalIdPassportFrontUploadScreen({
+    super.key,
+    required this.selected,
+    this.initialImage,
+  });
 
   @override
   State<NationalIdPassportFrontUploadScreen> createState() =>
@@ -18,7 +24,7 @@ class NationalIdPassportFrontUploadScreen extends StatefulWidget {
 
 class _NationalIdPassportFrontUploadScreenState
     extends State<NationalIdPassportFrontUploadScreen> {
-  int selected = 0;
+  late int selected;
   XFile? _selectedImage;
   final ImagePicker _picker = ImagePicker();
   bool _isUploading = false;
@@ -64,7 +70,7 @@ class _NationalIdPassportFrontUploadScreenState
       // Navigate to back upload screen and only pop with true if both are uploaded
       final result = await Navigator.of(context).push(
         MaterialPageRoute(
-          builder: (context) => const NationalIdPassportBackUploadScreen(),
+          builder: (context) => NationalIdPassportBackUploadScreen(),
         ),
       );
       if (result == true) {
@@ -81,11 +87,27 @@ class _NationalIdPassportFrontUploadScreenState
   }
 
   Future<void> _pickImageFromGallery() async {
+    if (_selectedImage != null) return; // Prevent picking if already set
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
     if (image != null) {
       setState(() {
         _selectedImage = image;
       });
+    }
+  }
+
+  void _removeImage() {
+    setState(() {
+      _selectedImage = null;
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    selected = widget.selected;
+    if (widget.initialImage != null) {
+      _selectedImage = widget.initialImage;
     }
   }
 
@@ -376,14 +398,18 @@ class _NationalIdPassportFrontUploadScreenState
                         width: double.infinity,
                         height: screenHeight * 0.062,
                         child: ElevatedButton(
-                          onPressed: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    const NationalIdPassportFrontScanScreen(),
-                              ),
-                            );
-                          },
+                          onPressed: _selectedImage != null
+                              ? null
+                              : () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          NationalIdPassportFrontScanScreen(
+                                            selected: selected,
+                                          ),
+                                    ),
+                                  );
+                                },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFFDF8800),
                             elevation: 0,
@@ -421,7 +447,9 @@ class _NationalIdPassportFrontUploadScreenState
                         width: double.infinity,
                         height: screenHeight * 0.062,
                         child: ElevatedButton(
-                          onPressed: _pickImageFromGallery,
+                          onPressed: _selectedImage != null
+                              ? null
+                              : _pickImageFromGallery,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.white,
                             elevation: 0,
@@ -472,21 +500,35 @@ class _NationalIdPassportFrontUploadScreenState
                           borderRadius: BorderRadius.circular(20),
                           color: Colors.black.withOpacity(0.1),
                         ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(16),
-                          child: _selectedImage != null
-                              ? Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Image.file(
-                                      File(_selectedImage!.path),
-                                      fit: BoxFit.contain,
-                                      width: screenWidth * 0.8,
-                                      // Optionally adjust height if needed
-                                    ),
-                                  ],
-                                )
-                              : null,
+                        child: Stack(
+                          children: [
+                            Center(
+                              child: Image.file(
+                                File(_selectedImage!.path),
+                                fit: BoxFit.contain,
+                                width: screenWidth * 0.8,
+                              ),
+                            ),
+                            Positioned(
+                              top: 8,
+                              right: 8,
+                              child: GestureDetector(
+                                onTap: _removeImage,
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withOpacity(0.5),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  padding: const EdgeInsets.all(6),
+                                  child: const Icon(
+                                    Icons.close,
+                                    color: Colors.white,
+                                    size: 20,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                       const SizedBox(height: 32),

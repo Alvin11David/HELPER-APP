@@ -4,9 +4,11 @@ import 'dart:ui';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:google_ml_kit/google_ml_kit.dart';
+import 'package:helper/Document%20Upload/National_ID_Passport_Front_Upload_Screen.dart';
 
 class NationalIdPassportFrontScanScreen extends StatefulWidget {
-  const NationalIdPassportFrontScanScreen({super.key});
+  final int selected; // 0 for National ID, 1 for Passport
+  const NationalIdPassportFrontScanScreen({super.key, required this.selected});
 
   @override
   State<NationalIdPassportFrontScanScreen> createState() =>
@@ -19,7 +21,7 @@ class _NationalIdPassportFrontScanScreenState
   Future<void>? _initializeControllerFuture;
   XFile? _capturedImage;
   bool _isAnalyzing = false;
-  final bool _isVerifying = false;
+  bool _isVerifying = false;
   final TextRecognizer _textRecognizer = GoogleMlKit.vision.textRecognizer();
 
   @override
@@ -378,10 +380,32 @@ class _NationalIdPassportFrontScanScreenState
                                 width: double.infinity,
                                 height: screenHeight * 0.062,
                                 child: ElevatedButton(
-                                  onPressed: _isVerifying
+                                  onPressed:
+                                      _isVerifying || _capturedImage == null
                                       ? null
-                                      : () {
-                                          // TODO: Handle continue action
+                                      : () async {
+                                          setState(() {
+                                            _isVerifying = true;
+                                          });
+                                          // Navigate to upload screen with image and selected
+                                          final result =
+                                              await Navigator.of(context).push(
+                                                MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      NationalIdPassportFrontUploadScreen(
+                                                        selected:
+                                                            widget.selected,
+                                                        initialImage:
+                                                            _capturedImage,
+                                                      ),
+                                                ),
+                                              );
+                                          setState(() {
+                                            _isVerifying = false;
+                                          });
+                                          if (result == true) {
+                                            Navigator.of(context).pop(true);
+                                          }
                                         },
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.white,
