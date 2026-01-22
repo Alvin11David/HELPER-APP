@@ -7,6 +7,7 @@ import 'National_ID_Passport_Back_Scan_Screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'Non_Professional_Document_Upload_Screen.dart';
 
 class NationalIdPassportBackUploadScreen extends StatefulWidget {
   final int selected;
@@ -79,13 +80,27 @@ class _NationalIdPassportBackUploadScreenState
             'uploadedAt': FieldValue.serverTimestamp(),
             'type': docType,
             'storagePath': '$folder/$fileName',
+            'verified': true, // Mark as verified
           });
+
+      // Also update main verification status for the row (assuming a field in user's main doc)
+      final mainDocField = selected == 0
+          ? 'national_id_verified'
+          : 'passport_id_verified';
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+        mainDocField: true,
+      }, SetOptions(merge: true));
 
       setState(() => _isUploading = false);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Back uploaded successfully!')),
       );
-      Navigator.of(context).pop(true);
+      // Navigate to NonProfessionalDocumentUploadScreen
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (context) => const NonProfessionalDocumentUploadScreen(),
+        ),
+      );
     } catch (e) {
       setState(() => _isUploading = false);
       ScaffoldMessenger.of(
@@ -94,7 +109,28 @@ class _NationalIdPassportBackUploadScreenState
     }
   }
 
-  void _removeImage() {
+  void _removeImage() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final docType = selected == 0 ? 'national_id_back' : 'passport_id_back';
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('documents')
+          .doc(docType)
+          .get();
+      if (doc.exists) {
+        final data = doc.data() as Map<String, dynamic>;
+        final storagePath = data['storagePath'];
+        await FirebaseStorage.instance.ref().child(storagePath).delete();
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .collection('documents')
+            .doc(docType)
+            .delete();
+      }
+    }
     setState(() {
       _selectedImage = null;
     });

@@ -28,6 +28,10 @@ class _NationalIdPassportFrontUploadScreenState
   XFile? _selectedImage;
   final ImagePicker _picker = ImagePicker();
   bool _isUploading = false;
+  bool _isAlreadyUploaded = false;
+  String? _uploadedUrl;
+  bool _isBackUploaded = false;
+  String? _backUrl;
 
   Future<void> _uploadAndSave() async {
     if (_selectedImage == null) return;
@@ -99,10 +103,76 @@ class _NationalIdPassportFrontUploadScreenState
     }
   }
 
-  void _removeImage() {
-    setState(() {
-      _selectedImage = null;
-    });
+  void _removeBackImage() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final docType = selected == 0 ? 'national_id_back' : 'passport_id_back';
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('documents')
+          .doc(docType)
+          .get();
+      if (doc.exists) {
+        final data = doc.data() as Map<String, dynamic>;
+        final storagePath = data['storagePath'];
+        await FirebaseStorage.instance.ref().child(storagePath).delete();
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .collection('documents')
+            .doc(docType)
+            .delete();
+        setState(() {
+          _isBackUploaded = false;
+          _backUrl = null;
+        });
+      }
+    }
+  }
+
+  void _navigateToBack() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => NationalIdPassportBackUploadScreen(
+          selected: selected,
+          initialImage: null,
+        ),
+      ),
+    );
+  }
+
+  void _removeImage() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final docType = selected == 0 ? 'national_id_front' : 'passport_id_front';
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('documents')
+          .doc(docType)
+          .get();
+      if (doc.exists) {
+        final data = doc.data() as Map<String, dynamic>;
+        final storagePath = data['storagePath'];
+        await FirebaseStorage.instance.ref().child(storagePath).delete();
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .collection('documents')
+            .doc(docType)
+            .delete();
+        setState(() {
+          _isAlreadyUploaded = false;
+          _uploadedUrl = null;
+          _selectedImage = null;
+        });
+      }
+    } else {
+      setState(() {
+        _selectedImage = null;
+      });
+    }
   }
 
   @override
@@ -112,6 +182,40 @@ class _NationalIdPassportFrontUploadScreenState
     if (widget.initialImage != null) {
       _selectedImage = widget.initialImage;
     }
+    _checkExistingUpload();
+  }
+
+  Future<void> _checkExistingUpload() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+    final frontDocType = selected == 0
+        ? 'national_id_front'
+        : 'passport_id_front';
+    final backDocType = selected == 0 ? 'national_id_back' : 'passport_id_back';
+    final frontDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .collection('documents')
+        .doc(frontDocType)
+        .get();
+    final backDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .collection('documents')
+        .doc(backDocType)
+        .get();
+    setState(() {
+      if (frontDoc.exists) {
+        final data = frontDoc.data() as Map<String, dynamic>;
+        _isAlreadyUploaded = true;
+        _uploadedUrl = data['url'];
+      }
+      if (backDoc.exists) {
+        final data = backDoc.data() as Map<String, dynamic>;
+        _isBackUploaded = true;
+        _backUrl = data['url'];
+      }
+    });
   }
 
   @override
@@ -168,172 +272,171 @@ class _NationalIdPassportFrontUploadScreenState
                   ],
                 ),
               ),
-              // SizedBox(height: screenHeight * 0.01), // Removed unused SizedBox
-              Positioned(
-                top:
-                    screenHeight * 0.14, // Adjusted to reduce space from header
-                left: screenWidth * 0.15,
-                right: screenWidth * 0.15,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(30),
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                    child: Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: screenWidth * 0.02,
-                        vertical: screenHeight * 0.004,
-                      ),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            Colors.white.withOpacity(0.25),
-                            Colors.white.withOpacity(0.15),
+
+              if (_selectedImage == null && !_isAlreadyUploaded) ...[
+                Positioned(
+                  top: screenHeight * 0.14,
+                  left: screenWidth * 0.15,
+                  right: screenWidth * 0.15,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(30),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: screenWidth * 0.02,
+                          vertical: screenHeight * 0.004,
+                        ),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Colors.white.withOpacity(0.25),
+                              Colors.white.withOpacity(0.15),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(30),
+                          border: Border.all(
+                            color: Colors.white.withOpacity(0.4),
+                            width: 2,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.white.withOpacity(0.1),
+                              blurRadius: 15,
+                              spreadRadius: 2,
+                            ),
                           ],
                         ),
-                        borderRadius: BorderRadius.circular(30),
-                        border: Border.all(
-                          color: Colors.white.withOpacity(0.4),
-                          width: 2,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.white.withOpacity(0.1),
-                            blurRadius: 15,
-                            spreadRadius: 2,
-                          ),
-                        ],
-                      ),
-                      height: 33,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            'Upload the front part of your ID',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: screenWidth * 0.04,
-                              fontWeight: FontWeight.w500,
-                              fontFamily: 'Inter',
+                        height: 33,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Upload the front part of your ID',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: screenWidth * 0.04,
+                                fontWeight: FontWeight.w500,
+                                fontFamily: 'Inter',
+                              ),
+                              textAlign: TextAlign.center,
                             ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-              Positioned(
-                top: screenHeight * 0.16 + 42 + 10,
-                left: screenWidth * 0.05,
-                right: screenWidth * 0.05,
-                child: Container(
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.35),
-                    borderRadius: BorderRadius.circular(30),
-                    border: Border.all(
-                      color: Colors.white.withOpacity(0.35),
-                      width: 1.2,
+                Positioned(
+                  top: screenHeight * 0.16 + 42 + 10,
+                  left: screenWidth * 0.05,
+                  right: screenWidth * 0.05,
+                  child: Container(
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.35),
+                      borderRadius: BorderRadius.circular(30),
+                      border: Border.all(
+                        color: Colors.white.withOpacity(0.35),
+                        width: 1.2,
+                      ),
                     ),
-                  ),
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      final segmentW = constraints.maxWidth / 2;
-                      return Stack(
-                        children: [
-                          AnimatedAlign(
-                            duration: const Duration(milliseconds: 230),
-                            curve: Curves.easeOut,
-                            alignment: selected == 0
-                                ? Alignment.centerLeft
-                                : Alignment.centerRight,
-                            child: Container(
-                              width: segmentW,
-                              height: 44,
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(30),
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final segmentW = constraints.maxWidth / 2;
+                        return Stack(
+                          children: [
+                            AnimatedAlign(
+                              duration: const Duration(milliseconds: 230),
+                              curve: Curves.easeOut,
+                              alignment: selected == 0
+                                  ? Alignment.centerLeft
+                                  : Alignment.centerRight,
+                              child: Container(
+                                width: segmentW,
+                                height: 44,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
                               ),
                             ),
-                          ),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: InkWell(
-                                  onTap: () => setState(() => selected = 0),
-                                  child: Center(
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Icon(
-                                          Icons.badge,
-                                          size: 18,
-                                          color: selected == 0
-                                              ? Colors.black
-                                              : Colors.white,
-                                        ),
-                                        const SizedBox(width: 6),
-                                        Text(
-                                          'National ID',
-                                          style: TextStyle(
-                                            fontFamily: 'Inter',
-                                            fontWeight: FontWeight.w500,
-                                            fontSize: 14,
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: InkWell(
+                                    onTap: () => setState(() => selected = 0),
+                                    child: Center(
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            Icons.badge,
+                                            size: 18,
                                             color: selected == 0
                                                 ? Colors.black
                                                 : Colors.white,
                                           ),
-                                        ),
-                                      ],
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            'National ID',
+                                            style: TextStyle(
+                                              fontFamily: 'Inter',
+                                              fontWeight: FontWeight.w500,
+                                              fontSize: 14,
+                                              color: selected == 0
+                                                  ? Colors.black
+                                                  : Colors.white,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ),
                                 ),
-                              ),
-                              Expanded(
-                                child: InkWell(
-                                  onTap: () => setState(() => selected = 1),
-                                  child: Center(
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Icon(
-                                          Icons.credit_card,
-                                          size: 18,
-                                          color: selected == 1
-                                              ? Colors.black
-                                              : Colors.white,
-                                        ),
-                                        const SizedBox(width: 6),
-                                        Text(
-                                          'Passport',
-                                          style: TextStyle(
-                                            fontFamily: 'Inter',
-                                            fontWeight: FontWeight.w500,
-                                            fontSize: 14,
+                                Expanded(
+                                  child: InkWell(
+                                    onTap: () => setState(() => selected = 1),
+                                    child: Center(
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            Icons.credit_card,
+                                            size: 18,
                                             color: selected == 1
                                                 ? Colors.black
                                                 : Colors.white,
                                           ),
-                                        ),
-                                      ],
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            'Passport',
+                                            style: TextStyle(
+                                              fontFamily: 'Inter',
+                                              fontWeight: FontWeight.w500,
+                                              fontSize: 14,
+                                              color: selected == 1
+                                                  ? Colors.black
+                                                  : Colors.white,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ),
                                 ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      );
-                    },
+                              ],
+                            ),
+                          ],
+                        );
+                      },
+                    ),
                   ),
                 ),
-              ),
-              if (_selectedImage == null) ...[
                 Positioned(
                   top:
                       MediaQuery.of(context).size.height * 0.16 +
@@ -497,12 +600,12 @@ class _NationalIdPassportFrontUploadScreenState
                   ),
                 ),
               ] else ...[
-                SizedBox(height: screenHeight * 0.16 + 80),
                 Center(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       const SizedBox(height: 70),
+                      // Front image
                       Container(
                         width: screenWidth * 0.9,
                         height: screenWidth * 0.7,
@@ -514,11 +617,17 @@ class _NationalIdPassportFrontUploadScreenState
                         child: Stack(
                           children: [
                             Center(
-                              child: Image.file(
-                                File(_selectedImage!.path),
-                                fit: BoxFit.contain,
-                                width: screenWidth * 0.8,
-                              ),
+                              child: _isAlreadyUploaded
+                                  ? Image.network(
+                                      _uploadedUrl!,
+                                      fit: BoxFit.contain,
+                                      width: screenWidth * 0.8,
+                                    )
+                                  : Image.file(
+                                      File(_selectedImage!.path),
+                                      fit: BoxFit.contain,
+                                      width: screenWidth * 0.8,
+                                    ),
                             ),
                             Positioned(
                               top: 8,
@@ -542,14 +651,61 @@ class _NationalIdPassportFrontUploadScreenState
                           ],
                         ),
                       ),
+                      if (_isBackUploaded) ...[
+                        const SizedBox(height: 20),
+                        // Back image
+                        Container(
+                          width: screenWidth * 0.9,
+                          height: screenWidth * 0.7,
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.white, width: 4),
+                            borderRadius: BorderRadius.circular(20),
+                            color: Colors.black.withOpacity(0.1),
+                          ),
+                          child: Stack(
+                            children: [
+                              Center(
+                                child: Image.network(
+                                  _backUrl!,
+                                  fit: BoxFit.contain,
+                                  width: screenWidth * 0.8,
+                                ),
+                              ),
+                              Positioned(
+                                top: 8,
+                                right: 8,
+                                child: GestureDetector(
+                                  onTap: () => _removeBackImage(),
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.black.withOpacity(0.5),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    padding: const EdgeInsets.all(6),
+                                    child: const Icon(
+                                      Icons.close,
+                                      color: Colors.white,
+                                      size: 20,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                       const SizedBox(height: 32),
                       SizedBox(
                         width: screenWidth * 0.9,
                         height: 48,
                         child: ElevatedButton(
-                          onPressed: (_isUploading || _selectedImage == null)
-                              ? null
-                              : _uploadAndSave,
+                          onPressed: _isAlreadyUploaded
+                              ? (_isBackUploaded
+                                    ? null
+                                    : () => _navigateToBack())
+                              : (_isUploading || _selectedImage == null
+                                    ? null
+                                    : _uploadAndSave),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFFDF8800),
                             elevation: 0,
@@ -568,9 +724,13 @@ class _NationalIdPassportFrontUploadScreenState
                                     strokeWidth: 3,
                                   ),
                                 )
-                              : const Text(
-                                  'Continue',
-                                  style: TextStyle(
+                              : Text(
+                                  _isAlreadyUploaded
+                                      ? (_isBackUploaded
+                                            ? 'Both Uploaded'
+                                            : 'Upload Back')
+                                      : 'Continue',
+                                  style: const TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
                                     color: Colors.white,
