@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'Face_Scan_Screen.dart';
 
 class SelfieCaptureScreen extends StatefulWidget {
   const SelfieCaptureScreen({super.key});
@@ -20,10 +21,12 @@ class _SelfieCaptureScreenState extends State<SelfieCaptureScreen> {
   bool _isUploading = false;
 
   void _takePhoto() async {
-    final XFile? image = await _picker.pickImage(source: ImageSource.camera);
-    if (image != null) {
+    final result = await Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (context) => FaceScanScreen()));
+    if (result is XFile) {
       setState(() {
-        _selectedImage = image;
+        _selectedImage = result;
       });
     }
   }

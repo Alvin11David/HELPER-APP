@@ -130,247 +130,94 @@ class _FaceScanScreenState extends State<FaceScanScreen> {
     final screenHeight = MediaQuery.of(context).size.height;
     return Scaffold(
       backgroundColor: Colors.black,
-      body: Stack(
-        children: [
-          if (_controller != null && _controller!.value.isInitialized)
-            CameraPreview(_controller!)
-          else
-            Container(color: Colors.black),
-          Positioned.fill(
-            child: ClipPath(
-              clipper: InvertedRectangleClipper(
-                Rect.fromLTWH(
-                  (screenWidth - screenWidth * 0.8) / 2,
-                  screenHeight * 0.25,
-                  screenWidth * 0.8,
-                  screenHeight * 0.42,
-                ),
+      body: SafeArea(
+        child: Container(
+          constraints: const BoxConstraints.expand(),
+          child: Stack(
+          children: [
+            if (_controller != null && _controller!.value.isInitialized)
+              Positioned.fill(
+                child: CameraPreview(_controller!),
+              )
+            else
+              Positioned.fill(
+                child: Container(color: Colors.black),
               ),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                child: Container(color: Colors.black.withOpacity(0.3)),
-              ),
-            ),
-          ),
-          Positioned(
-            top: screenHeight * 0.05,
-            left: screenWidth * 0.04,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                GestureDetector(
-                  onTap: () {
-                    if (_capturedImage != null) {
-                      setState(() {
-                        _capturedImage = null;
-                      });
-                      _controller?.startImageStream(_processImage);
-                    } else {
-                      Navigator.of(context).maybePop();
-                    }
-                  },
-                  child: Container(
-                    width: screenWidth * 0.13,
-                    height: screenWidth * 0.13,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFFFFFF),
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    child: Center(
-                      child: Icon(
-                        Icons.chevron_left,
-                        color: Colors.black,
-                        size: screenWidth * 0.10,
-                      ),
-                    ),
+            Positioned.fill(
+              child: ClipPath(
+                clipper: InvertedRectangleClipper(
+                  Rect.fromLTWH(
+                    (screenWidth - screenWidth * 0.8) / 2,
+                    screenHeight * 0.25,
+                    screenWidth * 0.8,
+                    screenHeight * 0.42,
                   ),
                 ),
-
-                SizedBox(width: screenWidth * 0.06),
-                Text(
-                  _capturedImage != null ? 'Selfie Preview' : 'Selfie Capture',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: screenWidth * 0.06,
-                    fontWeight: FontWeight.bold,
-                    fontFamily: 'Montserrat',
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Positioned(
-            top: screenHeight * 0.14, // Adjusted to reduce space from header
-            left: screenWidth * 0.10,
-            right: screenWidth * 0.10,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(30),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                child: Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: screenWidth * 0.02,
-                    vertical: screenHeight * 0.004,
-                  ),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        Colors.white.withOpacity(0.25),
-                        Colors.white.withOpacity(0.15),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(30),
-                    border: Border.all(
-                      color: Colors.white.withOpacity(0.4),
-                      width: 2,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.white.withOpacity(0.1),
-                        blurRadius: 15,
-                        spreadRadius: 2,
-                      ),
-                    ],
-                  ),
-                  height: 33,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        _capturedImage != null
-                            ? 'Preview your selfie'
-                            : 'Position your face within the frame',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: screenWidth * 0.034,
-                          fontWeight: FontWeight.w500,
-                          fontFamily: 'Poppins',
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-          Positioned(
-            top: screenHeight * 0.25,
-            left: (screenWidth - screenWidth * 0.8) / 2,
-            child: Container(
-              width: screenWidth * 0.8,
-              height: screenHeight * 0.42,
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.white, width: 2),
-                borderRadius: BorderRadius.circular(30),
-              ),
-            ),
-          ),
-          Positioned(
-            top:
-                screenHeight * 0.25 + screenHeight * 0.42 + screenHeight * 0.02,
-            left: (screenWidth - screenWidth * 0.1) / 2,
-            child: GestureDetector(
-              onTap: () async {
-                if (_controller != null) {
-                  if (_isFlashOn) {
-                    await _controller!.setFlashMode(FlashMode.off);
-                  } else {
-                    await _controller!.setFlashMode(FlashMode.torch);
-                  }
-                  setState(() {
-                    _isFlashOn = !_isFlashOn;
-                  });
-                }
-              },
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(20),
                 child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                  child: Container(
-                    width: screenWidth * 0.1,
-                    height: screenWidth * 0.1,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          Colors.white.withOpacity(0.25),
-                          Colors.white.withOpacity(0.15),
-                        ],
+                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                  child: Container(color: Colors.black.withOpacity(0.3)),
+                ),
+              ),
+            ),
+            Positioned(
+              top: screenHeight * 0.05,
+              left: screenWidth * 0.04,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  GestureDetector(
+                    onTap: () {
+                      if (_capturedImage != null) {
+                        setState(() {
+                          _capturedImage = null;
+                        });
+                        _controller?.startImageStream(_processImage);
+                      } else {
+                        Navigator.of(context).maybePop();
+                      }
+                    },
+                    child: Container(
+                      width: screenWidth * 0.13,
+                      height: screenWidth * 0.13,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFFFFF),
+                        borderRadius: BorderRadius.circular(15),
                       ),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: Colors.white.withOpacity(0.4),
-                        width: 2,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.white.withOpacity(0.1),
-                          blurRadius: 15,
-                          spreadRadius: 2,
+                      child: Center(
+                        child: Icon(
+                          Icons.chevron_left,
+                          color: Colors.black,
+                          size: screenWidth * 0.10,
                         ),
-                      ],
-                    ),
-                    child: Center(
-                      child: Icon(
-                        Icons.flashlight_on,
-                        color: Colors.white,
-                        size: screenWidth * 0.06,
                       ),
                     ),
                   ),
-                ),
+        
+                  SizedBox(width: screenWidth * 0.06),
+                  Text(
+                    _capturedImage != null ? 'Selfie Preview' : 'Selfie Capture',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: screenWidth * 0.06,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Montserrat',
+                    ),
+                  ),
+                ],
               ),
             ),
-          ),
-          if (_capturedImage != null)
             Positioned(
-              top: screenHeight * 0.8,
-              left: (screenWidth - screenWidth * 0.9) / 2,
-              child: Container(
-                width: screenWidth * 0.9,
-                height: screenHeight * 0.08,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(30),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      'Continue',
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontSize: screenWidth * 0.04,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    SizedBox(width: screenWidth * 0.02),
-                    Icon(
-                      Icons.arrow_forward_rounded,
-                      color: Colors.black,
-                      size: screenWidth * 0.06,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          Positioned(
-            bottom: screenHeight * 0.06,
-            left: 0,
-            right: 0,
-            child: Center(
+              top: screenHeight * 0.14, // Adjusted to reduce space from header
+              left: screenWidth * 0.10,
+              right: screenWidth * 0.10,
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(30),
                 child: BackdropFilter(
                   filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
                   child: Container(
                     padding: EdgeInsets.symmetric(
-                      horizontal: screenWidth * 0.06,
-                      vertical: screenHeight * 0.011,
+                      horizontal: screenWidth * 0.02,
+                      vertical: screenHeight * 0.004,
                     ),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
@@ -394,15 +241,17 @@ class _FaceScanScreenState extends State<FaceScanScreen> {
                         ),
                       ],
                     ),
+                    height: 33,
                     child: Row(
-                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        SizedBox(width: screenWidth * 0.02),
                         Text(
-                          'Use good lighting and ensure your face matches your\nID photo',
+                          _capturedImage != null
+                              ? 'Preview your selfie'
+                              : 'Position your face within the frame',
                           style: TextStyle(
                             color: Colors.white,
-                            fontSize: screenWidth * 0.03,
+                            fontSize: screenWidth * 0.034,
                             fontWeight: FontWeight.w500,
                             fontFamily: 'Poppins',
                           ),
@@ -414,9 +263,169 @@ class _FaceScanScreenState extends State<FaceScanScreen> {
                 ),
               ),
             ),
-          ),
-        ],
+            Positioned(
+              top: screenHeight * 0.25,
+              left: (screenWidth - screenWidth * 0.8) / 2,
+              child: Container(
+                width: screenWidth * 0.8,
+                height: screenHeight * 0.42,
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.white, width: 2),
+                  borderRadius: BorderRadius.circular(30),
+                ),
+              ),
+            ),
+            Positioned(
+              top:
+                  screenHeight * 0.25 + screenHeight * 0.42 + screenHeight * 0.02,
+              left: (screenWidth - screenWidth * 0.1) / 2,
+              child: GestureDetector(
+                onTap: () async {
+                  if (_controller != null) {
+                    if (_isFlashOn) {
+                      await _controller!.setFlashMode(FlashMode.off);
+                    } else {
+                      await _controller!.setFlashMode(FlashMode.torch);
+                    }
+                    setState(() {
+                      _isFlashOn = !_isFlashOn;
+                    });
+                  }
+                },
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                    child: Container(
+                      width: screenWidth * 0.1,
+                      height: screenWidth * 0.1,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Colors.white.withOpacity(0.25),
+                            Colors.white.withOpacity(0.15),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.4),
+                          width: 2,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.white.withOpacity(0.1),
+                            blurRadius: 15,
+                            spreadRadius: 2,
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: Icon(
+                          Icons.flashlight_on,
+                          color: Colors.white,
+                          size: screenWidth * 0.06,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            if (_capturedImage != null)
+              Positioned(
+                top: screenHeight * 0.8,
+                left: (screenWidth - screenWidth * 0.9) / 2,
+                child: Container(
+                  width: screenWidth * 0.9,
+                  height: screenHeight * 0.08,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Continue',
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: screenWidth * 0.04,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(width: screenWidth * 0.02),
+                      Icon(
+                        Icons.arrow_forward_rounded,
+                        color: Colors.black,
+                        size: screenWidth * 0.06,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            Positioned(
+              bottom: screenHeight * 0.06,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(30),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: screenWidth * 0.06,
+                        vertical: screenHeight * 0.011,
+                      ),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Colors.white.withOpacity(0.25),
+                            Colors.white.withOpacity(0.15),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(30),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.4),
+                          width: 2,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.white.withOpacity(0.1),
+                            blurRadius: 15,
+                            spreadRadius: 2,
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          SizedBox(width: screenWidth * 0.02),
+                          Text(
+                            'Use good lighting and ensure your face matches your\nID photo',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: screenWidth * 0.03,
+                              fontWeight: FontWeight.w500,
+                              fontFamily: 'Poppins',
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
+    ),
     );
   }
 }
