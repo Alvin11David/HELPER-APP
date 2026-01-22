@@ -1,13 +1,11 @@
 import 'dart:ui';
-
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
-import 'package:flutterwave_standard/core/flutterwave.dart';
-import 'package:flutterwave_standard/models/requests/customer.dart';
-import 'package:flutterwave_standard/models/requests/customizations.dart';
-import 'package:flutterwave_standard/models/responses/charge_response.dart';
-import 'package:helper/Intro/Role_Selection_Screen.dart';
-
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:helper/Intro/Role_Selection_Screen.dart';
 
 class PayPalPaymentMethodScreen extends StatefulWidget {
   const PayPalPaymentMethodScreen({super.key});
@@ -23,14 +21,8 @@ class _PayPalPaymentMethodScreenState extends State<PayPalPaymentMethodScreen> {
   bool isChecked = false;
   bool _isDimming = false; // State to track if the screen should dim
   bool _showOverlay = false; // State to control the overlay visibility
+  bool _isPaymentSuccessful = false; // State to track payment status
   final Duration _overlayAnimDuration = Duration(milliseconds: 300);
-  String _paymentStatus = 'Not Paid'; // State for payment status
-
-  // Flutterwave configuration
-  final String publicKey =
-      "FLWPUBK_TEST-5c4c1ba4-9c72-45c8-90b0-b29e9c6a4597-X"; // Test Public Key
-  final String encryptionKey =
-      "0lT5zNJgnxHOm2PyOYZxQKL7yk0MC9Uodyo3Z/I3DE4="; // Test Encryption Key
 
   @override
   void initState() {
@@ -56,7 +48,7 @@ class _PayPalPaymentMethodScreenState extends State<PayPalPaymentMethodScreen> {
     super.dispose();
   }
 
-  void _handlePayment() async {
+  Future<void> _processPayment() async {
     final email = _emailController.text.trim();
     if (email.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -73,58 +65,149 @@ class _PayPalPaymentMethodScreenState extends State<PayPalPaymentMethodScreen> {
       return;
     }
 
-    // Generate a unique transaction reference
-    final txRef = "helper_reg_${DateTime.now().millisecondsSinceEpoch}";
+    // Get current user
+    final User? currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('User not authenticated'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
 
-    final Customer customer = Customer(
-      name: "Helper User", // You might want to get this from user data
-      phoneNumber: "", // Not required for PayPal
-      email: email,
-    );
-
-    final Flutterwave flutterwave = Flutterwave(
-      publicKey: publicKey,
-      txRef: txRef,
-      amount: "25000",
-      customer: customer,
-      paymentOptions: "paypal",
-      customization: Customization(
-        title: "Helper Registration Payment",
-        description: "Payment for Helper app registration",
-      ),
-      redirectUrl: "https://your-redirect-url.com", // Optional
-      isTestMode: true, // Set to false for production
-      currency: "UGX",
-    );
+    // RELWORX API configuration
+    const String apiKey = "2902144e65b9a7.v3wxxu9iseWHI-dQzOh7Gg";
+    const String baseUrl = "https://payments.relworx.com/api";
+    const String accountNo =
+        "YOUR_BUSINESS_ACCOUNT_NO"; // TODO: Replace with actual account number
+    final String reference =
+        "reg_fee_${DateTime.now().millisecondsSinceEpoch}_${currentUser.uid}";
+    const double amount = 25000.0;
+    const String currency = "UGX";
+    const String webhookUrl =
+        "https://us-central1-helperapp-46849.cloudfunctions.net/relworxWebhook";
 
     try {
-      final ChargeResponse response = await flutterwave.charge(context);
-      print(
-        'Flutterwave Response: ${response.toJson()}',
-      ); // Add this for debugging
-      if (response.success == true) {
-        // Payment successful
+      // Show loading indicator
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Initiating PayPal payment request...'),
+          backgroundColor: Colors.blue,
+        ),
+      );
+
+      final response = await http.post(
+        Uri.parse('$baseUrl/paypal/request-payment'),
+        headers: {
+          'Authorization': 'Bearer $apiKey',
+          'Content-Type': 'application/json',
+          'Accept': 'application/vnd.relworx.v2',
+        },
+        body: jsonEncode({
+          'account_no': accountNo,
+          'reference': reference,
+          'paypal_email': email,
+          'currency': currency,
+          'amount': amount,
+          'description': 'Registration Fee Payment via PayPal',
+          'webhook_url': webhookUrl,
+        }),
+      );
+
+      final responseData = jsonDecode(response.body);
+
+      if (response.statusCode == 200 && responseData['success'] == true) {
+        // Payment request successful - show pending status
         setState(() {
+          _isPaymentSuccessful = false; // Wait for webhook confirmation
           _isDimming = true;
           _showOverlay = true;
-          _paymentStatus = 'Paid';
         });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'PayPal payment request sent successfully! Please complete the payment in your PayPal account.',
+            ),
+            backgroundColor: Colors.blue,
+          ),
+        );
+
+        // Save email if checkbox is checked
+        if (isChecked) {
+          await _saveEmail();
+        }
+
+        // Start listening for payment status updates
+        _listenForPaymentStatus(reference);
       } else {
-        // Payment failed
+        // Payment request failed
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Payment failed: ${response.status ?? 'Unknown error'}',
+              'Payment request failed: ${responseData['message'] ?? 'Unknown error'}',
             ),
+            backgroundColor: Colors.red,
           ),
         );
       }
-    } catch (error) {
-      print('Payment Error: $error'); // Add this for debugging
+    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('An error occurred during payment')),
+        SnackBar(
+          content: Text('Payment error: $e'),
+          backgroundColor: Colors.red,
+        ),
       );
     }
+  }
+
+  void _listenForPaymentStatus(String reference) {
+    final paymentRef = FirebaseFirestore.instance
+        .collection('Payments')
+        .doc(reference);
+
+    paymentRef.snapshots().listen((snapshot) {
+      if (snapshot.exists) {
+        final data = snapshot.data();
+        final status = data?['status'];
+
+        if (status == 'success') {
+          setState(() {
+            _isPaymentSuccessful = true;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('PayPal payment completed successfully!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          // Navigate to role selection after a short delay to show success
+          Future.delayed(const Duration(seconds: 2), () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => const RoleSelectionScreen(),
+              ),
+            );
+          });
+        } else if (status == 'failed') {
+          setState(() {
+            _isPaymentSuccessful = false;
+            _showOverlay = false; // Hide overlay on failure
+            _isDimming = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Payment failed: ${data?['message'] ?? 'Unknown error'}',
+              ),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    });
   }
 
   @override
@@ -289,9 +372,9 @@ class _PayPalPaymentMethodScreenState extends State<PayPalPaymentMethodScreen> {
                               ),
                               alignment: Alignment.center,
                               child: Text(
-                                _paymentStatus,
+                                _isPaymentSuccessful ? 'Paid' : 'Not Paid',
                                 style: TextStyle(
-                                  color: _paymentStatus == 'Paid'
+                                  color: _isPaymentSuccessful
                                       ? Colors.green
                                       : Colors.black,
                                   fontSize: screenWidth * 0.04,
@@ -415,7 +498,7 @@ class _PayPalPaymentMethodScreenState extends State<PayPalPaymentMethodScreen> {
                         ),
                         SizedBox(height: screenHeight * 0.05),
                         GestureDetector(
-                          onTap: _handlePayment,
+                          onTap: _processPayment,
                           child: Container(
                             width: screenWidth * 0.93,
                             height: screenHeight * 0.07,
@@ -577,7 +660,9 @@ class _PayPalPaymentMethodScreenState extends State<PayPalPaymentMethodScreen> {
                         ),
                         SizedBox(height: screenHeight * 0.0),
                         Text(
-                          'Account Created',
+                          _isPaymentSuccessful
+                              ? 'Account Created'
+                              : 'Payment Pending',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: Colors.black,
@@ -587,7 +672,9 @@ class _PayPalPaymentMethodScreenState extends State<PayPalPaymentMethodScreen> {
                           ),
                         ),
                         Text(
-                          'Successfully',
+                          _isPaymentSuccessful
+                              ? 'Successfully'
+                              : 'Please Complete Payment',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: Colors.black,
@@ -602,7 +689,9 @@ class _PayPalPaymentMethodScreenState extends State<PayPalPaymentMethodScreen> {
                             horizontal: screenWidth * 0.08,
                           ),
                           child: Text(
-                            'Your payment of UGX 25,000\nhas been successfully\nreceived via PayPal.',
+                            _isPaymentSuccessful
+                                ? 'Your payment of UGX 25,000\nhas been successfully\nreceived via PayPal.'
+                                : 'Please complete your PayPal payment\nto continue with registration.\nCheck your PayPal account.',
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               color: Colors.black,
@@ -629,14 +718,23 @@ class _PayPalPaymentMethodScreenState extends State<PayPalPaymentMethodScreen> {
                           width: double.infinity,
                           height: screenHeight * 0.062,
                           child: ElevatedButton(
-                            onPressed: () {
-                              // TODO: Handle continue action
-                            },
+                            onPressed: _isPaymentSuccessful
+                                ? () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            const RoleSelectionScreen(),
+                                      ),
+                                    );
+                                  }
+                                : null, // Disable button if payment not successful
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFDF8800),
-                              disabledBackgroundColor: const Color(
-                                0xFFDF8800,
-                              ).withOpacity(0.6),
+                              backgroundColor: _isPaymentSuccessful
+                                  ? const Color(0xFFDF8800)
+                                  : Colors.grey,
+                              disabledBackgroundColor: Colors.grey.withOpacity(
+                                0.6,
+                              ),
                               elevation: 0,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(30),
@@ -647,23 +745,15 @@ class _PayPalPaymentMethodScreenState extends State<PayPalPaymentMethodScreen> {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  GestureDetector(
-                                    onTap: () {
-                                      Navigator.of(context).push(
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              const RoleSelectionScreen(),
-                                        ),
-                                      );
-                                    },
-                                    child: Text(
-                                      'Go To Role Selection',
-                                      style: TextStyle(
-                                        fontSize: screenWidth * 0.045,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
-                                        fontFamily: 'Inter',
-                                      ),
+                                  Text(
+                                    _isPaymentSuccessful
+                                        ? 'Go To Role Selection'
+                                        : 'Processing PayPal Payment...',
+                                    style: TextStyle(
+                                      fontSize: screenWidth * 0.045,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                      fontFamily: 'Inter',
                                     ),
                                   ),
                                   SizedBox(width: screenWidth * 0.02),
