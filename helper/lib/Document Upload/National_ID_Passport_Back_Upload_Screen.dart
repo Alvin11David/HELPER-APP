@@ -38,15 +38,16 @@ class _NationalIdPassportBackUploadScreenState
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       setState(() => _isUploading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('User not logged in.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('User not logged in.')));
       return;
     }
     try {
       final file = File(_selectedImage!.path);
       final folder = selected == 0 ? 'National IDS' : 'Passport ID';
-      final fileName = '${DateTime.now().millisecondsSinceEpoch}_${user.uid}_back.jpg';
+      final fileName =
+          '${DateTime.now().millisecondsSinceEpoch}_${user.uid}_back.jpg';
       final ref = FirebaseStorage.instance.ref().child('$folder/$fileName');
       final uploadTask = await ref.putFile(file);
       final downloadUrl = await uploadTask.ref.getDownloadURL();
@@ -72,9 +73,9 @@ class _NationalIdPassportBackUploadScreenState
       Navigator.of(context).pop(true);
     } catch (e) {
       setState(() => _isUploading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Upload failed: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Upload failed: $e')));
     }
   }
 
