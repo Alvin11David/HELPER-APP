@@ -1,12 +1,12 @@
+import 'dart:async';
+import 'dart:convert';
 import 'dart:ui';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutterwave_standard/core/flutterwave.dart';
-import 'package:flutterwave_standard/models/requests/customer.dart';
-import 'package:flutterwave_standard/models/requests/customizations.dart';
-import 'package:flutterwave_standard/models/responses/charge_response.dart';
 import 'package:helper/Intro/Role_Selection_Screen.dart';
-
+import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class VisaPaymentMethodScreen extends StatefulWidget {
@@ -59,6 +59,8 @@ class _VisaPaymentMethodScreenState extends State<VisaPaymentMethodScreen> {
   bool _showOverlay = false; // State to control the overlay visibility
   bool _isPaymentSuccessful = false; // State to track payment status
   final Duration _overlayAnimDuration = Duration(milliseconds: 300);
+  StreamSubscription<DocumentSnapshot>? _paymentStatusSubscription;
+  String? _currentPaymentReference;
 
   @override
   void dispose() {
@@ -70,6 +72,7 @@ class _VisaPaymentMethodScreenState extends State<VisaPaymentMethodScreen> {
     _cardHolderController.dispose();
     _expiryController.dispose();
     _cvvController.dispose();
+    _paymentStatusSubscription?.cancel();
     super.dispose();
   }
 
@@ -120,51 +123,64 @@ class _VisaPaymentMethodScreenState extends State<VisaPaymentMethodScreen> {
       return;
     }
 
-    // Flutterwave standard SDK configuration
-    final String publicKey =
-        "FLWPUBK_TEST-5c4c1ba4-9c72-45c8-90b0-b29e9c6a4597-X"; // Using test key
-    final String txRef = "visa_txn_${DateTime.now().millisecondsSinceEpoch}";
-    final String amount = "25000";
-    final String currency = "UGX";
-    final String customerEmail =
-        "user@example.com"; // You might want to get this from user data
-    final String customerName = cardHolder;
-    final String customerPhone =
-        "+256700000000"; // You might want to get this from user data
+    // Get current user
+    final User? user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('User not authenticated'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
 
-    final Customer customer = Customer(
-      name: customerName,
-      phoneNumber: customerPhone,
-      email: customerEmail,
-    );
+    final String userId = user.uid;
+    final String reference =
+        'visa_${userId}_${DateTime.now().millisecondsSinceEpoch}';
+    _currentPaymentReference = reference;
 
-    final Flutterwave flutterwave = Flutterwave(
-      publicKey: publicKey,
-      currency: currency,
-      redirectUrl: "https://example.com/callback",
-      txRef: txRef,
-      amount: amount,
-      customer: customer,
-      paymentOptions: "card, mobilemoneyuganda",
-      customization: Customization(title: "Helper Registration Payment"),
-      isTestMode: true,
-    );
+    // RELWORX API call
+    const String apiKey = '2902144e65b9a7.v3wxxu9iseWHI-dQzOh7Gg';
+    const String relworxUrl =
+        'https://api.relworx.com/api/card/request-payment'; // Assuming this is the endpoint
+    const String webhookUrl =
+        'https://us-central1-helper-app-9b3a3.cloudfunctions.net/relworxWebhook'; // Your webhook URL
+
+    final Map<String, dynamic> requestBody = {
+      'api_key': apiKey,
+      'amount': '25000',
+      'currency': 'UGX',
+      'card_number': cardNumber,
+      'card_holder': cardHolder,
+      'expiry': expiry,
+      'cvv': cvv,
+      'webhook_url': webhookUrl,
+      'reference': reference,
+    };
 
     try {
-      final ChargeResponse response = await flutterwave.charge(context);
+      final response = await http.post(
+        Uri.parse(relworxUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(requestBody),
+      );
 
-      if (response.success == true) {
-        // Payment successful - show success overlay
-        setState(() {
-          _isPaymentSuccessful = true;
-          _isDimming = true;
-          _showOverlay = true;
-        });
-      } else {
-        // Payment failed or cancelled
+      if (response.statusCode == 200) {
+        // Payment request sent, start listening for status
+        _listenForPaymentStatus(reference);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Payment failed or was cancelled'),
+            content: Text(
+              'Payment processing... Please wait for confirmation.',
+            ),
+            backgroundColor: Colors.blue,
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Payment request failed: ${response.body}'),
             backgroundColor: Colors.red,
           ),
         );
@@ -177,6 +193,27 @@ class _VisaPaymentMethodScreenState extends State<VisaPaymentMethodScreen> {
         ),
       );
     }
+  }
+
+  void _listenForPaymentStatus(String reference) {
+    _paymentStatusSubscription?.cancel();
+    _paymentStatusSubscription = FirebaseFirestore.instance
+        .collection('payments')
+        .doc(reference)
+        .snapshots()
+        .listen((snapshot) {
+          if (snapshot.exists) {
+            final data = snapshot.data();
+            if (data != null && data['status'] == 'completed') {
+              setState(() {
+                _isPaymentSuccessful = true;
+                _isDimming = true;
+                _showOverlay = true;
+              });
+              _paymentStatusSubscription?.cancel();
+            }
+          }
+        });
   }
 
   @override

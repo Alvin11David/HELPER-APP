@@ -12,10 +12,12 @@ class NonProfessionalSelfieCaptureScreen extends StatefulWidget {
   const NonProfessionalSelfieCaptureScreen({super.key});
 
   @override
-  State<NonProfessionalSelfieCaptureScreen> createState() => _NonProfessionalSelfieCaptureScreenState();
+  State<NonProfessionalSelfieCaptureScreen> createState() =>
+      _NonProfessionalSelfieCaptureScreenState();
 }
 
-class _NonProfessionalSelfieCaptureScreenState extends State<NonProfessionalSelfieCaptureScreen> {
+class _NonProfessionalSelfieCaptureScreenState
+    extends State<NonProfessionalSelfieCaptureScreen> {
   static const _brandYellow = Color(0xFFFFC700);
   final ImagePicker _picker = ImagePicker();
   XFile? _selectedImage;
@@ -47,9 +49,9 @@ class _NonProfessionalSelfieCaptureScreenState extends State<NonProfessionalSelf
   }
 
   void _takePhoto() async {
-    final result = await Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (context) => NonProfessionalFaceScanScreen()));
+    final result = await Navigator.of(context).push(
+      MaterialPageRoute(builder: (context) => NonProfessionalFaceScanScreen()),
+    );
     if (result == 'uploaded') {
       Navigator.of(context).pop(true);
     } else if (result is XFile) {
@@ -86,7 +88,9 @@ class _NonProfessionalSelfieCaptureScreenState extends State<NonProfessionalSelf
       final file = File(_selectedImage!.path);
       final fileName =
           '${DateTime.now().millisecondsSinceEpoch}_${user.uid}.jpg';
-      final ref = FirebaseStorage.instance.ref().child('Selfies/$fileName');
+      final ref = FirebaseStorage.instance.ref().child(
+        'Non Professional Workers Selfies/$fileName',
+      );
       final uploadTask = await ref.putFile(file);
       final downloadUrl = await uploadTask.ref.getDownloadURL();
 
@@ -100,7 +104,8 @@ class _NonProfessionalSelfieCaptureScreenState extends State<NonProfessionalSelf
             'url': downloadUrl,
             'uploadedAt': FieldValue.serverTimestamp(),
             'type': 'selfie',
-            'storagePath': 'Selfies/$fileName',
+            'workerType': 'Non Professional Workers',
+            'storagePath': 'Non Professional Workers Selfies/$fileName',
           });
 
       setState(() => _isUploading = false);

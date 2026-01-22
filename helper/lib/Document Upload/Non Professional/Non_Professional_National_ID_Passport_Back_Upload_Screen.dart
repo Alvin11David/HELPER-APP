@@ -2,7 +2,7 @@ import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:helper/Document%20Upload/Non%20Professional/Non_Professional_National_ID_Passport_Back_Scan_Screen.dart';
-import 'package:helper/Document%20Upload/Non_Professional_Document_Upload_Screen.dart';
+import 'Non_Professional_Document_Upload_Screen.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -60,7 +60,9 @@ class _NonProfessionalNationalIdPassportBackUploadScreenState
     }
     try {
       final file = File(_selectedImage!.path);
-      final folder = selected == 0 ? 'National IDS' : 'Passport ID';
+      final folder = selected == 0
+          ? 'Non Professional Workers National IDS'
+          : 'Non Professional Workers Passport ID';
       final fileName =
           '${DateTime.now().millisecondsSinceEpoch}_${user.uid}_back.jpg';
       final ref = FirebaseStorage.instance.ref().child('$folder/$fileName');
@@ -78,6 +80,7 @@ class _NonProfessionalNationalIdPassportBackUploadScreenState
             'url': downloadUrl,
             'uploadedAt': FieldValue.serverTimestamp(),
             'type': docType,
+            'workerType': 'Non Professional Workers',
             'storagePath': '$folder/$fileName',
             'verified': true, // Mark as verified
           });

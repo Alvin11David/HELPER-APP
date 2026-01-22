@@ -85,7 +85,9 @@ class _SelfieCaptureScreenState extends State<SelfieCaptureScreen> {
       final file = File(_selectedImage!.path);
       final fileName =
           '${DateTime.now().millisecondsSinceEpoch}_${user.uid}.jpg';
-      final ref = FirebaseStorage.instance.ref().child('Selfies/$fileName');
+      final ref = FirebaseStorage.instance.ref().child(
+        'Non Professional Workers Selfies/$fileName',
+      );
       final uploadTask = await ref.putFile(file);
       final downloadUrl = await uploadTask.ref.getDownloadURL();
 
@@ -99,7 +101,8 @@ class _SelfieCaptureScreenState extends State<SelfieCaptureScreen> {
             'url': downloadUrl,
             'uploadedAt': FieldValue.serverTimestamp(),
             'type': 'selfie',
-            'storagePath': 'Selfies/$fileName',
+            'workerType': 'Non Professional Workers',
+            'storagePath': 'Non Professional Workers Selfies/$fileName',
           });
 
       setState(() => _isUploading = false);
