@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../Components/Side_Bar.dart';
+import 'package:helper/Components/user_avatar_circle.dart';
 
 class WorkersDashboardScreen extends StatefulWidget {
   const WorkersDashboardScreen({super.key});
@@ -109,17 +110,11 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Container(
-                                width: 40,
-                                height: 40,
-                                decoration: const BoxDecoration(
-                                  color: Colors.white,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  Icons.person,
-                                  color: Colors.black,
-                                ),
+                              const UserAvatarCircle(
+                                size: 40,
+                                backgroundColor: Colors.white,
+                                iconColor: Colors.black,
+                                borderWidth: 0,
                               ),
                               const SizedBox(width: 10),
                               Container(
