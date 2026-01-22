@@ -404,14 +404,22 @@ class _NationalIdPassportFrontUploadScreenState
                           onPressed: _selectedImage != null
                               ? null
                               : () {
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          NationalIdPassportFrontScanScreen(
-                                            selected: selected,
-                                          ),
-                                    ),
-                                  );
+                                  Navigator.of(context)
+                                      .push(
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              NationalIdPassportFrontScanScreen(
+                                                selected: selected,
+                                              ),
+                                        ),
+                                      )
+                                      .then((result) {
+                                        if (result is XFile) {
+                                          setState(() {
+                                            _selectedImage = result;
+                                          });
+                                        }
+                                      });
                                 },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFFDF8800),
@@ -539,7 +547,7 @@ class _NationalIdPassportFrontUploadScreenState
                         width: screenWidth * 0.9,
                         height: 48,
                         child: ElevatedButton(
-                          onPressed: _isUploading ? null : _uploadAndSave,
+                          onPressed: (_isUploading || _selectedImage == null) ? null : _uploadAndSave,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFFDF8800),
                             elevation: 0,
