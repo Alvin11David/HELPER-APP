@@ -135,7 +135,7 @@ class _NonProfessionalNationalIdPassportFrontUploadScreenState
   void _navigateToBack() {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => NationalIdPassportBackUploadScreen(
+        builder: (context) => NonProfessionalNationalIdPassportBackUploadScreen(
           selected: selected,
           initialImage: null,
         ),
