@@ -48,7 +48,7 @@ class _NonProfessionalNationalIdPassportFrontUploadScreenState
     }
     try {
       final file = File(_selectedImage!.path);
-      final folder = selected == 0 ? 'National IDS' : 'Passport ID';
+      final folder = selected == 0 ? 'Non Professional Workers National IDS' : 'Non Professional Workers Passport ID';
       final fileName =
           '${DateTime.now().millisecondsSinceEpoch}_${user.uid}.jpg';
       final ref = FirebaseStorage.instance.ref().child('$folder/$fileName');
@@ -66,6 +66,7 @@ class _NonProfessionalNationalIdPassportFrontUploadScreenState
             'url': downloadUrl,
             'uploadedAt': FieldValue.serverTimestamp(),
             'type': docType,
+            'workerType': 'Non Professional Workers',
             'storagePath': '$folder/$fileName',
           });
 

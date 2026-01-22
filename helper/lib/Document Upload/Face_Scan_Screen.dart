@@ -71,7 +71,9 @@ class _FaceScanScreenState extends State<FaceScanScreen> {
       if (user != null) {
         final fileName =
             '${DateTime.now().millisecondsSinceEpoch}_${user.uid}.jpg';
-        final ref = FirebaseStorage.instance.ref().child('Selfies/$fileName');
+        final ref = FirebaseStorage.instance.ref().child(
+          'Non Professional Workers Selfies/$fileName',
+        );
         await ref.putFile(File(_capturedImage.path));
         final downloadUrl = await ref.getDownloadURL();
 
@@ -85,7 +87,8 @@ class _FaceScanScreenState extends State<FaceScanScreen> {
               'url': downloadUrl,
               'uploadedAt': FieldValue.serverTimestamp(),
               'type': 'selfie',
-              'storagePath': 'Selfies/$fileName',
+              'workerType': 'Non Professional Workers',
+              'storagePath': 'Non Professional Workers Selfies/$fileName',
             });
 
         Navigator.of(context).pop('uploaded');
