@@ -19,6 +19,31 @@ class _SelfieCaptureScreenState extends State<SelfieCaptureScreen> {
   final ImagePicker _picker = ImagePicker();
   XFile? _selectedImage;
   bool _isUploading = false;
+  String? _existingImageUrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadExistingSelfie();
+  }
+
+  Future<void> _loadExistingSelfie() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('documents')
+          .doc('selfie')
+          .get();
+      if (doc.exists) {
+        final data = doc.data() as Map<String, dynamic>;
+        setState(() {
+          _existingImageUrl = data['url'];
+        });
+      }
+    }
+  }
 
   void _takePhoto() async {
     final result = await Navigator.of(
@@ -218,7 +243,8 @@ class _SelfieCaptureScreenState extends State<SelfieCaptureScreen> {
                                 height: h * 0.05,
                               ), // space before selfie frame (important)
 
-                              if (_selectedImage == null) ...[
+                              if (_selectedImage == null &&
+                                  _existingImageUrl == null) ...[
                                 // Framed preview with person.png
                                 _PreviewFrame(
                                   height: (h * 0.40).clamp(260.0, 360.0),
@@ -237,6 +263,58 @@ class _SelfieCaptureScreenState extends State<SelfieCaptureScreen> {
                                 SizedBox(
                                   height: h * 0.06,
                                 ), // space before buttons (important)
+                                // Take a photo button (yellow)
+                                _PrimaryButton(
+                                  text: 'Take a photo',
+                                  icon: Icons.photo_camera_rounded,
+                                  onTap: _takePhoto,
+                                  background: _brandYellow,
+                                  textColor: Colors.black,
+                                  iconColor: Colors.black,
+                                ),
+
+                                SizedBox(height: h * 0.018),
+
+                                // Gallery button (white)
+                                _PrimaryButton(
+                                  text: 'Gallery',
+                                  icon: Icons.photo_library_rounded,
+                                  onTap: _openGallery,
+                                  background: Colors.white,
+                                  textColor: Colors.black,
+                                  iconColor: Colors.black,
+                                ),
+                              ] else if (_selectedImage == null &&
+                                  _existingImageUrl != null) ...[
+                                // White stroke rectangle with existing image
+                                Container(
+                                  width: double.infinity,
+                                  height: (h * 0.40).clamp(260.0, 360.0),
+                                  decoration: BoxDecoration(
+                                    color: Colors.transparent,
+                                    borderRadius: BorderRadius.circular(22),
+                                    border: Border.all(
+                                      color: Colors.white,
+                                      width: 2,
+                                    ),
+                                  ),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(20),
+                                    child: Padding(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: w * 0.06,
+                                        vertical: h * 0.02,
+                                      ),
+                                      child: Image.network(
+                                        _existingImageUrl!,
+                                        fit: BoxFit.contain,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+
+                                SizedBox(height: h * 0.06),
+
                                 // Take a photo button (yellow)
                                 _PrimaryButton(
                                   text: 'Take a photo',
