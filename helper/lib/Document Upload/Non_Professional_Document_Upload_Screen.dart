@@ -4,7 +4,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'Selfie_Verification_Upload.dart';
+import 'Non_Professional_Selfie_Capture_Screen.dart';
 
 class NonProfessionalDocumentUploadScreen extends StatefulWidget {
   const NonProfessionalDocumentUploadScreen({super.key});
@@ -77,7 +77,7 @@ class _NonProfessionalDocumentUploadScreenState
       setState(() => _selectedRows.add(3));
       await Navigator.of(
         context,
-      ).push(MaterialPageRoute(builder: (context) => SelfieCaptureScreen()));
+      ).push(MaterialPageRoute(builder: (context) => NonProfessionalSelfieCaptureScreen()));
       // The StreamBuilder will update when the document is added
     }
 
