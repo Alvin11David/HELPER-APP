@@ -315,24 +315,24 @@ class _SelfieCaptureScreenState extends State<SelfieCaptureScreen> {
 
                                 SizedBox(height: h * 0.06),
 
-                                // Take a photo button (yellow)
+                                // Take a photo button (yellow) - disabled since image already exists
                                 _PrimaryButton(
                                   text: 'Take a photo',
                                   icon: Icons.photo_camera_rounded,
-                                  onTap: _takePhoto,
-                                  background: _brandYellow,
+                                  onTap: null,
+                                  background: Colors.grey,
                                   textColor: Colors.black,
                                   iconColor: Colors.black,
                                 ),
 
                                 SizedBox(height: h * 0.018),
 
-                                // Gallery button (white)
+                                // Gallery button (white) - disabled since image already exists
                                 _PrimaryButton(
                                   text: 'Gallery',
                                   icon: Icons.photo_library_rounded,
-                                  onTap: _openGallery,
-                                  background: Colors.white,
+                                  onTap: null,
+                                  background: Colors.grey,
                                   textColor: Colors.black,
                                   iconColor: Colors.black,
                                 ),
@@ -494,7 +494,7 @@ class _PreviewFrame extends StatelessWidget {
 class _PrimaryButton extends StatelessWidget {
   final String text;
   final IconData icon;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
   final Color background;
   final Color textColor;
   final Color iconColor;
