@@ -1,10 +1,12 @@
-import 'National_ID_Passport_Front_Upload_Screen.dart';
+import 'package:helper/Document%20Upload/Non%20Professional/Non_Professional_National_ID_Passport_Front_Upload_Screen.dart';
+
+import '../National_ID_Passport_Front_Upload_Screen.dart';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'Selfie_Verification_Upload.dart';
+import 'Non_Professional_Selfie_Capture_Screen.dart';
 
 class NonProfessionalDocumentUploadScreen extends StatefulWidget {
   const NonProfessionalDocumentUploadScreen({super.key});
@@ -67,7 +69,7 @@ class _NonProfessionalDocumentUploadScreenState
       final result = await Navigator.of(context).push(
         MaterialPageRoute(
           builder: (context) =>
-              NationalIdPassportFrontUploadScreen(selected: 0),
+              NonProfessionalNationalIdPassportFrontUploadScreen(selected: 0),
         ),
       );
       // No need to set local state, Firestore will update
@@ -77,7 +79,7 @@ class _NonProfessionalDocumentUploadScreenState
       setState(() => _selectedRows.add(3));
       await Navigator.of(
         context,
-      ).push(MaterialPageRoute(builder: (context) => SelfieCaptureScreen()));
+      ).push(MaterialPageRoute(builder: (context) => NonProfessionalSelfieCaptureScreen()));
       // The StreamBuilder will update when the document is added
     }
 
@@ -156,7 +158,7 @@ class _NonProfessionalDocumentUploadScreenState
                     SizedBox(height: h * 0.023),
                     _StepIndicator(
                       width: w,
-                      activeIndex: 0,
+                      activeIndex: 1,
                       labels: const ['1', '2', '3'],
                       accent: brandOrange,
                     ),
@@ -243,9 +245,13 @@ class _NonProfessionalDocumentUploadScreenState
                                     {};
                                 final isVerified =
                                     data['national_id_verified'] == true;
-                                WidgetsBinding.instance.addPostFrameCallback((_) {
+                                WidgetsBinding.instance.addPostFrameCallback((
+                                  _,
+                                ) {
                                   if (_nationalIdSubmitted != isVerified) {
-                                    setState(() => _nationalIdSubmitted = isVerified);
+                                    setState(
+                                      () => _nationalIdSubmitted = isVerified,
+                                    );
                                   }
                                 });
                                 return GestureDetector(
@@ -354,9 +360,13 @@ class _NonProfessionalDocumentUploadScreenState
                               builder: (context, snapshot) {
                                 final isSubmitted =
                                     snapshot.hasData && snapshot.data!.exists;
-                                WidgetsBinding.instance.addPostFrameCallback((_) {
+                                WidgetsBinding.instance.addPostFrameCallback((
+                                  _,
+                                ) {
                                   if (_selfieSubmitted != isSubmitted) {
-                                    setState(() => _selfieSubmitted = isSubmitted);
+                                    setState(
+                                      () => _selfieSubmitted = isSubmitted,
+                                    );
                                   }
                                 });
                                 return GestureDetector(

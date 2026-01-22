@@ -1,21 +1,23 @@
 import 'dart:io';
 import 'dart:ui';
+
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:google_ml_kit/google_ml_kit.dart';
-import 'package:helper/Document%20Upload/National_ID_Passport_Back_Upload_Screen.dart';
+import 'package:helper/Document%20Upload/National_ID_Passport_Front_Upload_Screen.dart';
+import 'package:helper/Document%20Upload/Non%20Professional/Non_Professional_National_ID_Passport_Front_Upload_Screen.dart';
 
-class NationalIdPassportBackScanScreen extends StatefulWidget {
+class NonProfessionalNationalIdPassportFrontScanScreen extends StatefulWidget {
   final int selected; // 0 for National ID, 1 for Passport
-  const NationalIdPassportBackScanScreen({super.key, required this.selected});
+  const NonProfessionalNationalIdPassportFrontScanScreen({super.key, required this.selected});
 
   @override
-  State<NationalIdPassportBackScanScreen> createState() =>
-      _NationalIdPassportBackScanScreenState();
+  State<NonProfessionalNationalIdPassportFrontScanScreen> createState() =>
+      _NonProfessionalNationalIdPassportFrontScanScreenState();
 }
 
-class _NationalIdPassportBackScanScreenState
-    extends State<NationalIdPassportBackScanScreen> {
+class _NonProfessionalNationalIdPassportFrontScanScreenState
+    extends State<NonProfessionalNationalIdPassportFrontScanScreen> {
   late CameraController _controller;
   Future<void>? _initializeControllerFuture;
   XFile? _capturedImage;
@@ -33,7 +35,9 @@ class _NationalIdPassportBackScanScreenState
   Future<void> _initializeCamera() async {
     final cameras = await availableCameras();
     final firstCamera = cameras.first;
+
     _controller = CameraController(firstCamera, ResolutionPreset.high);
+
     await _controller.initialize();
     _streamStartTime = DateTime.now();
     _controller.startImageStream(_processImage);
@@ -41,23 +45,37 @@ class _NationalIdPassportBackScanScreenState
 
   void _processImage(CameraImage image) async {
     if (_isAnalyzing || _capturedImage != null) return;
+
     // Wait for 6 seconds after stream starts before allowing capture
     if (_streamStartTime != null &&
         DateTime.now().difference(_streamStartTime!).inSeconds < 6) {
       return;
     }
+
     _isAnalyzing = true;
+
     final inputImage = _getInputImageFromCameraImage(image);
     if (inputImage == null) {
+      print('InputImage is null');
       _isAnalyzing = false;
       return;
     }
+
     final brightness = _calculateBrightness(image);
+    print('Brightness: $brightness');
     if (brightness < 0.1) {
+      // Lowered threshold for testing
       _isAnalyzing = false;
       return;
     }
+
+    // final recognizedText = await _textRecognizer.processImage(inputImage);
+    // print('Recognized text: ${recognizedText.text}');
+    // if (recognizedText.text.isNotEmpty) {
+    print('Brightness sufficient, capturing image');
     _captureImage();
+    // }
+
     _isAnalyzing = false;
   }
 
@@ -254,7 +272,9 @@ class _NationalIdPassportBackScanScreenState
                       ),
                       SizedBox(width: screenWidth * 0.06),
                       Text(
-                        _capturedImage != null ? 'ID Back Preview' : 'ID Back',
+                        _capturedImage != null
+                            ? 'ID Front Preview'
+                            : 'ID Front',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: screenWidth * 0.06,
@@ -266,7 +286,9 @@ class _NationalIdPassportBackScanScreenState
                   ),
                 ),
                 Positioned(
-                  top: screenHeight * 0.14,
+                  top:
+                      screenHeight *
+                      0.14, // Adjusted to reduce space from header
                   left: screenWidth * 0.10,
                   right: screenWidth * 0.10,
                   child: ClipRRect(
@@ -306,8 +328,8 @@ class _NationalIdPassportBackScanScreenState
                           children: [
                             Text(
                               _capturedImage != null
-                                  ? 'Preview the back of the ID'
-                                  : 'Place the back part of your ID in the frame',
+                                  ? 'Preview the front of the ID'
+                                  : 'Place the front part of your ID in the frame',
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: screenWidth * 0.034,
@@ -374,11 +396,12 @@ class _NationalIdPassportBackScanScreenState
                                           setState(() {
                                             _isVerifying = true;
                                           });
+                                          // Navigate to upload screen with image and selected
                                           final result =
                                               await Navigator.of(context).push(
                                                 MaterialPageRoute(
                                                   builder: (context) =>
-                                                      NationalIdPassportBackUploadScreen(
+                                                      NonProfessionalNationalIdPassportFrontUploadScreen(
                                                         selected:
                                                             widget.selected,
                                                         initialImage:
