@@ -85,7 +85,9 @@ class _SelfieCaptureScreenState extends State<SelfieCaptureScreen> {
       final file = File(_selectedImage!.path);
       final fileName =
           '${DateTime.now().millisecondsSinceEpoch}_${user.uid}.jpg';
-      final ref = FirebaseStorage.instance.ref().child('Non Professional Workers Selfies/$fileName');
+      final ref = FirebaseStorage.instance.ref().child(
+        'Non Professional Workers Selfies/$fileName',
+      );
       final uploadTask = await ref.putFile(file);
       final downloadUrl = await uploadTask.ref.getDownloadURL();
 
