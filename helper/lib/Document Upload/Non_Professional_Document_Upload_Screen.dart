@@ -156,7 +156,7 @@ class _NonProfessionalDocumentUploadScreenState
                     SizedBox(height: h * 0.023),
                     _StepIndicator(
                       width: w,
-                      activeIndex: 0,
+                      activeIndex: 1,
                       labels: const ['1', '2', '3'],
                       accent: brandOrange,
                     ),
@@ -243,9 +243,13 @@ class _NonProfessionalDocumentUploadScreenState
                                     {};
                                 final isVerified =
                                     data['national_id_verified'] == true;
-                                WidgetsBinding.instance.addPostFrameCallback((_) {
+                                WidgetsBinding.instance.addPostFrameCallback((
+                                  _,
+                                ) {
                                   if (_nationalIdSubmitted != isVerified) {
-                                    setState(() => _nationalIdSubmitted = isVerified);
+                                    setState(
+                                      () => _nationalIdSubmitted = isVerified,
+                                    );
                                   }
                                 });
                                 return GestureDetector(
@@ -354,9 +358,13 @@ class _NonProfessionalDocumentUploadScreenState
                               builder: (context, snapshot) {
                                 final isSubmitted =
                                     snapshot.hasData && snapshot.data!.exists;
-                                WidgetsBinding.instance.addPostFrameCallback((_) {
+                                WidgetsBinding.instance.addPostFrameCallback((
+                                  _,
+                                ) {
                                   if (_selfieSubmitted != isSubmitted) {
-                                    setState(() => _selfieSubmitted = isSubmitted);
+                                    setState(
+                                      () => _selfieSubmitted = isSubmitted,
+                                    );
                                   }
                                 });
                                 return GestureDetector(
