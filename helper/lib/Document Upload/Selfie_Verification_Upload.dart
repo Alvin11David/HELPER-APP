@@ -17,6 +17,7 @@ class _SelfieCaptureScreenState extends State<SelfieCaptureScreen> {
   static const _brandYellow = Color(0xFFFFC700);
   final ImagePicker _picker = ImagePicker();
   XFile? _selectedImage;
+  bool _isUploading = false;
 
   void _takePhoto() async {
     final XFile? image = await _picker.pickImage(source: ImageSource.camera);
@@ -39,8 +40,11 @@ class _SelfieCaptureScreenState extends State<SelfieCaptureScreen> {
   Future<void> _uploadSelfie() async {
     if (_selectedImage == null) return;
 
+    setState(() => _isUploading = true);
+
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
+      setState(() => _isUploading = false);
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('User not logged in.')));
@@ -68,6 +72,7 @@ class _SelfieCaptureScreenState extends State<SelfieCaptureScreen> {
             'storagePath': 'Selfies/$fileName',
           });
 
+      setState(() => _isUploading = false);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Selfie uploaded successfully!')),
       );
@@ -75,6 +80,7 @@ class _SelfieCaptureScreenState extends State<SelfieCaptureScreen> {
       // Navigate back
       Navigator.of(context).pop(true);
     } catch (e) {
+      setState(() => _isUploading = false);
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Upload failed: $e')));
@@ -296,18 +302,30 @@ class _SelfieCaptureScreenState extends State<SelfieCaptureScreen> {
                                       ],
                                     ),
                                     child: Center(
-                                      child: Text(
-                                        'Continue',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontFamily: 'Poppins',
-                                          fontWeight: FontWeight.w800,
-                                          fontSize: (w * 0.040).clamp(
-                                            14.0,
-                                            16.0,
-                                          ),
-                                        ),
-                                      ),
+                                      child: _isUploading
+                                          ? const SizedBox(
+                                              width: 24,
+                                              height: 24,
+                                              child: CircularProgressIndicator(
+                                                valueColor:
+                                                    AlwaysStoppedAnimation<
+                                                      Color
+                                                    >(Colors.white),
+                                                strokeWidth: 3,
+                                              ),
+                                            )
+                                          : Text(
+                                              'Continue',
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontFamily: 'Poppins',
+                                                fontWeight: FontWeight.w800,
+                                                fontSize: (w * 0.040).clamp(
+                                                  14.0,
+                                                  16.0,
+                                                ),
+                                              ),
+                                            ),
                                     ),
                                   ),
                                 ),
