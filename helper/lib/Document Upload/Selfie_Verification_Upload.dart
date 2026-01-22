@@ -24,7 +24,9 @@ class _SelfieCaptureScreenState extends State<SelfieCaptureScreen> {
     final result = await Navigator.of(
       context,
     ).push(MaterialPageRoute(builder: (context) => FaceScanScreen()));
-    if (result is XFile) {
+    if (result == 'uploaded') {
+      Navigator.of(context).pop(true);
+    } else if (result is XFile) {
       setState(() {
         _selectedImage = result;
       });

@@ -73,10 +73,10 @@ class _NonProfessionalDocumentUploadScreenState
 
     Future<void> _openSelfieUpload() async {
       setState(() => _selectedRows.add(3));
-      final result = await Navigator.of(
+      await Navigator.of(
         context,
       ).push(MaterialPageRoute(builder: (context) => SelfieCaptureScreen()));
-      // Handle result if needed
+      // The StreamBuilder will update when the document is added
     }
 
     return Scaffold(
@@ -211,7 +211,7 @@ class _NonProfessionalDocumentUploadScreenState
                     SizedBox(height: h * 0.05),
                     Container(
                       width: 361,
-                      height: 143,
+                      height: 146,
                       padding: EdgeInsets.all(w * 0.04),
                       alignment: Alignment.topCenter,
                       decoration: BoxDecoration(
@@ -337,63 +337,101 @@ class _NonProfessionalDocumentUploadScreenState
                               },
                             ),
                             SizedBox(height: h * 0.03),
-                            GestureDetector(
-                              onTap: _openSelfieUpload,
-                              child: Row(
-                                children: [
-                                  Container(
-                                    width: 36,
-                                    height: 36,
+                            StreamBuilder<DocumentSnapshot>(
+                              stream: FirebaseFirestore.instance
+                                  .collection('users')
+                                  .doc(FirebaseAuth.instance.currentUser!.uid)
+                                  .collection('documents')
+                                  .doc('selfie')
+                                  .snapshots(),
+                              builder: (context, snapshot) {
+                                final isSubmitted =
+                                    snapshot.hasData && snapshot.data!.exists;
+                                return GestureDetector(
+                                  onTap: _openSelfieUpload,
+                                  child: Container(
                                     decoration: BoxDecoration(
-                                      color: _selectedRows.contains(3)
+                                      color: isSubmitted
                                           ? const Color(0xFFFBBC04)
-                                          : const Color(0xFFD9D9D9),
-                                      shape: BoxShape.circle,
+                                          : null,
+                                      borderRadius: BorderRadius.circular(10),
                                     ),
-                                    child: Center(
-                                      child: Icon(
-                                        Icons.camera,
-                                        color: Colors.black,
-                                        size: 20,
-                                      ),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 8,
+                                      horizontal: 8,
                                     ),
-                                  ),
-                                  SizedBox(width: w * 0.018),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
+                                    child: Row(
                                       children: [
-                                        Text(
-                                          'Current Photo(Selfie)',
-                                          style: TextStyle(
-                                            color: _selectedRows.contains(3)
+                                        Container(
+                                          width: 36,
+                                          height: 36,
+                                          decoration: BoxDecoration(
+                                            color: isSubmitted
+                                                ? Colors.white
+                                                : _selectedRows.contains(3)
                                                 ? const Color(0xFFFBBC04)
-                                                : Colors.black,
-                                            fontSize: screenWidth * 0.032,
-                                            fontWeight: FontWeight.w800,
+                                                : const Color(0xFFD9D9D9),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: Center(
+                                            child: Icon(
+                                              Icons.camera,
+                                              color: Colors.black,
+                                              size: 20,
+                                            ),
                                           ),
                                         ),
-                                        Text(
-                                          'Not Verified',
-                                          style: TextStyle(
-                                            color: _selectedRows.contains(3)
-                                                ? const Color(0xFFFBBC04)
-                                                : Colors.black54,
-                                            fontSize: screenWidth * 0.035,
+                                        SizedBox(width: w * 0.018),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                'Current Photo(Selfie)',
+                                                style: TextStyle(
+                                                  color: isSubmitted
+                                                      ? Colors.white
+                                                      : _selectedRows.contains(
+                                                          3,
+                                                        )
+                                                      ? const Color(0xFFFBBC04)
+                                                      : Colors.black,
+                                                  fontSize: screenWidth * 0.032,
+                                                  fontWeight: FontWeight.w800,
+                                                ),
+                                              ),
+                                              Text(
+                                                isSubmitted
+                                                    ? 'Submitted For Verification'
+                                                    : 'Not Verified',
+                                                style: TextStyle(
+                                                  color: isSubmitted
+                                                      ? Colors.white
+                                                      : _selectedRows.contains(
+                                                          3,
+                                                        )
+                                                      ? const Color(0xFFFBBC04)
+                                                      : Colors.black54,
+                                                  fontSize: screenWidth * 0.035,
+                                                ),
+                                              ),
+                                            ],
                                           ),
+                                        ),
+                                        Icon(
+                                          Icons.chevron_right,
+                                          color: isSubmitted
+                                              ? Colors.white
+                                              : _selectedRows.contains(3)
+                                              ? const Color(0xFFFBBC04)
+                                              : Colors.black54,
                                         ),
                                       ],
                                     ),
                                   ),
-                                  Icon(
-                                    Icons.chevron_right,
-                                    color: _selectedRows.contains(3)
-                                        ? const Color(0xFFFBBC04)
-                                        : Colors.black54,
-                                  ),
-                                ],
-                              ),
+                                );
+                              },
                             ),
                           ],
                         ),
