@@ -1,4 +1,4 @@
-import 'National_ID_Passport_Front_Upload_Screen.dart';
+import '../National_ID_Passport_Front_Upload_Screen.dart';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
