@@ -42,6 +42,9 @@ class _NonProfessionalDocumentUploadScreenState
     bool loading = false;
     final formKey = GlobalKey<FormState>();
 
+    // Track verification status for National ID/Passport
+    bool _nationalIdPassportVerified = false;
+
     Future<void> onContinue() async {
       FocusScope.of(context).unfocus();
       if (!(formKey.currentState?.validate() ?? false)) return;
@@ -55,6 +58,21 @@ class _NonProfessionalDocumentUploadScreenState
 
       if (!mounted) return;
       setState(() => loading = false);
+    }
+
+    Future<void> _openNationalIdPassportUpload() async {
+      setState(() => _selectedRows.add(0));
+      final result = await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) =>
+              NationalIdPassportFrontUploadScreen(selected: 0),
+        ),
+      );
+      if (result == true) {
+        setState(() {
+          _nationalIdPassportVerified = true;
+        });
+      }
     }
 
     return Scaffold(
@@ -200,17 +218,7 @@ class _NonProfessionalDocumentUploadScreenState
                         child: Column(
                           children: [
                             GestureDetector(
-                              onTap: () {
-                                setState(() => _selectedRows.add(0));
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        NationalIdPassportFrontUploadScreen(
-                                          selected: 0,
-                                        ),
-                                  ),
-                                );
-                              },
+                              onTap: _openNationalIdPassportUpload,
                               child: Row(
                                 children: [
                                   Container(
@@ -239,19 +247,25 @@ class _NonProfessionalDocumentUploadScreenState
                                         Text(
                                           'National ID/Passport',
                                           style: TextStyle(
-                                            color: _selectedRows.contains(0)
+                                            color: _nationalIdPassportVerified
                                                 ? const Color(0xFFFBBC04)
-                                                : Colors.black,
+                                                : (_selectedRows.contains(0)
+                                                      ? const Color(0xFFFBBC04)
+                                                      : Colors.black),
                                             fontSize: screenWidth * 0.032,
                                             fontWeight: FontWeight.w800,
                                           ),
                                         ),
                                         Text(
-                                          'Not Verified',
+                                          _nationalIdPassportVerified
+                                              ? 'Verified'
+                                              : 'Not Verified',
                                           style: TextStyle(
-                                            color: _selectedRows.contains(0)
+                                            color: _nationalIdPassportVerified
                                                 ? const Color(0xFFFBBC04)
-                                                : Colors.black54,
+                                                : (_selectedRows.contains(0)
+                                                      ? const Color(0xFFFBBC04)
+                                                      : Colors.black54),
                                             fontSize: screenWidth * 0.035,
                                           ),
                                         ),
