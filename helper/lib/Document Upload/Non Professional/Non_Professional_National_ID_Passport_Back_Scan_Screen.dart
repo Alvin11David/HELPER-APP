@@ -5,17 +5,17 @@ import 'package:flutter/material.dart';
 import 'package:google_ml_kit/google_ml_kit.dart';
 import 'package:helper/Document%20Upload/National_ID_Passport_Back_Upload_Screen.dart';
 
-class NationalIdPassportBackScanScreen extends StatefulWidget {
+class NonProfessionalNationalIdPassportBackScanScreen extends StatefulWidget {
   final int selected; // 0 for National ID, 1 for Passport
-  const NationalIdPassportBackScanScreen({super.key, required this.selected});
+  const NonProfessionalNationalIdPassportBackScanScreen({super.key, required this.selected});
 
   @override
-  State<NationalIdPassportBackScanScreen> createState() =>
-      _NationalIdPassportBackScanScreenState();
+  State<NonProfessionalNationalIdPassportBackScanScreen> createState() =>
+      _NonProfessionalNationalIdPassportBackScanScreenState();
 }
 
-class _NationalIdPassportBackScanScreenState
-    extends State<NationalIdPassportBackScanScreen> {
+class _NonProfessionalNationalIdPassportBackScanScreenState
+    extends State<NonProfessionalNationalIdPassportBackScanScreen> {
   late CameraController _controller;
   Future<void>? _initializeControllerFuture;
   XFile? _capturedImage;

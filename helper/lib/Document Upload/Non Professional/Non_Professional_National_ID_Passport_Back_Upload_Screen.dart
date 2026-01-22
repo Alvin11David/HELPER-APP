@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:helper/Document%20Upload/Non_Professional_Document_Upload_Screen.dart';
 import 'package:image_picker/image_picker.dart';
 import 'National_ID_Passport_Back_Scan_Screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -8,22 +9,22 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'Non Professional/Non_Professional_Document_Upload_Screen.dart';
 
-class NationalIdPassportBackUploadScreen extends StatefulWidget {
+class NonProfessionalNationalIdPassportBackUploadScreen extends StatefulWidget {
   final int selected;
   final XFile? initialImage;
-  const NationalIdPassportBackUploadScreen({
+  const NonProfessionalNationalIdPassportBackUploadScreen({
     super.key,
     required this.selected,
     this.initialImage,
   });
 
   @override
-  State<NationalIdPassportBackUploadScreen> createState() =>
-      _NationalIdPassportBackUploadScreenState();
+  State<NonProfessionalNationalIdPassportBackUploadScreen> createState() =>
+      _NonProfessionalNationalIdPassportBackUploadScreenState();
 }
 
-class _NationalIdPassportBackUploadScreenState
-    extends State<NationalIdPassportBackUploadScreen> {
+class _NonProfessionalNationalIdPassportBackUploadScreenState
+    extends State<NonProfessionalNationalIdPassportBackUploadScreen> {
   late int selected;
   final ImagePicker _picker = ImagePicker();
   XFile? _selectedImage;
@@ -425,7 +426,7 @@ class _NationalIdPassportBackUploadScreenState
                             Navigator.of(context).push(
                               MaterialPageRoute(
                                 builder: (context) =>
-                                    NationalIdPassportBackScanScreen(
+                                    NonProfessionalNationalIdPassportBackScanScreen(
                                       selected: selected,
                                     ),
                               ),
