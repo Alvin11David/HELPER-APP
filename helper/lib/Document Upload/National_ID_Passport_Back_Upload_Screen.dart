@@ -94,6 +94,12 @@ class _NationalIdPassportBackUploadScreenState
     }
   }
 
+  void _removeImage() {
+    setState(() {
+      _selectedImage = null;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final double screenWidth = MediaQuery.of(context).size.width;
@@ -482,7 +488,6 @@ class _NationalIdPassportBackUploadScreenState
                           children: [
                             Center(
                               child: Image.file(
-                                // ignore: prefer_const_constructors
                                 File(_selectedImage!.path),
                                 fit: BoxFit.contain,
                                 width: screenWidth * 0.8,
@@ -492,11 +497,7 @@ class _NationalIdPassportBackUploadScreenState
                               top: 8,
                               right: 8,
                               child: GestureDetector(
-                                onTap: () {
-                                  setState(() {
-                                    _selectedImage = null;
-                                  });
-                                },
+                                onTap: _removeImage,
                                 child: Container(
                                   decoration: BoxDecoration(
                                     color: Colors.black.withOpacity(0.5),
@@ -519,7 +520,9 @@ class _NationalIdPassportBackUploadScreenState
                         width: screenWidth * 0.9,
                         height: 48,
                         child: ElevatedButton(
-                          onPressed: _isUploading ? null : _uploadAndSave,
+                          onPressed: (_isUploading || _selectedImage == null)
+                              ? null
+                              : _uploadAndSave,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFFDF8800),
                             elevation: 0,

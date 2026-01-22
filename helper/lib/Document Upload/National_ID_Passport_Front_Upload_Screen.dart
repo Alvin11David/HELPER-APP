@@ -547,7 +547,9 @@ class _NationalIdPassportFrontUploadScreenState
                         width: screenWidth * 0.9,
                         height: 48,
                         child: ElevatedButton(
-                          onPressed: (_isUploading || _selectedImage == null) ? null : _uploadAndSave,
+                          onPressed: (_isUploading || _selectedImage == null)
+                              ? null
+                              : _uploadAndSave,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFFDF8800),
                             elevation: 0,
