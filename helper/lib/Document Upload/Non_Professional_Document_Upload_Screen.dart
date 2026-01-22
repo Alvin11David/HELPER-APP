@@ -18,6 +18,8 @@ class _NonProfessionalDocumentUploadScreenState
     extends State<NonProfessionalDocumentUploadScreen> {
   bool _loading = false;
   final Set<int> _selectedRows = {};
+  bool _nationalIdSubmitted = false;
+  bool _selfieSubmitted = false;
   final _formKey = GlobalKey<FormState>();
 
   Future<void> _onContinue() async {
@@ -241,6 +243,11 @@ class _NonProfessionalDocumentUploadScreenState
                                     {};
                                 final isVerified =
                                     data['national_id_verified'] == true;
+                                WidgetsBinding.instance.addPostFrameCallback((_) {
+                                  if (_nationalIdSubmitted != isVerified) {
+                                    setState(() => _nationalIdSubmitted = isVerified);
+                                  }
+                                });
                                 return GestureDetector(
                                   onTap: _openNationalIdPassportUpload,
                                   child: Container(
@@ -347,6 +354,11 @@ class _NonProfessionalDocumentUploadScreenState
                               builder: (context, snapshot) {
                                 final isSubmitted =
                                     snapshot.hasData && snapshot.data!.exists;
+                                WidgetsBinding.instance.addPostFrameCallback((_) {
+                                  if (_selfieSubmitted != isSubmitted) {
+                                    setState(() => _selfieSubmitted = isSubmitted);
+                                  }
+                                });
                                 return GestureDetector(
                                   onTap: _openSelfieUpload,
                                   child: Container(
@@ -444,8 +456,8 @@ class _NonProfessionalDocumentUploadScreenState
                       height: h * 0.062,
                       child: ElevatedButton(
                         onPressed:
-                            (_selectedRows.contains(0) &&
-                                _selectedRows.contains(3) &&
+                            (_nationalIdSubmitted &&
+                                _selfieSubmitted &&
                                 !loading)
                             ? onContinue
                             : null,
