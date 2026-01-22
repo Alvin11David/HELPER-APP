@@ -189,7 +189,7 @@ class _NonProfessionalDocumentUploadScreenState
                     SizedBox(height: h * 0.05),
                     Container(
                       width: 361,
-                      height: 120,
+                      height: 138,
                       padding: EdgeInsets.all(w * 0.04),
                       alignment: Alignment.topCenter,
                       decoration: BoxDecoration(
@@ -200,14 +200,16 @@ class _NonProfessionalDocumentUploadScreenState
                         child: Column(
                           children: [
                             GestureDetector(
-                              onTap: () {
-                                setState(() => _selectedRows.add(0));
-                                Navigator.of(context).push(
+                              onTap: () async {
+                                final result = await Navigator.of(context).push(
                                   MaterialPageRoute(
                                     builder: (context) =>
                                         const NationalIdPassportFrontUploadScreen(),
                                   ),
                                 );
+                                if (result == true) {
+                                  setState(() => _selectedRows.add(0));
+                                }
                               },
                               child: Row(
                                 children: [

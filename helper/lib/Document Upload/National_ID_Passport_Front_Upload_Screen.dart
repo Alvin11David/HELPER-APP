@@ -2,7 +2,11 @@ import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:helper/Document Upload/National_ID_Passport_Front_Scan_Screen.dart';
+import 'package:helper/Document Upload/National_ID_Passport_Back_Upload_Screen.dart';
 
 class NationalIdPassportFrontUploadScreen extends StatefulWidget {
   const NationalIdPassportFrontUploadScreen({super.key});
@@ -17,6 +21,64 @@ class _NationalIdPassportFrontUploadScreenState
   int selected = 0;
   XFile? _selectedImage;
   final ImagePicker _picker = ImagePicker();
+  bool _isUploading = false;
+
+  Future<void> _uploadAndSave() async {
+    if (_selectedImage == null) return;
+    setState(() => _isUploading = true);
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      setState(() => _isUploading = false);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('User not logged in.')));
+      return;
+    }
+    try {
+      final file = File(_selectedImage!.path);
+      final folder = selected == 0 ? 'National IDS' : 'Passport ID';
+      final fileName =
+          '${DateTime.now().millisecondsSinceEpoch}_${user.uid}.jpg';
+      final ref = FirebaseStorage.instance.ref().child('$folder/$fileName');
+      final uploadTask = await ref.putFile(file);
+      final downloadUrl = await uploadTask.ref.getDownloadURL();
+
+      // Save to Firestore under user's collection
+      final docType = selected == 0 ? 'national_id' : 'passport_id';
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('documents')
+          .doc(docType)
+          .set({
+            'url': downloadUrl,
+            'uploadedAt': FieldValue.serverTimestamp(),
+            'type': docType,
+            'storagePath': '$folder/$fileName',
+          });
+
+      setState(() => _isUploading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Front uploaded! Now upload the back.')),
+      );
+      // Navigate to back upload screen and only pop with true if both are uploaded
+      final result = await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => const NationalIdPassportBackUploadScreen(),
+        ),
+      );
+      if (result == true) {
+        Navigator.of(
+          context,
+        ).pop(true); // Only mark row orange if both sides uploaded
+      }
+    } catch (e) {
+      setState(() => _isUploading = false);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Upload failed: $e')));
+    }
+  }
 
   Future<void> _pickImageFromGallery() async {
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
@@ -317,7 +379,8 @@ class _NationalIdPassportFrontUploadScreenState
                           onPressed: () {
                             Navigator.of(context).push(
                               MaterialPageRoute(
-                                builder: (context) => const NationalIdPassportFrontScanScreen(),
+                                builder: (context) =>
+                                    const NationalIdPassportFrontScanScreen(),
                               ),
                             );
                           },
@@ -400,9 +463,9 @@ class _NationalIdPassportFrontUploadScreenState
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                       const SizedBox(height: 70),
+                      const SizedBox(height: 70),
                       Container(
-                        width: screenWidth * 0.7,
+                        width: screenWidth * 0.9,
                         height: screenWidth * 0.7,
                         decoration: BoxDecoration(
                           border: Border.all(color: Colors.white, width: 4),
@@ -412,9 +475,16 @@ class _NationalIdPassportFrontUploadScreenState
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(16),
                           child: _selectedImage != null
-                              ? Image.file(
-                                  File(_selectedImage!.path),
-                                  fit: BoxFit.cover,
+                              ? Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Image.file(
+                                      File(_selectedImage!.path),
+                                      fit: BoxFit.contain,
+                                      width: screenWidth * 0.8,
+                                      // Optionally adjust height if needed
+                                    ),
+                                  ],
                                 )
                               : null,
                         ),
@@ -424,9 +494,7 @@ class _NationalIdPassportFrontUploadScreenState
                         width: screenWidth * 0.9,
                         height: 48,
                         child: ElevatedButton(
-                          onPressed: () {
-                            // TODO: Add continue logic
-                          },
+                          onPressed: _isUploading ? null : _uploadAndSave,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFFDF8800),
                             elevation: 0,
@@ -434,15 +502,26 @@ class _NationalIdPassportFrontUploadScreenState
                               borderRadius: BorderRadius.circular(30),
                             ),
                           ),
-                          child: const Text(
-                            'Continue',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                              fontFamily: 'Inter',
-                            ),
-                          ),
+                          child: _isUploading
+                              ? const SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.white,
+                                    ),
+                                    strokeWidth: 3,
+                                  ),
+                                )
+                              : const Text(
+                                  'Continue',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                    fontFamily: 'Inter',
+                                  ),
+                                ),
                         ),
                       ),
                     ],
