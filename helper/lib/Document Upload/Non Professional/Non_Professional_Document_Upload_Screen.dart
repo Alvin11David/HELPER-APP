@@ -1,3 +1,5 @@
+import 'package:helper/Document%20Upload/Non%20Professional/Non_Professional_National_ID_Passport_Front_Upload_Screen.dart';
+
 import '../National_ID_Passport_Front_Upload_Screen.dart';
 import 'dart:ui';
 
@@ -67,7 +69,7 @@ class _NonProfessionalDocumentUploadScreenState
       final result = await Navigator.of(context).push(
         MaterialPageRoute(
           builder: (context) =>
-              NationalIdPassportFrontUploadScreen(selected: 0),
+              NonProfessionalNationalIdPassportFrontUploadScreen(selected: 0),
         ),
       );
       // No need to set local state, Firestore will update
