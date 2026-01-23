@@ -73,6 +73,8 @@ class _NationalIdPassportBackUploadScreenState
           .collection('users')
           .doc(user.uid)
           .collection('documents')
+          .doc('Professional Workers')
+            .collection('Professional Workers')
           .doc(docType)
           .set({
             'url': downloadUrl,
@@ -84,8 +86,8 @@ class _NationalIdPassportBackUploadScreenState
 
       // Also update main verification status for the row (assuming a field in user's main doc)
       final mainDocField = selected == 0
-          ? 'national_id_verified'
-          : 'passport_id_verified';
+          ? 'professional_workers_national_id_verified'
+          : 'professional_workers_passport_id_verified';
       await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
         mainDocField: true,
       }, SetOptions(merge: true));
