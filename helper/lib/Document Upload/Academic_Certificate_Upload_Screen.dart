@@ -455,7 +455,7 @@ class _AcademicCertificateUploadScreenState
                           hintText: 'Search your Profession here',
                           hintStyle: TextStyle(
                             color: Colors.grey,
-                            fontSize: screenWidth * 0.045,
+                            fontSize: screenWidth * 0.043,
                             fontFamily: 'Inter',
                             fontWeight: FontWeight.w600,
                           ),
@@ -550,7 +550,7 @@ class _AcademicCertificateUploadScreenState
                         ? 'Selected Professions will appear here'
                         : selectedProfessions.join(', '),
                     style: TextStyle(
-                      fontSize: screenWidth * 0.04,
+                      fontSize: screenWidth * 0.035,
                       fontWeight: FontWeight.w500,
                       fontFamily: 'Inter',
                     ),
