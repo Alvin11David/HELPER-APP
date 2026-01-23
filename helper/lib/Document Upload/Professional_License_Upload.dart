@@ -116,7 +116,8 @@ class _ProfessionalLicenseUploadScreenState
 
     if (doc.exists && doc.data()!.containsKey('Professional License')) {
       setState(() {
-        _existingDocument = doc.data()!['Professional License'] as Map<String, dynamic>;
+        _existingDocument =
+            doc.data()!['Professional License'] as Map<String, dynamic>;
         _selectedType = _existingDocument!['type'];
       });
     }
@@ -566,9 +567,11 @@ class _ProfessionalLicenseUploadScreenState
                                       child: Text('Truck Driver License'),
                                     ),
                                   ],
-                                  onChanged: _existingDocument != null ? null : (val) {
-                                    setState(() => _selectedType = val);
-                                  },
+                                  onChanged: _existingDocument != null
+                                      ? null
+                                      : (val) {
+                                          setState(() => _selectedType = val);
+                                        },
                                 ),
                               ),
                             ),
@@ -581,7 +584,11 @@ class _ProfessionalLicenseUploadScreenState
                             height: (h * 0.26).clamp(180, 240),
                             selectedFile: _selectedFile,
                             existingDocument: _existingDocument,
-                            onTap: _selectedFile == null && _existingDocument == null ? _uploadFile : null,
+                            onTap:
+                                _selectedFile == null &&
+                                    _existingDocument == null
+                                ? _uploadFile
+                                : null,
                             onRemove: () =>
                                 setState(() => _selectedFile = null),
                           ),
@@ -609,12 +616,16 @@ class _ProfessionalLicenseUploadScreenState
 
                           // Continue button
                           GestureDetector(
-                            onTap: _loading || _existingDocument != null ? null : _onContinue,
+                            onTap: _loading || _existingDocument != null
+                                ? null
+                                : _onContinue,
                             child: Container(
                               width: double.infinity,
                               height: 54,
                               decoration: BoxDecoration(
-                                color: _brandYellow,
+                                color: _loading || _existingDocument != null
+                                    ? Colors.grey
+                                    : _brandYellow,
                                 borderRadius: BorderRadius.circular(30),
                                 boxShadow: [
                                   BoxShadow(
@@ -635,7 +646,9 @@ class _ProfessionalLicenseUploadScreenState
                                     : Text(
                                         'Continue →',
                                         style: TextStyle(
-                                          color: Colors.black,
+                                          color: _loading || _existingDocument != null
+                                              ? Colors.white
+                                              : Colors.black,
                                           fontFamily: 'Poppins',
                                           fontWeight: FontWeight.w900,
                                           fontSize: (w * 0.040).clamp(14, 16),
@@ -664,89 +677,97 @@ class _ProfessionalLicenseUploadScreenState
                                 width: double.infinity,
                                 height: 54,
                                 child: ElevatedButton(
-                                  onPressed: _existingDocument != null ? null : () {
-                                    showModalBottomSheet(
-                                      context: context,
-                                      isScrollControlled: true,
-                                      backgroundColor: Colors.transparent,
-                                      builder: (context) => Container(
-                                        decoration: const BoxDecoration(
-                                          color: Colors.white,
-                                          borderRadius: BorderRadius.only(
-                                            topLeft: Radius.circular(30),
-                                            topRight: Radius.circular(30),
-                                          ),
-                                        ),
-                                        padding: const EdgeInsets.all(20),
-                                        child: Column(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Text(
-                                              'Profession',
-                                              style: TextStyle(
-                                                color: Colors.black,
-                                                fontFamily: 'Inter',
-                                                fontWeight: FontWeight.w900,
-                                                fontSize: 16,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 10),
-                                            TextField(
-                                              controller: _professionController,
-                                              decoration: InputDecoration(
-                                                hintText:
-                                                    'Add Your profession here',
-                                                border: OutlineInputBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(30),
+                                  onPressed: _existingDocument != null
+                                      ? null
+                                      : () {
+                                          showModalBottomSheet(
+                                            context: context,
+                                            isScrollControlled: true,
+                                            backgroundColor: Colors.transparent,
+                                            builder: (context) => Container(
+                                              decoration: const BoxDecoration(
+                                                color: Colors.white,
+                                                borderRadius: BorderRadius.only(
+                                                  topLeft: Radius.circular(30),
+                                                  topRight: Radius.circular(30),
                                                 ),
                                               ),
-                                            ),
-                                            const SizedBox(height: 20),
-                                            SizedBox(
-                                              width: double.infinity,
-                                              height: 54,
-                                              child: ElevatedButton(
-                                                onPressed: () {
-                                                  setState(() {
-                                                    _selectedType =
-                                                        _professionController
-                                                            .text
-                                                            .trim();
-                                                  });
-                                                  Navigator.pop(context);
-                                                },
-                                                style: ElevatedButton.styleFrom(
-                                                  backgroundColor: _brandYellow,
-                                                  foregroundColor: Colors.black,
-                                                  elevation: 4,
-                                                  shadowColor: Colors.black
-                                                      .withOpacity(0.2),
-                                                  shape: RoundedRectangleBorder(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          30,
-                                                        ),
-                                                  ),
-                                                ),
-                                                child: Text(
-                                                  'Continue',
-                                                  style: TextStyle(
-                                                    fontFamily: 'Poppins',
-                                                    fontWeight: FontWeight.w900,
-                                                    fontSize: (w * 0.040).clamp(
-                                                      14,
-                                                      16,
+                                              padding: const EdgeInsets.all(20),
+                                              child: Column(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Text(
+                                                    'Profession',
+                                                    style: TextStyle(
+                                                      color: Colors.black,
+                                                      fontFamily: 'Inter',
+                                                      fontWeight:
+                                                          FontWeight.w900,
+                                                      fontSize: 16,
                                                     ),
                                                   ),
-                                                ),
+                                                  const SizedBox(height: 10),
+                                                  TextField(
+                                                    controller:
+                                                        _professionController,
+                                                    decoration: InputDecoration(
+                                                      hintText:
+                                                          'Add Your profession here',
+                                                      border: OutlineInputBorder(
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                              30,
+                                                            ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  const SizedBox(height: 20),
+                                                  SizedBox(
+                                                    width: double.infinity,
+                                                    height: 54,
+                                                    child: ElevatedButton(
+                                                      onPressed: () {
+                                                        setState(() {
+                                                          _selectedType =
+                                                              _professionController
+                                                                  .text
+                                                                  .trim();
+                                                        });
+                                                        Navigator.pop(context);
+                                                      },
+                                                      style: ElevatedButton.styleFrom(
+                                                        backgroundColor:
+                                                            _brandYellow,
+                                                        foregroundColor:
+                                                            Colors.black,
+                                                        elevation: 4,
+                                                        shadowColor: Colors
+                                                            .black
+                                                            .withOpacity(0.2),
+                                                        shape: RoundedRectangleBorder(
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                                30,
+                                                              ),
+                                                        ),
+                                                      ),
+                                                      child: Text(
+                                                        'Continue',
+                                                        style: TextStyle(
+                                                          fontFamily: 'Poppins',
+                                                          fontWeight:
+                                                              FontWeight.w900,
+                                                          fontSize: (w * 0.040)
+                                                              .clamp(14, 16),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
                                               ),
                                             ),
-                                          ],
-                                        ),
-                                      ),
-                                    );
-                                  },
+                                          );
+                                        },
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.white,
                                     foregroundColor: Colors.black,
@@ -871,11 +892,7 @@ class _DashedUploadBox extends StatelessWidget {
                     padding: const EdgeInsets.all(16),
                     child: Row(
                       children: [
-                        Icon(
-                          Icons.description,
-                          color: Colors.white,
-                          size: 40,
-                        ),
+                        Icon(Icons.description, color: Colors.white, size: 40),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
