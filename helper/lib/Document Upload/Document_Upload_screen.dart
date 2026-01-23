@@ -285,7 +285,7 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                                               'National ID/Passport',
                                               style: TextStyle(
                                                 color: bothUploaded
-                                                    ? Colors.white
+                                                    ? Colors.orange
                                                     : (_selectedIndex == 0
                                                           ? const Color(
                                                               0xFFFBBC04,
@@ -301,7 +301,7 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                                                   : 'Not Verified',
                                               style: TextStyle(
                                                 color: bothUploaded
-                                                    ? Colors.black
+                                                    ? Colors.orange
                                                     : (_selectedIndex == 0
                                                           ? const Color(
                                                               0xFFFBBC04,
@@ -316,7 +316,7 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                                       Icon(
                                         Icons.chevron_right,
                                         color: bothUploaded
-                                            ? Colors.white
+                                            ? Colors.orange
                                             : (_selectedIndex == 0
                                                   ? const Color(0xFFFBBC04)
                                                   : Colors.black54),
