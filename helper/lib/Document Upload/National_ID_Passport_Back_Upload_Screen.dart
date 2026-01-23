@@ -99,7 +99,7 @@ class _NationalIdPassportBackUploadScreenState
       // Navigate to NonProfessionalDocumentUploadScreen
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (context) => const NonProfessionalDocumentUploadScreen(),
+          builder: (context) => const DocumentUploadScreen(),
         ),
       );
     } catch (e) {
