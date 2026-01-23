@@ -689,7 +689,7 @@ class _AcademicCertificateUploadScreenState
                           Icon(Icons.upload, color: Colors.white, size: 40),
                           const SizedBox(height: 2),
                           Text(
-                            'Upload File',
+                            'Select File',
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 16,
@@ -728,7 +728,7 @@ class _AcademicCertificateUploadScreenState
               left: (screenWidth - 190) / 2,
               child: Center(
                 child: GestureDetector(
-                  onTap: _pickFile,
+                  onTap: _uploadToFirebase,
                   child: Container(
                     width: screenWidth * 0.5,
                     height: 40,
