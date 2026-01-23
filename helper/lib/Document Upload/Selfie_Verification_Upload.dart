@@ -38,9 +38,15 @@ class _SelfieCaptureScreenState extends State<SelfieCaptureScreen> {
           .get();
       if (doc.exists) {
         final data = doc.data() as Map<String, dynamic>;
-        setState(() {
-          _existingImageUrl = data['url'];
-        });
+        // Only load if the storage path matches the new format
+        if (data['storagePath'] != null &&
+            data['storagePath'].startsWith(
+              'users/${user.uid}/documents/Professional Workers/',
+            )) {
+          setState(() {
+            _existingImageUrl = data['url'];
+          });
+        }
       }
     }
   }
@@ -83,10 +89,8 @@ class _SelfieCaptureScreenState extends State<SelfieCaptureScreen> {
 
     try {
       final file = File(_selectedImage!.path);
-      final fileName =
-          '${DateTime.now().millisecondsSinceEpoch}_${user.uid}.jpg';
       final ref = FirebaseStorage.instance.ref().child(
-        'Non Professional Workers Selfies/$fileName',
+        'users/${user.uid}/documents/Professional Workers/selfieimage.jpg',
       );
       final uploadTask = await ref.putFile(file);
       final downloadUrl = await uploadTask.ref.getDownloadURL();
@@ -101,8 +105,9 @@ class _SelfieCaptureScreenState extends State<SelfieCaptureScreen> {
             'url': downloadUrl,
             'uploadedAt': FieldValue.serverTimestamp(),
             'type': 'selfie',
-            'workerType': 'Non Professional Workers',
-            'storagePath': 'Non Professional Workers Selfies/$fileName',
+            'workerType': 'Professional Workers',
+            'storagePath':
+                'users/${user.uid}/documents/Professional Workers/selfieimage.jpg',
           });
 
       setState(() => _isUploading = false);
