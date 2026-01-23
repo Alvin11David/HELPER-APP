@@ -59,17 +59,34 @@ class _NationalIdPassportFrontUploadScreenState
       final docType = selected == 0
           ? 'professional_workers_national_id_front'
           : 'professional_workers_passport_id_front';
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .collection('Professional Workers')
-          .doc(docType)
-          .set({
-            'url': downloadUrl,
-            'uploadedAt': FieldValue.serverTimestamp(),
-            'type': docType,
-            'storagePath': '$folder/$fileName',
-          });
+      // Store under users/{uid}/documents/Professional Workers/{docType} for professional workers
+      if (selected == 0) {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .collection('documents')
+            .doc('Professional Workers')
+            .collection('Professional Workers')
+            .doc(docType)
+            .set({
+              'url': downloadUrl,
+              'uploadedAt': FieldValue.serverTimestamp(),
+              'type': docType,
+              'storagePath': '$folder/$fileName',
+            });
+      } else {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .collection('documents')
+            .doc(docType)
+            .set({
+              'url': downloadUrl,
+              'uploadedAt': FieldValue.serverTimestamp(),
+              'type': docType,
+              'storagePath': '$folder/$fileName',
+            });
+      }
 
       setState(() => _isUploading = false);
       ScaffoldMessenger.of(context).showSnackBar(
