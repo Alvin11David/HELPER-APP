@@ -117,6 +117,7 @@ class _AcademicCertificateUploadScreenState
 
       // Navigate back to DocumentUploadScreen
       Navigator.of(context).pop();
+      Navigator.of(context).pop();
     } catch (e) {
       ScaffoldMessenger.of(
         context,
