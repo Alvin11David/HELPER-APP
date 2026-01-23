@@ -636,6 +636,41 @@ class _AcademicCertificateUploadScreenState
                 ),
               ),
             ),
+          if (_selectedFile != null)
+            Positioned(
+              top: screenHeight * 0.33 + 220,
+              left: (screenWidth - screenWidth * 0.9) / 2,
+              child: Container(
+                width: screenWidth * 0.9,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        _selectedFile!.name,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontFamily: 'Inter',
+                        ),
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: _removeFile,
+                      child: Icon(
+                        Icons.delete,
+                        color: Colors.white,
+                        size: 24,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           Positioned(
             bottom: screenHeight * 0.05,
             left: (screenWidth - 290) / 2,
