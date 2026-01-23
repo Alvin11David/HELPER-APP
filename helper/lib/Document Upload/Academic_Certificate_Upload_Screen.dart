@@ -728,24 +728,26 @@ class _AcademicCertificateUploadScreenState
               left: (screenWidth - 190) / 2,
               child: Center(
                 child: GestureDetector(
-                  onTap: _uploadToFirebase,
+                  onTap: _isUploading ? null : _uploadToFirebase,
                   child: Container(
                     width: screenWidth * 0.5,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: _isUploading ? Colors.grey : Colors.white,
                       borderRadius: BorderRadius.circular(30),
                     ),
                     child: Center(
-                      child: Text(
-                        'Upload',
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          fontFamily: 'Inter',
-                        ),
-                      ),
+                      child: _isUploading
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : Text(
+                              'Upload',
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'Inter',
+                              ),
+                            ),
                     ),
                   ),
                 ),
@@ -818,35 +820,6 @@ class _AcademicCertificateUploadScreenState
               ),
             ),
           ),
-          if (_selectedFile != null && _selectedProfession != null)
-            Positioned(
-              bottom: screenHeight * 0.05 + 50,
-              left: (screenWidth - 290) / 2,
-              child: GestureDetector(
-                onTap: _isUploading ? null : _uploadToFirebase,
-                child: Container(
-                  width: 290,
-                  height: 38,
-                  decoration: BoxDecoration(
-                    color: _isUploading ? Colors.grey : Colors.blue,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Center(
-                    child: _isUploading
-                        ? const CircularProgressIndicator(color: Colors.black)
-                        : Text(
-                            'Upload to Firebase',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: screenWidth * 0.04,
-                              fontWeight: FontWeight.w500,
-                              fontFamily: 'Inter',
-                            ),
-                          ),
-                  ),
-                ),
-              ),
-            ),
         ],
       ),
     );
