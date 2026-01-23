@@ -1,6 +1,13 @@
 import 'dart:ui';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:helper/Document%20Upload/National_ID_Passport_Front_Upload_Screen.dart';
+import 'package:helper/Document%20Upload/Academic_Certificate_Upload_Screen.dart';
+import 'package:helper/Document%20Upload/Professional_License_Upload.dart';
+import 'package:helper/Document%20Upload/Selfie_Verification_Upload.dart';
+import 'package:rxdart/rxdart.dart';
 
 class DocumentUploadScreen extends StatefulWidget {
   const DocumentUploadScreen({super.key});
@@ -13,6 +20,7 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
   bool _loading = false;
   int _selectedIndex = -1;
   final _formKey = GlobalKey<FormState>();
+  bool _nationalIdSubmitted = false;
 
   Future<void> _onContinue() async {
     FocusScope.of(context).unfocus();
@@ -27,6 +35,37 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
 
     if (!mounted) return;
     setState(() => _loading = false);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _checkNationalIdSubmission();
+  }
+
+  Future<void> _checkNationalIdSubmission() async {
+    final user = await Future.value(
+      null,
+    ); // Replace with FirebaseAuth.instance.currentUser if available
+    // TODO: Replace with actual user check if needed
+    // For demo, just check Firestore for the document
+    // Uncomment and use the following if Firebase is available:
+    /*
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+    final docType = 'professional_workers_national_id_back';
+    final doc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .collection('documents')
+        .doc('Professional Workers')
+        .collection('Professional Workers')
+        .doc(docType)
+        .get();
+    setState(() {
+      _nationalIdSubmitted = doc.exists;
+    });
+    */
   }
 
   @override
@@ -129,7 +168,7 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                     SizedBox(height: h * 0.023),
                     _StepIndicator(
                       width: w,
-                      activeIndex: 0,
+                      activeIndex: 2,
                       labels: const ['1', '2', '3'],
                       accent: brandOrange,
                     ),
@@ -186,7 +225,7 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                     SizedBox(height: h * 0.05),
                     Container(
                       width: 361,
-                      height: 244,
+                      height: 249,
                       padding: EdgeInsets.all(w * 0.04),
                       alignment: Alignment.topCenter,
                       decoration: BoxDecoration(
@@ -196,240 +235,366 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                       child: SingleChildScrollView(
                         child: Column(
                           children: [
-                            GestureDetector(
-                              onTap: () => setState(() => _selectedIndex = 0),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    width: 36,
-                                    height: 36,
-                                    decoration: BoxDecoration(
-                                      color: _selectedIndex == 0
-                                          ? const Color(0xFFFBBC04)
-                                          : const Color(0xFFD9D9D9),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: Center(
-                                      child: Image.asset(
-                                        'assets/icons/nationalid.png',
-                                        width: 20,
-                                        height: 20,
+                            // Replace National ID/Passport row with a StreamBuilder that listens to Firestore for both front and back uploads
+                            StreamBuilder<List<bool>>(
+                              stream: _nationalIdVerificationStream(),
+                              builder: (context, snapshot) {
+                                final bothUploaded =
+                                    snapshot.data != null &&
+                                    snapshot.data!.every((v) => v);
+                                return GestureDetector(
+                                  onTap: () async {
+                                    setState(() => _selectedIndex = 0);
+                                    await Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            NationalIdPassportFrontUploadScreen(
+                                              selected: 0,
+                                            ),
                                       ),
-                                    ),
-                                  ),
-                                  SizedBox(width: w * 0.018),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          'National ID/Passport',
-                                          style: TextStyle(
-                                            color: _selectedIndex == 0
-                                                ? const Color(0xFFFBBC04)
-                                                : Colors.black,
-                                            fontSize: screenWidth * 0.032,
-                                            fontWeight: FontWeight.w800,
+                                    );
+                                  },
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        width: 36,
+                                        height: 36,
+                                        decoration: BoxDecoration(
+                                          color: bothUploaded
+                                              ? const Color(0xFFFBBC04)
+                                              : (_selectedIndex == 0
+                                                    ? const Color(0xFFFBBC04)
+                                                    : const Color(0xFFD9D9D9)),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Center(
+                                          child: Image.asset(
+                                            'assets/icons/nationalid.png',
+                                            width: 20,
+                                            height: 20,
+                                            color: bothUploaded
+                                                ? Colors.white
+                                                : null,
                                           ),
                                         ),
-                                        Text(
-                                          'Not Verified',
-                                          style: TextStyle(
-                                            color: _selectedIndex == 0
-                                                ? const Color(0xFFFBBC04)
-                                                : Colors.black54,
-                                            fontSize: screenWidth * 0.035,
-                                          ),
+                                      ),
+                                      SizedBox(width: w * 0.018),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              'National ID/Passport',
+                                              style: TextStyle(
+                                                color: bothUploaded
+                                                    ? Colors.orange
+                                                    : (_selectedIndex == 0
+                                                          ? const Color(
+                                                              0xFFFBBC04,
+                                                            )
+                                                          : Colors.black),
+                                                fontSize: screenWidth * 0.032,
+                                                fontWeight: FontWeight.w800,
+                                              ),
+                                            ),
+                                            Text(
+                                              bothUploaded
+                                                  ? 'Submitted For Verification'
+                                                  : 'Not Verified',
+                                              style: TextStyle(
+                                                color: bothUploaded
+                                                    ? Colors.orange
+                                                    : (_selectedIndex == 0
+                                                          ? const Color(
+                                                              0xFFFBBC04,
+                                                            )
+                                                          : Colors.black54),
+                                                fontSize: screenWidth * 0.035,
+                                              ),
+                                            ),
+                                          ],
                                         ),
-                                      ],
-                                    ),
+                                      ),
+                                      Icon(
+                                        Icons.chevron_right,
+                                        color: bothUploaded
+                                            ? Colors.orange
+                                            : (_selectedIndex == 0
+                                                  ? const Color(0xFFFBBC04)
+                                                  : Colors.black54),
+                                      ),
+                                    ],
                                   ),
-                                  Icon(
-                                    Icons.chevron_right,
-                                    color: _selectedIndex == 0
-                                        ? const Color(0xFFFBBC04)
-                                        : Colors.black54,
-                                  ),
-                                ],
-                              ),
+                                );
+                              },
                             ),
                             SizedBox(height: h * 0.03),
-                            GestureDetector(
-                              onTap: () => setState(() => _selectedIndex = 1),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    width: 36,
-                                    height: 36,
-                                    decoration: BoxDecoration(
-                                      color: _selectedIndex == 1
-                                          ? const Color(0xFFFBBC04)
-                                          : const Color(0xFFD9D9D9),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: Center(
-                                      child: Image.asset(
-                                        'assets/icons/academic.png',
-                                        width: 20,
-                                        height: 20,
+                            StreamBuilder<bool>(
+                              stream: _academicCertificateVerificationStream(),
+                              builder: (context, snapshot) {
+                                final uploaded = snapshot.data ?? false;
+                                return GestureDetector(
+                                  onTap: () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            AcademicCertificateUploadScreen(),
                                       ),
-                                    ),
-                                  ),
-                                  SizedBox(width: w * 0.018),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          'Academic Certificates',
-                                          style: TextStyle(
-                                            color: _selectedIndex == 1
-                                                ? const Color(0xFFFBBC04)
-                                                : Colors.black,
-                                            fontSize: screenWidth * 0.032,
-                                            fontWeight: FontWeight.w800,
+                                    );
+                                  },
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        width: 36,
+                                        height: 36,
+                                        decoration: BoxDecoration(
+                                          color: uploaded
+                                              ? const Color(0xFFFBBC04)
+                                              : (_selectedIndex == 1
+                                                    ? const Color(0xFFFBBC04)
+                                                    : const Color(0xFFD9D9D9)),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Center(
+                                          child: Image.asset(
+                                            'assets/icons/academic.png',
+                                            width: 20,
+                                            height: 20,
+                                            color: uploaded
+                                                ? Colors.white
+                                                : null,
                                           ),
                                         ),
-                                        Text(
-                                          'Not Verified',
-                                          style: TextStyle(
-                                            color: _selectedIndex == 1
-                                                ? const Color(0xFFFBBC04)
-                                                : Colors.black54,
-                                            fontSize: screenWidth * 0.035,
-                                          ),
+                                      ),
+                                      SizedBox(width: w * 0.018),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              'Academic Certificates',
+                                              style: TextStyle(
+                                                color: uploaded
+                                                    ? Colors.orange
+                                                    : (_selectedIndex == 1
+                                                          ? const Color(
+                                                              0xFFFBBC04,
+                                                            )
+                                                          : Colors.black),
+                                                fontSize: screenWidth * 0.032,
+                                                fontWeight: FontWeight.w800,
+                                              ),
+                                            ),
+                                            Text(
+                                              uploaded
+                                                  ? 'Submitted For Verification'
+                                                  : 'Not Verified',
+                                              style: TextStyle(
+                                                color: uploaded
+                                                    ? Colors.orange
+                                                    : (_selectedIndex == 1
+                                                          ? const Color(
+                                                              0xFFFBBC04,
+                                                            )
+                                                          : Colors.black54),
+                                                fontSize: screenWidth * 0.035,
+                                              ),
+                                            ),
+                                          ],
                                         ),
-                                      ],
-                                    ),
+                                      ),
+                                      Icon(
+                                        Icons.chevron_right,
+                                        color: uploaded
+                                            ? Colors.orange
+                                            : (_selectedIndex == 1
+                                                  ? const Color(0xFFFBBC04)
+                                                  : Colors.black54),
+                                      ),
+                                    ],
                                   ),
-                                  Icon(
-                                    Icons.chevron_right,
-                                    color: _selectedIndex == 1
-                                        ? const Color(0xFFFBBC04)
-                                        : Colors.black54,
-                                  ),
-                                ],
-                              ),
+                                );
+                              },
                             ),
                             SizedBox(height: h * 0.03),
-                            GestureDetector(
-                              onTap: () => setState(() => _selectedIndex = 2),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    width: 36,
-                                    height: 36,
-                                    decoration: BoxDecoration(
-                                      color: _selectedIndex == 2
-                                          ? const Color(0xFFFBBC04)
-                                          : const Color(0xFFD9D9D9),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: Center(
-                                      child: Image.asset(
-                                        'assets/icons/license.png',
-                                        width: 20,
-                                        height: 20,
+                            StreamBuilder<bool>(
+                              stream: _professionalLicenseVerificationStream(),
+                              builder: (context, snapshot) {
+                                final uploaded = snapshot.data ?? false;
+                                return GestureDetector(
+                                  onTap: () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            ProfessionalLicenseUploadScreen(),
                                       ),
-                                    ),
-                                  ),
-                                  SizedBox(width: w * 0.018),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          'Professional Licenses',
-                                          style: TextStyle(
-                                            color: _selectedIndex == 2
-                                                ? const Color(0xFFFBBC04)
-                                                : Colors.black,
-                                            fontSize: screenWidth * 0.032,
-                                            fontWeight: FontWeight.w800,
+                                    );
+                                  },
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        width: 36,
+                                        height: 36,
+                                        decoration: BoxDecoration(
+                                          color: uploaded
+                                              ? const Color(0xFFFBBC04)
+                                              : (_selectedIndex == 2
+                                                    ? const Color(0xFFFBBC04)
+                                                    : const Color(0xFFD9D9D9)),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Center(
+                                          child: Image.asset(
+                                            'assets/icons/license.png',
+                                            width: 20,
+                                            height: 20,
+                                            color: uploaded
+                                                ? Colors.white
+                                                : null,
                                           ),
                                         ),
-                                        Text(
-                                          'Not Verified',
-                                          style: TextStyle(
-                                            color: _selectedIndex == 2
-                                                ? const Color(0xFFFBBC04)
-                                                : Colors.black54,
-                                            fontSize: screenWidth * 0.035,
-                                          ),
+                                      ),
+                                      SizedBox(width: w * 0.018),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              'Professional Licenses',
+                                              style: TextStyle(
+                                                color: uploaded
+                                                    ? Colors.orange
+                                                    : (_selectedIndex == 2
+                                                          ? const Color(
+                                                              0xFFFBBC04,
+                                                            )
+                                                          : Colors.black),
+                                                fontSize: screenWidth * 0.032,
+                                                fontWeight: FontWeight.w800,
+                                              ),
+                                            ),
+                                            Text(
+                                              uploaded
+                                                  ? 'Submitted For Verification'
+                                                  : 'Not Verified',
+                                              style: TextStyle(
+                                                color: uploaded
+                                                    ? Colors.orange
+                                                    : (_selectedIndex == 2
+                                                          ? const Color(
+                                                              0xFFFBBC04,
+                                                            )
+                                                          : Colors.black54),
+                                                fontSize: screenWidth * 0.035,
+                                              ),
+                                            ),
+                                          ],
                                         ),
-                                      ],
-                                    ),
+                                      ),
+                                      Icon(
+                                        Icons.chevron_right,
+                                        color: uploaded
+                                            ? Colors.orange
+                                            : (_selectedIndex == 2
+                                                  ? const Color(0xFFFBBC04)
+                                                  : Colors.black54),
+                                      ),
+                                    ],
                                   ),
-                                  Icon(
-                                    Icons.chevron_right,
-                                    color: _selectedIndex == 2
-                                        ? const Color(0xFFFBBC04)
-                                        : Colors.black54,
-                                  ),
-                                ],
-                              ),
+                                );
+                              },
                             ),
                             SizedBox(height: h * 0.03),
-                            GestureDetector(
-                              onTap: () => setState(() => _selectedIndex = 3),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    width: 36,
-                                    height: 36,
-                                    decoration: BoxDecoration(
-                                      color: _selectedIndex == 3
-                                          ? const Color(0xFFFBBC04)
-                                          : const Color(0xFFD9D9D9),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: Center(
-                                      child: Icon(
-                                        Icons.camera,
-                                        color: Colors.black,
-                                        size: 20,
+                            StreamBuilder<bool>(
+                              stream: _selfieVerificationStream(),
+                              builder: (context, snapshot) {
+                                final uploaded = snapshot.data ?? false;
+                                return GestureDetector(
+                                  onTap: () async {
+                                    setState(() => _selectedIndex = 3);
+                                    await Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            SelfieCaptureScreen(),
                                       ),
-                                    ),
-                                  ),
-                                  SizedBox(width: w * 0.018),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          'Current Photo(Selfie)',
-                                          style: TextStyle(
-                                            color: _selectedIndex == 3
-                                                ? const Color(0xFFFBBC04)
+                                    );
+                                  },
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        width: 36,
+                                        height: 36,
+                                        decoration: BoxDecoration(
+                                          color: uploaded
+                                              ? const Color(0xFFFBBC04)
+                                              : (_selectedIndex == 3
+                                                    ? const Color(0xFFFBBC04)
+                                                    : const Color(0xFFD9D9D9)),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Center(
+                                          child: Icon(
+                                            Icons.camera,
+                                            color: uploaded
+                                                ? Colors.white
                                                 : Colors.black,
-                                            fontSize: screenWidth * 0.032,
-                                            fontWeight: FontWeight.w800,
+                                            size: 20,
                                           ),
                                         ),
-                                        Text(
-                                          'Not Verified',
-                                          style: TextStyle(
-                                            color: _selectedIndex == 3
-                                                ? const Color(0xFFFBBC04)
-                                                : Colors.black54,
-                                            fontSize: screenWidth * 0.035,
-                                          ),
+                                      ),
+                                      SizedBox(width: w * 0.018),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              '`Current Photo(Selfie)`',
+                                              style: TextStyle(
+                                                color: uploaded
+                                                    ? Colors.orange
+                                                    : (_selectedIndex == 3
+                                                          ? const Color(
+                                                              0xFFFBBC04,
+                                                            )
+                                                          : Colors.black),
+                                                fontSize: screenWidth * 0.032,
+                                                fontWeight: FontWeight.w800,
+                                              ),
+                                            ),
+                                            Text(
+                                              uploaded
+                                                  ? 'Submitted For Verification'
+                                                  : 'Not Verified',
+                                              style: TextStyle(
+                                                color: uploaded
+                                                    ? Colors.orange
+                                                    : (_selectedIndex == 3
+                                                          ? const Color(
+                                                              0xFFFBBC04,
+                                                            )
+                                                          : Colors.black54),
+                                                fontSize: screenWidth * 0.035,
+                                              ),
+                                            ),
+                                          ],
                                         ),
-                                      ],
-                                    ),
+                                      ),
+                                      Icon(
+                                        Icons.chevron_right,
+                                        color: uploaded
+                                            ? Colors.orange
+                                            : (_selectedIndex == 3
+                                                  ? const Color(0xFFFBBC04)
+                                                  : Colors.black54),
+                                      ),
+                                    ],
                                   ),
-                                  Icon(
-                                    Icons.chevron_right,
-                                    color: _selectedIndex == 3
-                                        ? const Color(0xFFFBBC04)
-                                        : Colors.black54,
-                                  ),
-                                ],
-                              ),
+                                );
+                              },
                             ),
                           ],
                         ),
@@ -437,54 +602,64 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                     ),
                     SizedBox(height: h * 0.06),
                     // Continue (white)
-                    SizedBox(
-                      width: double.infinity,
-                      height: h * 0.062,
-                      child: ElevatedButton(
-                        onPressed: loading ? null : onContinue,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(0XFFFBBC04),
-                          disabledBackgroundColor: Color(
-                            0XFFFBBC04,
-                          ).withOpacity(0.6),
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                        ),
-                        child: loading
-                            ? SizedBox(
-                                width: h * 0.03,
-                                height: h * 0.03,
-                                child: const CircularProgressIndicator(
-                                  strokeWidth: 3,
-                                  color: Colors.black,
-                                ),
-                              )
-                            : Center(
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      'Continue',
-                                      style: TextStyle(
-                                        fontSize: w * 0.045,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.black,
-                                        fontFamily: 'Poppins',
-                                      ),
-                                    ),
-                                    SizedBox(width: w * 0.02),
-                                    Icon(
-                                      Icons.arrow_forward_rounded,
-                                      color: Colors.black,
-                                      size: h * 0.035,
-                                    ),
-                                  ],
-                                ),
+                    StreamBuilder<bool>(
+                      stream: _allDocumentsUploadedStream(),
+                      builder: (context, snapshot) {
+                        final allUploaded = snapshot.data ?? false;
+                        return SizedBox(
+                          width: double.infinity,
+                          height: h * 0.062,
+                          child: ElevatedButton(
+                            onPressed: allUploaded
+                                ? () {
+                                    // TODO: Navigate to next screen
+                                    print(
+                                      'Continue pressed - all documents uploaded!',
+                                    );
+                                  }
+                                : null,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: allUploaded
+                                  ? const Color(0XFFFBBC04)
+                                  : Color(0XFFFBBC04).withOpacity(0.6),
+                              disabledBackgroundColor: Color(
+                                0XFFFBBC04,
+                              ).withOpacity(0.6),
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
                               ),
-                      ),
+                            ),
+                            child: Center(
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    'Continue',
+                                    style: TextStyle(
+                                      fontSize: w * 0.045,
+                                      fontWeight: FontWeight.bold,
+                                      color: allUploaded
+                                          ? Colors.black
+                                          : Colors.black.withOpacity(0.5),
+                                      fontFamily: 'Poppins',
+                                    ),
+                                  ),
+                                  SizedBox(width: w * 0.02),
+                                  Icon(
+                                    Icons.arrow_forward_rounded,
+                                    color: allUploaded
+                                        ? Colors.black
+                                        : Colors.black.withOpacity(0.5),
+                                    size: h * 0.035,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ],
                 ),
@@ -647,4 +822,110 @@ class DashedLinePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(DashedLinePainter oldDelegate) => false;
+}
+
+// Helper: Listen to both front and back uploads for National ID/Passport
+Stream<List<bool>> _nationalIdVerificationStream() {
+  final user = FirebaseAuth.instance.currentUser;
+  if (user == null) {
+    return Stream.value([false, false]);
+  }
+
+  final baseRef = FirebaseFirestore.instance
+      .collection('users')
+      .doc(user.uid)
+      .collection('documents')
+      .doc('Professional Workers')
+      .collection('Professional Workers');
+
+  final frontStream = baseRef
+      .doc('professional_workers_national_id_front')
+      .snapshots();
+
+  final backStream = baseRef
+      .doc('professional_workers_national_id_back')
+      .snapshots();
+
+  return Rx.combineLatest2<DocumentSnapshot, DocumentSnapshot, List<bool>>(
+    frontStream,
+    backStream,
+    (front, back) => [front.exists, back.exists],
+  );
+}
+
+// Helper: Listen to Academic Certificate upload
+Stream<bool> _academicCertificateVerificationStream() {
+  final user = FirebaseAuth.instance.currentUser;
+  if (user == null) {
+    return Stream.value(false);
+  }
+
+  return FirebaseFirestore.instance
+      .collection('users')
+      .doc(user.uid)
+      .collection('documents')
+      .doc('Professional Workers')
+      .snapshots()
+      .map(
+        (doc) => doc.exists && doc.data()!.containsKey('Academic Certificate'),
+      );
+}
+
+// Helper: Listen to Professional License upload
+Stream<bool> _professionalLicenseVerificationStream() {
+  final user = FirebaseAuth.instance.currentUser;
+  if (user == null) {
+    return Stream.value(false);
+  }
+
+  return FirebaseFirestore.instance
+      .collection('users')
+      .doc(user.uid)
+      .collection('documents')
+      .doc('Professional Workers')
+      .snapshots()
+      .map(
+        (doc) => doc.exists && doc.data()!.containsKey('Professional License'),
+      );
+}
+
+// Helper: Listen to Selfie upload
+Stream<bool> _selfieVerificationStream() {
+  final user = FirebaseAuth.instance.currentUser;
+  if (user == null) {
+    return Stream.value(false);
+  }
+
+  return FirebaseFirestore.instance
+      .collection('users')
+      .doc(user.uid)
+      .collection('documents')
+      .doc('selfie')
+      .snapshots()
+      .map((doc) => doc.exists);
+}
+
+// Helper: Combined stream to check if all required documents are uploaded
+Stream<bool> _allDocumentsUploadedStream() {
+  final user = FirebaseAuth.instance.currentUser;
+  if (user == null) {
+    return Stream.value(false);
+  }
+
+  final nationalIdStream = _nationalIdVerificationStream();
+  final selfieStream = _selfieVerificationStream();
+  final academicStream = _academicCertificateVerificationStream();
+  final licenseStream = _professionalLicenseVerificationStream();
+
+  return Rx.combineLatest4<List<bool>, bool, bool, bool, bool>(
+    nationalIdStream,
+    selfieStream,
+    academicStream,
+    licenseStream,
+    (nationalId, selfie, academic, license) {
+      final nationalIdUploaded = nationalId.every((v) => v);
+      final eitherCertificateOrLicense = academic || license;
+      return nationalIdUploaded && selfie && eitherCertificateOrLicense;
+    },
+  );
 }

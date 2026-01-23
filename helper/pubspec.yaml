@@ -63,6 +63,10 @@ dependencies:
   # Google Sign-In
   google_sign_in: ^6.2.1
   firebase_storage: ^12.4.10
+  # For combining streams
+  rxdart: ^0.28.0
+  # For file picking
+  file_picker: ^10.0.0
 
 dev_dependencies:
   flutter_test:
