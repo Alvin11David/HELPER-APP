@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:helper/Document%20Upload/National_ID_Passport_Front_Upload_Screen.dart';
 import 'package:helper/Document%20Upload/Academic_Certificate_Upload_Screen.dart';
+import 'package:helper/Document%20Upload/Professional_License_Upload.dart';
 import 'package:rxdart/rxdart.dart';
 
 class DocumentUploadScreen extends StatefulWidget {
@@ -418,7 +419,13 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                             ),
                             SizedBox(height: h * 0.03),
                             GestureDetector(
-                              onTap: () => setState(() => _selectedIndex = 2),
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) => ProfessionalLicenseUploadScreen(),
+                                  ),
+                                );
+                              },
                               child: Row(
                                 children: [
                                   Container(

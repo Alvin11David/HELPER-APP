@@ -163,7 +163,8 @@ class _AcademicCertificateUploadScreenState
         _isAlreadyUploaded = true;
         _uploadedProfession = data['profession'] as String?;
         _uploadedFileUrl = data['url'] as String?;
-        if (_uploadedProfession != null && !selectedProfessions.contains(_uploadedProfession!)) {
+        if (_uploadedProfession != null &&
+            !selectedProfessions.contains(_uploadedProfession!)) {
           selectedProfessions.add(_uploadedProfession!);
         }
       });
@@ -575,18 +576,21 @@ class _AcademicCertificateUploadScreenState
                     );
                   });
                 },
-                onSelected: _isAlreadyUploaded ? null : (String selection) {
-                  setState(() {
-                    if (!searchHistory.contains(selection)) {
-                      searchHistory.insert(0, selection);
-                      if (searchHistory.length > 5) searchHistory.removeLast();
-                    }
-                    if (!selectedProfessions.contains(selection)) {
-                      selectedProfessions.add(selection);
-                    }
-                    _selectedProfession = selection;
-                  });
-                },
+                onSelected: _isAlreadyUploaded
+                    ? null
+                    : (String selection) {
+                        setState(() {
+                          if (!searchHistory.contains(selection)) {
+                            searchHistory.insert(0, selection);
+                            if (searchHistory.length > 5)
+                              searchHistory.removeLast();
+                          }
+                          if (!selectedProfessions.contains(selection)) {
+                            selectedProfessions.add(selection);
+                          }
+                          _selectedProfession = selection;
+                        });
+                      },
                 fieldViewBuilder:
                     (
                       BuildContext context,
@@ -599,10 +603,19 @@ class _AcademicCertificateUploadScreenState
                         focusNode: focusNode,
                         enabled: !_isAlreadyUploaded,
                         decoration: InputDecoration(
-                          prefixIcon: Icon(Icons.search, color: _isAlreadyUploaded ? Colors.grey : Colors.black),
-                          hintText: _isAlreadyUploaded ? 'Profession already selected' : 'Search your Profession here',
+                          prefixIcon: Icon(
+                            Icons.search,
+                            color: _isAlreadyUploaded
+                                ? Colors.grey
+                                : Colors.black,
+                          ),
+                          hintText: _isAlreadyUploaded
+                              ? 'Profession already selected'
+                              : 'Search your Profession here',
                           hintStyle: TextStyle(
-                            color: _isAlreadyUploaded ? Colors.grey : Colors.grey,
+                            color: _isAlreadyUploaded
+                                ? Colors.grey
+                                : Colors.grey,
                             fontSize: screenWidth * 0.043,
                             fontFamily: 'Inter',
                             fontWeight: FontWeight.w600,
@@ -718,13 +731,20 @@ class _AcademicCertificateUploadScreenState
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(25),
-                        border: Border.all(color: Colors.white.withOpacity(0.4), width: 2),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.4),
+                          width: 2,
+                        ),
                       ),
                       child: Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.check_circle, color: Colors.green, size: 40),
+                            Icon(
+                              Icons.check_circle,
+                              color: Colors.green,
+                              size: 40,
+                            ),
                             const SizedBox(height: 10),
                             Text(
                               'Certificate Uploaded',
@@ -763,7 +783,11 @@ class _AcademicCertificateUploadScreenState
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.upload, color: Colors.white, size: 40),
+                                Icon(
+                                  Icons.upload,
+                                  color: Colors.white,
+                                  size: 40,
+                                ),
                                 const SizedBox(height: 2),
                                 Text(
                                   'Select File',
@@ -805,19 +829,25 @@ class _AcademicCertificateUploadScreenState
               left: (screenWidth - 190) / 2,
               child: Center(
                 child: GestureDetector(
-                  onTap: (_isUploading || _isAlreadyUploaded) ? null : _uploadToFirebase,
+                  onTap: (_isUploading || _isAlreadyUploaded)
+                      ? null
+                      : _uploadToFirebase,
                   child: Container(
                     width: screenWidth * 0.5,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: (_isUploading || _isAlreadyUploaded) ? Colors.grey : Colors.white,
+                      color: (_isUploading || _isAlreadyUploaded)
+                          ? Colors.grey
+                          : Colors.white,
                       borderRadius: BorderRadius.circular(30),
                     ),
                     child: Center(
                       child: _isUploading
                           ? const CircularProgressIndicator(color: Colors.white)
                           : Text(
-                              _isAlreadyUploaded ? 'Already Uploaded' : 'Upload',
+                              _isAlreadyUploaded
+                                  ? 'Already Uploaded'
+                                  : 'Upload',
                               style: TextStyle(
                                 color: Colors.black,
                                 fontSize: 16,
@@ -830,7 +860,8 @@ class _AcademicCertificateUploadScreenState
                 ),
               ),
             ),
-          if (selectedProfessions.isNotEmpty && (_selectedFile != null || _isAlreadyUploaded))
+          if (selectedProfessions.isNotEmpty &&
+              (_selectedFile != null || _isAlreadyUploaded))
             Positioned(
               top: screenHeight * 0.33 + 280,
               left: (screenWidth - screenWidth * 0.8) / 2,
@@ -845,7 +876,9 @@ class _AcademicCertificateUploadScreenState
                   children: [
                     Expanded(
                       child: Text(
-                        _isAlreadyUploaded ? 'Academic Certificate' : _selectedFile!.name,
+                        _isAlreadyUploaded
+                            ? 'Academic Certificate'
+                            : _selectedFile!.name,
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 14,
@@ -856,7 +889,11 @@ class _AcademicCertificateUploadScreenState
                     if (!_isAlreadyUploaded)
                       GestureDetector(
                         onTap: _removeFile,
-                        child: Icon(Icons.delete, color: Colors.white, size: 24),
+                        child: Icon(
+                          Icons.delete,
+                          color: Colors.white,
+                          size: 24,
+                        ),
                       ),
                   ],
                 ),
@@ -866,13 +903,15 @@ class _AcademicCertificateUploadScreenState
             bottom: screenHeight * 0.05,
             left: (screenWidth - 290) / 2,
             child: GestureDetector(
-              onTap: _isAlreadyUploaded ? null : () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => AddProfessionScreen(),
-                  ),
-                );
-              },
+              onTap: _isAlreadyUploaded
+                  ? null
+                  : () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => AddProfessionScreen(),
+                        ),
+                      );
+                    },
               child: Container(
                 width: 290,
                 height: 38,
@@ -883,7 +922,10 @@ class _AcademicCertificateUploadScreenState
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.add, color: _isAlreadyUploaded ? Colors.white : Colors.black),
+                    Icon(
+                      Icons.add,
+                      color: _isAlreadyUploaded ? Colors.white : Colors.black,
+                    ),
                     const SizedBox(width: 8),
                     Text(
                       'Add Your Profession',
