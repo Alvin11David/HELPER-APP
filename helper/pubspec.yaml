@@ -58,10 +58,11 @@ dependencies:
   image_picker: ^1.0.4
   # Webview for Flutterwave payment
   webview_flutter: ^4.13.1
-  # Flutterwave standard SDK
-  flutterwave_standard: ^1.1.0
+  # HTTP package for API calls
+  http: ^1.2.0
   # Google Sign-In
   google_sign_in: ^6.2.1
+  firebase_storage: ^12.4.10
 
 dev_dependencies:
   flutter_test:
@@ -89,7 +90,6 @@ flutter:
     - assets/images/
     - assets/background/
     - assets/icons/
-
 
   fonts:
     - family: Poppins

@@ -1,29 +1,30 @@
 import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:helper/Document%20Upload/Non%20Professional/Non_Professional_National_ID_Passport_Back_Upload_Screen.dart';
+import 'package:helper/Document%20Upload/Non%20Professional/Non_Professional_National_ID_Passport_Front_Scan_Screen.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:helper/Document Upload/National_ID_Passport_Front_Scan_Screen.dart';
-import 'package:helper/Document Upload/National_ID_Passport_Back_Upload_Screen.dart';
 
-class NationalIdPassportFrontUploadScreen extends StatefulWidget {
+class NonProfessionalNationalIdPassportFrontUploadScreen
+    extends StatefulWidget {
   final int selected;
   final XFile? initialImage;
-  const NationalIdPassportFrontUploadScreen({
+  const NonProfessionalNationalIdPassportFrontUploadScreen({
     super.key,
     required this.selected,
     this.initialImage,
   });
 
   @override
-  State<NationalIdPassportFrontUploadScreen> createState() =>
-      _NationalIdPassportFrontUploadScreenState();
+  State<NonProfessionalNationalIdPassportFrontUploadScreen> createState() =>
+      _NonProfessionalNationalIdPassportFrontUploadScreenState();
 }
 
-class _NationalIdPassportFrontUploadScreenState
-    extends State<NationalIdPassportFrontUploadScreen> {
+class _NonProfessionalNationalIdPassportFrontUploadScreenState
+    extends State<NonProfessionalNationalIdPassportFrontUploadScreen> {
   late int selected;
   XFile? _selectedImage;
   final ImagePicker _picker = ImagePicker();
@@ -46,7 +47,9 @@ class _NationalIdPassportFrontUploadScreenState
     }
     try {
       final file = File(_selectedImage!.path);
-      final folder = selected == 0 ? 'National IDS' : 'Passport ID';
+      final folder = selected == 0
+          ? 'Non Professional Workers National IDS'
+          : 'Non Professional Workers Passport ID';
       final fileName =
           '${DateTime.now().millisecondsSinceEpoch}_${user.uid}.jpg';
       final ref = FirebaseStorage.instance.ref().child('$folder/$fileName');
@@ -64,6 +67,7 @@ class _NationalIdPassportFrontUploadScreenState
             'url': downloadUrl,
             'uploadedAt': FieldValue.serverTimestamp(),
             'type': docType,
+            'workerType': 'Non Professional Workers',
             'storagePath': '$folder/$fileName',
           });
 
@@ -74,10 +78,11 @@ class _NationalIdPassportFrontUploadScreenState
       // Navigate to back upload screen and only pop with true if both are uploaded
       final result = await Navigator.of(context).push(
         MaterialPageRoute(
-          builder: (context) => NationalIdPassportBackUploadScreen(
-            selected: selected,
-            initialImage: null,
-          ),
+          builder: (context) =>
+              NonProfessionalNationalIdPassportBackUploadScreen(
+                selected: selected,
+                initialImage: null,
+              ),
         ),
       );
       if (result == true) {
@@ -134,7 +139,7 @@ class _NationalIdPassportFrontUploadScreenState
   void _navigateToBack() {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => NationalIdPassportBackUploadScreen(
+        builder: (context) => NonProfessionalNationalIdPassportBackUploadScreen(
           selected: selected,
           initialImage: null,
         ),
@@ -511,7 +516,7 @@ class _NationalIdPassportFrontUploadScreenState
                                       .push(
                                         MaterialPageRoute(
                                           builder: (context) =>
-                                              NationalIdPassportFrontScanScreen(
+                                              NonProfessionalNationalIdPassportFrontScanScreen(
                                                 selected: selected,
                                               ),
                                         ),

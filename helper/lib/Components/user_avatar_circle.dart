@@ -9,12 +9,12 @@ class UserAvatarCircle extends StatelessWidget {
   final double borderWidth;
 
   const UserAvatarCircle({
-    Key? key,
+    super.key,
     this.size = 40,
     this.backgroundColor = Colors.white,
     this.iconColor = Colors.black,
     this.borderWidth = 1.5,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

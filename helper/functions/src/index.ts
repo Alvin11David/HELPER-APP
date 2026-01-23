@@ -8,9 +8,13 @@
  */
 
 import { setGlobalOptions } from "firebase-functions";
-import { onCall } from "firebase-functions/v2/https";
+import { onCall, onRequest } from "firebase-functions/v2/https";
 import * as logger from "firebase-functions/logger";
 import * as nodemailer from "nodemailer";
+import * as admin from "firebase-admin";
+
+// Initialize Firebase Admin
+admin.initializeApp();
 
 // Start writing functions
 // https://firebase.google.com/docs/functions/typescript
@@ -144,6 +148,174 @@ export const sendForgotPasswordOTPEmail = onCall(async (request) => {
     throw new Error(
       `Failed to send Forgot Password OTP email: ${errorMessage}`,
     );
+  }
+});
+
+// RELWORX Payment Webhook Handler
+export const relworxWebhook = onRequest(
+  {
+    cors: true,
+    maxInstances: 10,
+  },
+  async (req, res) => {
+    try {
+      // Only accept POST requests
+      if (req.method !== "POST") {
+        logger.warn(`Invalid method: ${req.method}`);
+        res.status(405).json({ error: "Method not allowed" });
+        return;
+      }
+
+      const webhookData = req.body;
+
+      // Log the webhook data for debugging
+      logger.info("RELWORX Webhook received:", webhookData);
+
+      // Validate webhook payload
+      if (
+        !webhookData ||
+        !webhookData.status ||
+        !webhookData.customer_reference
+      ) {
+        logger.error("Invalid webhook payload:", webhookData);
+        res.status(400).json({ error: "Invalid webhook payload" });
+        return;
+      }
+
+      const {
+        status,
+        customer_reference,
+        internal_reference,
+        msisdn,
+        amount,
+        currency,
+        provider,
+        charge,
+        completed_at,
+        message,
+      } = webhookData;
+
+      // Extract user ID from customer_reference (format: reg_fee_{timestamp}_{userId})
+      const referenceParts = customer_reference.split("_");
+      const userId = referenceParts.length >= 3 ? referenceParts[2] : null;
+
+      // Create payment record
+      const paymentData = {
+        reference: customer_reference,
+        userId: userId, // Add userId to payment record
+        internalReference: internal_reference,
+        phoneNumber: msisdn,
+        amount: amount,
+        currency: currency,
+        provider: provider,
+        charge: charge,
+        status: status,
+        message: message,
+        completedAt: completed_at
+          ? admin.firestore.Timestamp.fromDate(new Date(completed_at))
+          : null,
+        webhookReceivedAt: admin.firestore.FieldValue.serverTimestamp(),
+        paymentType: "registration_fee",
+      };
+
+      const paymentRef = admin.firestore().collection("Payments").doc(customer_reference);
+      await paymentRef.set(paymentData);
+
+      // If payment is successful and we have userId, update user status
+      if (status === "success" && userId) {
+        const userRef = admin.firestore().collection("users").doc(userId);
+        const userDoc = await userRef.get();
+
+        if (userDoc.exists) {
+          await userRef.update({
+            registrationFeePaid: true,
+            registrationFeePaidAt: admin.firestore.FieldValue.serverTimestamp(),
+            registrationFeeAmount: amount,
+            registrationFeeReference: customer_reference,
+          });
+
+          logger.info(`Updated user ${userId} registration fee status to paid`);
+        } else {
+          logger.warn(`User document not found for userId: ${userId}`);
+        }
+      } else if (status === "success" && !userId) {
+        // Fallback: Try to find user by phone number
+        const usersRef = admin.firestore().collection("users");
+        const userQuery = await usersRef
+          .where("phoneNumber", "==", msisdn)
+          .limit(1)
+          .get();
+
+        if (!userQuery.empty) {
+          const userDoc = userQuery.docs[0];
+          await userDoc.ref.update({
+            registrationFeePaid: true,
+            registrationFeePaidAt: admin.firestore.FieldValue.serverTimestamp(),
+            registrationFeeAmount: amount,
+            registrationFeeReference: customer_reference,
+          });
+
+          logger.info(
+            `Updated user ${userDoc.id} registration fee status to paid (fallback by phone)`,
+          );
+        } else {
+          logger.warn(`User not found for phone number: ${msisdn}`);
+        }
+      }
+
+      // Acknowledge webhook receipt
+      logger.info(
+        `Payment webhook processed: ${customer_reference} - ${status}`,
+      );
+      res.status(200).json({
+        success: true,
+        message: "Webhook processed successfully",
+      });
+    } catch (error) {
+      logger.error("Error processing RELWORX webhook:", error);
+      res.status(500).json({
+        error: "Internal server error",
+        message: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  },
+);
+
+// Function to check payment status
+export const checkPaymentStatus = onCall(async (request) => {
+  try {
+    const { reference } = request.data;
+
+    if (!reference) {
+      throw new Error("Payment reference is required");
+    }
+
+    const paymentRef = admin.firestore().collection("Payments").doc(reference);
+    const paymentDoc = await paymentRef.get();
+
+    if (!paymentDoc.exists) {
+      return {
+        success: false,
+        status: "pending",
+        message: "Payment not found",
+      };
+    }
+
+    const paymentData = paymentDoc.data();
+
+    return {
+      success: true,
+      status: paymentData?.status || "unknown",
+      amount: paymentData?.amount,
+      currency: paymentData?.currency,
+      completedAt: paymentData?.completedAt,
+      message: paymentData?.message,
+    };
+  } catch (error) {
+    logger.error("Error checking payment status:", error);
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+    throw new Error(`Failed to check payment status: ${errorMessage}`);
   }
 });
 

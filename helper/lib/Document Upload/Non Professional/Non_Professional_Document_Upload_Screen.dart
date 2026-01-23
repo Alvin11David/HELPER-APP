@@ -1,6 +1,11 @@
+import 'package:helper/Document%20Upload/Non%20Professional/Non_Professional_National_ID_Passport_Front_Upload_Screen.dart';
+
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'Non_Professional_Selfie_Capture_Screen.dart';
 
 class NonProfessionalDocumentUploadScreen extends StatefulWidget {
   const NonProfessionalDocumentUploadScreen({super.key});
@@ -13,7 +18,9 @@ class NonProfessionalDocumentUploadScreen extends StatefulWidget {
 class _NonProfessionalDocumentUploadScreenState
     extends State<NonProfessionalDocumentUploadScreen> {
   bool _loading = false;
-  int _selectedIndex = -1;
+  final Set<int> _selectedRows = {};
+  bool _nationalIdSubmitted = false;
+  bool _selfieSubmitted = false;
   final _formKey = GlobalKey<FormState>();
 
   Future<void> _onContinue() async {
@@ -54,6 +61,25 @@ class _NonProfessionalDocumentUploadScreenState
 
       if (!mounted) return;
       setState(() => loading = false);
+    }
+
+    Future<void> openNationalIdPassportUpload() async {
+      setState(() => _selectedRows.add(0));
+      final result = await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) =>
+              NonProfessionalNationalIdPassportFrontUploadScreen(selected: 0),
+        ),
+      );
+      // No need to set local state, Firestore will update
+    }
+
+    Future<void> openSelfieUpload() async {
+      setState(() => _selectedRows.add(3));
+      await Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (context) => NonProfessionalSelfieCaptureScreen()));
+      // The StreamBuilder will update when the document is added
     }
 
     return Scaffold(
@@ -131,7 +157,7 @@ class _NonProfessionalDocumentUploadScreenState
                     SizedBox(height: h * 0.023),
                     _StepIndicator(
                       width: w,
-                      activeIndex: 0,
+                      activeIndex: 1,
                       labels: const ['1', '2', '3'],
                       accent: brandOrange,
                     ),
@@ -188,7 +214,7 @@ class _NonProfessionalDocumentUploadScreenState
                     SizedBox(height: h * 0.05),
                     Container(
                       width: 361,
-                      height: 120,
+                      height: 160,
                       padding: EdgeInsets.all(w * 0.04),
                       alignment: Alignment.topCenter,
                       decoration: BoxDecoration(
@@ -198,122 +224,235 @@ class _NonProfessionalDocumentUploadScreenState
                       child: SingleChildScrollView(
                         child: Column(
                           children: [
-                            GestureDetector(
-                              onTap: () => setState(() => _selectedIndex = 0),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    width: 36,
-                                    height: 36,
-                                    decoration: BoxDecoration(
-                                      color: _selectedIndex == 0
-                                          ? const Color(0xFFFBBC04)
-                                          : const Color(0xFFD9D9D9),
-                                      shape: BoxShape.circle,
-                                    ),
+                            StreamBuilder<DocumentSnapshot>(
+                              stream: FirebaseFirestore.instance
+                                  .collection('users')
+                                  .doc(FirebaseAuth.instance.currentUser!.uid)
+                                  .snapshots(),
+                              builder: (context, snapshot) {
+                                if (!snapshot.hasData) {
+                                  return const SizedBox(
+                                    height: 50,
                                     child: Center(
-                                      child: Image.asset(
-                                        'assets/icons/nationalid.png',
-                                        width: 20,
-                                        height: 20,
-                                      ),
+                                      child: CircularProgressIndicator(),
                                     ),
-                                  ),
-                                  SizedBox(width: w * 0.018),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
+                                  );
+                                }
+                                final data =
+                                    snapshot.data!.data()
+                                        as Map<String, dynamic>? ??
+                                    {};
+                                final isVerified =
+                                    data['national_id_verified'] == true;
+                                WidgetsBinding.instance.addPostFrameCallback((
+                                  _,
+                                ) {
+                                  if (_nationalIdSubmitted != isVerified) {
+                                    setState(
+                                      () => _nationalIdSubmitted = isVerified,
+                                    );
+                                  }
+                                });
+                                return GestureDetector(
+                                  onTap: openNationalIdPassportUpload,
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: isVerified
+                                          ? const Color(0xFFFBBC04)
+                                          : null,
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 8,
+                                      horizontal: 8,
+                                    ),
+                                    child: Row(
                                       children: [
-                                        Text(
-                                          'National ID/Passport',
-                                          style: TextStyle(
-                                            color: _selectedIndex == 0
-                                                ? const Color(0xFFFBBC04)
-                                                : Colors.black,
-                                            fontSize: screenWidth * 0.032,
-                                            fontWeight: FontWeight.w800,
+                                        Container(
+                                          width: 36,
+                                          height: 36,
+                                          decoration: BoxDecoration(
+                                            color: isVerified
+                                                ? Colors.white
+                                                : (_selectedRows.contains(0)
+                                                      ? const Color(0xFFFBBC04)
+                                                      : const Color(
+                                                          0xFFD9D9D9,
+                                                        )),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: Center(
+                                            child: Image.asset(
+                                              'assets/icons/nationalid.png',
+                                              width: 20,
+                                              height: 20,
+                                              color: isVerified
+                                                  ? const Color(0xFFFBBC04)
+                                                  : null,
+                                            ),
                                           ),
                                         ),
-                                        Text(
-                                          'Not Verified',
-                                          style: TextStyle(
-                                            color: _selectedIndex == 0
-                                                ? const Color(0xFFFBBC04)
-                                                : Colors.black54,
-                                            fontSize: screenWidth * 0.035,
+                                        SizedBox(width: w * 0.018),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                'National ID/Passport',
+                                                style: TextStyle(
+                                                  color: isVerified
+                                                      ? Colors.white
+                                                      : (_selectedRows.contains(
+                                                              0,
+                                                            )
+                                                            ? const Color(
+                                                                0xFFFBBC04,
+                                                              )
+                                                            : Colors.black),
+                                                  fontSize: screenWidth * 0.032,
+                                                  fontWeight: FontWeight.w800,
+                                                ),
+                                              ),
+                                              Text(
+                                                isVerified
+                                                    ? 'Submitted For Verification'
+                                                    : 'Not Verified',
+                                                style: TextStyle(
+                                                  color: isVerified
+                                                      ? Colors.white
+                                                      : (_selectedRows.contains(
+                                                              0,
+                                                            )
+                                                            ? const Color(
+                                                                0xFFFBBC04,
+                                                              )
+                                                            : Colors.black54),
+                                                  fontSize: screenWidth * 0.035,
+                                                ),
+                                              ),
+                                            ],
                                           ),
+                                        ),
+                                        Icon(
+                                          Icons.chevron_right,
+                                          color: isVerified
+                                              ? Colors.white
+                                              : (_selectedRows.contains(0)
+                                                    ? const Color(0xFFFBBC04)
+                                                    : Colors.black54),
                                         ),
                                       ],
                                     ),
                                   ),
-                                  Icon(
-                                    Icons.chevron_right,
-                                    color: _selectedIndex == 0
-                                        ? const Color(0xFFFBBC04)
-                                        : Colors.black54,
-                                  ),
-                                ],
-                              ),
+                                );
+                              },
                             ),
                             SizedBox(height: h * 0.03),
-                            GestureDetector(
-                              onTap: () => setState(() => _selectedIndex = 3),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    width: 36,
-                                    height: 36,
+                            StreamBuilder<DocumentSnapshot>(
+                              stream: FirebaseFirestore.instance
+                                  .collection('users')
+                                  .doc(FirebaseAuth.instance.currentUser!.uid)
+                                  .collection('documents')
+                                  .doc('selfie')
+                                  .snapshots(),
+                              builder: (context, snapshot) {
+                                final isSubmitted =
+                                    snapshot.hasData && snapshot.data!.exists;
+                                WidgetsBinding.instance.addPostFrameCallback((
+                                  _,
+                                ) {
+                                  if (_selfieSubmitted != isSubmitted) {
+                                    setState(
+                                      () => _selfieSubmitted = isSubmitted,
+                                    );
+                                  }
+                                });
+                                return GestureDetector(
+                                  onTap: openSelfieUpload,
+                                  child: Container(
                                     decoration: BoxDecoration(
-                                      color: _selectedIndex == 3
+                                      color: isSubmitted
                                           ? const Color(0xFFFBBC04)
-                                          : const Color(0xFFD9D9D9),
-                                      shape: BoxShape.circle,
+                                          : null,
+                                      borderRadius: BorderRadius.circular(10),
                                     ),
-                                    child: Center(
-                                      child: Icon(
-                                        Icons.camera,
-                                        color: Colors.black,
-                                        size: 20,
-                                      ),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 8,
+                                      horizontal: 8,
                                     ),
-                                  ),
-                                  SizedBox(width: w * 0.018),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
+                                    child: Row(
                                       children: [
-                                        Text(
-                                          'Current Photo(Selfie)',
-                                          style: TextStyle(
-                                            color: _selectedIndex == 3
+                                        Container(
+                                          width: 36,
+                                          height: 36,
+                                          decoration: BoxDecoration(
+                                            color: isSubmitted
+                                                ? Colors.white
+                                                : _selectedRows.contains(3)
                                                 ? const Color(0xFFFBBC04)
-                                                : Colors.black,
-                                            fontSize: screenWidth * 0.032,
-                                            fontWeight: FontWeight.w800,
+                                                : const Color(0xFFD9D9D9),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: Center(
+                                            child: Icon(
+                                              Icons.camera,
+                                              color: Colors.black,
+                                              size: 20,
+                                            ),
                                           ),
                                         ),
-                                        Text(
-                                          'Not Verified',
-                                          style: TextStyle(
-                                            color: _selectedIndex == 3
-                                                ? const Color(0xFFFBBC04)
-                                                : Colors.black54,
-                                            fontSize: screenWidth * 0.035,
+                                        SizedBox(width: w * 0.018),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                'Current Photo(Selfie)',
+                                                style: TextStyle(
+                                                  color: isSubmitted
+                                                      ? Colors.white
+                                                      : _selectedRows.contains(
+                                                          3,
+                                                        )
+                                                      ? const Color(0xFFFBBC04)
+                                                      : Colors.black,
+                                                  fontSize: screenWidth * 0.032,
+                                                  fontWeight: FontWeight.w800,
+                                                ),
+                                              ),
+                                              Text(
+                                                isSubmitted
+                                                    ? 'Submitted For Verification'
+                                                    : 'Not Verified',
+                                                style: TextStyle(
+                                                  color: isSubmitted
+                                                      ? Colors.white
+                                                      : _selectedRows.contains(
+                                                          3,
+                                                        )
+                                                      ? const Color(0xFFFBBC04)
+                                                      : Colors.black54,
+                                                  fontSize: screenWidth * 0.035,
+                                                ),
+                                              ),
+                                            ],
                                           ),
+                                        ),
+                                        Icon(
+                                          Icons.chevron_right,
+                                          color: isSubmitted
+                                              ? Colors.white
+                                              : _selectedRows.contains(3)
+                                              ? const Color(0xFFFBBC04)
+                                              : Colors.black54,
                                         ),
                                       ],
                                     ),
                                   ),
-                                  Icon(
-                                    Icons.chevron_right,
-                                    color: _selectedIndex == 3
-                                        ? const Color(0xFFFBBC04)
-                                        : Colors.black54,
-                                  ),
-                                ],
-                              ),
+                                );
+                              },
                             ),
                           ],
                         ),
@@ -325,7 +464,12 @@ class _NonProfessionalDocumentUploadScreenState
                       width: double.infinity,
                       height: h * 0.062,
                       child: ElevatedButton(
-                        onPressed: loading ? null : onContinue,
+                        onPressed:
+                            (_nationalIdSubmitted &&
+                                _selfieSubmitted &&
+                                !loading)
+                            ? onContinue
+                            : null,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Color(0XFFFBBC04),
                           disabledBackgroundColor: Color(

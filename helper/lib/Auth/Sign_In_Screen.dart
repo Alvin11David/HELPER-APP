@@ -284,7 +284,7 @@ class _SignInScreenState extends State<SignInScreen> {
           .get();
       if (query.docs.isNotEmpty) {
         final doc = query.docs.first;
-        referralCode = doc['referralCode'] ?? null;
+        referralCode = doc['referralCode'];
       }
     } else {
       identifier = _emailCtrl.text.trim();
@@ -301,7 +301,7 @@ class _SignInScreenState extends State<SignInScreen> {
           .get();
       if (query.docs.isNotEmpty) {
         final doc = query.docs.first;
-        referralCode = doc['referralCode'] ?? null;
+        referralCode = doc['referralCode'];
       }
     }
 
@@ -351,7 +351,6 @@ class _SignInScreenState extends State<SignInScreen> {
                     SizedBox(height: MediaQuery.of(context).size.height * 0.02),
                     ElevatedButton(
                       onPressed: () => Navigator.pop(context),
-                      child: Text('Close'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.black,
                         foregroundColor: Colors.white,
@@ -359,6 +358,7 @@ class _SignInScreenState extends State<SignInScreen> {
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
+                      child: Text('Close'),
                     ),
                   ],
                 ),
@@ -740,12 +740,14 @@ class _PhoneBlock extends StatelessWidget {
           validator: (v) {
             final t = (v ?? '').trim();
             if (t.isEmpty) return 'Phone number is required';
-            if (!t.startsWith('+256 '))
+            if (!t.startsWith('+256 ')) {
               return 'Phone number must start with +256';
+            }
             final digits = t.substring(5);
             if (digits.length != 9) return 'Enter exactly 9 digits after +256';
-            if (!RegExp(r'^[0-9]{9}$').hasMatch(digits))
+            if (!RegExp(r'^[0-9]{9}$').hasMatch(digits)) {
               return 'Enter valid 9-digit number';
+            }
             return null;
           },
         ),

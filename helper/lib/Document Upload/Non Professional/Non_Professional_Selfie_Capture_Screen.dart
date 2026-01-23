@@ -1,20 +1,22 @@
 import 'dart:ui';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:helper/Document%20Upload/Non%20Professional/Non_Professional_Face_Scan_Screen.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'Face_Scan_Screen.dart';
 
-class SelfieCaptureScreen extends StatefulWidget {
-  const SelfieCaptureScreen({super.key});
+class NonProfessionalSelfieCaptureScreen extends StatefulWidget {
+  const NonProfessionalSelfieCaptureScreen({super.key});
 
   @override
-  State<SelfieCaptureScreen> createState() => _SelfieCaptureScreenState();
+  State<NonProfessionalSelfieCaptureScreen> createState() =>
+      _NonProfessionalSelfieCaptureScreenState();
 }
 
-class _SelfieCaptureScreenState extends State<SelfieCaptureScreen> {
+class _NonProfessionalSelfieCaptureScreenState
+    extends State<NonProfessionalSelfieCaptureScreen> {
   static const _brandYellow = Color(0xFFFFC700);
   final ImagePicker _picker = ImagePicker();
   XFile? _selectedImage;
@@ -46,9 +48,9 @@ class _SelfieCaptureScreenState extends State<SelfieCaptureScreen> {
   }
 
   void _takePhoto() async {
-    final result = await Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (context) => FaceScanScreen()));
+    final result = await Navigator.of(context).push(
+      MaterialPageRoute(builder: (context) => NonProfessionalFaceScanScreen()),
+    );
     if (result == 'uploaded') {
       Navigator.of(context).pop(true);
     } else if (result is XFile) {

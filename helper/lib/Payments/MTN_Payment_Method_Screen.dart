@@ -1,7 +1,7 @@
 import 'dart:ui';
-
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
-import 'package:flutterwave_standard/flutterwave.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:helper/Intro/Role_Selection_Screen.dart';
@@ -102,7 +102,7 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
       return;
     }
 
-    // Format phone number for Flutterwave (ensure international format)
+    // Format phone number for RELWORX (ensure international format)
     String formattedPhone = cleanPhone;
     if (formattedPhone.startsWith('0')) {
       formattedPhone = '256${formattedPhone.substring(1)}';
@@ -110,51 +110,73 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
       formattedPhone = '256$formattedPhone';
     }
 
-    // Flutterwave standard SDK configuration
-    final String publicKey =
-        "FLWPUBK_TEST-5c4c1ba4-9c72-45c8-90b0-b29e9c6a4597-X"; // Using test key
-    final String txRef = "mtn_txn_${DateTime.now().millisecondsSinceEpoch}";
-    final String amount = "25000";
-    final String currency = "UGX";
-    final String customerEmail =
-        "user@example.com"; // You might want to get this from user data
-    final String customerName = "MTN User";
-    final String customerPhone = formattedPhone;
+    // Get current user
+    final User? currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('User not authenticated'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
 
-    final Customer customer = Customer(
-      name: customerName,
-      phoneNumber: customerPhone,
-      email: customerEmail,
-    );
-
-    final Flutterwave flutterwave = Flutterwave(
-      publicKey: publicKey,
-      currency: currency,
-      redirectUrl: "https://example.com/callback",
-      txRef: txRef,
-      amount: amount,
-      customer: customer,
-      paymentOptions: "mobilemoneyuganda,mobilemoney",
-      customization: Customization(title: "Helper MTN Payment"),
-      isTestMode: true,
-    );
+    // RELWORX API configuration
+    const String apiKey = "2902144e65b9a7.v3wxxu9iseWHI-dQzOh7Gg";
+    const String baseUrl = "https://payments.relworx.com/api";
+    const String accountNo =
+        "YOUR_BUSINESS_ACCOUNT_NO"; // TODO: Replace with actual account number
+    final String reference =
+        "reg_fee_${DateTime.now().millisecondsSinceEpoch}_${currentUser.uid}";
+    const double amount = 25000.0;
+    const String currency = "UGX";
+    const String webhookUrl =
+        "https://us-central1-helperapp-46849.cloudfunctions.net/relworxWebhook";
 
     try {
-      final ChargeResponse response = await flutterwave.charge(context);
+      // Show loading indicator
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Initiating payment request...'),
+          backgroundColor: Colors.blue,
+        ),
+      );
 
-      // For testing purposes, simulate success if in test mode and using mobile money
-      const bool isTestMode = true; // Match the Flutterwave config
-      if (response.success != true && isTestMode) {
-        // Simulate successful payment for testing
+      final response = await http.post(
+        Uri.parse('$baseUrl/mobile-money/request-payment'),
+        headers: {
+          'Authorization': 'Bearer $apiKey',
+          'Content-Type': 'application/json',
+          'Accept': 'application/vnd.relworx.v2',
+        },
+        body: jsonEncode({
+          'account_no': accountNo,
+          'reference': reference,
+          'msisdn': formattedPhone,
+          'currency': currency,
+          'amount': amount,
+          'description': 'Registration Fee Payment',
+          'webhook_url': webhookUrl,
+        }),
+      );
+
+      final responseData = jsonDecode(response.body);
+
+      if (response.statusCode == 200 && responseData['success'] == true) {
+        // Payment request successful - show pending status
         setState(() {
-          _isPaymentSuccessful = true;
+          _isPaymentSuccessful = false; // Wait for webhook confirmation
           _isDimming = true;
           _showOverlay = true;
         });
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Test payment simulated successfully!'),
-            backgroundColor: Colors.green,
+            content: Text(
+              'Payment request sent successfully! Please complete the payment on your phone.',
+            ),
+            backgroundColor: Colors.blue,
           ),
         );
 
@@ -163,26 +185,15 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
           await _savePhoneNumber(phoneNumber);
         }
 
-        return;
-      }
-
-      if (response.success == true) {
-        // Payment successful - show success overlay
-        setState(() {
-          _isPaymentSuccessful = true;
-          _isDimming = true;
-          _showOverlay = true;
-        });
-
-        // Save phone number if checkbox is checked
-        if (isChecked) {
-          await _savePhoneNumber(phoneNumber);
-        }
+        // Start listening for payment status updates
+        _listenForPaymentStatus(reference);
       } else {
-        // Payment failed or cancelled
+        // Payment request failed
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Payment failed or was cancelled'),
+          SnackBar(
+            content: Text(
+              'Payment request failed: ${responseData['message'] ?? 'Unknown error'}',
+            ),
             backgroundColor: Colors.red,
           ),
         );
@@ -195,6 +206,53 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
         ),
       );
     }
+  }
+
+  void _listenForPaymentStatus(String reference) {
+    final paymentRef = FirebaseFirestore.instance
+        .collection('Payments')
+        .doc(reference);
+
+    paymentRef.snapshots().listen((snapshot) {
+      if (snapshot.exists) {
+        final data = snapshot.data();
+        final status = data?['status'];
+
+        if (status == 'success') {
+          setState(() {
+            _isPaymentSuccessful = true;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Payment completed successfully!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          // Navigate to role selection after a short delay to show success
+          Future.delayed(const Duration(seconds: 2), () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => const RoleSelectionScreen(),
+              ),
+            );
+          });
+        } else if (status == 'failed') {
+          setState(() {
+            _isPaymentSuccessful = false;
+            _showOverlay = false; // Hide overlay on failure
+            _isDimming = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Payment failed: ${data?['message'] ?? 'Unknown error'}',
+              ),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    });
   }
 
   @override
@@ -649,7 +707,9 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
                         ),
                         SizedBox(height: screenHeight * 0.0),
                         Text(
-                          'Account Created',
+                          _isPaymentSuccessful
+                              ? 'Account Created'
+                              : 'Payment Pending',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: Colors.black,
@@ -659,7 +719,9 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
                           ),
                         ),
                         Text(
-                          'Successfully',
+                          _isPaymentSuccessful
+                              ? 'Successfully'
+                              : 'Please Complete Payment',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: Colors.black,
@@ -674,7 +736,9 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
                             horizontal: screenWidth * 0.08,
                           ),
                           child: Text(
-                            'Your payment of UGX 25,000\nhas been successfully\nreceived.',
+                            _isPaymentSuccessful
+                                ? 'Your payment of UGX 25,000\nhas been successfully\nreceived.'
+                                : 'Please complete your payment\non your MTN mobile phone\nto continue.',
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               color: Colors.black,
@@ -701,9 +765,16 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
                           width: double.infinity,
                           height: screenHeight * 0.062,
                           child: ElevatedButton(
-                            onPressed: () {
-                              // TODO: Handle continue action
-                            },
+                            onPressed: _isPaymentSuccessful
+                                ? () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            const RoleSelectionScreen(),
+                                      ),
+                                    );
+                                  }
+                                : null, // Disable button if payment not successful
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFFDF8800),
                               disabledBackgroundColor: const Color(
@@ -719,23 +790,15 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  GestureDetector(
-                                    onTap: () {
-                                      Navigator.of(context).push(
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              const RoleSelectionScreen(),
-                                        ),
-                                      );
-                                    },
-                                    child: Text(
-                                      'Go To Role Selection',
-                                      style: TextStyle(
-                                        fontSize: screenWidth * 0.045,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
-                                        fontFamily: 'Inter',
-                                      ),
+                                  Text(
+                                    _isPaymentSuccessful
+                                        ? 'Go To Role Selection'
+                                        : 'Waiting for Payment...',
+                                    style: TextStyle(
+                                      fontSize: screenWidth * 0.045,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                      fontFamily: 'Inter',
                                     ),
                                   ),
                                   SizedBox(width: screenWidth * 0.02),

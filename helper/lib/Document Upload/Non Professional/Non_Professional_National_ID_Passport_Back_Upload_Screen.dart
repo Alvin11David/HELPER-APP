@@ -1,29 +1,29 @@
 import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:helper/Document%20Upload/Non%20Professional/Non_Professional_National_ID_Passport_Back_Scan_Screen.dart';
+import 'Non_Professional_Document_Upload_Screen.dart';
 import 'package:image_picker/image_picker.dart';
-import 'National_ID_Passport_Back_Scan_Screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'Non Professional/Non_Professional_Document_Upload_Screen.dart';
 
-class NationalIdPassportBackUploadScreen extends StatefulWidget {
+class NonProfessionalNationalIdPassportBackUploadScreen extends StatefulWidget {
   final int selected;
   final XFile? initialImage;
-  const NationalIdPassportBackUploadScreen({
+  const NonProfessionalNationalIdPassportBackUploadScreen({
     super.key,
     required this.selected,
     this.initialImage,
   });
 
   @override
-  State<NationalIdPassportBackUploadScreen> createState() =>
-      _NationalIdPassportBackUploadScreenState();
+  State<NonProfessionalNationalIdPassportBackUploadScreen> createState() =>
+      _NonProfessionalNationalIdPassportBackUploadScreenState();
 }
 
-class _NationalIdPassportBackUploadScreenState
-    extends State<NationalIdPassportBackUploadScreen> {
+class _NonProfessionalNationalIdPassportBackUploadScreenState
+    extends State<NonProfessionalNationalIdPassportBackUploadScreen> {
   late int selected;
   final ImagePicker _picker = ImagePicker();
   XFile? _selectedImage;
@@ -60,7 +60,9 @@ class _NationalIdPassportBackUploadScreenState
     }
     try {
       final file = File(_selectedImage!.path);
-      final folder = selected == 0 ? 'National IDS' : 'Passport ID';
+      final folder = selected == 0
+          ? 'Non Professional Workers National IDS'
+          : 'Non Professional Workers Passport ID';
       final fileName =
           '${DateTime.now().millisecondsSinceEpoch}_${user.uid}_back.jpg';
       final ref = FirebaseStorage.instance.ref().child('$folder/$fileName');
@@ -78,6 +80,7 @@ class _NationalIdPassportBackUploadScreenState
             'url': downloadUrl,
             'uploadedAt': FieldValue.serverTimestamp(),
             'type': docType,
+            'workerType': 'Non Professional Workers',
             'storagePath': '$folder/$fileName',
             'verified': true, // Mark as verified
           });
@@ -425,7 +428,7 @@ class _NationalIdPassportBackUploadScreenState
                             Navigator.of(context).push(
                               MaterialPageRoute(
                                 builder: (context) =>
-                                    NationalIdPassportBackScanScreen(
+                                    NonProfessionalNationalIdPassportBackScanScreen(
                                       selected: selected,
                                     ),
                               ),

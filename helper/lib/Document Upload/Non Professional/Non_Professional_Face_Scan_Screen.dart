@@ -7,14 +7,16 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-class FaceScanScreen extends StatefulWidget {
-  const FaceScanScreen({super.key});
+class NonProfessionalFaceScanScreen extends StatefulWidget {
+  const NonProfessionalFaceScanScreen({super.key});
 
   @override
-  State<FaceScanScreen> createState() => _FaceScanScreenState();
+  State<NonProfessionalFaceScanScreen> createState() =>
+      _NonProfessionalFaceScanScreenState();
 }
 
-class _FaceScanScreenState extends State<FaceScanScreen> {
+class _NonProfessionalFaceScanScreenState
+    extends State<NonProfessionalFaceScanScreen> {
   // Add a variable to hold the captured image
   dynamic _capturedImage;
 

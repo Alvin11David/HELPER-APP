@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:helper/Document%20Upload/Non%20Professional/Non_Professional_Document_Upload_Screen.dart';
 
 class NonProfessionalWorkerVerificationInformationScreen extends StatefulWidget {
   const NonProfessionalWorkerVerificationInformationScreen({super.key});
@@ -245,7 +246,14 @@ class _NonProfessionalWorkerVerificationInformationScreenState
                               borderRadius: BorderRadius.circular(30),
                             ),
                           ),
-                          onPressed: () {},
+                          onPressed: () {
+                            Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  const NonProfessionalDocumentUploadScreen(),
+                            ),
+                          );
+                          },
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [

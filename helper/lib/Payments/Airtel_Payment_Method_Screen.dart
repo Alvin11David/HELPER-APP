@@ -1,12 +1,9 @@
 import 'dart:ui';
-
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
-import 'package:flutterwave_standard/core/flutterwave.dart';
-import 'package:flutterwave_standard/models/requests/customer.dart';
-import 'package:flutterwave_standard/models/requests/customizations.dart';
-import 'package:flutterwave_standard/models/responses/charge_response.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:helper/Intro/Role_Selection_Screen.dart';
 
 class AirtelPaymentMethodScreen extends StatefulWidget {
@@ -22,15 +19,9 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
   bool isChecked = false;
   bool _isDimming = false; // State to track if the screen should dim
   bool _showOverlay = false; // State to control the overlay visibility
+  bool _isPaymentSuccessful = false; // State to track payment status
   final Duration _overlayAnimDuration = Duration(milliseconds: 300);
-  String _paymentStatus = 'Not Paid'; // State for payment status
   String? _savedPhoneNumber;
-
-  // Flutterwave configuration
-  final String publicKey =
-      "FLWPUBK_TEST-5c4c1ba4-9c72-45c8-90b0-b29e9c6a4597-X";
-  final String encryptionKey =
-      "0lT5zNJgnxHOm2PyOYZxQKL7yk0MC9Uodyo3Z/I3DE4="; // Test Encryption Key
 
   @override
   void initState() {
@@ -92,88 +83,177 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
     }
   }
 
-  void _handlePayment() async {
-    String phoneNumber = _cardNumberController.text.trim();
-    if (phoneNumber.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter your Airtel phone number')),
-      );
-      return;
-    }
+  Future<void> _processPayment() async {
+    final String phoneNumber = _cardNumberController.text.trim();
 
-    // Validate Airtel prefixes using regex
-    RegExp airtelRegex = RegExp(r'^(070[0-9]|075[0-9]|074[0-2])\d{6}$');
-    if (!airtelRegex.hasMatch(phoneNumber)) {
+    // Basic validation - Airtel Uganda prefixes: 075, 070, 074(0-2)
+    final String cleanPhone = phoneNumber
+        .replaceAll(' ', '')
+        .replaceAll('+', '');
+    final RegExp airtelRegex = RegExp(
+      r'^(256(75|70|74[0-2])\d{7}|0(75|70|74[0-2])\d{7}|(75|70|74[0-2])\d{7})$',
+    );
+    if (phoneNumber.isEmpty || !airtelRegex.hasMatch(cleanPhone)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
-            'Invalid Airtel number. Must be a valid 10-digit Airtel Uganda number',
-          ),
+          content: Text('Please enter a valid Airtel Uganda phone number'),
+          backgroundColor: Colors.red,
         ),
       );
       return;
     }
 
-    // Convert to +256 format
-    String convertedPhoneNumber = '+256${phoneNumber.substring(1)}';
+    // Format phone number for RELWORX (ensure international format)
+    String formattedPhone = cleanPhone;
+    if (formattedPhone.startsWith('0')) {
+      formattedPhone = '256${formattedPhone.substring(1)}';
+    } else if (!formattedPhone.startsWith('256')) {
+      formattedPhone = '256$formattedPhone';
+    }
 
-    // Generate a unique transaction reference
-    final txRef = "helper_reg_${DateTime.now().millisecondsSinceEpoch}";
+    // Get current user
+    final User? currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('User not authenticated'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
 
-    final Customer customer = Customer(
-      name: "Helper User", // You might want to get this from user data
-      phoneNumber: convertedPhoneNumber,
-      email: "user@example.com", // Replace with actual email if available
-    );
-
-    final Flutterwave flutterwave = Flutterwave(
-      publicKey: publicKey,
-      txRef: txRef,
-      amount: "25000",
-      customer: customer,
-      paymentOptions: "mobilemoneyuganda",
-      customization: Customization(
-        title: "Helper Registration Payment",
-        description: "Payment for Helper app registration",
-      ),
-      redirectUrl: "https://your-redirect-url.com", // Optional
-      isTestMode: true, // Set to false for production
-      currency: "UGX",
-    );
+    // RELWORX API configuration
+    const String apiKey = "2902144e65b9a7.v3wxxu9iseWHI-dQzOh7Gg";
+    const String baseUrl = "https://payments.relworx.com/api";
+    const String accountNo =
+        "YOUR_BUSINESS_ACCOUNT_NO"; // TODO: Replace with actual account number
+    final String reference =
+        "reg_fee_${DateTime.now().millisecondsSinceEpoch}_${currentUser.uid}";
+    const double amount = 25000.0;
+    const String currency = "UGX";
+    const String webhookUrl =
+        "https://us-central1-helperapp-46849.cloudfunctions.net/relworxWebhook";
 
     try {
-      final ChargeResponse response = await flutterwave.charge(context);
-      print(
-        'Flutterwave Response: ${response.toJson()}',
-      ); // Add this for debugging
-      if (response.success == true) {
-        // Payment successful
+      // Show loading indicator
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Initiating payment request...'),
+          backgroundColor: Colors.blue,
+        ),
+      );
+
+      final response = await http.post(
+        Uri.parse('$baseUrl/mobile-money/request-payment'),
+        headers: {
+          'Authorization': 'Bearer $apiKey',
+          'Content-Type': 'application/json',
+          'Accept': 'application/vnd.relworx.v2',
+        },
+        body: jsonEncode({
+          'account_no': accountNo,
+          'reference': reference,
+          'msisdn': formattedPhone,
+          'currency': currency,
+          'amount': amount,
+          'description': 'Registration Fee Payment',
+          'webhook_url': webhookUrl,
+        }),
+      );
+
+      final responseData = jsonDecode(response.body);
+
+      if (response.statusCode == 200 && responseData['success'] == true) {
+        // Payment request successful - show pending status
         setState(() {
+          _isPaymentSuccessful = false; // Wait for webhook confirmation
           _isDimming = true;
           _showOverlay = true;
-          _paymentStatus = 'Paid';
         });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Payment request sent successfully! Please complete the payment on your phone.',
+            ),
+            backgroundColor: Colors.blue,
+          ),
+        );
 
         // Save phone number if checkbox is checked
         if (isChecked) {
           await _savePhoneNumber(phoneNumber);
         }
+
+        // Start listening for payment status updates
+        _listenForPaymentStatus(reference);
       } else {
-        // Payment failed
+        // Payment request failed
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Payment failed: ${response.status ?? 'Unknown error'}',
+              'Payment request failed: ${responseData['message'] ?? 'Unknown error'}',
             ),
+            backgroundColor: Colors.red,
           ),
         );
       }
-    } catch (error) {
-      print('Payment Error: $error'); // Add this for debugging
+    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('An error occurred during payment')),
+        SnackBar(
+          content: Text('Payment error: $e'),
+          backgroundColor: Colors.red,
+        ),
       );
     }
+  }
+
+  void _listenForPaymentStatus(String reference) {
+    final paymentRef = FirebaseFirestore.instance
+        .collection('Payments')
+        .doc(reference);
+
+    paymentRef.snapshots().listen((snapshot) {
+      if (snapshot.exists) {
+        final data = snapshot.data();
+        final status = data?['status'];
+
+        if (status == 'success') {
+          setState(() {
+            _isPaymentSuccessful = true;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Payment completed successfully!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          // Navigate to role selection after a short delay to show success
+          Future.delayed(const Duration(seconds: 2), () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => const RoleSelectionScreen(),
+              ),
+            );
+          });
+        } else if (status == 'failed') {
+          setState(() {
+            _isPaymentSuccessful = false;
+            _showOverlay = false; // Hide overlay on failure
+            _isDimming = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Payment failed: ${data?['message'] ?? 'Unknown error'}',
+              ),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    });
   }
 
   @override
@@ -335,9 +415,9 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
                               ),
                               alignment: Alignment.center,
                               child: Text(
-                                _paymentStatus,
+                                _isPaymentSuccessful ? 'Paid' : 'Not Paid',
                                 style: TextStyle(
-                                  color: _paymentStatus == 'Paid'
+                                  color: _isPaymentSuccessful
                                       ? Colors.green
                                       : Colors.black,
                                   fontSize: screenWidth * 0.04,
@@ -464,7 +544,7 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
                         ),
                         SizedBox(height: screenHeight * 0.05),
                         GestureDetector(
-                          onTap: _handlePayment,
+                          onTap: _processPayment,
                           child: Container(
                             width: screenWidth * 0.93,
                             height: screenHeight * 0.07,
@@ -626,7 +706,9 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
                         ),
                         SizedBox(height: screenHeight * 0.0),
                         Text(
-                          'Account Created',
+                          _isPaymentSuccessful
+                              ? 'Account Created'
+                              : 'Payment Pending',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: Colors.black,
@@ -636,7 +718,9 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
                           ),
                         ),
                         Text(
-                          'Successfully',
+                          _isPaymentSuccessful
+                              ? 'Successfully'
+                              : 'Please Complete Payment',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: Colors.black,
@@ -651,7 +735,9 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
                             horizontal: screenWidth * 0.08,
                           ),
                           child: Text(
-                            'Your payment of UGX 25,000\nhas been successfully\nreceived.',
+                            _isPaymentSuccessful
+                                ? 'Your payment of UGX 25,000\nhas been successfully\nreceived.'
+                                : 'Please complete your payment\non your Airtel mobile phone\nto continue.',
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               color: Colors.black,
