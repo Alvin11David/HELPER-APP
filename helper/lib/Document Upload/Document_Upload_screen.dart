@@ -203,7 +203,7 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                                 Navigator.of(context).push(
                                   MaterialPageRoute(
                                     builder: (context) =>
-                                        NationalIdPassportFrontUploadScreen(),
+                                        NationalIdPassportFrontUploadScreen(selected: 0,),
                                   ),
                                 );
                               },
