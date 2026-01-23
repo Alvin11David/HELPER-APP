@@ -1,7 +1,10 @@
 import 'dart:ui';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:helper/Document%20Upload/National_ID_Passport_Front_Upload_Screen.dart';
+import 'package:rxdart/rxdart.dart';
 
 class DocumentUploadScreen extends StatefulWidget {
   const DocumentUploadScreen({super.key});
@@ -711,12 +714,14 @@ class DashedLinePainter extends CustomPainter {
 
 // Helper: Listen to both front and back uploads for National ID/Passport
 Stream<List<bool>> _nationalIdVerificationStream() async* {
-  // Replace with actual user ID logic
-  final user = null; // FirebaseAuth.instance.currentUser;
-  final userId = user?.uid ?? '';
-  // Firestore paths for both front and back
-  // Uncomment and use the following if Firebase is available:
-  /*
+  final user = FirebaseAuth.instance.currentUser;
+  if (user == null) {
+    yield [false, false];
+    return;
+  }
+
+  final userId = user.uid;
+
   final frontDoc = FirebaseFirestore.instance
       .collection('users')
       .doc(userId)
@@ -725,6 +730,7 @@ Stream<List<bool>> _nationalIdVerificationStream() async* {
       .collection('Professional Workers')
       .doc('professional_workers_national_id_front')
       .snapshots();
+
   final backDoc = FirebaseFirestore.instance
       .collection('users')
       .doc(userId)
@@ -733,10 +739,12 @@ Stream<List<bool>> _nationalIdVerificationStream() async* {
       .collection('Professional Workers')
       .doc('professional_workers_national_id_back')
       .snapshots();
-  await for (final combined in Rx.combineLatest2(frontDoc, backDoc, (a, b) => [a.exists, b.exists])) {
+
+  await for (final combined in Rx.combineLatest2(
+    frontDoc,
+    backDoc,
+    (a, b) => [a.exists, b.exists],
+  )) {
     yield combined;
   }
-  */
-  // Placeholder: always not uploaded
-  yield [false, false];
 }
