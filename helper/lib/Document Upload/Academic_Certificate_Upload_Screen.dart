@@ -1,9 +1,10 @@
-import 'dart:ui';
 import 'dart:io';
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:helper/Document%20Upload/Add_Profession_Screen.dart';
+import 'package:helper/Document%20Upload/Document_Upload_screen.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -116,8 +117,9 @@ class _AcademicCertificateUploadScreenState
       ).showSnackBar(const SnackBar(content: Text('Uploaded successfully')));
 
       // Navigate back to DocumentUploadScreen
-      Navigator.of(context).pop();
-      Navigator.of(context).pop();
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => DocumentUploadScreen()),
+      );
     } catch (e) {
       ScaffoldMessenger.of(
         context,
