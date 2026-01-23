@@ -409,7 +409,7 @@ class _AcademicCertificateUploadScreenState
                       ),
                     ],
                   ),
-                  height: 33,
+                  height: 36,
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
