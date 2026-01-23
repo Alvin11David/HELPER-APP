@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:helper/Document%20Upload/Add_Profession_Screen.dart';
 
 class AcademicCertificateUploadScreen extends StatefulWidget {
@@ -16,6 +17,27 @@ class _AcademicCertificateUploadScreenState
     extends State<AcademicCertificateUploadScreen> {
   late List<String> searchHistory;
   late List<String> selectedProfessions;
+  PlatformFile? _selectedFile;
+
+  Future<void> _pickFile() async {
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['pdf', 'png', 'jpeg', 'jpg'],
+      allowMultiple: false,
+    );
+
+    if (result != null) {
+      setState(() {
+        _selectedFile = result.files.first;
+      });
+    }
+  }
+
+  void _removeFile() {
+    setState(() {
+      _selectedFile = null;
+    });
+  }
 
   @override
   void initState() {
@@ -563,49 +585,52 @@ class _AcademicCertificateUploadScreenState
             Positioned(
               top: screenHeight * 0.33,
               left: (screenWidth - screenWidth * 0.9) / 2,
-              child: Container(
-                width: screenWidth * 0.9,
-                height: 200,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(25),
-                ),
-                child: CustomPaint(
-                  painter: DashedBorderPainter(),
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.upload, color: Colors.white, size: 40),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Upload File',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            fontFamily: 'Inter',
+              child: GestureDetector(
+                onTap: _pickFile,
+                child: Container(
+                  width: screenWidth * 0.9,
+                  height: 200,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(25),
+                  ),
+                  child: CustomPaint(
+                    painter: DashedBorderPainter(),
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.upload, color: Colors.white, size: 40),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Upload File',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              fontFamily: 'Inter',
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Supported files: PDF/PNG/JPEG/JPG',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontFamily: 'Inter',
+                          const SizedBox(height: 4),
+                          Text(
+                            'Supported files: PDF/PNG/JPEG/JPG',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontFamily: 'Inter',
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Max Size: 5MB',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontFamily: 'Inter',
+                          const SizedBox(height: 4),
+                          Text(
+                            'Max Size: 5MB',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontFamily: 'Inter',
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
