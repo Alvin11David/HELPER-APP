@@ -73,6 +73,10 @@ class _AcademicCertificateUploadScreenState
       return;
     }
 
+    setState(() {
+      _isUploading = true;
+    });
+
     try {
       final userId = FirebaseAuth.instance.currentUser!.uid;
       final extension = _selectedFile!.extension ?? 'pdf';
@@ -113,6 +117,10 @@ class _AcademicCertificateUploadScreenState
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Upload failed: $e')));
+    } finally {
+      setState(() {
+        _isUploading = false;
+      });
     }
   }
 
@@ -815,24 +823,26 @@ class _AcademicCertificateUploadScreenState
               bottom: screenHeight * 0.05 + 50,
               left: (screenWidth - 290) / 2,
               child: GestureDetector(
-                onTap: _uploadToFirebase,
+                onTap: _isUploading ? null : _uploadToFirebase,
                 child: Container(
                   width: 290,
                   height: 38,
                   decoration: BoxDecoration(
-                    color: Colors.blue,
+                    color: _isUploading ? Colors.grey : Colors.blue,
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Center(
-                    child: Text(
-                      'Upload to Firebase',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: screenWidth * 0.04,
-                        fontWeight: FontWeight.w500,
-                        fontFamily: 'Inter',
-                      ),
-                    ),
+                    child: _isUploading
+                        ? const CircularProgressIndicator(color: Colors.black)
+                        : Text(
+                            'Upload to Firebase',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: screenWidth * 0.04,
+                              fontWeight: FontWeight.w500,
+                              fontFamily: 'Inter',
+                            ),
+                          ),
                   ),
                 ),
               ),
