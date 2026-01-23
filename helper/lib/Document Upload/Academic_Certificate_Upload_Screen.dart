@@ -113,6 +113,9 @@ class _AcademicCertificateUploadScreenState
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Uploaded successfully')));
+      
+      // Navigate back to DocumentUploadScreen
+      Navigator.of(context).pop();
     } catch (e) {
       ScaffoldMessenger.of(
         context,
