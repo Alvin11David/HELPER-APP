@@ -348,7 +348,7 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                                         height: 36,
                                         decoration: BoxDecoration(
                                           color: uploaded
-                                              ? Colors.orange
+                                              ? const Color(0xFFFBBC04)
                                               : (_selectedIndex == 1
                                                     ? const Color(0xFFFBBC04)
                                                     : const Color(0xFFD9D9D9)),
