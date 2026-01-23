@@ -197,7 +197,15 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                         child: Column(
                           children: [
                             GestureDetector(
-                              onTap: () => setState(() => _selectedIndex = 0),
+                              onTap: () {
+                                setState(() => _selectedIndex = 0);
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        NationalIdPassportFrontUploadScreen(),
+                                  ),
+                                );
+                              },
                               child: Row(
                                 children: [
                                   Container(
@@ -444,7 +452,9 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                         onPressed: null, // Deactivated
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Color(0XFFFBBC04).withOpacity(0.6),
-                          disabledBackgroundColor: Color(0XFFFBBC04).withOpacity(0.6),
+                          disabledBackgroundColor: Color(
+                            0XFFFBBC04,
+                          ).withOpacity(0.6),
                           elevation: 0,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(30),
