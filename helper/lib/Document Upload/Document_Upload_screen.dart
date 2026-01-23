@@ -38,7 +38,9 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
   }
 
   Future<void> _checkNationalIdSubmission() async {
-    final user = await Future.value(null); // Replace with FirebaseAuth.instance.currentUser if available
+    final user = await Future.value(
+      null,
+    ); // Replace with FirebaseAuth.instance.currentUser if available
     // TODO: Replace with actual user check if needed
     // For demo, just check Firestore for the document
     // Uncomment and use the following if Firebase is available:
@@ -217,7 +219,7 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                     SizedBox(height: h * 0.05),
                     Container(
                       width: 361,
-                      height: 244,
+                      height: 249,
                       padding: EdgeInsets.all(w * 0.04),
                       alignment: Alignment.topCenter,
                       decoration: BoxDecoration(
@@ -233,7 +235,9 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                                 final result = await Navigator.of(context).push(
                                   MaterialPageRoute(
                                     builder: (context) =>
-                                        NationalIdPassportFrontUploadScreen(selected: 0,),
+                                        NationalIdPassportFrontUploadScreen(
+                                          selected: 0,
+                                        ),
                                   ),
                                 );
                                 // If the result is true, mark as submitted
@@ -255,8 +259,8 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                                       color: _nationalIdSubmitted
                                           ? const Color(0xFFFBBC04)
                                           : (_selectedIndex == 0
-                                              ? const Color(0xFFFBBC04)
-                                              : const Color(0xFFD9D9D9)),
+                                                ? const Color(0xFFFBBC04)
+                                                : const Color(0xFFD9D9D9)),
                                       shape: BoxShape.circle,
                                     ),
                                     child: Center(
@@ -264,7 +268,9 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                                         'assets/icons/nationalid.png',
                                         width: 20,
                                         height: 20,
-                                        color: _nationalIdSubmitted ? Colors.white : null,
+                                        color: _nationalIdSubmitted
+                                            ? Colors.white
+                                            : null,
                                       ),
                                     ),
                                   ),
@@ -280,8 +286,8 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                                             color: _nationalIdSubmitted
                                                 ? Colors.white
                                                 : (_selectedIndex == 0
-                                                    ? const Color(0xFFFBBC04)
-                                                    : Colors.black),
+                                                      ? const Color(0xFFFBBC04)
+                                                      : Colors.black),
                                             fontSize: screenWidth * 0.032,
                                             fontWeight: FontWeight.w800,
                                           ),
@@ -294,8 +300,8 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                                             color: _nationalIdSubmitted
                                                 ? Colors.white
                                                 : (_selectedIndex == 0
-                                                    ? const Color(0xFFFBBC04)
-                                                    : Colors.black54),
+                                                      ? const Color(0xFFFBBC04)
+                                                      : Colors.black54),
                                             fontSize: screenWidth * 0.035,
                                           ),
                                         ),
@@ -307,8 +313,8 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                                     color: _nationalIdSubmitted
                                         ? Colors.white
                                         : (_selectedIndex == 0
-                                            ? const Color(0xFFFBBC04)
-                                            : Colors.black54),
+                                              ? const Color(0xFFFBBC04)
+                                              : Colors.black54),
                                   ),
                                 ],
                               ),
