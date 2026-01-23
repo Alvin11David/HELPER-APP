@@ -233,13 +233,18 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                             StreamBuilder<List<bool>>(
                               stream: _nationalIdVerificationStream(),
                               builder: (context, snapshot) {
-                                final bothUploaded = snapshot.data != null && snapshot.data!.every((v) => v);
+                                final bothUploaded =
+                                    snapshot.data != null &&
+                                    snapshot.data!.every((v) => v);
                                 return GestureDetector(
                                   onTap: () async {
                                     setState(() => _selectedIndex = 0);
                                     await Navigator.of(context).push(
                                       MaterialPageRoute(
-                                        builder: (context) => NationalIdPassportFrontUploadScreen(selected: 0),
+                                        builder: (context) =>
+                                            NationalIdPassportFrontUploadScreen(
+                                              selected: 0,
+                                            ),
                                       ),
                                     );
                                   },
@@ -252,8 +257,8 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                                           color: bothUploaded
                                               ? const Color(0xFFFBBC04)
                                               : (_selectedIndex == 0
-                                                  ? const Color(0xFFFBBC04)
-                                                  : const Color(0xFFD9D9D9)),
+                                                    ? const Color(0xFFFBBC04)
+                                                    : const Color(0xFFD9D9D9)),
                                           shape: BoxShape.circle,
                                         ),
                                         child: Center(
@@ -261,14 +266,17 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                                             'assets/icons/nationalid.png',
                                             width: 20,
                                             height: 20,
-                                            color: bothUploaded ? Colors.white : null,
+                                            color: bothUploaded
+                                                ? Colors.white
+                                                : null,
                                           ),
                                         ),
                                       ),
                                       SizedBox(width: w * 0.018),
                                       Expanded(
                                         child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
                                             Text(
                                               'National ID/Passport',
@@ -276,20 +284,26 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                                                 color: bothUploaded
                                                     ? Colors.white
                                                     : (_selectedIndex == 0
-                                                        ? const Color(0xFFFBBC04)
-                                                        : Colors.black),
+                                                          ? const Color(
+                                                              0xFFFBBC04,
+                                                            )
+                                                          : Colors.black),
                                                 fontSize: screenWidth * 0.032,
                                                 fontWeight: FontWeight.w800,
                                               ),
                                             ),
                                             Text(
-                                              bothUploaded ? 'Submitted For Verification' : 'Not Verified',
+                                              bothUploaded
+                                                  ? 'Submitted For Verification'
+                                                  : 'Not Verified',
                                               style: TextStyle(
                                                 color: bothUploaded
                                                     ? Colors.white
                                                     : (_selectedIndex == 0
-                                                        ? const Color(0xFFFBBC04)
-                                                        : Colors.black54),
+                                                          ? const Color(
+                                                              0xFFFBBC04,
+                                                            )
+                                                          : Colors.black54),
                                                 fontSize: screenWidth * 0.035,
                                               ),
                                             ),
@@ -301,8 +315,8 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                                         color: bothUploaded
                                             ? Colors.white
                                             : (_selectedIndex == 0
-                                                ? const Color(0xFFFBBC04)
-                                                : Colors.black54),
+                                                  ? const Color(0xFFFBBC04)
+                                                  : Colors.black54),
                                       ),
                                     ],
                                   ),
