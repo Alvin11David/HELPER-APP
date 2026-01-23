@@ -621,7 +621,7 @@ class _AcademicCertificateUploadScreenState
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(Icons.upload, color: Colors.white, size: 40),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 2),
                           Text(
                             'Upload File',
                             style: TextStyle(
@@ -631,7 +631,7 @@ class _AcademicCertificateUploadScreenState
                               fontFamily: 'Inter',
                             ),
                           ),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 2),
                           Text(
                             'Supported files: PDF/PNG/JPEG/JPG',
                             style: TextStyle(
@@ -640,7 +640,7 @@ class _AcademicCertificateUploadScreenState
                               fontFamily: 'Inter',
                             ),
                           ),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 2),
                           Text(
                             'Max Size: 5MB',
                             style: TextStyle(
