@@ -20,16 +20,31 @@ class _AcademicCertificateUploadScreenState
   PlatformFile? _selectedFile;
 
   Future<void> _pickFile() async {
-    FilePickerResult? result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['pdf', 'png', 'jpeg', 'jpg'],
-      allowMultiple: false,
-    );
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.any,
+        allowMultiple: false,
+      );
 
-    if (result != null) {
-      setState(() {
-        _selectedFile = result.files.first;
-      });
+      if (result != null && result.files.isNotEmpty) {
+        final file = result.files.first;
+        // Check extension
+        final extension = file.extension?.toLowerCase();
+        if (extension == 'pdf' || extension == 'png' || extension == 'jpeg' || extension == 'jpg') {
+          setState(() {
+            _selectedFile = file;
+          });
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Please select a PDF, PNG, JPEG, or JPG file')),
+          );
+        }
+      }
+    } catch (e) {
+      // Show error message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error picking file: $e')),
+      );
     }
   }
 
@@ -638,25 +653,27 @@ class _AcademicCertificateUploadScreenState
             ),
           if (selectedProfessions.isNotEmpty)
             Positioned(
-              top: screenHeight * 0.33 + 210,
-              left: (screenWidth - 150) / 2,
-              child: GestureDetector(
-                onTap: _pickFile,
-                child: Container(
-                  width: 150,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  child: Center(
-                    child: Text(
-                      'Upload',
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'Inter',
+              top: screenHeight * 0.33 + 220,
+              left: (screenWidth - 190) / 2,
+              child: Center(
+                child: GestureDetector(
+                  onTap: _pickFile,
+                  child: Container(
+                    width: screenWidth * 0.5,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    child: Center(
+                      child: Text(
+                        'Upload',
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'Inter',
+                        ),
                       ),
                     ),
                   ),
