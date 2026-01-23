@@ -441,49 +441,38 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                       width: double.infinity,
                       height: h * 0.062,
                       child: ElevatedButton(
-                        onPressed: loading ? null : onContinue,
+                        onPressed: null, // Deactivated
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(0XFFFBBC04),
-                          disabledBackgroundColor: Color(
-                            0XFFFBBC04,
-                          ).withOpacity(0.6),
+                          backgroundColor: Color(0XFFFBBC04).withOpacity(0.6),
+                          disabledBackgroundColor: Color(0XFFFBBC04).withOpacity(0.6),
                           elevation: 0,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(30),
                           ),
                         ),
-                        child: loading
-                            ? SizedBox(
-                                width: h * 0.03,
-                                height: h * 0.03,
-                                child: const CircularProgressIndicator(
-                                  strokeWidth: 3,
-                                  color: Colors.black,
-                                ),
-                              )
-                            : Center(
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      'Continue',
-                                      style: TextStyle(
-                                        fontSize: w * 0.045,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.black,
-                                        fontFamily: 'Poppins',
-                                      ),
-                                    ),
-                                    SizedBox(width: w * 0.02),
-                                    Icon(
-                                      Icons.arrow_forward_rounded,
-                                      color: Colors.black,
-                                      size: h * 0.035,
-                                    ),
-                                  ],
+                        child: Center(
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'Continue',
+                                style: TextStyle(
+                                  fontSize: w * 0.045,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black.withOpacity(0.5),
+                                  fontFamily: 'Poppins',
                                 ),
                               ),
+                              SizedBox(width: w * 0.02),
+                              Icon(
+                                Icons.arrow_forward_rounded,
+                                color: Colors.black.withOpacity(0.5),
+                                size: h * 0.035,
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
                   ],
