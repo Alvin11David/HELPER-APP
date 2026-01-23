@@ -56,7 +56,9 @@ class _NationalIdPassportFrontUploadScreenState
       final downloadUrl = await uploadTask.ref.getDownloadURL();
 
       // Save to Firestore under user's collection
-      final docType = selected == 0 ? 'professional_workers_national_id_front' : 'professional_workers_passport_id_front';
+      final docType = selected == 0
+          ? 'professional_workers_national_id_front'
+          : 'professional_workers_passport_id_front';
       await FirebaseFirestore.instance
           .collection('users')
           .doc(user.uid)
@@ -191,9 +193,11 @@ class _NationalIdPassportFrontUploadScreenState
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
     final frontDocType = selected == 0
-        ? 'national_id_front'
-        : 'passport_id_front';
-    final backDocType = selected == 0 ? 'national_id_back' : 'passport_id_back';
+        ? 'professional_workers_national_id_front'
+        : 'professional_workers_passport_id_front';
+    final backDocType = selected == 0
+        ? 'professional_workers_national_id_back'
+        : 'professional_workers_passport_id_back';
     final frontDoc = await FirebaseFirestore.instance
         .collection('users')
         .doc(user.uid)
@@ -209,7 +213,7 @@ class _NationalIdPassportFrontUploadScreenState
     setState(() {
       if (frontDoc.exists) {
         final data = frontDoc.data() as Map<String, dynamic>;
-        _isAlreadyUploaded = false;
+        _isAlreadyUploaded = true;
         _uploadedUrl = data['url'];
       }
       if (backDoc.exists) {
