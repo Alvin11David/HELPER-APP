@@ -414,10 +414,10 @@ class _AcademicCertificateUploadScreenState
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        'Search or add your profession/Job',
+                        'Search your profession/Job and upload\nits certificate',
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: screenWidth * 0.038,
+                          fontSize: screenWidth * 0.033,
                           fontWeight: FontWeight.w500,
                           fontFamily: 'Inter',
                         ),
@@ -636,6 +636,33 @@ class _AcademicCertificateUploadScreenState
                 ),
               ),
             ),
+          if (selectedProfessions.isNotEmpty)
+            Positioned(
+              top: screenHeight * 0.33 + 210,
+              left: (screenWidth - 150) / 2,
+              child: GestureDetector(
+                onTap: _pickFile,
+                child: Container(
+                  width: 150,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  child: Center(
+                    child: Text(
+                      'Upload',
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Inter',
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
           if (_selectedFile != null)
             Positioned(
               top: screenHeight * 0.33 + 220,
@@ -661,11 +688,7 @@ class _AcademicCertificateUploadScreenState
                     ),
                     GestureDetector(
                       onTap: _removeFile,
-                      child: Icon(
-                        Icons.delete,
-                        color: Colors.white,
-                        size: 24,
-                      ),
+                      child: Icon(Icons.delete, color: Colors.white, size: 24),
                     ),
                   ],
                 ),
