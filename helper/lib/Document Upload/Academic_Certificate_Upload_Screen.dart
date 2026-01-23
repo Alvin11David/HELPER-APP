@@ -561,7 +561,7 @@ class _AcademicCertificateUploadScreenState
           ),
           if (selectedProfessions.isNotEmpty)
             Positioned(
-              bottom: screenHeight * 0.10,
+              top: screenHeight * 0.35,
               left: (screenWidth - screenWidth * 0.9) / 2,
               child: Container(
                 width: screenWidth * 0.9,
