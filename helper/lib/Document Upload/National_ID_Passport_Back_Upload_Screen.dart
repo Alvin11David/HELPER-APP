@@ -113,11 +113,13 @@ class _NationalIdPassportBackUploadScreenState
   void _removeImage() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
-      final docType = selected == 0 ? 'national_id_back' : 'passport_id_back';
+      final docType = selected == 0 ? 'professional_workers_national_id_back' : 'professional_workers_passport_id_back';
       final doc = await FirebaseFirestore.instance
           .collection('users')
           .doc(user.uid)
           .collection('documents')
+          .doc('Professional Workers')
+            .collection('Professional Workers')
           .doc(docType)
           .get();
       if (doc.exists) {
