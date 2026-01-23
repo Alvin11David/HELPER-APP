@@ -328,70 +328,93 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                               },
                             ),
                             SizedBox(height: h * 0.03),
-                            GestureDetector(
-                              onTap: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        AcademicCertificateUploadScreen(),
+                            StreamBuilder<bool>(
+                              stream: _academicCertificateVerificationStream(),
+                              builder: (context, snapshot) {
+                                final uploaded = snapshot.data ?? false;
+                                return GestureDetector(
+                                  onTap: () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            AcademicCertificateUploadScreen(),
+                                      ),
+                                    );
+                                  },
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        width: 36,
+                                        height: 36,
+                                        decoration: BoxDecoration(
+                                          color: uploaded
+                                              ? Colors.orange
+                                              : (_selectedIndex == 1
+                                                    ? const Color(0xFFFBBC04)
+                                                    : const Color(0xFFD9D9D9)),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Center(
+                                          child: Image.asset(
+                                            'assets/icons/academic.png',
+                                            width: 20,
+                                            height: 20,
+                                            color: uploaded
+                                                ? Colors.white
+                                                : null,
+                                          ),
+                                        ),
+                                      ),
+                                      SizedBox(width: w * 0.018),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              'Academic Certificates',
+                                              style: TextStyle(
+                                                color: uploaded
+                                                    ? Colors.orange
+                                                    : (_selectedIndex == 1
+                                                          ? const Color(
+                                                              0xFFFBBC04,
+                                                            )
+                                                          : Colors.black),
+                                                fontSize: screenWidth * 0.032,
+                                                fontWeight: FontWeight.w800,
+                                              ),
+                                            ),
+                                            Text(
+                                              uploaded
+                                                  ? 'Submitted For Verification'
+                                                  : 'Not Verified',
+                                              style: TextStyle(
+                                                color: uploaded
+                                                    ? Colors.orange
+                                                    : (_selectedIndex == 1
+                                                          ? const Color(
+                                                              0xFFFBBC04,
+                                                            )
+                                                          : Colors.black54),
+                                                fontSize: screenWidth * 0.035,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Icon(
+                                        Icons.chevron_right,
+                                        color: uploaded
+                                            ? Colors.orange
+                                            : (_selectedIndex == 1
+                                                  ? const Color(0xFFFBBC04)
+                                                  : Colors.black54),
+                                      ),
+                                    ],
                                   ),
                                 );
                               },
-                              child: Row(
-                                children: [
-                                  Container(
-                                    width: 36,
-                                    height: 36,
-                                    decoration: BoxDecoration(
-                                      color: _selectedIndex == 1
-                                          ? const Color(0xFFFBBC04)
-                                          : const Color(0xFFD9D9D9),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: Center(
-                                      child: Image.asset(
-                                        'assets/icons/academic.png',
-                                        width: 20,
-                                        height: 20,
-                                      ),
-                                    ),
-                                  ),
-                                  SizedBox(width: w * 0.018),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          'Academic Certificates',
-                                          style: TextStyle(
-                                            color: _selectedIndex == 1
-                                                ? const Color(0xFFFBBC04)
-                                                : Colors.black,
-                                            fontSize: screenWidth * 0.032,
-                                            fontWeight: FontWeight.w800,
-                                          ),
-                                        ),
-                                        Text(
-                                          'Not Verified',
-                                          style: TextStyle(
-                                            color: _selectedIndex == 1
-                                                ? const Color(0xFFFBBC04)
-                                                : Colors.black54,
-                                            fontSize: screenWidth * 0.035,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Icon(
-                                    Icons.chevron_right,
-                                    color: _selectedIndex == 1
-                                        ? const Color(0xFFFBBC04)
-                                        : Colors.black54,
-                                  ),
-                                ],
-                              ),
                             ),
                             SizedBox(height: h * 0.03),
                             GestureDetector(
@@ -747,4 +770,22 @@ Stream<List<bool>> _nationalIdVerificationStream() {
     backStream,
     (front, back) => [front.exists, back.exists],
   );
+}
+
+// Helper: Listen to Academic Certificate upload
+Stream<bool> _academicCertificateVerificationStream() {
+  final user = FirebaseAuth.instance.currentUser;
+  if (user == null) {
+    return Stream.value(false);
+  }
+
+  return FirebaseFirestore.instance
+      .collection('users')
+      .doc(user.uid)
+      .collection('documents')
+      .doc('Professional Workers')
+      .snapshots()
+      .map(
+        (doc) => doc.exists && doc.data()!.containsKey('Academic Certificate'),
+      );
 }
