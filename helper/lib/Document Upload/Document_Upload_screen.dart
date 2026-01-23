@@ -329,7 +329,13 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                             ),
                             SizedBox(height: h * 0.03),
                             GestureDetector(
-                              onTap: () => setState(() => _selectedIndex = 1),
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) => AcademicCertificateUploadScreen(),
+                                  ),
+                                );
+                              },
                               child: Row(
                                 children: [
                                   Container(
