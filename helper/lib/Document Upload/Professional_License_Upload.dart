@@ -490,7 +490,9 @@ class _ProfessionalLicenseUploadScreenState
                           // ✅ Dashed upload box (responsive height)
                           _DashedUploadBox(
                             height: (h * 0.26).clamp(180, 240),
-                            onTap: _uploadFile,
+                            selectedFile: _selectedFile,
+                            onTap: _selectedFile == null ? _uploadFile : null,
+                            onRemove: () => setState(() => _selectedFile = null),
                           ),
                           const SizedBox(height: 16),
                           Text(
@@ -608,9 +610,16 @@ class _GlassPill extends StatelessWidget {
 
 class _DashedUploadBox extends StatelessWidget {
   final double height;
-  final VoidCallback onTap;
+  final PlatformFile? selectedFile;
+  final VoidCallback? onTap;
+  final VoidCallback? onRemove;
 
-  const _DashedUploadBox({required this.height, required this.onTap});
+  const _DashedUploadBox({
+    required this.height,
+    this.selectedFile,
+    this.onTap,
+    this.onRemove,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -633,41 +642,76 @@ class _DashedUploadBox extends StatelessWidget {
               color: Colors.black.withOpacity(0.35),
               borderRadius: BorderRadius.circular(24),
             ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.cloud_upload_rounded, color: Colors.white, size: 56),
-                const SizedBox(height: 10),
-                Text(
-                  'Upload File',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontFamily: 'AbrilFatface',
-                    fontSize: 18,
+            child: selectedFile != null
+                ? Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        Icon(
+                          selectedFile!.extension == 'pdf'
+                              ? Icons.picture_as_pdf
+                              : Icons.image,
+                          color: Colors.white,
+                          size: 40,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            selectedFile!.name,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontFamily: 'Inter',
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: onRemove,
+                          icon: const Icon(
+                            Icons.delete,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.cloud_upload_rounded, color: Colors.white, size: 56),
+                      const SizedBox(height: 10),
+                      Text(
+                        'Upload File',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontFamily: 'AbrilFatface',
+                          fontSize: 18,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Supported files: PDF/PNG/JPEG/JPG',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.8),
+                          fontFamily: 'Inter',
+                          fontWeight: FontWeight.w900,
+                          fontSize: 12,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Max Size: 5MB',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.8),
+                          fontFamily: 'Inter',
+                          fontWeight: FontWeight.w900,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Supported files: PDF/PNG/JPEG/JPG',
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.8),
-                    fontFamily: 'Inter',
-                    fontWeight: FontWeight.w900,
-                    fontSize: 12,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  'Max Size: 5MB',
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.8),
-                    fontFamily: 'Inter',
-                    fontWeight: FontWeight.w900,
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
           ),
         ),
       ),
