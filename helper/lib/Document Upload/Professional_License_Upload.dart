@@ -16,6 +16,7 @@ class _ProfessionalLicenseUploadScreenState
 
   String? _selectedType;
   PlatformFile? _selectedFile;
+  final TextEditingController _professionController = TextEditingController();
 
   void _onContinue() {
     // TODO: next
@@ -492,7 +493,8 @@ class _ProfessionalLicenseUploadScreenState
                             height: (h * 0.26).clamp(180, 240),
                             selectedFile: _selectedFile,
                             onTap: _selectedFile == null ? _uploadFile : null,
-                            onRemove: () => setState(() => _selectedFile = null),
+                            onRemove: () =>
+                                setState(() => _selectedFile = null),
                           ),
                           const SizedBox(height: 16),
                           Text(
@@ -545,6 +547,50 @@ class _ProfessionalLicenseUploadScreenState
                                 ),
                               ),
                             ),
+                          ),
+
+                          const SizedBox(height: 18),
+
+                          // Manual add license section
+                          Column(
+                            children: [
+                              Text(
+                                'Or Manually add a license',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontFamily: 'Inter',
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              SizedBox(
+                                width: double.infinity,
+                                height: 54,
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    // TODO: implement manual add
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.white,
+                                    foregroundColor: Colors.black,
+                                    elevation: 4,
+                                    shadowColor: Colors.black.withOpacity(0.2),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(30),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    'Add a license',
+                                    style: TextStyle(
+                                      fontFamily: 'Poppins',
+                                      fontWeight: FontWeight.w900,
+                                      fontSize: (w * 0.040).clamp(14, 16),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
 
                           const SizedBox(height: 18),
@@ -669,10 +715,7 @@ class _DashedUploadBox extends StatelessWidget {
                         ),
                         IconButton(
                           onPressed: onRemove,
-                          icon: const Icon(
-                            Icons.delete,
-                            color: Colors.white,
-                          ),
+                          icon: const Icon(Icons.delete, color: Colors.white),
                         ),
                       ],
                     ),
@@ -680,7 +723,11 @@ class _DashedUploadBox extends StatelessWidget {
                 : Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.cloud_upload_rounded, color: Colors.white, size: 56),
+                      Icon(
+                        Icons.cloud_upload_rounded,
+                        color: Colors.white,
+                        size: 56,
+                      ),
                       const SizedBox(height: 10),
                       Text(
                         'Upload File',
