@@ -14,6 +14,7 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
   bool _loading = false;
   int _selectedIndex = -1;
   final _formKey = GlobalKey<FormState>();
+  bool _nationalIdSubmitted = false;
 
   Future<void> _onContinue() async {
     FocusScope.of(context).unfocus();
@@ -28,6 +29,35 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
 
     if (!mounted) return;
     setState(() => _loading = false);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _checkNationalIdSubmission();
+  }
+
+  Future<void> _checkNationalIdSubmission() async {
+    final user = await Future.value(null); // Replace with FirebaseAuth.instance.currentUser if available
+    // TODO: Replace with actual user check if needed
+    // For demo, just check Firestore for the document
+    // Uncomment and use the following if Firebase is available:
+    /*
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+    final docType = 'professional_workers_national_id_back';
+    final doc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .collection('documents')
+        .doc('Professional Workers')
+        .collection('Professional Workers')
+        .doc(docType)
+        .get();
+    setState(() {
+      _nationalIdSubmitted = doc.exists;
+    });
+    */
   }
 
   @override
@@ -198,14 +228,23 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                         child: Column(
                           children: [
                             GestureDetector(
-                              onTap: () {
+                              onTap: () async {
                                 setState(() => _selectedIndex = 0);
-                                Navigator.of(context).push(
+                                final result = await Navigator.of(context).push(
                                   MaterialPageRoute(
                                     builder: (context) =>
                                         NationalIdPassportFrontUploadScreen(selected: 0,),
                                   ),
                                 );
+                                // If the result is true, mark as submitted
+                                if (result == true) {
+                                  setState(() {
+                                    _nationalIdSubmitted = true;
+                                  });
+                                } else {
+                                  // Optionally re-check Firestore
+                                  _checkNationalIdSubmission();
+                                }
                               },
                               child: Row(
                                 children: [
@@ -213,9 +252,11 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                                     width: 36,
                                     height: 36,
                                     decoration: BoxDecoration(
-                                      color: _selectedIndex == 0
+                                      color: _nationalIdSubmitted
                                           ? const Color(0xFFFBBC04)
-                                          : const Color(0xFFD9D9D9),
+                                          : (_selectedIndex == 0
+                                              ? const Color(0xFFFBBC04)
+                                              : const Color(0xFFD9D9D9)),
                                       shape: BoxShape.circle,
                                     ),
                                     child: Center(
@@ -223,6 +264,7 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                                         'assets/icons/nationalid.png',
                                         width: 20,
                                         height: 20,
+                                        color: _nationalIdSubmitted ? Colors.white : null,
                                       ),
                                     ),
                                   ),
@@ -235,19 +277,25 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                                         Text(
                                           'National ID/Passport',
                                           style: TextStyle(
-                                            color: _selectedIndex == 0
-                                                ? const Color(0xFFFBBC04)
-                                                : Colors.black,
+                                            color: _nationalIdSubmitted
+                                                ? Colors.white
+                                                : (_selectedIndex == 0
+                                                    ? const Color(0xFFFBBC04)
+                                                    : Colors.black),
                                             fontSize: screenWidth * 0.032,
                                             fontWeight: FontWeight.w800,
                                           ),
                                         ),
                                         Text(
-                                          'Not Verified',
+                                          _nationalIdSubmitted
+                                              ? 'Submitted For Verification'
+                                              : 'Not Verified',
                                           style: TextStyle(
-                                            color: _selectedIndex == 0
-                                                ? const Color(0xFFFBBC04)
-                                                : Colors.black54,
+                                            color: _nationalIdSubmitted
+                                                ? Colors.white
+                                                : (_selectedIndex == 0
+                                                    ? const Color(0xFFFBBC04)
+                                                    : Colors.black54),
                                             fontSize: screenWidth * 0.035,
                                           ),
                                         ),
@@ -256,9 +304,11 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                                   ),
                                   Icon(
                                     Icons.chevron_right,
-                                    color: _selectedIndex == 0
-                                        ? const Color(0xFFFBBC04)
-                                        : Colors.black54,
+                                    color: _nationalIdSubmitted
+                                        ? Colors.white
+                                        : (_selectedIndex == 0
+                                            ? const Color(0xFFFBBC04)
+                                            : Colors.black54),
                                   ),
                                 ],
                               ),
