@@ -646,7 +646,9 @@ class _ProfessionalLicenseUploadScreenState
                                     : Text(
                                         'Continue →',
                                         style: TextStyle(
-                                          color: _loading || _existingDocument != null
+                                          color:
+                                              _loading ||
+                                                  _existingDocument != null
                                               ? Colors.white
                                               : Colors.black,
                                           fontFamily: 'Poppins',
