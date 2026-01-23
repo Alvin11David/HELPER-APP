@@ -46,7 +46,7 @@ class _NationalIdPassportFrontUploadScreenState
     }
     try {
       final file = File(_selectedImage!.path);
-      final folder = selected == 0 ? 'National IDS' : 'Passport ID';
+      final folder = selected == 0 ? 'Professional' : 'Passport ID';
       final fileName =
           '${DateTime.now().millisecondsSinceEpoch}_${user.uid}.jpg';
       final ref = FirebaseStorage.instance.ref().child('$folder/$fileName');
