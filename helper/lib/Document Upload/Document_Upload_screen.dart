@@ -332,7 +332,8 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                               onTap: () {
                                 Navigator.of(context).push(
                                   MaterialPageRoute(
-                                    builder: (context) => AcademicCertificateUploadScreen(),
+                                    builder: (context) =>
+                                        AcademicCertificateUploadScreen(),
                                   ),
                                 );
                               },
@@ -744,9 +745,6 @@ Stream<List<bool>> _nationalIdVerificationStream() {
   return Rx.combineLatest2<DocumentSnapshot, DocumentSnapshot, List<bool>>(
     frontStream,
     backStream,
-    (front, back) => [
-      front.exists,
-      back.exists,
-    ],
+    (front, back) => [front.exists, back.exists],
   );
 }

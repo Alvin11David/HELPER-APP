@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:helper/Document%20Upload/Add_Profession_Screen.dart';
 
 class AcademicCertificateUploadScreen extends StatefulWidget {
   const AcademicCertificateUploadScreen({super.key});
@@ -561,27 +562,36 @@ class _AcademicCertificateUploadScreenState
           Positioned(
             bottom: screenHeight * 0.05,
             left: (screenWidth - 290) / 2,
-            child: Container(
-              width: 290,
-              height: 38,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.add, color: Colors.black),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Add Your Profession',
-                    style: TextStyle(
-                      fontSize: screenWidth * 0.04,
-                      fontWeight: FontWeight.w500,
-                      fontFamily: 'Poppins',
-                    ),
+            child: GestureDetector(
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => AddProfessionScreen(),
                   ),
-                ],
+                );
+              },
+              child: Container(
+                width: 290,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.add, color: Colors.black),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Add Your Profession',
+                      style: TextStyle(
+                        fontSize: screenWidth * 0.04,
+                        fontWeight: FontWeight.w500,
+                        fontFamily: 'Poppins',
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
