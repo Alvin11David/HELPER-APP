@@ -127,23 +127,31 @@ class _NationalIdPassportFrontUploadScreenState
   void _removeBackImage() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
-      final docType = selected == 0 ? 'national_id_back' : 'passport_id_back';
-      final doc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .collection('documents')
-          .doc(docType)
-          .get();
+      final docType = selected == 0
+          ? 'professional_workers_national_id_back'
+          : 'professional_workers_passport_id_back';
+      DocumentReference docRef;
+      if (selected == 0) {
+        docRef = FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .collection('documents')
+            .doc('Professional Workers')
+            .collection('Professional Workers')
+            .doc(docType);
+      } else {
+        docRef = FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .collection('documents')
+            .doc(docType);
+      }
+      final doc = await docRef.get();
       if (doc.exists) {
         final data = doc.data() as Map<String, dynamic>;
         final storagePath = data['storagePath'];
         await FirebaseStorage.instance.ref().child(storagePath).delete();
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .collection('documents')
-            .doc(docType)
-            .delete();
+        await docRef.delete();
         setState(() {
           _isBackUploaded = false;
           _backUrl = null;
@@ -166,23 +174,31 @@ class _NationalIdPassportFrontUploadScreenState
   void _removeImage() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
-      final docType = selected == 0 ? 'national_id_front' : 'passport_id_front';
-      final doc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .collection('documents')
-          .doc(docType)
-          .get();
+      final docType = selected == 0
+          ? 'professional_workers_national_id_front'
+          : 'professional_workers_passport_id_front';
+      DocumentReference docRef;
+      if (selected == 0) {
+        docRef = FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .collection('documents')
+            .doc('Professional Workers')
+            .collection('Professional Workers')
+            .doc(docType);
+      } else {
+        docRef = FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .collection('documents')
+            .doc(docType);
+      }
+      final doc = await docRef.get();
       if (doc.exists) {
         final data = doc.data() as Map<String, dynamic>;
         final storagePath = data['storagePath'];
         await FirebaseStorage.instance.ref().child(storagePath).delete();
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .collection('documents')
-            .doc(docType)
-            .delete();
+        await docRef.delete();
         setState(() {
           _isAlreadyUploaded = false;
           _uploadedUrl = null;
@@ -215,18 +231,39 @@ class _NationalIdPassportFrontUploadScreenState
     final backDocType = selected == 0
         ? 'professional_workers_national_id_back'
         : 'professional_workers_passport_id_back';
-    final frontDoc = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(user.uid)
-        .collection('documents')
-        .doc(frontDocType)
-        .get();
-    final backDoc = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(user.uid)
-        .collection('documents')
-        .doc(backDocType)
-        .get();
+    DocumentSnapshot frontDoc;
+    DocumentSnapshot backDoc;
+    if (selected == 0) {
+      frontDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('documents')
+          .doc('Professional Workers')
+          .collection('Professional Workers')
+          .doc(frontDocType)
+          .get();
+      backDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('documents')
+          .doc('Professional Workers')
+          .collection('Professional Workers')
+          .doc(backDocType)
+          .get();
+    } else {
+      frontDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('documents')
+          .doc(frontDocType)
+          .get();
+      backDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('documents')
+          .doc(backDocType)
+          .get();
+    }
     setState(() {
       if (frontDoc.exists) {
         final data = frontDoc.data() as Map<String, dynamic>;
