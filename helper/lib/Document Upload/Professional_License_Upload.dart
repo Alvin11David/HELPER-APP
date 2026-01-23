@@ -35,6 +35,12 @@ class _ProfessionalLicenseUploadScreenState
   }
 
   @override
+  void dispose() {
+    _professionController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final w = MediaQuery.of(context).size.width;
     final h = MediaQuery.of(context).size.height;
@@ -569,7 +575,75 @@ class _ProfessionalLicenseUploadScreenState
                                 height: 54,
                                 child: ElevatedButton(
                                   onPressed: () {
-                                    // TODO: implement manual add
+                                    showModalBottomSheet(
+                                      context: context,
+                                      isScrollControlled: true,
+                                      backgroundColor: Colors.transparent,
+                                      builder: (context) => Container(
+                                        decoration: const BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius: BorderRadius.only(
+                                            topLeft: Radius.circular(30),
+                                            topRight: Radius.circular(30),
+                                          ),
+                                        ),
+                                        padding: const EdgeInsets.all(20),
+                                        child: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Text(
+                                              'Profession',
+                                              style: TextStyle(
+                                                color: Colors.black,
+                                                fontFamily: 'Inter',
+                                                fontWeight: FontWeight.w900,
+                                                fontSize: 16,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 10),
+                                            TextField(
+                                              controller: _professionController,
+                                              decoration: InputDecoration(
+                                                hintText: 'Add Your profession here',
+                                                border: OutlineInputBorder(
+                                                  borderRadius: BorderRadius.circular(30),
+                                                ),
+                                              ),
+                                            ),
+                                            const SizedBox(height: 20),
+                                            SizedBox(
+                                              width: double.infinity,
+                                              height: 54,
+                                              child: ElevatedButton(
+                                                onPressed: () {
+                                                  setState(() {
+                                                    _selectedType = _professionController.text.trim();
+                                                  });
+                                                  Navigator.pop(context);
+                                                },
+                                                style: ElevatedButton.styleFrom(
+                                                  backgroundColor: _brandYellow,
+                                                  foregroundColor: Colors.black,
+                                                  elevation: 4,
+                                                  shadowColor: Colors.black.withOpacity(0.2),
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius: BorderRadius.circular(30),
+                                                  ),
+                                                ),
+                                                child: Text(
+                                                  'Continue',
+                                                  style: TextStyle(
+                                                    fontFamily: 'Poppins',
+                                                    fontWeight: FontWeight.w900,
+                                                    fontSize: (w * 0.040).clamp(14, 16),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    );
                                   },
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.white,
