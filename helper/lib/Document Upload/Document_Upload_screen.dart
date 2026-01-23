@@ -168,7 +168,7 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                     SizedBox(height: h * 0.023),
                     _StepIndicator(
                       width: w,
-                      activeIndex: 1,
+                      activeIndex: 2,
                       labels: const ['1', '2', '3'],
                       accent: brandOrange,
                     ),
@@ -602,45 +602,64 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                     ),
                     SizedBox(height: h * 0.06),
                     // Continue (white)
-                    SizedBox(
-                      width: double.infinity,
-                      height: h * 0.062,
-                      child: ElevatedButton(
-                        onPressed: null, // Deactivated
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(0XFFFBBC04).withOpacity(0.6),
-                          disabledBackgroundColor: Color(
-                            0XFFFBBC04,
-                          ).withOpacity(0.6),
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                        ),
-                        child: Center(
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                'Continue',
-                                style: TextStyle(
-                                  fontSize: w * 0.045,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black.withOpacity(0.5),
-                                  fontFamily: 'Poppins',
-                                ),
+                    StreamBuilder<bool>(
+                      stream: _allDocumentsUploadedStream(),
+                      builder: (context, snapshot) {
+                        final allUploaded = snapshot.data ?? false;
+                        return SizedBox(
+                          width: double.infinity,
+                          height: h * 0.062,
+                          child: ElevatedButton(
+                            onPressed: allUploaded
+                                ? () {
+                                    // TODO: Navigate to next screen
+                                    print(
+                                      'Continue pressed - all documents uploaded!',
+                                    );
+                                  }
+                                : null,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: allUploaded
+                                  ? const Color(0XFFFBBC04)
+                                  : Color(0XFFFBBC04).withOpacity(0.6),
+                              disabledBackgroundColor: Color(
+                                0XFFFBBC04,
+                              ).withOpacity(0.6),
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
                               ),
-                              SizedBox(width: w * 0.02),
-                              Icon(
-                                Icons.arrow_forward_rounded,
-                                color: Colors.black.withOpacity(0.5),
-                                size: h * 0.035,
+                            ),
+                            child: Center(
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    'Continue',
+                                    style: TextStyle(
+                                      fontSize: w * 0.045,
+                                      fontWeight: FontWeight.bold,
+                                      color: allUploaded
+                                          ? Colors.black
+                                          : Colors.black.withOpacity(0.5),
+                                      fontFamily: 'Poppins',
+                                    ),
+                                  ),
+                                  SizedBox(width: w * 0.02),
+                                  Icon(
+                                    Icons.arrow_forward_rounded,
+                                    color: allUploaded
+                                        ? Colors.black
+                                        : Colors.black.withOpacity(0.5),
+                                    size: h * 0.035,
+                                  ),
+                                ],
                               ),
-                            ],
+                            ),
                           ),
-                        ),
-                      ),
+                        );
+                      },
                     ),
                   ],
                 ),
@@ -884,4 +903,29 @@ Stream<bool> _selfieVerificationStream() {
       .doc('selfie')
       .snapshots()
       .map((doc) => doc.exists);
+}
+
+// Helper: Combined stream to check if all required documents are uploaded
+Stream<bool> _allDocumentsUploadedStream() {
+  final user = FirebaseAuth.instance.currentUser;
+  if (user == null) {
+    return Stream.value(false);
+  }
+
+  final nationalIdStream = _nationalIdVerificationStream();
+  final selfieStream = _selfieVerificationStream();
+  final academicStream = _academicCertificateVerificationStream();
+  final licenseStream = _professionalLicenseVerificationStream();
+
+  return Rx.combineLatest4<List<bool>, bool, bool, bool, bool>(
+    nationalIdStream,
+    selfieStream,
+    academicStream,
+    licenseStream,
+    (nationalId, selfie, academic, license) {
+      final nationalIdUploaded = nationalId.every((v) => v);
+      final eitherCertificateOrLicense = academic || license;
+      return nationalIdUploaded && selfie && eitherCertificateOrLicense;
+    },
+  );
 }
