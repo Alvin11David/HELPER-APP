@@ -62,7 +62,7 @@ class _NationalIdPassportFrontUploadScreenState
       await FirebaseFirestore.instance
           .collection('users')
           .doc(user.uid)
-          .collection('documents')
+          .collection('Professional Workers')
           .doc(docType)
           .set({
             'url': downloadUrl,
