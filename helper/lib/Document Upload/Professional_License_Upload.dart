@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
 
 class ProfessionalLicenseUploadScreen extends StatefulWidget {
   const ProfessionalLicenseUploadScreen({super.key});
@@ -14,13 +15,22 @@ class _ProfessionalLicenseUploadScreenState
   static const _brandYellow = Color(0xFFFFC700);
 
   String? _selectedType;
+  PlatformFile? _selectedFile;
 
   void _onContinue() {
     // TODO: next
   }
 
-  void _uploadFile() {
-    // TODO: pick file
+  void _uploadFile() async {
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['pdf', 'png', 'jpeg', 'jpg'],
+    );
+    if (result != null) {
+      setState(() {
+        _selectedFile = result.files.first;
+      });
+    }
   }
 
   @override

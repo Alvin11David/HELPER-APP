@@ -422,7 +422,8 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                               onTap: () {
                                 Navigator.of(context).push(
                                   MaterialPageRoute(
-                                    builder: (context) => ProfessionalLicenseUploadScreen(),
+                                    builder: (context) =>
+                                        ProfessionalLicenseUploadScreen(),
                                   ),
                                 );
                               },
