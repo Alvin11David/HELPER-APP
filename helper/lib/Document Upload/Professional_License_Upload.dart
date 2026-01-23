@@ -1,6 +1,10 @@
 import 'dart:ui';
+import 'dart:io';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 class ProfessionalLicenseUploadScreen extends StatefulWidget {
   const ProfessionalLicenseUploadScreen({super.key});
@@ -16,10 +20,68 @@ class _ProfessionalLicenseUploadScreenState
 
   String? _selectedType;
   PlatformFile? _selectedFile;
+  bool _loading = false;
   final TextEditingController _professionController = TextEditingController();
 
-  void _onContinue() {
-    // TODO: next
+  void _onContinue() async {
+    if (_selectedFile == null || _selectedType == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Please select both a license type and upload a document.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    setState(() => _loading = true);
+
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('User not authenticated.')),
+        );
+        return;
+      }
+
+      // Upload to Firebase Storage
+      final storageRef = FirebaseStorage.instance.ref().child(
+        'users/${user.uid}/documents/Professional Workers/Professional License/${_selectedFile!.name}',
+      );
+
+      await storageRef.putFile(File(_selectedFile!.path!));
+      final downloadUrl = await storageRef.getDownloadURL();
+
+      // Save to Firestore
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('documents')
+          .doc('Professional Workers')
+          .set({
+            'Professional License': {
+              'type': _selectedType,
+              'url': downloadUrl,
+              'uploadedAt': FieldValue.serverTimestamp(),
+            },
+          }, SetOptions(merge: true));
+
+      // Success
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Document uploaded successfully!')),
+      );
+
+      // Navigate back or to next screen
+      Navigator.of(context).maybePop();
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Upload failed: $e')));
+    } finally {
+      setState(() => _loading = false);
+    }
   }
 
   void _uploadFile() async {
@@ -526,7 +588,7 @@ class _ProfessionalLicenseUploadScreenState
 
                           // Continue button
                           GestureDetector(
-                            onTap: _onContinue,
+                            onTap: _loading ? null : _onContinue,
                             child: Container(
                               width: double.infinity,
                               height: 54,
@@ -542,15 +604,22 @@ class _ProfessionalLicenseUploadScreenState
                                 ],
                               ),
                               child: Center(
-                                child: Text(
-                                  'Continue →',
-                                  style: TextStyle(
-                                    color: Colors.black,
-                                    fontFamily: 'Poppins',
-                                    fontWeight: FontWeight.w900,
-                                    fontSize: (w * 0.040).clamp(14, 16),
-                                  ),
-                                ),
+                                child: _loading
+                                    ? const CircularProgressIndicator(
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                              Colors.black,
+                                            ),
+                                      )
+                                    : Text(
+                                        'Continue →',
+                                        style: TextStyle(
+                                          color: Colors.black,
+                                          fontFamily: 'Poppins',
+                                          fontWeight: FontWeight.w900,
+                                          fontSize: (w * 0.040).clamp(14, 16),
+                                        ),
+                                      ),
                               ),
                             ),
                           ),
@@ -604,9 +673,11 @@ class _ProfessionalLicenseUploadScreenState
                                             TextField(
                                               controller: _professionController,
                                               decoration: InputDecoration(
-                                                hintText: 'Add Your profession here',
+                                                hintText:
+                                                    'Add Your profession here',
                                                 border: OutlineInputBorder(
-                                                  borderRadius: BorderRadius.circular(30),
+                                                  borderRadius:
+                                                      BorderRadius.circular(30),
                                                 ),
                                               ),
                                             ),
@@ -617,7 +688,10 @@ class _ProfessionalLicenseUploadScreenState
                                               child: ElevatedButton(
                                                 onPressed: () {
                                                   setState(() {
-                                                    _selectedType = _professionController.text.trim();
+                                                    _selectedType =
+                                                        _professionController
+                                                            .text
+                                                            .trim();
                                                   });
                                                   Navigator.pop(context);
                                                 },
@@ -625,9 +699,13 @@ class _ProfessionalLicenseUploadScreenState
                                                   backgroundColor: _brandYellow,
                                                   foregroundColor: Colors.black,
                                                   elevation: 4,
-                                                  shadowColor: Colors.black.withOpacity(0.2),
+                                                  shadowColor: Colors.black
+                                                      .withOpacity(0.2),
                                                   shape: RoundedRectangleBorder(
-                                                    borderRadius: BorderRadius.circular(30),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          30,
+                                                        ),
                                                   ),
                                                 ),
                                                 child: Text(
@@ -635,7 +713,10 @@ class _ProfessionalLicenseUploadScreenState
                                                   style: TextStyle(
                                                     fontFamily: 'Poppins',
                                                     fontWeight: FontWeight.w900,
-                                                    fontSize: (w * 0.040).clamp(14, 16),
+                                                    fontSize: (w * 0.040).clamp(
+                                                      14,
+                                                      16,
+                                                    ),
                                                   ),
                                                 ),
                                               ),
