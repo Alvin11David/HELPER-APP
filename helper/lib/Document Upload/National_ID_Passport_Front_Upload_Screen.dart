@@ -56,7 +56,7 @@ class _NationalIdPassportFrontUploadScreenState
       final downloadUrl = await uploadTask.ref.getDownloadURL();
 
       // Save to Firestore under user's collection
-      final docType = selected == 0 ? 'national_id_front' : 'passport_id_front';
+      final docType = selected == 0 ? 'professional_workers_national_id_front' : 'professional_workers_passport_id_front';
       await FirebaseFirestore.instance
           .collection('users')
           .doc(user.uid)
