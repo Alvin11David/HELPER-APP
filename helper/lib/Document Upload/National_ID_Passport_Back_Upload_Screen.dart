@@ -68,7 +68,7 @@ class _NationalIdPassportBackUploadScreenState
       final downloadUrl = await uploadTask.ref.getDownloadURL();
 
       // Save to Firestore under user's collection
-      final docType = selected == 0 ? 'national_id_back' : 'passport_id_back';
+      final docType = selected == 0 ? 'professional_workers_national_id_back' : 'professional_workers_passport_id_back';
       await FirebaseFirestore.instance
           .collection('users')
           .doc(user.uid)
