@@ -134,6 +134,9 @@ class _AcademicCertificateUploadScreenState
     searchHistory = [];
     selectedProfessions = [];
     _selectedProfession = widget.selectedProfession;
+    if (_selectedProfession != null) {
+      selectedProfessions.add(_selectedProfession!);
+    }
   }
 
   static List<String> professions = [
@@ -758,7 +761,7 @@ class _AcademicCertificateUploadScreenState
                 ),
               ),
             ),
-          if (_selectedFile != null)
+          if (selectedProfessions.isNotEmpty && _selectedFile != null)
             Positioned(
               top: screenHeight * 0.33 + 280,
               left: (screenWidth - screenWidth * 0.8) / 2,

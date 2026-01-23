@@ -211,9 +211,10 @@ class _AddProfessionScreenState extends State<AddProfessionScreen> {
                           _professionController.clear();
                           Navigator.of(context).push(
                             MaterialPageRoute(
-                              builder: (context) => AcademicCertificateUploadScreen(
-                                selectedProfession: newProfession,
-                              ),
+                              builder: (context) =>
+                                  AcademicCertificateUploadScreen(
+                                    selectedProfession: newProfession,
+                                  ),
                             ),
                           );
                         } else if (newProfession.isEmpty) {
