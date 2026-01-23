@@ -22,6 +22,7 @@ class _ProfessionalLicenseUploadScreenState
   PlatformFile? _selectedFile;
   bool _loading = false;
   final TextEditingController _professionController = TextEditingController();
+  Map<String, dynamic>? _existingDocument;
 
   void _onContinue() async {
     if (_selectedFile == null || _selectedType == null) {
@@ -97,9 +98,28 @@ class _ProfessionalLicenseUploadScreenState
   }
 
   @override
-  void dispose() {
-    _professionController.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    _fetchExistingDocument();
+  }
+
+  Future<void> _fetchExistingDocument() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final doc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .collection('documents')
+        .doc('Professional Workers')
+        .get();
+
+    if (doc.exists && doc.data()!.containsKey('Professional License')) {
+      setState(() {
+        _existingDocument = doc.data()!['Professional License'] as Map<String, dynamic>;
+        _selectedType = _existingDocument!['type'];
+      });
+    }
   }
 
   @override
@@ -546,7 +566,7 @@ class _ProfessionalLicenseUploadScreenState
                                       child: Text('Truck Driver License'),
                                     ),
                                   ],
-                                  onChanged: (val) {
+                                  onChanged: _existingDocument != null ? null : (val) {
                                     setState(() => _selectedType = val);
                                   },
                                 ),
@@ -560,7 +580,8 @@ class _ProfessionalLicenseUploadScreenState
                           _DashedUploadBox(
                             height: (h * 0.26).clamp(180, 240),
                             selectedFile: _selectedFile,
-                            onTap: _selectedFile == null ? _uploadFile : null,
+                            existingDocument: _existingDocument,
+                            onTap: _selectedFile == null && _existingDocument == null ? _uploadFile : null,
                             onRemove: () =>
                                 setState(() => _selectedFile = null),
                           ),
@@ -588,7 +609,7 @@ class _ProfessionalLicenseUploadScreenState
 
                           // Continue button
                           GestureDetector(
-                            onTap: _loading ? null : _onContinue,
+                            onTap: _loading || _existingDocument != null ? null : _onContinue,
                             child: Container(
                               width: double.infinity,
                               height: 54,
@@ -643,7 +664,7 @@ class _ProfessionalLicenseUploadScreenState
                                 width: double.infinity,
                                 height: 54,
                                 child: ElevatedButton(
-                                  onPressed: () {
+                                  onPressed: _existingDocument != null ? null : () {
                                     showModalBottomSheet(
                                       context: context,
                                       isScrollControlled: true,
@@ -812,12 +833,14 @@ class _GlassPill extends StatelessWidget {
 class _DashedUploadBox extends StatelessWidget {
   final double height;
   final PlatformFile? selectedFile;
+  final Map<String, dynamic>? existingDocument;
   final VoidCallback? onTap;
   final VoidCallback? onRemove;
 
   const _DashedUploadBox({
     required this.height,
     this.selectedFile,
+    this.existingDocument,
     this.onTap,
     this.onRemove,
   });
@@ -843,7 +866,33 @@ class _DashedUploadBox extends StatelessWidget {
               color: Colors.black.withOpacity(0.35),
               borderRadius: BorderRadius.circular(24),
             ),
-            child: selectedFile != null
+            child: existingDocument != null
+                ? Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.description,
+                          color: Colors.white,
+                          size: 40,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            '${existingDocument!['type']} License',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontFamily: 'Inter',
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : selectedFile != null
                 ? Padding(
                     padding: const EdgeInsets.all(16),
                     child: Row(
