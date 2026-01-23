@@ -561,18 +561,13 @@ class _AcademicCertificateUploadScreenState
           ),
           if (selectedProfessions.isNotEmpty)
             Positioned(
-              top: screenHeight * 0.35,
+              top: screenHeight * 0.33,
               left: (screenWidth - screenWidth * 0.9) / 2,
               child: Container(
                 width: screenWidth * 0.9,
-                height: 120,
+                height: 200,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(25),
-                  border: Border.all(
-                    color: Colors.white,
-                    width: 2,
-                    style: BorderStyle.none, // Will use custom painter
-                  ),
                 ),
                 child: CustomPaint(
                   painter: DashedBorderPainter(),
