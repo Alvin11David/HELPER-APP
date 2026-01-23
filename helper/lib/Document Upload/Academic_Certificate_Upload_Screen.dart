@@ -687,7 +687,7 @@ class _AcademicCertificateUploadScreenState
             ),
           if (_selectedFile != null)
             Positioned(
-              top: screenHeight * 0.33 + 220,
+              top: screenHeight * 0.33 + 280,
               left: (screenWidth - screenWidth * 0.9) / 2,
               child: Container(
                 width: screenWidth * 0.9,
