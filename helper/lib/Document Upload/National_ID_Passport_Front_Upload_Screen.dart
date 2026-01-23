@@ -46,7 +46,9 @@ class _NationalIdPassportFrontUploadScreenState
     }
     try {
       final file = File(_selectedImage!.path);
-      final folder = selected == 0 ? 'National IDS' : 'Passport ID';
+      final folder = selected == 0
+          ? 'Professional Workers National IDS'
+          : 'Professional Workers Passport ID';
       final fileName =
           '${DateTime.now().millisecondsSinceEpoch}_${user.uid}.jpg';
       final ref = FirebaseStorage.instance.ref().child('$folder/$fileName');
@@ -207,7 +209,7 @@ class _NationalIdPassportFrontUploadScreenState
     setState(() {
       if (frontDoc.exists) {
         final data = frontDoc.data() as Map<String, dynamic>;
-        _isAlreadyUploaded = true;
+        _isAlreadyUploaded = false;
         _uploadedUrl = data['url'];
       }
       if (backDoc.exists) {
