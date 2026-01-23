@@ -209,9 +209,11 @@ class _AddProfessionScreenState extends State<AddProfessionScreen> {
                             );
                           });
                           _professionController.clear();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Profession added successfully!'),
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => AcademicCertificateUploadScreen(
+                                selectedProfession: newProfession,
+                              ),
                             ),
                           );
                         } else if (newProfession.isEmpty) {

@@ -9,7 +9,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class AcademicCertificateUploadScreen extends StatefulWidget {
-  const AcademicCertificateUploadScreen({super.key});
+  const AcademicCertificateUploadScreen({super.key, this.selectedProfession});
+  final String? selectedProfession;
   static List<String> professions = [];
 
   @override
@@ -132,6 +133,7 @@ class _AcademicCertificateUploadScreenState
     super.initState();
     searchHistory = [];
     selectedProfessions = [];
+    _selectedProfession = widget.selectedProfession;
   }
 
   static List<String> professions = [
