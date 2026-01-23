@@ -1,8 +1,12 @@
 import 'dart:ui';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:helper/Document%20Upload/Add_Profession_Screen.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class AcademicCertificateUploadScreen extends StatefulWidget {
   const AcademicCertificateUploadScreen({super.key});
@@ -17,6 +21,7 @@ class _AcademicCertificateUploadScreenState
     extends State<AcademicCertificateUploadScreen> {
   late List<String> searchHistory;
   late List<String> selectedProfessions;
+  String? _selectedProfession;
   PlatformFile? _selectedFile;
 
   Future<void> _pickFile() async {
@@ -57,6 +62,57 @@ class _AcademicCertificateUploadScreenState
     setState(() {
       _selectedFile = null;
     });
+  }
+
+  Future<void> _uploadToFirebase() async {
+    if (_selectedProfession == null || _selectedFile == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select profession and file')),
+      );
+      return;
+    }
+
+    try {
+      final userId = FirebaseAuth.instance.currentUser!.uid;
+      final extension = _selectedFile!.extension ?? 'pdf';
+      final fileName = 'Professional Workers Academic Certificate.$extension';
+      final storageRef = FirebaseStorage.instance.ref().child(
+        'documents/$userId/$fileName',
+      );
+
+      UploadTask uploadTask;
+      if (_selectedFile!.path != null) {
+        uploadTask = storageRef.putFile(File(_selectedFile!.path!));
+      } else if (_selectedFile!.bytes != null) {
+        uploadTask = storageRef.putData(_selectedFile!.bytes!);
+      } else {
+        throw 'No file data available';
+      }
+
+      await uploadTask;
+      final downloadUrl = await storageRef.getDownloadURL();
+
+      // Save to Firestore
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('documents')
+          .doc('Professional Workers')
+          .set({
+            'Academic Certificate': {
+              'url': downloadUrl,
+              'profession': _selectedProfession,
+            },
+          }, SetOptions(merge: true));
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Uploaded successfully')));
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Upload failed: $e')));
+    }
   }
 
   @override
@@ -480,6 +536,7 @@ class _AcademicCertificateUploadScreenState
                     if (!selectedProfessions.contains(selection)) {
                       selectedProfessions.add(selection);
                     }
+                    _selectedProfession = selection;
                   });
                 },
                 fieldViewBuilder:
@@ -752,6 +809,33 @@ class _AcademicCertificateUploadScreenState
               ),
             ),
           ),
+          if (_selectedFile != null && _selectedProfession != null)
+            Positioned(
+              bottom: screenHeight * 0.05 + 50,
+              left: (screenWidth - 290) / 2,
+              child: GestureDetector(
+                onTap: _uploadToFirebase,
+                child: Container(
+                  width: 290,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: Colors.blue,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Center(
+                    child: Text(
+                      'Upload to Firebase',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: screenWidth * 0.04,
+                        fontWeight: FontWeight.w500,
+                        fontFamily: 'Inter',
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );
