@@ -23,6 +23,7 @@ class _AcademicCertificateUploadScreenState
   late List<String> selectedProfessions;
   String? _selectedProfession;
   PlatformFile? _selectedFile;
+  bool _isUploading = false;
 
   Future<void> _pickFile() async {
     try {
