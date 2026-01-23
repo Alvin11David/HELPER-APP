@@ -688,9 +688,9 @@ class _AcademicCertificateUploadScreenState
           if (_selectedFile != null)
             Positioned(
               top: screenHeight * 0.33 + 280,
-              left: (screenWidth - screenWidth * 0.9) / 2,
+              left: (screenWidth - screenWidth * 0.8) / 2,
               child: Container(
-                width: screenWidth * 0.9,
+                width: screenWidth * 0.8,
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.1),
