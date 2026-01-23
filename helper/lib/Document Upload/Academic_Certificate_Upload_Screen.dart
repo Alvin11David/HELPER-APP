@@ -609,7 +609,7 @@ class _AcademicCertificateUploadScreenState
                 onTap: _pickFile,
                 child: Container(
                   width: screenWidth * 0.9,
-                  height: 200,
+                  height: 180,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(25),
                   ),
@@ -658,7 +658,7 @@ class _AcademicCertificateUploadScreenState
             ),
           if (selectedProfessions.isNotEmpty)
             Positioned(
-              top: screenHeight * 0.33 + 220,
+              top: screenHeight * 0.33 + 200,
               left: (screenWidth - 190) / 2,
               child: Center(
                 child: GestureDetector(
