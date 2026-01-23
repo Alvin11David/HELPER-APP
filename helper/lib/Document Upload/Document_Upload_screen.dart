@@ -301,7 +301,7 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                                                   : 'Not Verified',
                                               style: TextStyle(
                                                 color: bothUploaded
-                                                    ? Colors.white
+                                                    ? Colors.black
                                                     : (_selectedIndex == 0
                                                           ? const Color(
                                                               0xFFFBBC04,
@@ -713,38 +713,33 @@ class DashedLinePainter extends CustomPainter {
 }
 
 // Helper: Listen to both front and back uploads for National ID/Passport
-Stream<List<bool>> _nationalIdVerificationStream() async* {
+Stream<List<bool>> _nationalIdVerificationStream() {
   final user = FirebaseAuth.instance.currentUser;
   if (user == null) {
-    yield [false, false];
-    return;
+    return Stream.value([false, false]);
   }
 
-  final userId = user.uid;
-
-  final frontDoc = FirebaseFirestore.instance
+  final baseRef = FirebaseFirestore.instance
       .collection('users')
-      .doc(userId)
+      .doc(user.uid)
       .collection('documents')
       .doc('Professional Workers')
-      .collection('Professional Workers')
+      .collection('Professional Workers');
+
+  final frontStream = baseRef
       .doc('professional_workers_national_id_front')
       .snapshots();
 
-  final backDoc = FirebaseFirestore.instance
-      .collection('users')
-      .doc(userId)
-      .collection('documents')
-      .doc('Professional Workers')
-      .collection('Professional Workers')
+  final backStream = baseRef
       .doc('professional_workers_national_id_back')
       .snapshots();
 
-  await for (final combined in Rx.combineLatest2(
-    frontDoc,
-    backDoc,
-    (a, b) => [a.exists, b.exists],
-  )) {
-    yield combined;
-  }
+  return Rx.combineLatest2<DocumentSnapshot, DocumentSnapshot, List<bool>>(
+    frontStream,
+    backStream,
+    (front, back) => [
+      front.exists,
+      back.exists,
+    ],
+  );
 }
