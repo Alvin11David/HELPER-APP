@@ -663,7 +663,6 @@ class DashedBorderPainter extends CustomPainter {
 
     const dashWidth = 10.0;
     const dashSpace = 5.0;
-    double startX = 0;
 
     final path = Path();
     path.addRRect(
@@ -673,49 +672,38 @@ class DashedBorderPainter extends CustomPainter {
       ),
     );
 
-    canvas.drawPath(path, paint);
+    canvas.drawPath(_createDashedPath(path, dashWidth, dashSpace), paint);
+  }
 
-    // For dashed, we need to draw dashes manually
-    final borderPaint = Paint()
-      ..color = Colors.white
-      ..strokeWidth = 2
-      ..style = PaintingStyle.stroke;
+  Path _createDashedPath(Path source, double dashWidth, double dashSpace) {
+    final Path dashedPath = Path();
+    final PathMetrics pathMetrics = source.computeMetrics();
 
-    // Top
-    double x = 0;
-    while (x < size.width) {
-      canvas.drawLine(Offset(x, 0), Offset(x + dashWidth, 0), borderPaint);
-      x += dashWidth + dashSpace;
+    for (final PathMetric pathMetric in pathMetrics) {
+      double distance = 0.0;
+      bool draw = true;
+      while (distance < pathMetric.length) {
+        final double length = draw ? dashWidth : dashSpace;
+        if (draw) {
+          final Tangent? startTangent = pathMetric.getTangentForOffset(
+            distance,
+          );
+          final Tangent? endTangent = pathMetric.getTangentForOffset(
+            distance + dashWidth,
+          );
+          if (startTangent != null && endTangent != null) {
+            dashedPath.moveTo(
+              startTangent.position.dx,
+              startTangent.position.dy,
+            );
+            dashedPath.lineTo(endTangent.position.dx, endTangent.position.dy);
+          }
+        }
+        distance += length;
+        draw = !draw;
+      }
     }
-
-    // Right
-    double y = 0;
-    while (y < size.height) {
-      canvas.drawLine(
-        Offset(size.width, y),
-        Offset(size.width, y + dashWidth),
-        borderPaint,
-      );
-      y += dashWidth + dashSpace;
-    }
-
-    // Bottom
-    x = size.width;
-    while (x > 0) {
-      canvas.drawLine(
-        Offset(x, size.height),
-        Offset(x - dashWidth, size.height),
-        borderPaint,
-      );
-      x -= dashWidth + dashSpace;
-    }
-
-    // Left
-    y = size.height;
-    while (y > 0) {
-      canvas.drawLine(Offset(0, y), Offset(0, y - dashWidth), borderPaint);
-      y -= dashWidth + dashSpace;
-    }
+    return dashedPath;
   }
 
   @override
