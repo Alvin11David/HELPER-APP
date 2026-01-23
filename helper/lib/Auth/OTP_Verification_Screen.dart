@@ -37,11 +37,18 @@ class DashedLinePainter extends CustomPainter {
 
 class OTPVerificationScreen extends StatefulWidget {
   final bool isPhoneVerification; // true for phone, false for email
-  final String? emailOrPhone; // Email or phone number for OTP verification
+  final String? emailOrPhone; // Email or phone number
+  final String verificationId; // ✅ for phone only (passed from signup/signin)
+  final String fullName; // ✅ passed from signup (or '' if signin)
+  final String password; // ✅ for email signup only (or '')
+
   const OTPVerificationScreen({
     super.key,
-    this.isPhoneVerification = true, // default to phone
-    this.emailOrPhone, required String initialVerificationId,
+    required this.isPhoneVerification,
+    required this.emailOrPhone,
+    required this.verificationId,
+    required this.fullName,
+    required this.password,
   });
 
   @override
@@ -51,78 +58,29 @@ class OTPVerificationScreen extends StatefulWidget {
 class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
   static const _brandOrange = Color(0xFFFFA10D);
   final int _otpLength = 6;
+
   late List<TextEditingController> _controllers;
   late List<FocusNode> _focusNodes;
 
   int _countdown = 60;
   bool _isButtonEnabled = false;
   bool _isLoading = false;
+  bool _verifying = false;
+
   Timer? _timer;
-  String? _verificationId; // For Firebase phone auth
+
+  String? _verificationId; // for phone
+  String get otp => _controllers.map((c) => c.text).join();
 
   @override
   void initState() {
     super.initState();
-    _controllers = List.generate(
-      _otpLength,
-      (index) => TextEditingController(),
-    );
-    _focusNodes = List.generate(_otpLength, (index) => FocusNode());
-    if (widget.isPhoneVerification && widget.emailOrPhone != null) {
-      _startPhoneVerification(widget.emailOrPhone!);
-    }
-    _startCountdown();
-  }
 
-  void _startPhoneVerification(String phoneNumber) async {
-    setState(() => _isLoading = true);
-    await FirebaseAuth.instance.verifyPhoneNumber(
-      phoneNumber: phoneNumber,
-      timeout: const Duration(seconds: 60),
-      verificationCompleted: (PhoneAuthCredential credential) async {
-        // Auto-retrieval or instant verification
-        try {
-          await FirebaseAuth.instance.signInWithCredential(credential);
-          if (mounted) {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (context) => const RegistrationPaymentScreen(),
-              ),
-            );
-          }
-        } catch (e) {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Auto-verification failed: $e')),
-            );
-          }
-        }
-      },
-      verificationFailed: (FirebaseAuthException e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Verification failed: ${e.message}')),
-          );
-        }
-        setState(() => _isLoading = false);
-      },
-      codeSent: (String verificationId, int? resendToken) {
-        setState(() {
-          _verificationId = verificationId;
-          _isLoading = false;
-        });
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('OTP sent to your phone.')),
-          );
-        }
-      },
-      codeAutoRetrievalTimeout: (String verificationId) {
-        setState(() {
-          _verificationId = verificationId;
-        });
-      },
-    );
+    _controllers = List.generate(_otpLength, (_) => TextEditingController());
+    _focusNodes = List.generate(_otpLength, (_) => FocusNode());
+
+    _verificationId = widget.verificationId;
+    _startCountdown();
   }
 
   void _startCountdown() {
@@ -134,124 +92,303 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_countdown > 0) {
-        setState(() {
-          _countdown--;
-        });
+        setState(() => _countdown--);
       } else {
-        setState(() {
-          _isButtonEnabled = true;
-        });
+        setState(() => _isButtonEnabled = true);
         timer.cancel();
       }
     });
   }
 
-  String _generateOTP() {
-    // Generate a 6-digit OTP
-    return (100000 + (DateTime.now().millisecondsSinceEpoch % 900000))
-        .toString();
+  void _snack(String msg) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
-  void _resendOTP() async {
-    if (_isButtonEnabled && !_isLoading) {
-      setState(() {
-        _isLoading = true;
+  String _generateOTP() {
+    // 6-digit OTP (simple)
+    return (100000 + (DateTime.now().millisecondsSinceEpoch % 900000)).toString();
+  }
+
+  // ✅ PHONE RESEND: use FirebaseAuth.verifyPhoneNumber (do NOT use "OTP Codes" or sendSMSOTP)
+  Future<void> _resendPhoneOTP() async {
+    final phone = widget.emailOrPhone;
+    if (phone == null || phone.trim().isEmpty) {
+      _snack('Missing phone number.');
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      await FirebaseAuth.instance.verifyPhoneNumber(
+        phoneNumber: phone,
+        timeout: const Duration(seconds: 60),
+        verificationCompleted: (PhoneAuthCredential credential) async {
+          // Keep user flow manual
+        },
+        verificationFailed: (FirebaseAuthException e) {
+          _snack('Resend failed: ${e.message ?? e.code}');
+        },
+        codeSent: (String verificationId, int? resendToken) {
+          setState(() {
+            _verificationId = verificationId;
+          });
+          _snack('OTP resent to your phone.');
+        },
+        codeAutoRetrievalTimeout: (String verificationId) {
+          setState(() {
+            _verificationId = verificationId;
+          });
+        },
+      );
+
+      _startCountdown();
+      for (final c in _controllers) {
+        c.clear();
+      }
+      _focusNodes[0].requestFocus();
+    } catch (e) {
+      _snack('Error resending OTP: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  // ✅ EMAIL RESEND: regenerate OTP in Firestore + call sendOTPEmail
+  Future<void> _resendEmailOTP() async {
+    final email = widget.emailOrPhone;
+    if (email == null || email.trim().isEmpty) {
+      _snack('Missing email.');
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final otpCode = _generateOTP();
+
+      await FirebaseFirestore.instance.collection('OTP Codes').doc(email).set({
+        'email': email,
+        'otpCode': otpCode,
+        'timestamp': FieldValue.serverTimestamp(),
+        'expiresAt': Timestamp.fromDate(
+          DateTime.now().add(const Duration(minutes: 10)),
+        ),
       });
 
       try {
-        if (widget.isPhoneVerification && widget.emailOrPhone != null) {
-          // Generate OTP for phone
-          String otpCode = _generateOTP();
-          // Update OTP in Firestore
-          await FirebaseFirestore.instance
-              .collection('OTP Codes')
-              .doc(widget.emailOrPhone!)
-              .set({
-                'phone': widget.emailOrPhone!,
-                'otpCode': otpCode,
-                'timestamp': FieldValue.serverTimestamp(),
-                'expiresAt': Timestamp.fromDate(
-                  DateTime.now().add(const Duration(minutes: 10)),
-                ),
-              });
-          // Send SMS via Cloud Function
-          try {
-            final result = await FirebaseFunctions.instance
-                .httpsCallable('sendSMSOTP')
-                .call({'phone': widget.emailOrPhone!, 'otpCode': otpCode});
-            print('SMS OTP resent successfully');
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('SMS resent successfully!')),
-              );
-            }
-          } catch (e) {
-            print('Error resending SMS OTP: $e');
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Failed to resend SMS: $e')),
-              );
-            }
-          }
-        } else if (!widget.isPhoneVerification && widget.emailOrPhone != null) {
-          // Resend email OTP
-          String otpCode = _generateOTP();
-
-          // Update OTP in Firestore
-          await FirebaseFirestore.instance
-              .collection('OTP Codes')
-              .doc(widget.emailOrPhone!)
-              .set({
-                'email': widget.emailOrPhone!,
-                'otpCode': otpCode,
-                'timestamp': FieldValue.serverTimestamp(),
-                'expiresAt': Timestamp.fromDate(
-                  DateTime.now().add(const Duration(minutes: 10)),
-                ),
-              });
-
-          // Send email via Cloud Function
-          try {
-            final result = await FirebaseFunctions.instance
-                .httpsCallable('sendOTPEmail')
-                .call({'email': widget.emailOrPhone!, 'otpCode': otpCode});
-            print('OTP email resent successfully');
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('OTP email resent successfully!')),
-              );
-            }
-          } catch (e) {
-            print('Error resending OTP email: $e');
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Failed to resend OTP email: $e')),
-              );
-            }
-          }
-        }
-
-        if (mounted) {
-          _startCountdown();
-          // Clear OTP fields
-          for (var controller in _controllers) {
-            controller.clear();
-          }
-          _focusNodes[0].requestFocus();
-        }
+        await FirebaseFunctions.instance.httpsCallable('sendOTPEmail').call({
+          'email': email,
+          'otpCode': otpCode,
+        });
+        _snack('OTP email resent successfully!');
       } catch (e) {
-        print('Error resending OTP: $e');
-        if (mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text('Error resending OTP: $e')));
+        _snack('Failed to send OTP email (OTP still saved).');
+      }
+
+      _startCountdown();
+      for (final c in _controllers) {
+        c.clear();
+      }
+      _focusNodes[0].requestFocus();
+    } catch (e) {
+      _snack('Error resending OTP: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  void _resendOTP() async {
+    if (!(_isButtonEnabled && !_isLoading)) return;
+
+    if (widget.isPhoneVerification) {
+      await _resendPhoneOTP();
+    } else {
+      await _resendEmailOTP();
+    }
+  }
+
+  Future<void> _writeUserProfileDoc({
+    required User user,
+    required String provider,
+    required String fullName,
+    String email = '',
+    String phoneNumber = '',
+    String photoUrl = '',
+  }) async {
+    final doc = FirebaseFirestore.instance.collection('Sign Up').doc(user.uid);
+
+    await doc.set({
+      'uid': user.uid,
+      'provider': provider,
+      'fullName': fullName,
+      'email': email,
+      'phoneNumber': phoneNumber,
+      'photoUrl': photoUrl,
+      'verified': true,
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+
+    // ensure createdAt exists once
+    final snap = await doc.get();
+    final data = snap.data();
+    if (data == null || !data.containsKey('createdAt')) {
+      await doc.set({'createdAt': FieldValue.serverTimestamp()}, SetOptions(merge: true));
+    }
+  }
+
+  Future<void> _cleanupOTPDoc(String key) async {
+    await FirebaseFirestore.instance.collection('OTP Codes').doc(key).delete().catchError((_) {});
+  }
+
+  Future<void> _checkOTPAndNavigate() async {
+    if (_verifying) return;
+
+    final code = otp;
+    if (code.length != _otpLength) return;
+
+    final key = widget.emailOrPhone;
+    if (key == null || key.trim().isEmpty) return;
+
+    setState(() {
+      _verifying = true;
+    });
+
+    try {
+      if (widget.isPhoneVerification) {
+        // =========================
+        // PHONE: Firebase Auth OTP
+        // =========================
+        final vid = _verificationId;
+        if (vid == null || vid.isEmpty) {
+          _snack('No verification ID. Please resend OTP.');
+          return;
         }
-      } finally {
-        if (mounted) {
-          setState(() {
-            _isLoading = false;
-          });
+
+        final credential = PhoneAuthProvider.credential(
+          verificationId: vid,
+          smsCode: code,
+        );
+
+        final userCred = await FirebaseAuth.instance.signInWithCredential(credential);
+        final user = userCred.user;
+
+        if (user == null) {
+          throw Exception('Phone sign-in failed (no user).');
         }
+
+        final fullName = widget.fullName.trim();
+        if (fullName.isNotEmpty) {
+          // optional (nice for profile)
+          await user.updateDisplayName(fullName);
+        }
+
+        await _writeUserProfileDoc(
+          user: user,
+          provider: 'phone',
+          fullName: fullName.isNotEmpty ? fullName : (user.displayName ?? ''),
+          phoneNumber: key,
+          email: user.email ?? '',
+          photoUrl: user.photoURL ?? '',
+        );
+
+        if (!mounted) return;
+        _snack('Phone number verified successfully!');
+
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (context) => const RegistrationPaymentScreen()),
+        );
+        return;
+      }
+
+      // =========================
+      // EMAIL: Firestore OTP check
+      // then create FirebaseAuth user
+      // =========================
+      final otpDoc = await FirebaseFirestore.instance.collection('OTP Codes').doc(key).get();
+
+      if (!otpDoc.exists) {
+        _snack('OTP not found. Please request a new one.');
+        return;
+      }
+
+      final storedOTP = (otpDoc.data()?['otpCode'] ?? '').toString();
+      final expiresAt = otpDoc.data()?['expiresAt'];
+
+      if (expiresAt is Timestamp) {
+        if (expiresAt.toDate().isBefore(DateTime.now())) {
+          _snack('OTP has expired. Please request a new one.');
+          return;
+        }
+      }
+
+      if (code != storedOTP) {
+        _snack('Invalid OTP. Please try again.');
+        return;
+      }
+
+      final email = key.trim();
+      final password = widget.password.trim();
+      if (password.isEmpty) {
+        _snack('Missing signup password. Please sign up again.');
+        return;
+      }
+
+      UserCredential userCred;
+
+      try {
+        // Normal signup path
+        userCred = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+          email: email,
+          password: password,
+        );
+      } on FirebaseAuthException catch (e) {
+        // If user already exists, try sign in (prevents getting stuck)
+        if (e.code == 'email-already-in-use') {
+          userCred = await FirebaseAuth.instance.signInWithEmailAndPassword(
+            email: email,
+            password: password,
+          );
+        } else {
+          rethrow;
+        }
+      }
+
+      final user = userCred.user;
+      if (user == null) throw Exception('Email auth failed (no user).');
+
+      final fullName = widget.fullName.trim();
+      if (fullName.isNotEmpty) {
+        await user.updateDisplayName(fullName);
+      }
+
+      await _writeUserProfileDoc(
+        user: user,
+        provider: 'email',
+        fullName: fullName,
+        email: email,
+        phoneNumber: '',
+        photoUrl: user.photoURL ?? '',
+      );
+
+      await _cleanupOTPDoc(email);
+
+      if (!mounted) return;
+      _snack('OTP verified successfully!');
+
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (context) => const RegistrationPaymentScreen()),
+      );
+    } on FirebaseAuthException catch (e) {
+      _snack('Auth error: ${e.message ?? e.code}');
+    } catch (e) {
+      _snack('Error verifying OTP: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _verifying = false;
+        });
       }
     }
   }
@@ -259,122 +396,13 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
   @override
   void dispose() {
     _timer?.cancel();
-    for (var controller in _controllers) {
-      controller.dispose();
+    for (final c in _controllers) {
+      c.dispose();
     }
-    for (var focusNode in _focusNodes) {
-      focusNode.dispose();
+    for (final f in _focusNodes) {
+      f.dispose();
     }
     super.dispose();
-  }
-
-  Future<void> _checkOTPAndNavigate() async {
-    String otp = _controllers.map((controller) => controller.text).join();
-    if (otp.length == _otpLength && widget.emailOrPhone != null) {
-      try {
-        if (widget.isPhoneVerification) {
-          // Use Firebase phone auth
-          if (_verificationId == null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('No verification ID. Please resend OTP.'),
-              ),
-            );
-            return;
-          }
-          final credential = PhoneAuthProvider.credential(
-            verificationId: _verificationId!,
-            smsCode: otp,
-          );
-          await FirebaseAuth.instance.signInWithCredential(credential);
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Phone number verified successfully!'),
-              ),
-            );
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (context) => const RegistrationPaymentScreen(),
-              ),
-            );
-          }
-        } else {
-          // Email verification using stored OTP (unchanged)
-          DocumentSnapshot otpDoc = await FirebaseFirestore.instance
-              .collection('OTP Codes')
-              .doc(widget.emailOrPhone!)
-              .get();
-
-          if (otpDoc.exists) {
-            String storedOTP = otpDoc['otpCode'];
-            Timestamp expiresAt = otpDoc['expiresAt'];
-
-            // Check if OTP is expired
-            if (expiresAt.toDate().isBefore(DateTime.now())) {
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('OTP has expired. Please request a new one.'),
-                  ),
-                );
-              }
-              return;
-            }
-
-            // Check if entered OTP matches stored OTP
-            if (otp == storedOTP) {
-              // OTP is correct - update user data to mark as verified
-              QuerySnapshot userDocs = await FirebaseFirestore.instance
-                  .collection('Sign Up')
-                  .where('email', isEqualTo: widget.emailOrPhone!)
-                  .where('verified', isEqualTo: false)
-                  .get();
-
-              if (userDocs.docs.isNotEmpty) {
-                await userDocs.docs.first.reference.update({'verified': true});
-              }
-
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('OTP verified successfully!')),
-                );
-                print('OTP verified successfully for: ${widget.emailOrPhone}');
-                // Navigate to RegistrationPaymentScreen
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => const RegistrationPaymentScreen(),
-                  ),
-                );
-              }
-            } else {
-              // OTP is incorrect
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Invalid OTP. Please try again.'),
-                  ),
-                );
-              }
-            }
-          } else {
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('OTP not found. Please request a new one.'),
-                ),
-              );
-            }
-          }
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text('Error verifying OTP: $e')));
-        }
-      }
-    }
   }
 
   @override
@@ -382,7 +410,6 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
     double screenWidth = MediaQuery.of(context).size.width;
     double screenHeight = MediaQuery.of(context).size.height;
     final w = MediaQuery.of(context).size.width;
-    final h = MediaQuery.of(context).size.height;
 
     return Scaffold(
       body: SafeArea(
@@ -454,13 +481,15 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
                       ),
                     ),
                     SizedBox(height: screenHeight * 0.03),
-                    // ✅ circle #1 filled orange
+
                     _MiniStep123(
                       width: w,
                       accent: _brandOrange,
                       activeIndex: 0,
                     ),
+
                     SizedBox(height: screenHeight * 0.04),
+
                     Center(
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(30),
@@ -509,13 +538,14 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
                         ),
                       ),
                     ),
+
                     SizedBox(height: screenHeight * 0.05),
+
                     SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: List.generate(_otpLength + 1, (index) {
-                          // Add separator after 3rd box
                           if (index == 3) {
                             return Container(
                               width: screenWidth * 0.015,
@@ -523,14 +553,13 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
                               margin: EdgeInsets.symmetric(
                                 horizontal: screenWidth * 0.025,
                               ),
-                              decoration: BoxDecoration(
+                              decoration: const BoxDecoration(
                                 color: Colors.white,
                                 shape: BoxShape.circle,
                               ),
                             );
                           }
 
-                          // Calculate actual OTP box index
                           final otpIndex = index > 3 ? index - 1 : index;
                           final otpBoxWidth = screenWidth * 0.12;
                           final otpBoxHeight = screenWidth * 0.19;
@@ -586,16 +615,12 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
                                       final trimmedValue = value.trim();
                                       if (trimmedValue.isNotEmpty &&
                                           otpIndex < _otpLength - 1) {
-                                        _controllers[otpIndex].text =
-                                            trimmedValue;
+                                        _controllers[otpIndex].text = trimmedValue;
                                         _focusNodes[otpIndex].unfocus();
-                                        _focusNodes[otpIndex + 1]
-                                            .requestFocus();
-                                      } else if (trimmedValue.isEmpty &&
-                                          otpIndex > 0) {
+                                        _focusNodes[otpIndex + 1].requestFocus();
+                                      } else if (trimmedValue.isEmpty && otpIndex > 0) {
                                         _focusNodes[otpIndex].unfocus();
-                                        _focusNodes[otpIndex - 1]
-                                            .requestFocus();
+                                        _focusNodes[otpIndex - 1].requestFocus();
                                       }
                                       _checkOTPAndNavigate();
                                     },
@@ -607,11 +632,11 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
                         }),
                       ),
                     ),
+
                     SizedBox(height: screenHeight * 0.09),
+
                     GestureDetector(
-                      onTap: (_isButtonEnabled && !_isLoading)
-                          ? _resendOTP
-                          : null,
+                      onTap: (_isButtonEnabled && !_isLoading) ? _resendOTP : null,
                       child: Container(
                         width: screenWidth * 0.8,
                         height: screenHeight * 0.06,
@@ -620,13 +645,12 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
                             colors: _isButtonEnabled && !_isLoading
                                 ? [Colors.transparent, Colors.transparent]
                                 : [Colors.white, Colors.white],
-                            stops: [0.0, 0.47],
+                            stops: const [0.0, 0.47],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ),
-                          border: Border.all(
-                            color: Color(0xFFFFFFFF),
-                            width: 1,
+                          border: const Border.fromBorderSide(
+                            BorderSide(color: Color(0xFFFFFFFF), width: 1),
                           ),
                           borderRadius: BorderRadius.circular(30),
                         ),
@@ -656,7 +680,9 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
                         ),
                       ),
                     ),
+
                     SizedBox(height: screenHeight * 0.06),
+
                     Center(
                       child: RichText(
                         text: TextSpan(
@@ -702,6 +728,10 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
   }
 }
 
+extension on Function() {
+  get length => null;
+}
+
 class _MiniStep123 extends StatelessWidget {
   final double width;
   final Color accent;
@@ -725,7 +755,7 @@ class _MiniStep123 extends StatelessWidget {
         height: dotSize,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: active ? accent : Colors.transparent, // ✅ fill active
+          color: active ? accent : Colors.transparent,
           border: Border.all(color: accent, width: 3),
         ),
       );

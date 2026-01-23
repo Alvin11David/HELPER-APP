@@ -97,8 +97,6 @@ class _PhoneNumberEmailAddressScreenState
   bool _obscure = true;
   bool _loading = false;
 
-  String? _verificationId;
-
   @override
   void dispose() {
     _fullNameCtrl.dispose();
@@ -136,6 +134,7 @@ class _PhoneNumberEmailAddressScreenState
 
     if (_mode == _AuthMode.phone) {
       try {
+        final fullName = _fullNameCtrl.text.trim();
         String phoneNumber = _phoneCtrl.text.trim();
 
         if (!phoneNumber.startsWith('+256 ') || phoneNumber.length != 14) {
@@ -144,6 +143,7 @@ class _PhoneNumberEmailAddressScreenState
           return;
         }
 
+        // Convert "+256 712345678" -> "+256712345678"
         phoneNumber = phoneNumber.replaceAll(' ', '');
 
         if (!phoneNumber.startsWith('+256') || phoneNumber.length != 13) {
@@ -152,10 +152,11 @@ class _PhoneNumberEmailAddressScreenState
           return;
         }
 
-        // ✅ (OPTIONAL) prevent duplicates before writing
+        // ✅ Prevent duplicates (this checks if any verified user already has this phone)
         final already = await FirebaseFirestore.instance
             .collection('Sign Up')
             .where('phoneNumber', isEqualTo: phoneNumber)
+            .where('verified', isEqualTo: true)
             .limit(1)
             .get();
 
@@ -165,47 +166,52 @@ class _PhoneNumberEmailAddressScreenState
           return;
         }
 
-        // ✅ store pre-verification record (verified=false)
-        await FirebaseFirestore.instance.collection('Sign Up').add({
-          'provider': 'phone',
-          'fullName': _fullNameCtrl.text.trim(),
-          'phoneNumber': phoneNumber,
-          'email': '',
-          'photoUrl': '',
-          'timestamp': FieldValue.serverTimestamp(),
-          'verified': false,
-        });
+        // ✅ IMPORTANT CHANGE:
+        // ❌ Do NOT create Firestore "Sign Up" with .add() before OTP.
+        // ✅ OTP screen will "finish" auth and save Sign Up/{uid}.
 
         await FirebaseAuth.instance.verifyPhoneNumber(
           phoneNumber: phoneNumber,
-          verificationCompleted: (PhoneAuthCredential credential) async {},
+
+          verificationCompleted: (PhoneAuthCredential credential) async {
+            // We keep UI flow as-is (OTP screen). Do nothing here.
+            // (On Android sometimes it auto-verifies; we’ll still let user continue normally.)
+          },
+
           verificationFailed: (FirebaseAuthException e) {
             if (!mounted) return;
             _toast('SMS verification failed: ${e.message ?? "Unknown error"}');
             setState(() => _loading = false);
           },
-          codeSent: (String verificationId, int? resendToken) {
-            _verificationId = verificationId;
 
+          codeSent: (String verificationId, int? resendToken) {
             if (!mounted) return;
             _toast('SMS sent to your phone!');
 
+            // ✅ Pass verificationId + signup data to OTP screen
             Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (context) => OTPVerificationScreen(
                   isPhoneVerification: true,
                   emailOrPhone: phoneNumber,
-                  initialVerificationId: verificationId,
+                  // ✅ NEW: OTP screen must use THIS, and must NOT start verifyPhoneNumber again.
+                  verificationId: verificationId,
+
+                  // ✅ Send needed data so OTP can save Sign Up/{uid}
+                  fullName: fullName,
+                  password: '', // phone flow no password
                 ),
               ),
             ).then((_) {
               if (mounted) setState(() => _loading = false);
             });
           },
+
           codeAutoRetrievalTimeout: (String verificationId) {
-            _verificationId = verificationId;
+            // no-op
           },
+
           timeout: const Duration(seconds: 60),
         );
 
@@ -216,16 +222,17 @@ class _PhoneNumberEmailAddressScreenState
         return;
       }
     } else {
-      // EMAIL SIGN UP (your current flow)
+      // EMAIL SIGN UP
       try {
         final fullName = _fullNameCtrl.text.trim();
         final email = _emailCtrl.text.trim();
         final password = _passwordCtrl.text.trim();
 
-        // ✅ prevent duplicates before writing
+        // ✅ prevent duplicates
         final already = await FirebaseFirestore.instance
             .collection('Sign Up')
             .where('email', isEqualTo: email)
+            .where('verified', isEqualTo: true)
             .limit(1)
             .get();
 
@@ -237,17 +244,7 @@ class _PhoneNumberEmailAddressScreenState
 
         final otpCode = _generateOTP();
 
-        await FirebaseFirestore.instance.collection('Sign Up').add({
-          'provider': 'email',
-          'fullName': fullName,
-          'email': email,
-          'password': password, // NOTE: hash later in production
-          'phoneNumber': '',
-          'photoUrl': '',
-          'timestamp': FieldValue.serverTimestamp(),
-          'verified': false,
-        });
-
+        // ✅ Save OTP only (NOT Sign Up .add())
         await FirebaseFirestore.instance.collection('OTP Codes').doc(email).set({
           'email': email,
           'otpCode': otpCode,
@@ -272,19 +269,26 @@ class _PhoneNumberEmailAddressScreenState
         if (!mounted) return;
         setState(() => _loading = false);
 
+        // ✅ Move to OTP screen and pass signup data.
+        // OTP screen will:
+        // 1) confirm OTP matches
+        // 2) create FirebaseAuth user with email/password
+        // 3) save Firestore Sign Up/{uid}
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => OTPVerificationScreen(
               isPhoneVerification: false,
               emailOrPhone: email,
-              initialVerificationId: '',
+              verificationId: '', // not used for email
+              fullName: fullName,
+              password: password,
             ),
           ),
         );
         return;
       } catch (e) {
-        _toast('Error saving data: $e');
+        _toast('Error sending OTP: $e');
         setState(() => _loading = false);
         return;
       }
@@ -314,7 +318,6 @@ class _PhoneNumberEmailAddressScreenState
         final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
 
         if (googleUser == null) {
-          // user cancelled
           setState(() => _loading = false);
           return;
         }
@@ -333,7 +336,6 @@ class _PhoneNumberEmailAddressScreenState
       final user = userCred.user;
       if (user == null) throw Exception('Google sign-in failed (no user).');
 
-      // ✅ save to Firestore (Sign Up collection)
       await _saveGoogleUserToFirestore(user);
 
       if (!mounted) return;
@@ -354,7 +356,6 @@ class _PhoneNumberEmailAddressScreenState
   Future<void> _saveGoogleUserToFirestore(User user) async {
     final col = FirebaseFirestore.instance.collection('Sign Up');
 
-    // ✅ Use uid as document ID (stable)
     final docRef = col.doc(user.uid);
     final snap = await docRef.get();
 
@@ -365,7 +366,7 @@ class _PhoneNumberEmailAddressScreenState
       'fullName': user.displayName ?? '',
       'photoUrl': user.photoURL ?? '',
       'phoneNumber': user.phoneNumber ?? '',
-      'verified': true, // google is already verified by Firebase
+      'verified': true,
       'updatedAt': FieldValue.serverTimestamp(),
     };
 
@@ -564,7 +565,6 @@ class _PhoneNumberEmailAddressScreenState
                         ),
                       ),
 
-                      // ✅ We show Google button in EMAIL mode (your design)
                       if (_mode == _AuthMode.email) ...[
                         SizedBox(height: h * 0.02),
                         _OrDivider(),
