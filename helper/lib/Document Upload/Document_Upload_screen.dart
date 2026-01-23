@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:helper/Document%20Upload/National_ID_Passport_Front_Upload_Screen.dart';
+import 'package:helper/Document%20Upload/Academic_Certificate_Upload_Screen.dart';
 import 'package:rxdart/rxdart.dart';
 
 class DocumentUploadScreen extends StatefulWidget {
