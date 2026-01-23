@@ -229,95 +229,85 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                       child: SingleChildScrollView(
                         child: Column(
                           children: [
-                            GestureDetector(
-                              onTap: () async {
-                                setState(() => _selectedIndex = 0);
-                                final result = await Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        NationalIdPassportFrontUploadScreen(
-                                          selected: 0,
+                            // Replace National ID/Passport row with a StreamBuilder that listens to Firestore for both front and back uploads
+                            StreamBuilder<List<bool>>(
+                              stream: _nationalIdVerificationStream(),
+                              builder: (context, snapshot) {
+                                final bothUploaded = snapshot.data != null && snapshot.data!.every((v) => v);
+                                return GestureDetector(
+                                  onTap: () async {
+                                    setState(() => _selectedIndex = 0);
+                                    await Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (context) => NationalIdPassportFrontUploadScreen(selected: 0),
+                                      ),
+                                    );
+                                  },
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        width: 36,
+                                        height: 36,
+                                        decoration: BoxDecoration(
+                                          color: bothUploaded
+                                              ? const Color(0xFFFBBC04)
+                                              : (_selectedIndex == 0
+                                                  ? const Color(0xFFFBBC04)
+                                                  : const Color(0xFFD9D9D9)),
+                                          shape: BoxShape.circle,
                                         ),
+                                        child: Center(
+                                          child: Image.asset(
+                                            'assets/icons/nationalid.png',
+                                            width: 20,
+                                            height: 20,
+                                            color: bothUploaded ? Colors.white : null,
+                                          ),
+                                        ),
+                                      ),
+                                      SizedBox(width: w * 0.018),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              'National ID/Passport',
+                                              style: TextStyle(
+                                                color: bothUploaded
+                                                    ? Colors.white
+                                                    : (_selectedIndex == 0
+                                                        ? const Color(0xFFFBBC04)
+                                                        : Colors.black),
+                                                fontSize: screenWidth * 0.032,
+                                                fontWeight: FontWeight.w800,
+                                              ),
+                                            ),
+                                            Text(
+                                              bothUploaded ? 'Submitted For Verification' : 'Not Verified',
+                                              style: TextStyle(
+                                                color: bothUploaded
+                                                    ? Colors.white
+                                                    : (_selectedIndex == 0
+                                                        ? const Color(0xFFFBBC04)
+                                                        : Colors.black54),
+                                                fontSize: screenWidth * 0.035,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Icon(
+                                        Icons.chevron_right,
+                                        color: bothUploaded
+                                            ? Colors.white
+                                            : (_selectedIndex == 0
+                                                ? const Color(0xFFFBBC04)
+                                                : Colors.black54),
+                                      ),
+                                    ],
                                   ),
                                 );
-                                // If the result is true, mark as submitted
-                                if (result == true) {
-                                  setState(() {
-                                    _nationalIdSubmitted = true;
-                                  });
-                                } else {
-                                  // Optionally re-check Firestore
-                                  _checkNationalIdSubmission();
-                                }
                               },
-                              child: Row(
-                                children: [
-                                  Container(
-                                    width: 36,
-                                    height: 36,
-                                    decoration: BoxDecoration(
-                                      color: _nationalIdSubmitted
-                                          ? const Color(0xFFFBBC04)
-                                          : (_selectedIndex == 0
-                                                ? const Color(0xFFFBBC04)
-                                                : const Color(0xFFD9D9D9)),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: Center(
-                                      child: Image.asset(
-                                        'assets/icons/nationalid.png',
-                                        width: 20,
-                                        height: 20,
-                                        color: _nationalIdSubmitted
-                                            ? Colors.white
-                                            : null,
-                                      ),
-                                    ),
-                                  ),
-                                  SizedBox(width: w * 0.018),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          'National ID/Passport',
-                                          style: TextStyle(
-                                            color: _nationalIdSubmitted
-                                                ? Colors.white
-                                                : (_selectedIndex == 0
-                                                      ? const Color(0xFFFBBC04)
-                                                      : Colors.black),
-                                            fontSize: screenWidth * 0.032,
-                                            fontWeight: FontWeight.w800,
-                                          ),
-                                        ),
-                                        Text(
-                                          _nationalIdSubmitted
-                                              ? 'Submitted For Verification'
-                                              : 'Not Verified',
-                                          style: TextStyle(
-                                            color: _nationalIdSubmitted
-                                                ? Colors.white
-                                                : (_selectedIndex == 0
-                                                      ? const Color(0xFFFBBC04)
-                                                      : Colors.black54),
-                                            fontSize: screenWidth * 0.035,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Icon(
-                                    Icons.chevron_right,
-                                    color: _nationalIdSubmitted
-                                        ? Colors.white
-                                        : (_selectedIndex == 0
-                                              ? const Color(0xFFFBBC04)
-                                              : Colors.black54),
-                                  ),
-                                ],
-                              ),
                             ),
                             SizedBox(height: h * 0.03),
                             GestureDetector(
@@ -703,4 +693,36 @@ class DashedLinePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(DashedLinePainter oldDelegate) => false;
+}
+
+// Helper: Listen to both front and back uploads for National ID/Passport
+Stream<List<bool>> _nationalIdVerificationStream() async* {
+  // Replace with actual user ID logic
+  final user = null; // FirebaseAuth.instance.currentUser;
+  final userId = user?.uid ?? '';
+  // Firestore paths for both front and back
+  // Uncomment and use the following if Firebase is available:
+  /*
+  final frontDoc = FirebaseFirestore.instance
+      .collection('users')
+      .doc(userId)
+      .collection('documents')
+      .doc('Professional Workers')
+      .collection('Professional Workers')
+      .doc('professional_workers_national_id_front')
+      .snapshots();
+  final backDoc = FirebaseFirestore.instance
+      .collection('users')
+      .doc(userId)
+      .collection('documents')
+      .doc('Professional Workers')
+      .collection('Professional Workers')
+      .doc('professional_workers_national_id_back')
+      .snapshots();
+  await for (final combined in Rx.combineLatest2(frontDoc, backDoc, (a, b) => [a.exists, b.exists])) {
+    yield combined;
+  }
+  */
+  // Placeholder: always not uploaded
+  yield [false, false];
 }
