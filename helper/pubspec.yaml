@@ -66,7 +66,7 @@ dependencies:
   # For combining streams
   rxdart: ^0.28.0
   # For file picking
-  file_picker: ^8.0.0
+  file_picker: ^6.1.1
 
 dev_dependencies:
   flutter_test:

@@ -30,21 +30,26 @@ class _AcademicCertificateUploadScreenState
         final file = result.files.first;
         // Check extension
         final extension = file.extension?.toLowerCase();
-        if (extension == 'pdf' || extension == 'png' || extension == 'jpeg' || extension == 'jpg') {
+        if (extension == 'pdf' ||
+            extension == 'png' ||
+            extension == 'jpeg' ||
+            extension == 'jpg') {
           setState(() {
             _selectedFile = file;
           });
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Please select a PDF, PNG, JPEG, or JPG file')),
+            const SnackBar(
+              content: Text('Please select a PDF, PNG, JPEG, or JPG file'),
+            ),
           );
         }
       }
     } catch (e) {
       // Show error message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error picking file: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error picking file: $e')));
     }
   }
 
