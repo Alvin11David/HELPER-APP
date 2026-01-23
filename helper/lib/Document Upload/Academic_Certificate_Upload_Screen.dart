@@ -559,6 +559,63 @@ class _AcademicCertificateUploadScreenState
               ),
             ),
           ),
+          if (selectedProfessions.isNotEmpty)
+            Positioned(
+              bottom: screenHeight * 0.10,
+              left: (screenWidth - screenWidth * 0.9) / 2,
+              child: Container(
+                width: screenWidth * 0.9,
+                height: 120,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(25),
+                  border: Border.all(
+                    color: Colors.white,
+                    width: 2,
+                    style: BorderStyle.none, // Will use custom painter
+                  ),
+                ),
+                child: CustomPaint(
+                  painter: DashedBorderPainter(),
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.upload, color: Colors.white, size: 40),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Upload File',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'Inter',
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Supported files: PDF/PNG/JPEG/JPG',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontFamily: 'Inter',
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Max Size: 5MB',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontFamily: 'Inter',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
           Positioned(
             bottom: screenHeight * 0.05,
             left: (screenWidth - 290) / 2,
@@ -599,4 +656,73 @@ class _AcademicCertificateUploadScreenState
       ),
     );
   }
+}
+
+class DashedBorderPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white
+      ..strokeWidth = 2
+      ..style = PaintingStyle.stroke;
+
+    const dashWidth = 10.0;
+    const dashSpace = 5.0;
+    double startX = 0;
+
+    final path = Path();
+    path.addRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(0, 0, size.width, size.height),
+        const Radius.circular(25),
+      ),
+    );
+
+    canvas.drawPath(path, paint);
+
+    // For dashed, we need to draw dashes manually
+    final borderPaint = Paint()
+      ..color = Colors.white
+      ..strokeWidth = 2
+      ..style = PaintingStyle.stroke;
+
+    // Top
+    double x = 0;
+    while (x < size.width) {
+      canvas.drawLine(Offset(x, 0), Offset(x + dashWidth, 0), borderPaint);
+      x += dashWidth + dashSpace;
+    }
+
+    // Right
+    double y = 0;
+    while (y < size.height) {
+      canvas.drawLine(
+        Offset(size.width, y),
+        Offset(size.width, y + dashWidth),
+        borderPaint,
+      );
+      y += dashWidth + dashSpace;
+    }
+
+    // Bottom
+    x = size.width;
+    while (x > 0) {
+      canvas.drawLine(
+        Offset(x, size.height),
+        Offset(x - dashWidth, size.height),
+        borderPaint,
+      );
+      x -= dashWidth + dashSpace;
+    }
+
+    // Left
+    y = size.height;
+    while (y > 0) {
+      canvas.drawLine(Offset(0, y), Offset(0, y - dashWidth), borderPaint);
+      y -= dashWidth + dashSpace;
+    }
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) => false;
 }
