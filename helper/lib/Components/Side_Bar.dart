@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:helper/Components/User_Name.dart';
+import '../Document Upload/Profile/Profile_Screen.dart'; // Add this import
 
 class SideBar extends StatefulWidget {
   const SideBar({super.key});
@@ -42,6 +45,23 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
         _controller.reverse();
       }
     });
+  }
+
+  Future<String?> _fetchReferralCode() async {
+    try {
+      User? user = FirebaseAuth.instance.currentUser;
+      if (user == null) return null;
+      DocumentSnapshot doc = await FirebaseFirestore.instance
+          .collection('Sign Up')
+          .doc(user.uid)
+          .get();
+      if (doc.exists && doc.data() != null) {
+        return (doc.data() as Map<String, dynamic>)['referralCode'] as String?;
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
   }
 
   @override
@@ -122,13 +142,28 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                                   ),
                                 ),
                                 SizedBox(width: 16), // space between label and ID
-                                Text(
-                                  "ID Number", // Replace with actual ID if needed
-                                  style: TextStyle(
-                                    color: Colors.orange,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.normal,
-                                  ),
+                                FutureBuilder<String?>(
+                                  future: _fetchReferralCode(),
+                                  builder: (context, snapshot) {
+                                    if (snapshot.connectionState == ConnectionState.waiting) {
+                                      return Text(
+                                        'Loading...',
+                                        style: TextStyle(
+                                          color: Colors.orange,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.normal,
+                                        ),
+                                      );
+                                    }
+                                    return Text(
+                                      snapshot.data ?? 'No ID',
+                                      style: TextStyle(
+                                        color: Colors.orange,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.normal,
+                                      ),
+                                    );
+                                  },
                                 ),
                               ],
                             ),
@@ -296,7 +331,14 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                           ),
                           const SizedBox(height: 20),
                           GestureDetector(
-                            onTap: () => setState(() => _selectedIndex = 5),
+                            onTap: () {
+                              setState(() => _selectedIndex = 5);
+                              toggleDrawer();
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => ProfileScreen()),
+                              );
+                            },
                             child: Padding(
                               padding: EdgeInsets.only(left: 8, right: 8),
                               child: Row(

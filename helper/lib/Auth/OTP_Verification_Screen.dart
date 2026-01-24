@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:ui';
+import 'dart:math'; // <-- Add this import for Random
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -41,6 +42,7 @@ class OTPVerificationScreen extends StatefulWidget {
   final String verificationId; // ✅ for phone only (passed from signup/signin)
   final String fullName; // ✅ passed from signup (or '' if signin)
   final String password; // ✅ for email signup only (or '')
+  final String referralCode; // <-- Added for referral code
 
   const OTPVerificationScreen({
     super.key,
@@ -49,6 +51,7 @@ class OTPVerificationScreen extends StatefulWidget {
     required this.verificationId,
     required this.fullName,
     required this.password,
+    required this.referralCode, // <-- Added
   });
 
   @override
@@ -109,6 +112,17 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
     // 6-digit OTP (simple)
     return (100000 + (DateTime.now().millisecondsSinceEpoch % 900000))
         .toString();
+  }
+
+  String _generateReferralCode() {
+    final random = Random();
+    final digits1 = (100 + random.nextInt(900)).toString(); // 3 digits
+    final letters = String.fromCharCodes([
+      65 + random.nextInt(26), // A-Z
+      65 + random.nextInt(26),
+    ]);
+    final digits2 = (100 + random.nextInt(900)).toString(); // 3 digits
+    return 'UG$digits1$letters$digits2';
   }
 
   // ✅ PHONE RESEND: use FirebaseAuth.verifyPhoneNumber (do NOT use "OTP Codes" or sendSMSOTP)
@@ -217,6 +231,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
     String email = '',
     String phoneNumber = '',
     String photoUrl = '',
+    required String referralCode,
   }) async {
     final doc = FirebaseFirestore.instance.collection('Sign Up').doc(user.uid);
 
@@ -227,6 +242,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
       'email': email,
       'phoneNumber': phoneNumber,
       'photoUrl': photoUrl,
+      'referralCode': referralCode, // <-- Use the passed referralCode
       'verified': true,
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
@@ -293,6 +309,8 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
           await user.updateDisplayName(fullName);
         }
 
+        final referralCode = widget.referralCode.isNotEmpty ? widget.referralCode : _generateReferralCode(); // <-- Generate if empty
+
         await _writeUserProfileDoc(
           user: user,
           provider: 'phone',
@@ -300,6 +318,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
           phoneNumber: key,
           email: user.email ?? '',
           photoUrl: user.photoURL ?? '',
+          referralCode: referralCode,
         );
 
         if (!mounted) return;
@@ -377,6 +396,8 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
         await user.updateDisplayName(fullName);
       }
 
+      final referralCode = widget.referralCode.isNotEmpty ? widget.referralCode : _generateReferralCode(); // <-- Generate if empty
+
       await _writeUserProfileDoc(
         user: user,
         provider: 'email',
@@ -384,6 +405,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
         email: email,
         phoneNumber: '',
         photoUrl: user.photoURL ?? '',
+        referralCode: referralCode,
       );
 
       await _cleanupOTPDoc(email);
@@ -393,7 +415,8 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
         'uid': user.uid,
         'email': email,
         'fullName': fullName,
-        'password': password, 
+        'password': password,
+        'referralCode': referralCode, // <-- Use the generated or passed referralCode
         'verified': true,
         'createdAt': FieldValue.serverTimestamp(),
         // Other fields...
