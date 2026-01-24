@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:helper/Components/user_avatar_circle.dart';
 import 'package:helper/Components/User_Name.dart'; // Add this import
+import 'package:helper/Components/User_Email_Or_Phone_Number.dart'; // Add this import
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -158,6 +159,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ],
                     ),
                     UserName(), // Added below the circle
+                    UserEmailOrPhoneNumber(), // Added below UserName
                   ],
                 ),
               ),
