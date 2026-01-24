@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:helper/Components/Bottom_Nav_Bar.dart';
 import 'package:helper/Components/user_avatar_circle.dart';
 import 'package:helper/Components/User_Name.dart'; // Add this import
 import 'package:helper/Components/User_Email_Or_Phone_Number.dart'; // Add this import
@@ -7,6 +8,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:io';
+import 'package:flutter/services.dart'; // For input formatters
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -194,6 +196,137 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         : null, // Disabled when not enabled
                     child: const Text(
                       'Change Password',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showChangeWalletPinSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+      ),
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            String? _currentPin;
+            final TextEditingController _newPinController = TextEditingController();
+            bool _isButtonEnabled = false;
+
+            Future<void> _fetchCurrentPin() async {
+              try {
+                User? user = FirebaseAuth.instance.currentUser;
+                if (user == null) return;
+                DocumentSnapshot doc = await FirebaseFirestore.instance
+                    .collection('Sign Up')
+                    .doc(user.uid)
+                    .get();
+                if (doc.exists && doc.data() != null) {
+                  setState(() {
+                    _currentPin = (doc.data() as Map<String, dynamic>)['password'] as String?;
+                  });
+                }
+              } catch (e) {
+                // Handle error
+              }
+            }
+
+            // Fetch current PIN on build
+            if (_currentPin == null) {
+              _fetchCurrentPin();
+            }
+
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+                left: 16,
+                right: 16,
+                top: 16,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Change Wallet PIN',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    initialValue: _currentPin ?? '',
+                    readOnly: true,
+                    obscureText: true,
+                    decoration: const InputDecoration(
+                      labelText: 'Current PIN',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(30)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _newPinController,
+                    obscureText: true,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(4),
+                    ],
+                    decoration: const InputDecoration(
+                      labelText: 'New PIN (4 digits)',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(30)),
+                      ),
+                    ),
+                    onChanged: (value) {
+                      setState(() {
+                        _isButtonEnabled = value.length == 4 && value != _currentPin;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _isButtonEnabled ? Colors.orange : Colors.grey,
+                    ),
+                    onPressed: _isButtonEnabled
+                        ? () async {
+                            String newPin = _newPinController.text;
+                            if (newPin.length == 4) {
+                              try {
+                                User? user = FirebaseAuth.instance.currentUser;
+                                if (user != null) {
+                                  await FirebaseFirestore.instance
+                                      .collection('Sign Up')
+                                      .doc(user.uid)
+                                      .update({'password': newPin}); // Assuming password is the PIN
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Wallet PIN updated successfully!'),
+                                    ),
+                                  );
+                                  Navigator.pop(context);
+                                }
+                              } catch (e) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('Error updating PIN: $e')),
+                                );
+                              }
+                            }
+                          }
+                        : null,
+                    child: const Text(
+                      'Change PIN',
                       style: TextStyle(color: Colors.white),
                     ),
                   ),
@@ -459,7 +592,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 left: 0,
                 right: 0,
                 child: Container(
-                  height: screenHeight * 0.62, // Adjust height as needed
+                  height: screenHeight * 0.59, // Adjust height as needed
                   decoration: const BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.only(
@@ -659,18 +792,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         horizontal: 16.0,
                                       ),
                                       child: GestureDetector(
-                                        onTap: () {
-                                          // Add logic to change wallet PIN, e.g., show a sheet
-                                          ScaffoldMessenger.of(
-                                            context,
-                                          ).showSnackBar(
-                                            const SnackBar(
-                                              content: Text(
-                                                'Change Wallet PIN tapped',
-                                              ),
-                                            ),
-                                          );
-                                        },
+                                        onTap: () => _showChangeWalletPinSheet(context),
                                         child: Row(
                                           children: [
                                             const SizedBox(
@@ -705,6 +827,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ),
       ),
+      bottomNavigationBar: BottomNavBar(), // Add BottomNavBar at the bottom
     );
   }
 }
