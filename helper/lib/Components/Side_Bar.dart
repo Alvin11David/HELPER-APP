@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:helper/Auth/Sign_In_Screen.dart';
 import 'package:helper/Components/User_Name.dart';
+import 'package:helper/Components/Worker_Profession.dart';
 import '../Document Upload/Profile/Profile_Screen.dart'; // Add this import
+import '../Auth/Sign_In_Screen.dart'; // Add this import
 
 class SideBar extends StatefulWidget {
   const SideBar({super.key});
@@ -107,7 +108,9 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                         width: screenWidth * 0.20 > 70
                             ? 70
                             : screenWidth * 0.20, // Max 70, responsive
-                        height: screenWidth * 0.20 > 70 ? 70 : screenWidth * 0.20,
+                        height: screenWidth * 0.20 > 70
+                            ? 70
+                            : screenWidth * 0.20,
                         decoration: BoxDecoration(
                           color: Colors.black,
                           shape: BoxShape.circle,
@@ -127,7 +130,7 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                         children: [
                           Padding(
                             padding: EdgeInsets.only(left: 8),
-                            child: UserName()
+                            child: UserName(),
                           ),
                           const SizedBox(height: 2),
                           Padding(
@@ -142,11 +145,14 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
-                                SizedBox(width: 16), // space between label and ID
+                                SizedBox(
+                                  width: 16,
+                                ), // space between label and ID
                                 FutureBuilder<String?>(
                                   future: _fetchReferralCode(),
                                   builder: (context, snapshot) {
-                                    if (snapshot.connectionState == ConnectionState.waiting) {
+                                    if (snapshot.connectionState ==
+                                        ConnectionState.waiting) {
                                       return Text(
                                         'Loading...',
                                         style: TextStyle(
@@ -172,14 +178,7 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                           const SizedBox(height: 2),
                           Padding(
                             padding: EdgeInsets.only(left: 8),
-                            child: Text(
-                              "Profession",
-                              style: TextStyle(
-                                color: Colors.black,
-                                fontSize: 13,
-                                fontWeight: FontWeight.normal,
-                              ),
-                            ),
+                            child: WorkerProfession(),
                           ),
                           const SizedBox(height: 12),
                           Container(
@@ -332,12 +331,14 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                           ),
                           const SizedBox(height: 20),
                           GestureDetector(
-                            onTap: () {
-                              setState(() => _selectedIndex = 5);
+                           onTap: () async {
+                              setState(() => _selectedIndex = 7);
                               toggleDrawer();
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(builder: (context) => ProfileScreen()),
+                              await FirebaseAuth.instance.signOut();
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => const ProfileScreen(),
+                                ),
                               );
                             },
                             child: Padding(
