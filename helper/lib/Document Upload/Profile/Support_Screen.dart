@@ -11,10 +11,12 @@ class SupportScreen extends StatefulWidget {
 
 class _SupportScreenState extends State<SupportScreen> {
   final TextEditingController issueTitleCtrl = TextEditingController();
+  final TextEditingController issueDescCtrl = TextEditingController();
 
   @override
   void dispose() {
     issueTitleCtrl.dispose();
+    issueDescCtrl.dispose();
     super.dispose();
   }
 
@@ -155,6 +157,31 @@ class _SupportScreenState extends State<SupportScreen> {
                         return null;
                       },
                     ),
+                    SizedBox(height: screenHeight * 0.018),
+                    Text(
+                      'Issue Description',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: screenWidth * 0.040,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Inter',
+                      ),
+                    ),
+                    SizedBox(height: screenHeight * 0.012),
+                    _PillInput(
+                      controller: issueDescCtrl,
+                      hint: 'Enter Your Issue Description',
+                      icon: Icons.description,
+                      keyboardType: TextInputType.multiline,
+                      contentFontSize: screenWidth * 0.038,
+                      maxLines: 5, // Increased from 3 to 5 for taller field
+                      validator: (v) {
+                        final t = (v ?? '');
+                        if (t.trim().isEmpty)
+                          return 'Issue description is required';
+                        return null;
+                      },
+                    ),
                   ],
                 ),
               ),
@@ -175,8 +202,8 @@ class _PillInput extends StatelessWidget {
   final TextInputType keyboardType;
   final List<TextInputFormatter>? inputFormatters;
   final String? Function(String?)? validator;
-
   final double contentFontSize;
+  final int? maxLines;
 
   const _PillInput({
     required this.controller,
@@ -188,6 +215,7 @@ class _PillInput extends StatelessWidget {
     this.suffix,
     this.inputFormatters,
     this.validator,
+    this.maxLines = 1,
   });
 
   @override
@@ -199,7 +227,9 @@ class _PillInput extends StatelessWidget {
     final radius = fieldH / 2;
 
     return Container(
-      height: fieldH,
+      height: maxLines == 1
+          ? fieldH
+          : null, // Allow height to expand for multiline
       width: double.infinity,
       decoration: BoxDecoration(
         color: Colors.black.withOpacity(0.35),
@@ -207,14 +237,23 @@ class _PillInput extends StatelessWidget {
         border: Border.all(color: Colors.white.withOpacity(0.35), width: 1.2),
       ),
       child: Row(
+        crossAxisAlignment: maxLines == 1
+            ? CrossAxisAlignment.center
+            : CrossAxisAlignment.start,
         children: [
           SizedBox(width: w * 0.04),
-          Icon(icon, color: Colors.white, size: w * 0.06),
+          Padding(
+            padding: EdgeInsets.only(top: maxLines == 1 ? 0 : fieldH * 0.20),
+            child: Icon(icon, color: Colors.white, size: w * 0.06),
+          ),
           SizedBox(width: w * 0.025),
-          Container(
-            width: 1.2,
-            height: fieldH * 0.55,
-            color: Colors.white.withOpacity(0.6),
+          Padding(
+            padding: EdgeInsets.only(top: maxLines == 1 ? 0 : fieldH * 0.20),
+            child: Container(
+              width: 1.2,
+              height: fieldH * 0.55,
+              color: Colors.white.withOpacity(0.6),
+            ),
           ),
           SizedBox(width: w * 0.03),
           Expanded(
@@ -224,6 +263,7 @@ class _PillInput extends StatelessWidget {
               keyboardType: keyboardType,
               inputFormatters: inputFormatters,
               validator: validator,
+              maxLines: maxLines,
               style: TextStyle(
                 color: Colors.white,
                 fontSize: contentFontSize,
