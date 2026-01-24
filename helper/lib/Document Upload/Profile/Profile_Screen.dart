@@ -376,8 +376,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void _logout() async {
     try {
       await FirebaseAuth.instance.signOut();
-      // Navigate to login screen, assuming it's the first screen
-      Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+      // Navigate to SignInScreen
+      Navigator.of(context).pushReplacementNamed('/SignInScreen');
     } catch (e) {
       ScaffoldMessenger.of(
         context,
