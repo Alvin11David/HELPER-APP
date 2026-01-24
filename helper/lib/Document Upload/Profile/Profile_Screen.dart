@@ -119,9 +119,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
               Positioned(
-                top: screenHeight * 0.12,
-                left: (screenWidth - 100) / 2,
+                top: screenHeight * 0.15, // Moved below the Profile row
+                left: screenWidth / 2 - 100, // Center horizontally
                 child: Column(
+                  mainAxisSize: MainAxisSize.min, // Squeezed to form 5 rows
                   children: [
                     Stack(
                       children: [
