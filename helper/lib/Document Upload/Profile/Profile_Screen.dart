@@ -59,9 +59,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SnackBar(content: Text('Profile picture updated!')),
         );
       } catch (e) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error uploading image: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error uploading image: $e')),
+        );
       }
     }
   }
@@ -119,7 +119,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
               Positioned(
-                top: screenHeight * 0.15, // Moved below the Profile row
+                top: screenHeight * 0.10, // Moved below the Profile row
                 left: screenWidth / 2 - 100, // Center horizontally
                 child: Column(
                   mainAxisSize: MainAxisSize.min, // Squeezed to form 5 rows
@@ -162,6 +162,42 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     UserName(), // Added below the circle
                     UserEmailOrPhoneNumber(), // Added below UserName
                   ],
+                ),
+              ),
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: Container(
+                  height: screenHeight * 0.62, // Adjust height as needed
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(30),
+                      topRight: Radius.circular(30),
+                    ),
+                  ),
+                  padding: const EdgeInsets.only(
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                  ), // Bottom left and right padding set to 0
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Text(
+                          'Account Overview',
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
