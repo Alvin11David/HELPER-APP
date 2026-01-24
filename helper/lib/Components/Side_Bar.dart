@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:helper/Components/User_Name.dart';
 
 class SideBar extends StatefulWidget {
   const SideBar({super.key});
@@ -104,14 +105,7 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                       children: [
                         Padding(
                           padding: EdgeInsets.only(left: 8),
-                          child: Text(
-                            "Worker's Name",
-                            style: TextStyle(
-                              color: Colors.black,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                          child: UserName()
                         ),
                         const SizedBox(height: 2),
                         Padding(
