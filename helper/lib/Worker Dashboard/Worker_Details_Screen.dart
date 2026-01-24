@@ -3,6 +3,7 @@ import 'package:flutter/gestures.dart';
 import 'package:helper/Components/User_Name.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class WorkerDetailsScreen extends StatefulWidget {
   const WorkerDetailsScreen({super.key});
@@ -32,6 +33,13 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
   String? _skillsDescription;
   String? _pricingType;
   int? _amount;
+  String? _experienceLevel;
+  // Workplace location variables
+  final String workplaceLocationText = 'Mbale';
+  final LatLng workplaceLatLng = const LatLng(
+    0.351719882423072,
+    32.59219899773598,
+  );
 
   @override
   void initState() {
@@ -106,6 +114,25 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
   void dispose() {
     _commentController.dispose();
     super.dispose();
+  }
+
+  void _onWorkplaceLocationTap() {
+    // Example: Show a dialog with the coordinates, or navigate to a map
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Workplace Location'),
+        content: Text(
+          'Lat: ${workplaceLatLng.latitude}\nLng: ${workplaceLatLng.longitude}',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -481,17 +508,22 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                       top: h * 0.4 + 450,
                       left: w * 0.04,
                       child: RichText(
-                        text: const TextSpan(
+                        text: TextSpan(
                           text: 'Work Place: ',
-                          style: TextStyle(color: Colors.white, fontSize: 14),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                          ),
                           children: [
                             TextSpan(
-                              text: 'Location',
-                              style: TextStyle(
+                              text: workplaceLocationText,
+                              style: const TextStyle(
                                 color: Colors.orange,
                                 fontSize: 14,
                                 decoration: TextDecoration.underline,
                               ),
+                              recognizer: TapGestureRecognizer()
+                                ..onTap = _onWorkplaceLocationTap,
                             ),
                           ],
                         ),
