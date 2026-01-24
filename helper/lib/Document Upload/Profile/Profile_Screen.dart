@@ -1,8 +1,68 @@
 import 'package:flutter/material.dart';
 import 'package:helper/Components/user_avatar_circle.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:io';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  String? _imageUrl; // To store the uploaded image URL
+
+  Future<void> _pickAndUploadImage() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
+    if (pickedFile != null) {
+      File imageFile = File(pickedFile.path);
+
+      try {
+        // Get current user
+        User? user = FirebaseAuth.instance.currentUser;
+        if (user == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('User not authenticated')),
+          );
+          return;
+        }
+
+        // Upload to Firebase Storage
+        String fileName =
+            'profile_${user.uid}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+        Reference storageRef = FirebaseStorage.instance.ref().child(
+          'Profile Pictures/$fileName',
+        );
+        UploadTask uploadTask = storageRef.putFile(imageFile);
+        TaskSnapshot snapshot = await uploadTask;
+        String downloadUrl = await snapshot.ref.getDownloadURL();
+
+        // Save URL to Firestore
+        await FirebaseFirestore.instance
+            .collection('Sign Up')
+            .doc(user.uid)
+            .update({'photoUrl': downloadUrl});
+
+        setState(() {
+          _imageUrl = downloadUrl;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Profile picture updated!')),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error uploading image: $e')));
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -50,22 +110,46 @@ class ProfileScreen extends StatelessWidget {
                         color: Colors.white,
                         fontSize: screenWidth * 0.07,
                         fontWeight: FontWeight.bold,
-                        fontFamily: 'Poppins', // ✅ per your instruction
+                        fontFamily: 'Poppins',
                       ),
                     ),
                   ],
                 ),
               ),
               Positioned(
-                top:
-                    screenHeight *
-                    0.12, // Adjust as needed to place below "Profile"
-                left: (screenWidth - 100) / 2, // Center horizontally
-                child: Container(
-                  width: 100,
-                  height: 100,
-                  child:
-                      UserAvatarCircle(), // Wrapped in Container for 100x100 size
+                top: screenHeight * 0.12,
+                left: (screenWidth - 100) / 2,
+                child: Stack(
+                  children: [
+                    Container(
+                      width: 100,
+                      height: 100,
+                      child: UserAvatarCircle(
+                        imageUrl: _imageUrl,
+                      ), // Pass imageUrl if supported
+                    ),
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: GestureDetector(
+                        onTap: _pickAndUploadImage,
+                        child: Container(
+                          width: 30,
+                          height: 30,
+                          decoration: BoxDecoration(
+                            color: Colors.orange,
+                            border: Border.all(color: Colors.white, width: 2),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(
+                            Icons.upload,
+                            color: Colors.black,
+                            size: 20,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
