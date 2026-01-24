@@ -107,7 +107,8 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
 
   String _generateOTP() {
     // 6-digit OTP (simple)
-    return (100000 + (DateTime.now().millisecondsSinceEpoch % 900000)).toString();
+    return (100000 + (DateTime.now().millisecondsSinceEpoch % 900000))
+        .toString();
   }
 
   // ✅ PHONE RESEND: use FirebaseAuth.verifyPhoneNumber (do NOT use "OTP Codes" or sendSMSOTP)
@@ -234,12 +235,18 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
     final snap = await doc.get();
     final data = snap.data();
     if (data == null || !data.containsKey('createdAt')) {
-      await doc.set({'createdAt': FieldValue.serverTimestamp()}, SetOptions(merge: true));
+      await doc.set({
+        'createdAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
     }
   }
 
   Future<void> _cleanupOTPDoc(String key) async {
-    await FirebaseFirestore.instance.collection('OTP Codes').doc(key).delete().catchError((_) {});
+    await FirebaseFirestore.instance
+        .collection('OTP Codes')
+        .doc(key)
+        .delete()
+        .catchError((_) {});
   }
 
   Future<void> _checkOTPAndNavigate() async {
@@ -271,7 +278,9 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
           smsCode: code,
         );
 
-        final userCred = await FirebaseAuth.instance.signInWithCredential(credential);
+        final userCred = await FirebaseAuth.instance.signInWithCredential(
+          credential,
+        );
         final user = userCred.user;
 
         if (user == null) {
@@ -297,7 +306,9 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
         _snack('Phone number verified successfully!');
 
         Navigator.of(context).push(
-          MaterialPageRoute(builder: (context) => const RegistrationPaymentScreen()),
+          MaterialPageRoute(
+            builder: (context) => const RegistrationPaymentScreen(),
+          ),
         );
         return;
       }
@@ -306,7 +317,10 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
       // EMAIL: Firestore OTP check
       // then create FirebaseAuth user
       // =========================
-      final otpDoc = await FirebaseFirestore.instance.collection('OTP Codes').doc(key).get();
+      final otpDoc = await FirebaseFirestore.instance
+          .collection('OTP Codes')
+          .doc(key)
+          .get();
 
       if (!otpDoc.exists) {
         _snack('OTP not found. Please request a new one.');
@@ -374,11 +388,24 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
 
       await _cleanupOTPDoc(email);
 
+      // After OTP verification and user creation
+      await FirebaseFirestore.instance.collection('Sign Up').doc(user.uid).set({
+        'uid': user.uid,
+        'email': email,
+        'fullName': fullName,
+        'password': password, 
+        'verified': true,
+        'createdAt': FieldValue.serverTimestamp(),
+        // Other fields...
+      });
+
       if (!mounted) return;
       _snack('OTP verified successfully!');
 
       Navigator.of(context).push(
-        MaterialPageRoute(builder: (context) => const RegistrationPaymentScreen()),
+        MaterialPageRoute(
+          builder: (context) => const RegistrationPaymentScreen(),
+        ),
       );
     } on FirebaseAuthException catch (e) {
       _snack('Auth error: ${e.message ?? e.code}');
@@ -615,12 +642,16 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
                                       final trimmedValue = value.trim();
                                       if (trimmedValue.isNotEmpty &&
                                           otpIndex < _otpLength - 1) {
-                                        _controllers[otpIndex].text = trimmedValue;
+                                        _controllers[otpIndex].text =
+                                            trimmedValue;
                                         _focusNodes[otpIndex].unfocus();
-                                        _focusNodes[otpIndex + 1].requestFocus();
-                                      } else if (trimmedValue.isEmpty && otpIndex > 0) {
+                                        _focusNodes[otpIndex + 1]
+                                            .requestFocus();
+                                      } else if (trimmedValue.isEmpty &&
+                                          otpIndex > 0) {
                                         _focusNodes[otpIndex].unfocus();
-                                        _focusNodes[otpIndex - 1].requestFocus();
+                                        _focusNodes[otpIndex - 1]
+                                            .requestFocus();
                                       }
                                       _checkOTPAndNavigate();
                                     },
@@ -636,7 +667,9 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
                     SizedBox(height: screenHeight * 0.09),
 
                     GestureDetector(
-                      onTap: (_isButtonEnabled && !_isLoading) ? _resendOTP : null,
+                      onTap: (_isButtonEnabled && !_isLoading)
+                          ? _resendOTP
+                          : null,
                       child: Container(
                         width: screenWidth * 0.8,
                         height: screenHeight * 0.06,

@@ -19,6 +19,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String? _imageUrl; // To store the uploaded image URL
   bool _isExpanded = false; // To control expansion
 
+  final TextEditingController _previousPasswordController = TextEditingController();
+  final TextEditingController _newPasswordController = TextEditingController();
+
   Future<void> _pickAndUploadImage() async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
@@ -65,6 +68,265 @@ class _ProfileScreenState extends State<ProfileScreen> {
         );
       }
     }
+  }
+
+  void _showChangePasswordSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true, // Allows full height if needed
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+      ),
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            bool _isButtonEnabled = false;
+
+            Future<String?> _fetchStoredPassword() async {
+              try {
+                User? user = FirebaseAuth.instance.currentUser;
+                if (user == null) return null;
+                DocumentSnapshot doc = await FirebaseFirestore.instance
+                    .collection('Sign Up')
+                    .doc(user.uid)
+                    .get();
+                if (doc.exists && doc.data() != null) {
+                  return (doc.data() as Map<String, dynamic>)['password'] as String?;
+                }
+                return null;
+              } catch (e) {
+                return null;
+              }
+            }
+
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom, // Adjust for keyboard
+                left: 16,
+                right: 16,
+                top: 16,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Change Password',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _previousPasswordController,
+                    obscureText: true,
+                    decoration: const InputDecoration(
+                      labelText: 'Previous Password',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(30)),
+                      ),
+                    ),
+                    onChanged: (value) async {
+                      String? stored = await _fetchStoredPassword();
+                      setState(() {
+                        _isButtonEnabled = value == stored && value.isNotEmpty;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _newPasswordController,
+                    obscureText: true,
+                    decoration: const InputDecoration(
+                      labelText: 'New Password',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(30)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _isButtonEnabled ? Colors.orange : Colors.grey, // Orange when enabled, grey when disabled
+                    ),
+                    onPressed: _isButtonEnabled
+                        ? () async {
+                            String newPass = _newPasswordController.text;
+                            if (newPass.isNotEmpty) {
+                              try {
+                                User? user = FirebaseAuth.instance.currentUser;
+                                if (user != null) {
+                                  await FirebaseFirestore.instance
+                                      .collection('Sign Up')
+                                      .doc(user.uid)
+                                      .update({'password': newPass});
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Password updated successfully!')),
+                                  );
+                                  Navigator.pop(context); // Close the sheet
+                                }
+                              } catch (e) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('Error updating password: $e')),
+                                );
+                              }
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Please enter a new password')),
+                              );
+                            }
+                          }
+                        : null, // Disabled when not enabled
+                    child: const Text(
+                      'Change Password',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showEditProfileSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+      ),
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            final TextEditingController _fullNameController = TextEditingController();
+            final TextEditingController _contactController = TextEditingController();
+            bool _hasEmail = false;
+            bool _hasPhone = false;
+            String _contactLabel = '';
+
+            Future<void> _fetchUserData() async {
+              try {
+                User? user = FirebaseAuth.instance.currentUser;
+                if (user == null) return;
+                DocumentSnapshot doc = await FirebaseFirestore.instance
+                    .collection('Sign Up')
+                    .doc(user.uid)
+                    .get();
+                if (doc.exists && doc.data() != null) {
+                  Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+                  _fullNameController.text = data['fullName'] ?? '';
+                  if (data.containsKey('email') && data['email'] != null) {
+                    _hasEmail = true;
+                    _contactController.text = data['email'];
+                    _contactLabel = 'Email Address';
+                  } else if (data.containsKey('phoneNumber') && data['phoneNumber'] != null) {
+                    _hasPhone = true;
+                    _contactController.text = data['phoneNumber'];
+                    _contactLabel = 'Phone Number';
+                  }
+                }
+              } catch (e) {
+                // Handle error
+              }
+            }
+
+            // Fetch data on build
+            WidgetsBinding.instance.addPostFrameCallback((_) => _fetchUserData());
+
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+                left: 16,
+                right: 16,
+                top: 16,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Edit Profile',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _fullNameController,
+                    decoration: const InputDecoration(
+                      labelText: 'Full Names',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(30)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  if (_hasEmail || _hasPhone)
+                    TextFormField(
+                      controller: _contactController,
+                      decoration: InputDecoration(
+                        labelText: _contactLabel,
+                        border: const OutlineInputBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(30)),
+                        ),
+                      ),
+                    ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.orange,
+                    ),
+                    onPressed: () async {
+                      try {
+                        User? user = FirebaseAuth.instance.currentUser;
+                        if (user != null) {
+                          Map<String, dynamic> updates = {};
+                          if (_fullNameController.text.isNotEmpty) {
+                            updates['fullName'] = _fullNameController.text;
+                          }
+                          if (_hasEmail && _contactController.text.isNotEmpty) {
+                            updates['email'] = _contactController.text;
+                          } else if (_hasPhone && _contactController.text.isNotEmpty) {
+                            updates['phoneNumber'] = _contactController.text;
+                          }
+                          if (updates.isNotEmpty) {
+                            await FirebaseFirestore.instance
+                                .collection('Sign Up')
+                                .doc(user.uid)
+                                .update(updates);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Profile updated successfully!')),
+                            );
+                            Navigator.pop(context);
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('No changes made')),
+                            );
+                          }
+                        }
+                      } catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Error updating profile: $e')),
+                        );
+                      }
+                    },
+                    child: const Text(
+                      'Change',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -241,51 +503,48 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   children: [
                                     Padding(
                                       padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                                      child: Row(
-                                        children: [
-                                          const SizedBox(width: 45), // Space for removed square
-                                          
-                                        ],
+                                      child: GestureDetector(
+                                        onTap: () => _showEditProfileSheet(context),
+                                        child: Row(
+                                          children: [
+                                            const SizedBox(width: 45), // Space for removed square
+                                            const Text(
+                                              'Edit Profile',
+                                              style: TextStyle(
+                                                color: Colors.black,
+                                                fontSize: 13,
+                                              ),
+                                            ),
+                                            const Spacer(),
+                                            const Icon(
+                                              Icons.chevron_right,
+                                              color: Colors.black,
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                     ),
                                     Padding(
                                       padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                                      child: Row(
-                                        children: [
-                                          const SizedBox(width: 45), // Space for removed square
-                                          const Text(
-                                            'Change Password',
-                                            style: TextStyle(
-                                              color: Colors.black,
-                                              fontSize: 13,
+                                      child: GestureDetector(
+                                        onTap: () => _showChangePasswordSheet(context),
+                                        child: Row(
+                                          children: [
+                                            const SizedBox(width: 45), // Space for removed square
+                                            const Text(
+                                              'Change Password',
+                                              style: TextStyle(
+                                                color: Colors.black,
+                                                fontSize: 13,
+                                              ),
                                             ),
-                                          ),
-                                          const Spacer(),
-                                          const Icon(
-                                            Icons.chevron_right,
-                                            color: Colors.black,
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                                      child: Row(
-                                        children: [
-                                          const SizedBox(width: 45), // Space for removed square
-                                          const Text(
-                                            'Settings',
-                                            style: TextStyle(
+                                            const Spacer(),
+                                            const Icon(
+                                              Icons.chevron_right,
                                               color: Colors.black,
-                                              fontSize: 13,
                                             ),
-                                          ),
-                                          const Spacer(),
-                                          const Icon(
-                                            Icons.chevron_right,
-                                            color: Colors.black,
-                                          ),
-                                        ],
+                                          ],
+                                        ),
                                       ),
                                     ),
                                     Padding(
