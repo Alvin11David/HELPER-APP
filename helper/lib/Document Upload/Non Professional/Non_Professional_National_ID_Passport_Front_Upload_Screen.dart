@@ -7,8 +7,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:helper/Document Upload/National_ID_Passport_Front_Scan_Screen.dart';
-import 'package:helper/Document Upload/National_ID_Passport_Back_Upload_Screen.dart';
 
 class NonProfessionalNationalIdPassportFrontUploadScreen
     extends StatefulWidget {

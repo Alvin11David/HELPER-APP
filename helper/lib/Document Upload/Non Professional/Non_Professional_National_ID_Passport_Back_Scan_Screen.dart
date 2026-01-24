@@ -3,7 +3,6 @@ import 'dart:ui';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:google_ml_kit/google_ml_kit.dart';
-import 'package:helper/Document%20Upload/National_ID_Passport_Back_Upload_Screen.dart';
 import 'package:helper/Document%20Upload/Non%20Professional/Non_Professional_National_ID_Passport_Back_Upload_Screen.dart';
 
 class NonProfessionalNationalIdPassportBackScanScreen extends StatefulWidget {

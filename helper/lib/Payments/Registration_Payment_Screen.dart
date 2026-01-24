@@ -16,10 +16,10 @@ class RegistrationPaymentScreen extends StatefulWidget {
 
 class _RegistrationPaymentScreenState extends State<RegistrationPaymentScreen> {
   final bool _isMasterCardSelected = false;
-  bool _isVisaCardSelected = false;
-  bool _isMtnCardSelected = false;
-  bool _isPaypalSelected = false;
-  bool _isAirtelCardSelected = false;
+  final bool _isVisaCardSelected = false;
+  final bool _isMtnCardSelected = false;
+  final bool _isPaypalSelected = false;
+  final bool _isAirtelCardSelected = false;
 
   @override
   Widget build(BuildContext context) {

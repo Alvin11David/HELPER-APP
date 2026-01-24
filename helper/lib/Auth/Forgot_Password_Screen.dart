@@ -247,11 +247,13 @@ class _ForgotYourPasswordScreenState extends State<ForgotYourPasswordScreen> {
                         contentFontSize: w * 0.038,
                         validator: (v) {
                           final t = (v ?? '').trim();
-                          if (t.isEmpty)
+                          if (t.isEmpty) {
                             return 'Please enter a valid email address';
+                          }
                           final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+$');
-                          if (!emailRegex.hasMatch(t))
+                          if (!emailRegex.hasMatch(t)) {
                             return 'Please enter a valid email address';
+                          }
                           return null;
                         }, obscure: false,
                       ),
@@ -470,7 +472,14 @@ class _PillInput extends StatelessWidget {
     required this.keyboardType,
     this.contentFontSize = 16.0,
     this.validator,
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+    this.inputFormatters,
+>>>>>>> 471e8036e44ef2563c1cbded648c421a861cf700
+=======
     this.inputFormatters, required this.obscure, this.suffix,
+>>>>>>> 3f164284aacd06766eab331bc31cdc9ab8cffcb4
   });
 
   @override

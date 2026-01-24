@@ -63,7 +63,7 @@ class _NonProfessionalDocumentUploadScreenState
       setState(() => loading = false);
     }
 
-    Future<void> _openNationalIdPassportUpload() async {
+    Future<void> openNationalIdPassportUpload() async {
       setState(() => _selectedRows.add(0));
       final result = await Navigator.of(context).push(
         MaterialPageRoute(
@@ -74,7 +74,7 @@ class _NonProfessionalDocumentUploadScreenState
       // No need to set local state, Firestore will update
     }
 
-    Future<void> _openSelfieUpload() async {
+    Future<void> openSelfieUpload() async {
       setState(() => _selectedRows.add(3));
       await Navigator.of(
         context,
@@ -254,7 +254,7 @@ class _NonProfessionalDocumentUploadScreenState
                                   }
                                 });
                                 return GestureDetector(
-                                  onTap: _openNationalIdPassportUpload,
+                                  onTap: openNationalIdPassportUpload,
                                   child: Container(
                                     decoration: BoxDecoration(
                                       color: isVerified
@@ -369,7 +369,7 @@ class _NonProfessionalDocumentUploadScreenState
                                   }
                                 });
                                 return GestureDetector(
-                                  onTap: _openSelfieUpload,
+                                  onTap: openSelfieUpload,
                                   child: Container(
                                     decoration: BoxDecoration(
                                       color: isSubmitted

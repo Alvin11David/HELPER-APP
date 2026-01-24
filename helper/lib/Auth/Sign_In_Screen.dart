@@ -3,14 +3,13 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:helper/Worker%20Dashboard/Workers_Dashboard_Screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/foundation.dart';
+
 import 'OTP_Verification_Screen.dart';
-import 'package:helper/Intro/Role_Selection_Screen.dart';
 import 'Phone_Number_&_Email_Address_Screen.dart';
 import 'Referral_Code_Screen.dart';
 
@@ -20,7 +19,6 @@ class _UgandaPhoneFormatter extends TextInputFormatter {
     TextEditingValue oldValue,
     TextEditingValue newValue,
   ) {
-    // If the text is empty or doesn't start with "+256 ", reset to "+256 "
     if (newValue.text.isEmpty || !newValue.text.startsWith('+256 ')) {
       return const TextEditingValue(
         text: '+256 ',
@@ -28,17 +26,12 @@ class _UgandaPhoneFormatter extends TextInputFormatter {
       );
     }
 
-    // Extract the digits after "+256 "
-    final digitsOnly = newValue.text
-        .substring(5)
-        .replaceAll(RegExp(r'[^0-9]'), '');
+    final digitsOnly =
+        newValue.text.substring(5).replaceAll(RegExp(r'[^0-9]'), '');
 
-    // Limit to 9 digits
-    final limitedDigits = digitsOnly.length > 9
-        ? digitsOnly.substring(0, 9)
-        : digitsOnly;
+    final limitedDigits =
+        digitsOnly.length > 9 ? digitsOnly.substring(0, 9) : digitsOnly;
 
-    // Construct the final text
     final formattedText = '+256 $limitedDigits';
 
     return TextEditingValue(
@@ -84,30 +77,6 @@ class SignInScreen extends StatefulWidget {
 class _SignInScreenState extends State<SignInScreen> {
   final FocusNode _emailFocusNode = FocusNode();
   final FocusNode _passwordFocusNode = FocusNode();
-  @override
-  void initState() {
-    super.initState();
-    _loadLastInputs();
-    _phoneCtrl.addListener(_saveInputs);
-    _emailCtrl.addListener(_saveInputs);
-    _passwordCtrl.addListener(_saveInputs);
-  }
-
-  Future<void> _loadLastInputs() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _phoneCtrl.text = prefs.getString('last_phone') ?? '+256 ';
-      _emailCtrl.text = prefs.getString('last_email') ?? '';
-      _passwordCtrl.text = prefs.getString('last_password') ?? '';
-    });
-  }
-
-  Future<void> _saveInputs() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('last_phone', _phoneCtrl.text);
-    await prefs.setString('last_email', _emailCtrl.text);
-    await prefs.setString('last_password', _passwordCtrl.text);
-  }
 
   static const _brandOrange = Color(0xFFFFA10D);
   static const _pureWhite = Color(0xFFFFFFFF);
@@ -123,16 +92,44 @@ class _SignInScreenState extends State<SignInScreen> {
   bool _obscure = true;
   bool _loading = false;
 
-  String? _verificationId; // For phone verification
+  String? _verificationId; // phone
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLastInputs();
+    _phoneCtrl.addListener(_saveInputs);
+    _emailCtrl.addListener(_saveInputs);
+    _passwordCtrl.addListener(_saveInputs);
+  }
+
+  Future<void> _loadLastInputs() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    setState(() {
+      _phoneCtrl.text = prefs.getString('last_phone') ?? '+256 ';
+      _emailCtrl.text = prefs.getString('last_email') ?? '';
+      _passwordCtrl.text = prefs.getString('last_password') ?? '';
+    });
+  }
+
+  Future<void> _saveInputs() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('last_phone', _phoneCtrl.text);
+    await prefs.setString('last_email', _emailCtrl.text);
+    await prefs.setString('last_password', _passwordCtrl.text);
+  }
 
   @override
   void dispose() {
     _phoneCtrl.removeListener(_saveInputs);
     _emailCtrl.removeListener(_saveInputs);
     _passwordCtrl.removeListener(_saveInputs);
+
     _phoneCtrl.dispose();
     _emailCtrl.dispose();
     _passwordCtrl.dispose();
+
     _emailFocusNode.dispose();
     _passwordFocusNode.dispose();
     super.dispose();
@@ -144,13 +141,8 @@ class _SignInScreenState extends State<SignInScreen> {
     setState(() => _mode = m);
   }
 
-  String _generateOTP() {
-    Random random = Random();
-    return (100000 + random.nextInt(900000))
-        .toString(); // Generates 6-digit code
-  }
-
   void _toast(String msg) {
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(msg, style: const TextStyle(fontFamily: 'Inter')),
@@ -159,21 +151,192 @@ class _SignInScreenState extends State<SignInScreen> {
     );
   }
 
+  // ✅ format UI "+256 7XXXXXXXX" -> "+2567XXXXXXXX"
+  String _normalizeUgPhone(String uiPhone) {
+    var phone = uiPhone.trim();
+    if (!phone.startsWith('+256 ') || phone.length != 14) return '';
+    phone = phone.replaceAll(' ', ''); // +2567xxxxxxxx
+    if (!phone.startsWith('+256') || phone.length != 13) return '';
+    return phone;
+  }
+
+  // ✅ Ensures Firestore doc: Sign Up/{uid} exists (for avatars/profile reads)
+  Future<void> _ensureUserDocExists(User user, {required String provider}) async {
+    final docRef =
+        FirebaseFirestore.instance.collection('Sign Up').doc(user.uid);
+    final snap = await docRef.get();
+    if (snap.exists) return;
+
+    // Best-effort: recover from older .add() docs
+    String fullName = user.displayName ?? '';
+    String email = user.email ?? '';
+    String phone = user.phoneNumber ?? '';
+    String photoUrl = user.photoURL ?? '';
+
+    try {
+      if (email.isNotEmpty) {
+        final q = await FirebaseFirestore.instance
+            .collection('Sign Up')
+            .where('email', isEqualTo: email)
+            .limit(1)
+            .get();
+        if (q.docs.isNotEmpty) {
+          final d = q.docs.first.data();
+          fullName = (d['fullName'] ?? fullName).toString();
+          phone = (d['phoneNumber'] ?? phone).toString();
+          photoUrl = (d['photoUrl'] ?? photoUrl).toString();
+          provider = (d['provider'] ?? provider).toString();
+        }
+      } else if (phone.isNotEmpty) {
+        final q = await FirebaseFirestore.instance
+            .collection('Sign Up')
+            .where('phoneNumber', isEqualTo: phone)
+            .limit(1)
+            .get();
+        if (q.docs.isNotEmpty) {
+          final d = q.docs.first.data();
+          fullName = (d['fullName'] ?? fullName).toString();
+          email = (d['email'] ?? email).toString();
+          photoUrl = (d['photoUrl'] ?? photoUrl).toString();
+          provider = (d['provider'] ?? provider).toString();
+        }
+      }
+    } catch (_) {}
+
+    await docRef.set({
+      'uid': user.uid,
+      'provider': provider,
+      'fullName': fullName,
+      'email': email,
+      'phoneNumber': phone,
+      'photoUrl': photoUrl,
+      'verified': true,
+      'createdAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+
+  Future<void> _goToDashboard() async {
+    if (!mounted) return;
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => const WorkersDashboardScreen()),
+      (_) => false,
+    );
+  }
+
+  // ✅ EMAIL SIGN IN: real FirebaseAuth sign in
+  Future<void> _emailSignIn() async {
+    final email = _emailCtrl.text.trim();
+    final password = _passwordCtrl.text.trim();
+
+    final cred = await FirebaseAuth.instance.signInWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+
+    final user = cred.user;
+    if (user == null) throw Exception('No user returned.');
+
+    await _ensureUserDocExists(user, provider: 'email');
+    await _goToDashboard();
+  }
+
+  // ✅ PHONE SIGN IN: send OTP via FirebaseAuth.verifyPhoneNumber then go OTP screen
+  Future<void> _phoneSignIn() async {
+    final phoneUi = _phoneCtrl.text.trim();
+    final phone = _normalizeUgPhone(phoneUi);
+
+    if (phone.isEmpty) {
+      _toast('Please enter a valid phone number in format +256 XXXXXXXXX');
+      return;
+    }
+
+    await FirebaseAuth.instance.verifyPhoneNumber(
+      phoneNumber: phone,
+      timeout: const Duration(seconds: 60),
+
+      // If Android auto-verifies, sign in and go dashboard
+      verificationCompleted: (PhoneAuthCredential credential) async {
+        try {
+          final cred =
+              await FirebaseAuth.instance.signInWithCredential(credential);
+          final user = cred.user;
+          if (user != null) {
+            await _ensureUserDocExists(user, provider: 'phone');
+            if (mounted) {
+              setState(() => _loading = false);
+            }
+            await _goToDashboard();
+          }
+        } catch (e) {
+          _toast('Auto-verification failed: $e');
+        }
+      },
+
+      verificationFailed: (FirebaseAuthException e) {
+        if (!mounted) return;
+        _toast('SMS verification failed: ${e.message ?? e.code}');
+        setState(() => _loading = false);
+      },
+
+      codeSent: (String verificationId, int? resendToken) async {
+        _verificationId = verificationId;
+
+        if (!mounted) return;
+        _toast('OTP sent to your phone!');
+
+        // ✅ IMPORTANT:
+        // OTP screen is the ONLY place that "finishes" auth (signInWithCredential + save doc)
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => OTPVerificationScreen(
+              isPhoneVerification: true,
+              emailOrPhone: phone,
+              verificationId: verificationId,
+              fullName: '', // sign-in doesn't need it
+              password: '',
+            ),
+          ),
+        ).then((_) {
+          if (mounted) setState(() => _loading = false);
+        });
+      },
+
+      codeAutoRetrievalTimeout: (String verificationId) {
+        _verificationId = verificationId;
+      },
+    );
+  }
+
   Future<void> _onContinue() async {
     FocusScope.of(context).unfocus();
     if (!(_formKey.currentState?.validate() ?? false)) return;
+
     setState(() => _loading = true);
-    await Future.delayed(const Duration(milliseconds: 500));
-    if (!mounted) return;
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(
-        builder: (context) => const RoleSelectionScreen(),
-      ),
-      (route) => false,
-    );
-    setState(() => _loading = false);
+
+    try {
+      if (_mode == _AuthMode.email) {
+        await _emailSignIn();
+      } else {
+        await _phoneSignIn();
+      }
+
+      if (mounted) setState(() => _loading = false);
+    } on FirebaseAuthException catch (e) {
+      final msg = (e.code == 'user-not-found' || e.code == 'wrong-password')
+          ? 'Wrong email or password.'
+          : (e.message ?? 'Sign in failed.');
+      _toast(msg);
+      if (mounted) setState(() => _loading = false);
+    } catch (e) {
+      _toast('Sign in error: $e');
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
+  // ✅ Google sign-in uses FirebaseAuth
   Future<void> _onGoogle() async {
     if (_loading) return;
     FocusScope.of(context).unfocus();
@@ -183,20 +346,16 @@ class _SignInScreenState extends State<SignInScreen> {
       UserCredential userCred;
 
       if (kIsWeb) {
-        // ✅ Web uses popup
         final provider = GoogleAuthProvider();
         provider.addScope('email');
         provider.setCustomParameters({'prompt': 'select_account'});
-
         userCred = await FirebaseAuth.instance.signInWithPopup(provider);
       } else {
-        // ✅ Android/desktop uses google_sign_in
         final GoogleSignIn googleSignIn = GoogleSignIn(scopes: ['email']);
-
         final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+
         if (googleUser == null) {
-          // user cancelled
-          setState(() => _loading = false);
+          if (mounted) setState(() => _loading = false);
           return;
         }
 
@@ -212,21 +371,14 @@ class _SignInScreenState extends State<SignInScreen> {
       }
 
       final user = userCred.user;
-      if (user == null) {
-        throw Exception('Google sign-in failed (no user returned).');
-      }
+      if (user == null) throw Exception('Google sign-in failed (no user).');
 
       await _saveGoogleUserToFirestore(user);
 
       if (!mounted) return;
       setState(() => _loading = false);
 
-      // ✅ Go to dashboard
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (_) => const WorkersDashboardScreen()),
-        (_) => false,
-      );
+      await _goToDashboard();
     } catch (e) {
       if (!mounted) return;
       _toast('Google sign-in failed: $e');
@@ -236,8 +388,6 @@ class _SignInScreenState extends State<SignInScreen> {
 
   Future<void> _saveGoogleUserToFirestore(User user) async {
     final signUpCol = FirebaseFirestore.instance.collection('Sign Up');
-
-    // We store as doc = uid (easy, stable)
     final docRef = signUpCol.doc(user.uid);
     final snap = await docRef.get();
 
@@ -247,12 +397,16 @@ class _SignInScreenState extends State<SignInScreen> {
       'email': user.email ?? '',
       'fullName': user.displayName ?? '',
       'photoUrl': user.photoURL ?? '',
-      'phoneNumber': user.phoneNumber ?? '', // usually empty
+      'phoneNumber': user.phoneNumber ?? '',
+      'verified': true,
       'updatedAt': FieldValue.serverTimestamp(),
     };
 
     if (!snap.exists) {
-      await docRef.set({...payload, 'createdAt': FieldValue.serverTimestamp()});
+      await docRef.set({
+        ...payload,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
     } else {
       await docRef.set(payload, SetOptions(merge: true));
     }
@@ -261,6 +415,7 @@ class _SignInScreenState extends State<SignInScreen> {
   void _onReferralCodeTap() async {
     String identifier;
     String? referralCode;
+
     if (_mode == _AuthMode.phone) {
       String phoneNumber = _phoneCtrl.text.trim();
       if (!phoneNumber.startsWith('+256 ') || phoneNumber.length != 14) {
@@ -278,13 +433,15 @@ class _SignInScreenState extends State<SignInScreen> {
         );
         return;
       }
+
       QuerySnapshot query = await FirebaseFirestore.instance
           .collection('Sign Up')
           .where('phoneNumber', isEqualTo: phoneNumber)
           .get();
+
       if (query.docs.isNotEmpty) {
         final doc = query.docs.first;
-        referralCode = doc['referralCode'] ?? null;
+        referralCode = (doc['referralCode'] ?? '').toString();
       }
     } else {
       identifier = _emailCtrl.text.trim();
@@ -295,13 +452,15 @@ class _SignInScreenState extends State<SignInScreen> {
         );
         return;
       }
+
       QuerySnapshot query = await FirebaseFirestore.instance
           .collection('Sign Up')
           .where('email', isEqualTo: identifier)
           .get();
+
       if (query.docs.isNotEmpty) {
         final doc = query.docs.first;
-        referralCode = doc['referralCode'] ?? null;
+        referralCode = (doc['referralCode'] ?? '').toString();
       }
     }
 
@@ -312,7 +471,7 @@ class _SignInScreenState extends State<SignInScreen> {
         backgroundColor: Colors.transparent,
         builder: (context) {
           return AnimatedContainer(
-            duration: Duration(milliseconds: 300),
+            duration: const Duration(milliseconds: 300),
             curve: Curves.easeOut,
             margin: EdgeInsets.only(
               left: MediaQuery.of(context).size.width * 0.045,
@@ -320,15 +479,13 @@ class _SignInScreenState extends State<SignInScreen> {
               bottom: MediaQuery.of(context).viewInsets.bottom,
             ),
             child: Container(
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
               ),
               width: double.infinity,
               child: Padding(
-                padding: EdgeInsets.all(
-                  MediaQuery.of(context).size.width * 0.06,
-                ),
+                padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.06),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -345,13 +502,12 @@ class _SignInScreenState extends State<SignInScreen> {
                       style: TextStyle(
                         fontSize: MediaQuery.of(context).size.width * 0.08,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFFFFA10D),
+                        color: const Color(0xFFFFA10D),
                       ),
                     ),
                     SizedBox(height: MediaQuery.of(context).size.height * 0.02),
                     ElevatedButton(
                       onPressed: () => Navigator.pop(context),
-                      child: Text('Close'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.black,
                         foregroundColor: Colors.white,
@@ -359,6 +515,7 @@ class _SignInScreenState extends State<SignInScreen> {
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
+                      child: const Text('Close'),
                     ),
                   ],
                 ),
@@ -402,7 +559,6 @@ class _SignInScreenState extends State<SignInScreen> {
                     children: [
                       SizedBox(height: h * 0.02),
 
-                      // Top bar
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -473,22 +629,15 @@ class _SignInScreenState extends State<SignInScreen> {
                         switchInCurve: Curves.easeOut,
                         switchOutCurve: Curves.easeIn,
                         transitionBuilder: (child, anim) {
-                          final slide =
-                              Tween<Offset>(
-                                begin: const Offset(0.02, 0),
-                                end: Offset.zero,
-                              ).animate(
-                                CurvedAnimation(
-                                  parent: anim,
-                                  curve: Curves.easeOut,
-                                ),
-                              );
+                          final slide = Tween<Offset>(
+                            begin: const Offset(0.02, 0),
+                            end: Offset.zero,
+                          ).animate(
+                            CurvedAnimation(parent: anim, curve: Curves.easeOut),
+                          );
                           return FadeTransition(
                             opacity: anim,
-                            child: SlideTransition(
-                              position: slide,
-                              child: child,
-                            ),
+                            child: SlideTransition(position: slide, child: child),
                           );
                         },
                         child: _mode == _AuthMode.phone
@@ -510,7 +659,6 @@ class _SignInScreenState extends State<SignInScreen> {
 
                       SizedBox(height: h * 0.025),
 
-                      // Continue (white)
                       SizedBox(
                         width: double.infinity,
                         height: h * 0.062,
@@ -518,9 +666,7 @@ class _SignInScreenState extends State<SignInScreen> {
                           onPressed: _loading ? null : _onContinue,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: _pureWhite,
-                            disabledBackgroundColor: _pureWhite.withOpacity(
-                              0.6,
-                            ),
+                            disabledBackgroundColor: _pureWhite.withOpacity(0.6),
                             elevation: 0,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(30),
@@ -535,28 +681,26 @@ class _SignInScreenState extends State<SignInScreen> {
                                     color: Colors.black,
                                   ),
                                 )
-                              : Center(
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(
-                                        'Continue',
-                                        style: TextStyle(
-                                          fontSize: w * 0.045,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.black,
-                                          fontFamily: 'Inter',
-                                        ),
-                                      ),
-                                      SizedBox(width: w * 0.02),
-                                      Icon(
-                                        Icons.arrow_forward_rounded,
+                              : Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      'Continue',
+                                      style: TextStyle(
+                                        fontSize: w * 0.045,
+                                        fontWeight: FontWeight.bold,
                                         color: Colors.black,
-                                        size: h * 0.035,
+                                        fontFamily: 'Inter',
                                       ),
-                                    ],
-                                  ),
+                                    ),
+                                    SizedBox(width: w * 0.02),
+                                    Icon(
+                                      Icons.arrow_forward_rounded,
+                                      color: Colors.black,
+                                      size: h * 0.035,
+                                    ),
+                                  ],
                                 ),
                         ),
                       ),
@@ -565,12 +709,11 @@ class _SignInScreenState extends State<SignInScreen> {
                         SizedBox(height: h * 0.02),
                         _OrDivider(),
                         SizedBox(height: h * 0.02),
-
                         SizedBox(
                           width: double.infinity,
                           height: h * 0.062,
                           child: ElevatedButton(
-                            onPressed: _onGoogle,
+                            onPressed: _loading ? null : _onGoogle,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: _pureWhite,
                               elevation: 0,
@@ -630,7 +773,6 @@ class _SignInScreenState extends State<SignInScreen> {
 
                       SizedBox(height: h * 0.03),
 
-                      // ✅ spaced & Sign In smaller
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -643,7 +785,7 @@ class _SignInScreenState extends State<SignInScreen> {
                               fontWeight: FontWeight.w500,
                             ),
                           ),
-                          SizedBox(width: w * 0.02), // spacing
+                          SizedBox(width: w * 0.02),
                           GestureDetector(
                             onTap: () {
                               Navigator.push(
@@ -658,7 +800,7 @@ class _SignInScreenState extends State<SignInScreen> {
                               'Sign Up',
                               style: TextStyle(
                                 color: _brandOrange,
-                                fontSize: w * 0.032, // smaller
+                                fontSize: w * 0.032,
                                 fontFamily: 'Montserrat',
                                 fontWeight: FontWeight.w800,
                               ),
@@ -673,7 +815,6 @@ class _SignInScreenState extends State<SignInScreen> {
                 ),
               ),
 
-              // Back button overlay
               Positioned(
                 top: h * 0.04,
                 left: w * 0.04,
@@ -719,7 +860,6 @@ class _PhoneBlock extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Phone Number
         Text(
           'Phone Number',
           style: TextStyle(
@@ -740,12 +880,10 @@ class _PhoneBlock extends StatelessWidget {
           validator: (v) {
             final t = (v ?? '').trim();
             if (t.isEmpty) return 'Phone number is required';
-            if (!t.startsWith('+256 '))
-              return 'Phone number must start with +256';
+            if (!t.startsWith('+256 ')) return 'Phone number must start with +256';
             final digits = t.substring(5);
             if (digits.length != 9) return 'Enter exactly 9 digits after +256';
-            if (!RegExp(r'^[0-9]{9}$').hasMatch(digits))
-              return 'Enter valid 9-digit number';
+            if (!RegExp(r'^[0-9]{9}$').hasMatch(digits)) return 'Enter valid 9-digit number';
             return null;
           },
         ),
@@ -754,9 +892,7 @@ class _PhoneBlock extends StatelessWidget {
           alignment: Alignment.centerRight,
           child: GestureDetector(
             onTap: () {
-              // Call parent's _onReferralCodeTap
-              final state = context
-                  .findAncestorStateOfType<_SignInScreenState>();
+              final state = context.findAncestorStateOfType<_SignInScreenState>();
               state?._onReferralCodeTap();
             },
             child: Text(
@@ -801,7 +937,6 @@ class _EmailBlock extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Email
         Text(
           'Email',
           style: TextStyle(
@@ -829,8 +964,6 @@ class _EmailBlock extends StatelessWidget {
           onFieldSubmitted: (_) => passwordFocusNode.requestFocus(),
         ),
         SizedBox(height: h * 0.018),
-
-        // Password
         Text(
           'Password',
           style: TextStyle(
@@ -863,14 +996,12 @@ class _EmailBlock extends StatelessWidget {
           },
           focusNode: passwordFocusNode,
         ),
-
         SizedBox(height: h * 0.014),
         Row(
           children: [
             GestureDetector(
               onTap: () {
-                final state = context
-                    .findAncestorStateOfType<_SignInScreenState>();
+                final state = context.findAncestorStateOfType<_SignInScreenState>();
                 state?._onReferralCodeTap();
               },
               child: Text(
@@ -886,7 +1017,7 @@ class _EmailBlock extends StatelessWidget {
             const Spacer(),
             GestureDetector(
               onTap: () {
-                // TODO: forgot password
+                // TODO: forgot password later
               },
               child: Text(
                 'Forgot Password?',
@@ -905,94 +1036,7 @@ class _EmailBlock extends StatelessWidget {
   }
 }
 
-// --------------------- Indicator / Switch ---------------------
-
-class _StepIndicator extends StatelessWidget {
-  final double width;
-  final int activeIndex;
-  final List<String> labels;
-  final Color accent;
-
-  const _StepIndicator({
-    required this.width,
-    required this.activeIndex,
-    required this.labels,
-    required this.accent,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final dot = width * 0.02;
-    final lineW = width * 0.18;
-
-    Widget dotW(bool active) {
-      return Container(
-        width: dot * 1.45,
-        height: dot * 1.45,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: active ? accent : Colors.transparent,
-          border: Border.all(color: accent, width: 2),
-          boxShadow: active
-              ? [
-                  BoxShadow(
-                    color: accent.withOpacity(0.35),
-                    blurRadius: 10,
-                    spreadRadius: 1,
-                  ),
-                ]
-              : [],
-        ),
-      );
-    }
-
-    Widget dashed() {
-      return SizedBox(
-        width: lineW,
-        child: CustomPaint(painter: DashedLinePainter(color: accent)),
-      );
-    }
-
-    return Column(
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            dotW(activeIndex >= 0),
-            SizedBox(width: width * 0.02),
-            dashed(),
-            SizedBox(width: width * 0.02),
-            dotW(activeIndex >= 1),
-            SizedBox(width: width * 0.02),
-            dashed(),
-            SizedBox(width: width * 0.02),
-            dotW(activeIndex >= 2),
-          ],
-        ),
-        SizedBox(height: width * 0.02),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: labels
-              .map(
-                (t) => Expanded(
-                  child: Text(
-                    t,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: accent,
-                      fontSize: width * 0.032,
-                      fontWeight: FontWeight.w700,
-                      fontFamily: 'Inter',
-                    ),
-                  ),
-                ),
-              )
-              .toList(),
-        ),
-      ],
-    );
-  }
-}
+// --------------------- Switch ---------------------
 
 class _SmoothAuthSwitch extends StatelessWidget {
   final double height;
@@ -1252,7 +1296,7 @@ class _OrDivider extends StatelessWidget {
   }
 }
 
-// --------------------- Google icon slot (safe placeholder) ---------------------
+// --------------------- Google icon slot ---------------------
 
 class _GoogleIconSlot extends StatelessWidget {
   final double size;
@@ -1310,37 +1354,6 @@ class _GlassPill extends StatelessWidget {
             ],
           ),
           child: child,
-        ),
-      ),
-    );
-  }
-}
-
-class _CircleIconButton extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback onTap;
-  final double size;
-
-  const _CircleIconButton({
-    required this.icon,
-    required this.onTap,
-    required this.size,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.12),
-          shape: BoxShape.circle,
-          border: Border.all(color: Colors.white.withOpacity(0.25)),
-        ),
-        child: Center(
-          child: Icon(icon, color: Colors.white, size: size * 0.45),
         ),
       ),
     );
