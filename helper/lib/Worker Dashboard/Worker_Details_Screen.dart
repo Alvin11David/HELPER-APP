@@ -30,6 +30,8 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
   String? _jobCategoryName;
   int? _yearsExperience;
   String? _skillsDescription;
+  String? _pricingType;
+  int? _amount;
 
   @override
   void initState() {
@@ -63,6 +65,12 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
             }
             if (data != null && data['skillsDescription'] != null) {
               _skillsDescription = data['skillsDescription'];
+            }
+            if (data != null && data['pricingType'] != null) {
+              _pricingType = data['pricingType'];
+            }
+            if (data != null && data['amount'] != null) {
+              _amount = int.tryParse(data['amount'].toString());
             }
           });
         }
@@ -437,16 +445,19 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                       top: h * 0.4 + 380,
                       left: w * 0.04,
                       child: RichText(
-                        text: const TextSpan(
+                        text: TextSpan(
                           text:
-                              'Business Name prefers Pricing Type which is\n ',
-                          style: TextStyle(color: Colors.white, fontSize: 14),
+                              '${_businessName ?? ''} prefers ${_pricingType ?? ''} which is\n',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                          ),
                           children: [
                             TextSpan(
-                              text: 'Amount',
-                              style: TextStyle(
+                              text: _amount != null ? _amount.toString() : '',
+                              style: const TextStyle(
                                 color: Colors.orange,
-                                fontSize: 16,
+                                fontSize: 18,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
