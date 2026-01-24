@@ -40,19 +40,19 @@ class UserName extends StatelessWidget {
           // Show loading indicator
           return const Text(
             'Loading...',
-            style: TextStyle(color: Colors.white, fontSize: 16),
+            style: TextStyle(color: Colors.black, fontSize: 16),
           );
         } else if (snapshot.hasError || snapshot.data == null) {
           // Show error or default text
           return const Text(
             'User',
-            style: TextStyle(color: Colors.white, fontSize: 16),
+            style: TextStyle(color: Colors.black, fontSize: 16),
           );
         } else {
           // Display the fullName
           return Text(
             snapshot.data!,
-            style: const TextStyle(color: Colors.white, fontSize: 16),
+            style: const TextStyle(color: Colors.black, fontSize: 16),
           );
         }
       },
