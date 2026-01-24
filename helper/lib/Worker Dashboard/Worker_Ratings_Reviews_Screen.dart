@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'dart:ui'; // Add this import for ImageFilter
+import 'dart:ui';
+
+import 'package:helper/Components/Bottom_Nav_Bar.dart'; // Add this import for ImageFilter
 
 class WorkerRatingsReviewsScreen extends StatelessWidget {
   const WorkerRatingsReviewsScreen({super.key});
@@ -378,6 +380,7 @@ class WorkerRatingsReviewsScreen extends StatelessWidget {
           ],
         ),
       ),
+      bottomNavigationBar: BottomNavBar(currentIndex: 4),
     );
   }
 }
