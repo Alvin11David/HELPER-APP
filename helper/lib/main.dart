@@ -23,7 +23,6 @@ import 'package:helper/Worker%20Dashboard/Active_Job_detail.dart';
 import 'package:helper/Worker%20Dashboard/Workers_Earning_Detail_Screen.dart';
 import 'package:helper/Worker%20Dashboard/Workers_Reschedule_screen.dart';
 import 'package:helper/Worker%20Dashboard/Workers_skills_and_Job_Details.dart';
-import 'package:helper/Auth/Sign_In_Screen.dart';
 import 'firebase_options.dart';
 
 final GlobalKey<NavigatorState> appNavKey = GlobalKey<NavigatorState>();
@@ -46,7 +45,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home:  WorkerRatingsReviewsScreen(),
+      home: const WorkerSkillsJobDetailsScreen(),
     );
   }
 }
