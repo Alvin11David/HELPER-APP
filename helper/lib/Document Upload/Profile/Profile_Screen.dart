@@ -666,7 +666,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         duration: const Duration(milliseconds: 300),
                         height: _isWalletExpanded
                             ? 30
-                            : 0, // Height for Wallet PIN options
+                            : 25, // Height for Wallet PIN options
                         child: _isWalletExpanded
                             ? SingleChildScrollView(
                                 child: Column(
