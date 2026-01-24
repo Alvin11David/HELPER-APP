@@ -46,13 +46,13 @@ class UserName extends StatelessWidget {
           // Show error or default text
           return const Text(
             'User',
-            style: TextStyle(color: Colors.black, fontSize: 16),
+            style: TextStyle(color: Colors.orange, fontSize: 16),
           );
         } else {
           // Display the fullName
           return Text(
             snapshot.data!,
-            style: const TextStyle(color: Colors.black, fontSize: 16),
+            style: const TextStyle(color: Colors.orange, fontSize: 16),
           );
         }
       },

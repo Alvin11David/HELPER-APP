@@ -7,8 +7,8 @@ import 'package:helper/Employer%20Dashboard/All_Categories_Screen.dart';
 import 'package:helper/Employer%20Dashboard/Create_Wallet_PIN_Screen.dart';
 import 'package:helper/Employer%20Dashboard/Set_New_Wallet_PIN_Screen.dart';
 import 'package:helper/Employer%20Dashboard/job_detail_booking_screen.dart';
+import 'package:helper/Intro/Splash_Screen.dart';
 import 'package:helper/Maps/Map_Screen.dart';
-//import 'package:helper/Worker%20Dashboard/Worker_Jobs_Hub_Screen.dart';
 import 'package:helper/Payments/MTN_Airtel_Deposit_Screen.dart';
 import 'package:helper/Wallet/Wallet_Cancelled_screen.dart';
 import 'package:helper/Wallet/Wallet_Deposit_Payment_Method_Screen.dart';
@@ -43,7 +43,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home:  MapScreen(),
+      home:  SplashScreen(),
     );
   }
 }

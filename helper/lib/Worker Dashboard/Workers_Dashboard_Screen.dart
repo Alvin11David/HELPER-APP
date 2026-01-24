@@ -56,7 +56,7 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                 children: [
                   // Fixed header
                   SizedBox(
-                    height: 60,
+                    height: 70,
                     child: Stack(
                       children: [
                         Positioned(
@@ -269,7 +269,7 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                           Padding(
                             padding: EdgeInsets.symmetric(horizontal: w * 0.05),
                             child: Container(
-                              height: 120,
+                              height: 140,
                               decoration: BoxDecoration(
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(25),
@@ -425,7 +425,7 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                           Padding(
                             padding: EdgeInsets.symmetric(horizontal: w * 0.05),
                             child: Container(
-                              height: 170,
+                              height: 190,
                               decoration: BoxDecoration(
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(25),
@@ -597,7 +597,7 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                           Padding(
                             padding: EdgeInsets.symmetric(horizontal: w * 0.05),
                             child: Container(
-                              height: 140,
+                              height: 170,
                               decoration: BoxDecoration(
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(25),
