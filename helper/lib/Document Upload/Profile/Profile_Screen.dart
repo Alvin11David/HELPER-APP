@@ -55,6 +55,24 @@ class ProfileScreen extends StatelessWidget {
                   ],
                 ),
               ),
+              Positioned(
+                top:
+                    screenHeight *
+                    0.15, // Adjust as needed to place below "Profile"
+                left: (screenWidth - 100) / 2, // Center horizontally
+                child: Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: Colors.white,
+                      width: 2, // Adjust stroke width as needed
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
         ),
