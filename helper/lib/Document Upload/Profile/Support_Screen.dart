@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:ui'; // Add this import for ImageFilter
 import 'package:flutter/services.dart'; // Add this import for TextInputFormatter
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class SupportScreen extends StatefulWidget {
   const SupportScreen({super.key});
@@ -13,9 +15,26 @@ class _SupportScreenState extends State<SupportScreen> {
   final TextEditingController issueTitleCtrl = TextEditingController();
   final TextEditingController issueDescCtrl = TextEditingController();
   static const Color _brandOrange = Color(0xFFFFA10D);
+  bool _isLoading = false;
 
-  void _submit() {
-    // Handle submission logic here
+  Future<String?> _getFullName() async {
+    try {
+      User? user = FirebaseAuth.instance.currentUser;
+      if (user == null) return null;
+      DocumentSnapshot doc = await FirebaseFirestore.instance
+          .collection('Sign Up')
+          .doc(user.uid)
+          .get();
+      if (doc.exists && doc.data() != null) {
+        return (doc.data() as Map<String, dynamic>)['fullName'] as String?;
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  void _submit() async {
     String title = issueTitleCtrl.text.trim();
     String description = issueDescCtrl.text.trim();
     if (title.isEmpty || description.isEmpty) {
@@ -24,13 +43,47 @@ class _SupportScreenState extends State<SupportScreen> {
       );
       return;
     }
-    // Example: Submit to Firestore or API
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Issue submitted successfully')),
-    );
-    // Clear fields
-    issueTitleCtrl.clear();
-    issueDescCtrl.clear();
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      User? user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('User not authenticated')),
+        );
+        setState(() {
+          _isLoading = false;
+        });
+        return;
+      }
+
+      String? fullName = await _getFullName();
+
+      await FirebaseFirestore.instance.collection('Support Issues').add({
+        'title': title,
+        'description': description,
+        'fullName': fullName ?? 'Unknown',
+        'userId': user.uid,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Issue submitted successfully')),
+      );
+      issueTitleCtrl.clear();
+      issueDescCtrl.clear();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error submitting issue: $e')),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   @override
@@ -210,7 +263,7 @@ class _SupportScreenState extends State<SupportScreen> {
                           child: SizedBox(
                             height: screenHeight * 0.060,
                             child: ElevatedButton(
-                              onPressed: _submit, // submit
+                              onPressed: _isLoading ? null : _submit, // Disable when loading
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: _brandOrange,
                                 elevation: 0,
@@ -218,15 +271,17 @@ class _SupportScreenState extends State<SupportScreen> {
                                   borderRadius: BorderRadius.circular(30),
                                 ),
                               ),
-                              child: Text(
-                                'Submit',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontFamily: 'Inter',
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: screenWidth * 0.040,
-                                ),
-                              ),
+                              child: _isLoading
+                                  ? const CircularProgressIndicator(color: Colors.white)
+                                  : Text(
+                                      'Submit',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontFamily: 'Inter',
+                                        fontWeight: FontWeight.w900,
+                                        fontSize: screenWidth * 0.040,
+                                      ),
+                                    ),
                             ),
                           ),
                         ),
