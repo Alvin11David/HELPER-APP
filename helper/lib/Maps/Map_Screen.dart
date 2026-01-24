@@ -16,7 +16,10 @@ class _MapScreenState extends State<MapScreen> {
 
   final LatLng _center = const LatLng(45.521563, -122.677433);
 
-  int _selectedIndex = 0;
+  int _selectedIndex = 1;
+
+  late TextEditingController _controller;
+  late FocusNode _focusNode;
 
   void _onMapCreated(GoogleMapController controller) {
     mapController = controller;
@@ -38,6 +41,20 @@ class _MapScreenState extends State<MapScreen> {
       _selectedIndex = index;
     });
     // Add navigation logic if needed
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController();
+    _focusNode = FocusNode();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _focusNode.dispose();
+    super.dispose();
   }
 
   @override
@@ -105,9 +122,16 @@ class _MapScreenState extends State<MapScreen> {
                 Container(
                   width: 40,
                   height: 40,
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     color: Colors.white,
                     shape: BoxShape.circle,
+                    boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 10,
+                    offset: Offset(0, 5),
+                  ),
+                ],
                   ),
                   child: const Icon(Icons.notifications, color: Colors.black),
                 ),
@@ -123,9 +147,16 @@ class _MapScreenState extends State<MapScreen> {
                 Container(
                   width: 40,
                   height: 40,
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     color: Colors.white,
                     shape: BoxShape.circle,
+                    boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 10,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
                   ),
                   child: const Icon(Icons.menu, color: Colors.black),
                 ),
@@ -150,9 +181,50 @@ class _MapScreenState extends State<MapScreen> {
               ],
             ),
           ),
+          Positioned(
+            top: 80,
+            left: w * 0.03,
+            child: Container(
+              height: 40,
+              width: w * 0.76,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(30),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 10,
+                    offset: Offset(0, 5),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  SizedBox(width: 10),
+                  Icon(Icons.search, color: Colors.black),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: TextField(
+                      controller: _controller,
+                      focusNode: _focusNode,
+                      decoration: InputDecoration(
+                        hintText: 'Search for services here...',
+                        border: InputBorder.none,
+                        hintStyle: TextStyle(color: Colors.black),
+                      ),
+                      style: TextStyle(color: Colors.black),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
-      bottomNavigationBar: BottomNavBar(onItemTapped: _onItemTapped),
+      bottomNavigationBar: BottomNavBar(
+        onItemTapped: _onItemTapped,
+        initialSelectedIndex: 1,
+      ),
     );
   }
 }
