@@ -894,7 +894,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       AnimatedContainer(
                         duration: const Duration(milliseconds: 300),
                         height: _isAboutExpanded
-                            ? 100
+                            ? 30
                             : 25, // Height for About the App options
                         child: _isAboutExpanded
                             ? SingleChildScrollView(
