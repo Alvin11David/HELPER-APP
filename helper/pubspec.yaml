@@ -74,12 +74,9 @@ dependencies:
 
 
   # for the woker skilland job details screen
-  file_picker: ^8.0.0
   uuid: ^4.0.0
 
   #for map location
-  
-  geolocator: ^12.0.0
   dio: ^5.5.0
 
 dev_dependencies:
