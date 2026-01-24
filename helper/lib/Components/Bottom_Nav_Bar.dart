@@ -6,11 +6,11 @@ import '../Document Upload/Profile/Profile_Screen.dart'; // Add this import
 
 class BottomNavBar extends StatefulWidget {
   final Function(int)? onItemTapped;
-  final int initialSelectedIndex;
+  final int currentIndex; // Rename and make it the main parameter
   const BottomNavBar({
     super.key,
     this.onItemTapped,
-    this.initialSelectedIndex = 0, required int currentIndex,
+    required this.currentIndex, // Required, no default
   });
 
   @override
@@ -23,7 +23,8 @@ class _BottomNavBarState extends State<BottomNavBar> {
   @override
   void initState() {
     super.initState();
-    _selectedIndex = widget.initialSelectedIndex;
+    _selectedIndex =
+        widget.currentIndex; // Use currentIndex to set the active tab
   }
 
   void _showPINEntryModal() {
