@@ -67,6 +67,8 @@ dependencies:
   rxdart: ^0.28.0
   # For file picking
   file_picker: ^10.0.0
+  # For location
+  geolocator: ^10.0.0
 
 dev_dependencies:
   flutter_test:
