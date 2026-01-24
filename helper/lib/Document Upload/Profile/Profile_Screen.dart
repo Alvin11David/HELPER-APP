@@ -21,6 +21,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String? _imageUrl; // To store the uploaded image URL
   bool _isExpanded = false; // To control expansion
   bool _isWalletExpanded = false; // To control Wallet PIN expansion
+  bool _isHelpExpanded = false; // To control Help & Support expansion
 
   final TextEditingController _previousPasswordController =
       TextEditingController();
@@ -665,7 +666,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         duration: const Duration(milliseconds: 300),
                         height: _isWalletExpanded
                             ? 100
-                            : 0, // Height for Wallet PIN options
+                            : 20, // Height for Wallet PIN options
                         child: _isWalletExpanded
                             ? SingleChildScrollView(
                                 child: Column(
@@ -684,6 +685,133 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                             ), // Space for removed square
                                             const Text(
                                               'Change Wallet PIN',
+                                              style: TextStyle(
+                                                color: Colors.black,
+                                                fontSize: 13,
+                                              ),
+                                            ),
+                                            const Spacer(),
+                                            const Icon(
+                                              Icons.chevron_right,
+                                              color: Colors.black,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            : null,
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 35,
+                              height: 35,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFEFEF96),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Icon(
+                                Icons.help,
+                                color: Colors.black,
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            const Text(
+                              'Help & Support',
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontSize: 16,
+                              ),
+                            ),
+                            const Spacer(),
+                            GestureDetector(
+                              onTap: () => setState(
+                                () => _isHelpExpanded = !_isHelpExpanded,
+                              ),
+                              child: Icon(
+                                _isHelpExpanded
+                                    ? Icons.arrow_drop_up
+                                    : Icons.arrow_drop_down,
+                                color: Colors.black,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        height: _isHelpExpanded
+                            ? 100
+                            : 0, // Height for Help & Support options
+                        child: _isHelpExpanded
+                            ? SingleChildScrollView(
+                                child: Column(
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 16.0,
+                                      ),
+                                      child: GestureDetector(
+                                        onTap: () {
+                                          // Add logic for Contact Support
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                'Contact Support tapped',
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                        child: Row(
+                                          children: [
+                                            const SizedBox(
+                                              width: 45,
+                                            ), // Space for removed square
+                                            const Text(
+                                              'Contact Support',
+                                              style: TextStyle(
+                                                color: Colors.black,
+                                                fontSize: 13,
+                                              ),
+                                            ),
+                                            const Spacer(),
+                                            const Icon(
+                                              Icons.chevron_right,
+                                              color: Colors.black,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 16.0,
+                                      ),
+                                      child: GestureDetector(
+                                        onTap: () {
+                                          // Add logic for FAQ
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            const SnackBar(
+                                              content: Text('FAQ tapped'),
+                                            ),
+                                          );
+                                        },
+                                        child: Row(
+                                          children: [
+                                            const SizedBox(
+                                              width: 45,
+                                            ), // Space for removed square
+                                            const Text(
+                                              'FAQ',
                                               style: TextStyle(
                                                 color: Colors.black,
                                                 fontSize: 13,
