@@ -1150,7 +1150,7 @@ class _WorkerSkillsJobDetailsScreenState
     required String text,
     required VoidCallback onTap,
   }) {
-    final fieldH = h * 0.080;
+    final fieldH = h * 0.070;
     final r = fieldH / 2;
 
     return GestureDetector(

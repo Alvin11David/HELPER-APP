@@ -5,6 +5,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:helper/Worker%20Dashboard/Workers_skills_and_Job_Details.dart';
 import 'Non_Professional_Selfie_Capture_Screen.dart';
 import '../../Worker Dashboard/Worker_Details_Screen.dart';
 
@@ -52,7 +53,7 @@ class _NonProfessionalDocumentUploadScreenState
     Future<void> onContinue() async {
       Navigator.of(
         context,
-      ).push(MaterialPageRoute(builder: (context) => WorkerDetailsScreen()));
+      ).push(MaterialPageRoute(builder: (context) => WorkerSkillsJobDetailsScreen()));
     }
 
     Future<void> openNationalIdPassportUpload() async {
