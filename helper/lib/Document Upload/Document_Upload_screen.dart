@@ -8,6 +8,7 @@ import 'package:helper/Document%20Upload/Academic_Certificate_Upload_Screen.dart
 import 'package:helper/Document%20Upload/Professional_License_Upload.dart';
 import 'package:helper/Document%20Upload/Selfie_Verification_Upload.dart';
 import 'package:rxdart/rxdart.dart';
+import '../../Worker Dashboard/Worker_Details_Screen.dart';
 
 class DocumentUploadScreen extends StatefulWidget {
   const DocumentUploadScreen({super.key});
@@ -612,9 +613,8 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                           child: ElevatedButton(
                             onPressed: allUploaded
                                 ? () {
-                                    // TODO: Navigate to next screen
-                                    print(
-                                      'Continue pressed - all documents uploaded!',
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(builder: (context) => WorkerDetailsScreen()),
                                     );
                                   }
                                 : null,
