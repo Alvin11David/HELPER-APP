@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:helper/Components/User_Name.dart';
 import '../Components/Side_Bar.dart';
 import 'package:helper/Components/user_avatar_circle.dart';
 
@@ -92,13 +93,7 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
-                                  const Text(
-                                    'User',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 14,
-                                    ),
-                                  ),
+                                  UserName()
                                 ],
                               ),
                             ],
