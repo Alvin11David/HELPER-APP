@@ -32,13 +32,13 @@ class WorkerRatingsReviewsScreen extends StatelessWidget {
       // Add more sample reviews as needed
     ];
 
-    // Sample rating progress
-    final Map<int, double> ratingProgress = {
-      5: 0.8,
-      4: 0.6,
-      3: 0.4,
-      2: 0.2,
-      1: 0.1,
+    // Sample rating data
+    final Map<String, double> ratingProgress = {
+      '5 stars': 0.6,
+      '4 stars': 0.3,
+      '3 stars': 0.1,
+      '2 stars': 0.0,
+      '1 star': 0.0,
     };
 
     return Scaffold(
@@ -135,7 +135,6 @@ class WorkerRatingsReviewsScreen extends StatelessWidget {
                               fontWeight: FontWeight.w500,
                             ),
                             textAlign: TextAlign.center,
-                            maxLines: null,
                           ),
                         ),
                       ),
@@ -144,105 +143,9 @@ class WorkerRatingsReviewsScreen extends StatelessWidget {
                 ],
               ),
             ),
+
             Positioned(
-              top: screenHeight * 0.18, // Position for overall rating
-              left: screenWidth * 0.04,
-              right: screenWidth * 0.04,
-              height: screenHeight * 0.15, // Adjust height as needed
-              child: Row(
-                children: [
-                  // Left column: Overall Rating
-                  Expanded(
-                    flex: 1,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Overall Rating',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: screenWidth * 0.05,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        SizedBox(height: screenHeight * 0.01),
-                        Container(
-                          padding: EdgeInsets.all(screenWidth * 0.04),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                          child: Column(
-                            children: [
-                              Text(
-                                '4.8',
-                                style: TextStyle(
-                                  fontSize: screenWidth * 0.12,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black,
-                                ),
-                              ),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: List.generate(
-                                  5,
-                                  (index) => Icon(
-                                    Icons.star,
-                                    color: Colors.orange,
-                                    size: screenWidth * 0.06,
-                                  ),
-                                ),
-                              ),
-                              Text(
-                                'Number of reviews',
-                                style: TextStyle(
-                                  color: Colors.black,
-                                  fontSize: screenWidth * 0.04,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(width: screenWidth * 0.04),
-                  // Right column: Rating progress bars
-                  Expanded(
-                    flex: 1,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: ratingProgress.entries.map((entry) {
-                        return Padding(
-                          padding: EdgeInsets.only(bottom: screenHeight * 0.01),
-                          child: Row(
-                            children: [
-                              Text(
-                                '${entry.key}',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: screenWidth * 0.04,
-                                ),
-                              ),
-                              SizedBox(width: screenWidth * 0.02),
-                              Expanded(
-                                child: LinearProgressIndicator(
-                                  value: entry.value,
-                                  backgroundColor: Colors.white.withOpacity(0.3),
-                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.orange),
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Positioned(
-              top: screenHeight * 0.35, // Adjusted position for the reviews list
+              top: screenHeight * 0.25, // Position for the reviews list
               left: screenWidth * 0.04,
               right: screenWidth * 0.04,
               height: screenHeight * 0.23, // Reduced height for the scroll area
@@ -272,7 +175,9 @@ class WorkerRatingsReviewsScreen extends StatelessWidget {
                         final review = reviews[index];
                         return Container(
                           width: screenWidth * 0.8, // Fixed width for each card
-                          height: screenHeight * 0.15, // Adjusted height for each card
+                          height:
+                              screenHeight *
+                              0.15, // Adjusted height for each card
                           margin: EdgeInsets.only(right: screenWidth * 0.04),
                           padding: EdgeInsets.all(screenWidth * 0.04),
                           decoration: BoxDecoration(
@@ -351,6 +256,120 @@ class WorkerRatingsReviewsScreen extends StatelessWidget {
                           ),
                         );
                       },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Positioned(
+              top: screenHeight * 0.5, // Fixed top position
+              left: screenWidth * 0.04,
+              right: screenWidth * 0.04,
+              height:
+                  screenHeight * 0.25, // Increased height to prevent overflow
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Overall Rating',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: screenWidth * 0.05,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(height: screenHeight * 0.01),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Padding(
+                      padding: EdgeInsets.all(screenWidth * 0.04),
+                      child: Row(
+                        children: [
+                          // Left column: Rating details
+                          Expanded(
+                            flex: 1,
+                            child: Column(
+                              children: [
+                                Text(
+                                  '4.8',
+                                  style: TextStyle(
+                                    fontSize: screenWidth * 0.12,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: List.generate(
+                                    5,
+                                    (index) => Icon(
+                                      Icons.star,
+                                      color: Colors.orange,
+                                      size: screenWidth * 0.06,
+                                    ),
+                                  ),
+                                ),
+                                Text(
+                                  'Number of reviews',
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                    fontSize: screenWidth * 0.04,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          SizedBox(width: screenWidth * 0.04),
+                          // Right column: Rating progress bars
+                          Expanded(
+                            flex: 1,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: ratingProgress.entries.map((entry) {
+                                return Padding(
+                                  padding: EdgeInsets.only(
+                                    bottom:
+                                        screenHeight * 0.005, // Reduced padding
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Text(
+                                        '${entry.key}',
+                                        style: TextStyle(
+                                          color: Colors.black,
+                                          fontSize:
+                                              screenWidth *
+                                              0.035, // Smaller font
+                                        ),
+                                      ),
+                                      SizedBox(width: screenWidth * 0.02),
+                                      Expanded(
+                                        child: SizedBox(
+                                          height:
+                                              screenHeight *
+                                              0.01, // Fixed height for bars
+                                          child: LinearProgressIndicator(
+                                            value: entry.value,
+                                            backgroundColor: Colors.grey
+                                                .withOpacity(0.3),
+                                            valueColor:
+                                                AlwaysStoppedAnimation<Color>(
+                                                  Colors.orange,
+                                                ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],
