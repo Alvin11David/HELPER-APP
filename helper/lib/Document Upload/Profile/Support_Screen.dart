@@ -1,8 +1,22 @@
 import 'package:flutter/material.dart';
 import 'dart:ui'; // Add this import for ImageFilter
+import 'package:flutter/services.dart'; // Add this import for TextInputFormatter
 
-class SupportScreen extends StatelessWidget {
+class SupportScreen extends StatefulWidget {
   const SupportScreen({super.key});
+
+  @override
+  _SupportScreenState createState() => _SupportScreenState();
+}
+
+class _SupportScreenState extends State<SupportScreen> {
+  final TextEditingController issueTitleCtrl = TextEditingController();
+
+  @override
+  void dispose() {
+    issueTitleCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -111,12 +125,137 @@ class SupportScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              const Center(
-                child: Text('Support Screen'), // Placeholder content
+              Positioned(
+                top: screenHeight * 0.25, // Adjust position for the form
+                left: screenWidth * 0.04,
+                right: screenWidth * 0.04,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(height: screenHeight * 0.018),
+                    Text(
+                      'Issue title',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: screenWidth * 0.040,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Inter',
+                      ),
+                    ),
+                    SizedBox(height: screenHeight * 0.012),
+                    _PillInput(
+                      controller: issueTitleCtrl,
+                      hint: 'Enter Your Issue Title',
+                      icon: Icons.title,
+                      keyboardType: TextInputType.text,
+                      contentFontSize: screenWidth * 0.038,
+                      validator: (v) {
+                        final t = (v ?? '');
+                        if (t.trim().isEmpty) return 'Issue title is required';
+                        return null;
+                      },
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _PillInput extends StatelessWidget {
+  final TextEditingController controller;
+  final String hint;
+  final IconData icon;
+  final bool obscure;
+  final Widget? suffix;
+  final TextInputType keyboardType;
+  final List<TextInputFormatter>? inputFormatters;
+  final String? Function(String?)? validator;
+
+  final double contentFontSize;
+
+  const _PillInput({
+    required this.controller,
+    required this.hint,
+    required this.icon,
+    required this.keyboardType,
+    required this.contentFontSize,
+    this.obscure = false,
+    this.suffix,
+    this.inputFormatters,
+    this.validator,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final w = MediaQuery.of(context).size.width;
+    final h = MediaQuery.of(context).size.height;
+
+    final fieldH = h * 0.065;
+    final radius = fieldH / 2;
+
+    return Container(
+      height: fieldH,
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.35),
+        borderRadius: BorderRadius.circular(radius),
+        border: Border.all(color: Colors.white.withOpacity(0.35), width: 1.2),
+      ),
+      child: Row(
+        children: [
+          SizedBox(width: w * 0.04),
+          Icon(icon, color: Colors.white, size: w * 0.06),
+          SizedBox(width: w * 0.025),
+          Container(
+            width: 1.2,
+            height: fieldH * 0.55,
+            color: Colors.white.withOpacity(0.6),
+          ),
+          SizedBox(width: w * 0.03),
+          Expanded(
+            child: TextFormField(
+              controller: controller,
+              obscureText: obscure,
+              keyboardType: keyboardType,
+              inputFormatters: inputFormatters,
+              validator: validator,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: contentFontSize,
+                fontWeight: FontWeight.w700,
+                fontFamily: 'Inter',
+              ),
+              cursorColor: const Color(0xFFFFA10D),
+              decoration: InputDecoration(
+                hintText: hint,
+                hintStyle: TextStyle(
+                  color: Colors.white.withOpacity(0.55),
+                  fontSize: contentFontSize,
+                  fontWeight: FontWeight.w600,
+                  fontFamily: 'Inter',
+                ),
+                border: InputBorder.none,
+                isCollapsed: true,
+                contentPadding: EdgeInsets.only(
+                  top: fieldH * 0.20,
+                  bottom: fieldH * 0.20,
+                ),
+              ),
+            ),
+          ),
+          if (suffix != null)
+            Padding(
+              padding: EdgeInsets.only(right: w * 0.02),
+              child: suffix!,
+            )
+          else
+            SizedBox(width: w * 0.02),
+        ],
       ),
     );
   }
