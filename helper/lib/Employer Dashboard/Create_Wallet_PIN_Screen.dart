@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'dart:ui'; // For ImageFilter
 import 'package:flutter/services.dart'; // For FilteringTextInputFormatter
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';  // Add this import
-import 'package:firebase_auth/firebase_auth.dart';  // Add this import for user authentication
+import 'package:cloud_firestore/cloud_firestore.dart'; // Add this import
+import 'package:firebase_auth/firebase_auth.dart'; // Add this import for user authentication
+import 'WalletFlowScreen.dart';  // Add this import (adjust path if needed)
 
 class CreateWalletPINScreen extends StatefulWidget {
   const CreateWalletPINScreen({super.key});
@@ -63,7 +64,11 @@ class _CreateWalletPINScreenState extends State<CreateWalletPINScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('PIN created successfully!')),
         );
-        Navigator.pop(context); // Go back to dashboard
+        // Navigate to WalletFlowScreen
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => WalletFlowScreen()),
+        );
       } catch (e) {
         print('Error saving PIN: $e');
         ScaffoldMessenger.of(context).showSnackBar(
@@ -191,7 +196,8 @@ class _CreateWalletPINScreenState extends State<CreateWalletPINScreen> {
               ),
             ),
             Positioned(
-              top: screenHeight * 0.14 +
+              top:
+                  screenHeight * 0.14 +
                   50, // Position below the glassy rectangle
               left: screenWidth * 0.4,
               right: screenWidth * 0.4,
