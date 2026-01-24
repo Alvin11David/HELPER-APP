@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:helper/Auth/Sign_In_Screen.dart';
 import 'package:helper/Components/User_Name.dart';
 import '../Document Upload/Profile/Profile_Screen.dart'; // Add this import
 
@@ -394,7 +395,16 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                           ),
                           const SizedBox(height: 20),
                           GestureDetector(
-                            onTap: () => setState(() => _selectedIndex = 7),
+                            onTap: () async {
+                              setState(() => _selectedIndex = 7);
+                              toggleDrawer();
+                              await FirebaseAuth.instance.signOut();
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => const SignInScreen(),
+                                ),
+                              );
+                            },
                             child: Padding(
                               padding: EdgeInsets.only(left: 8, right: 8),
                               child: Row(
