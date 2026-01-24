@@ -4,6 +4,7 @@ import 'package:helper/Components/Bottom_Nav_Bar.dart';
 import 'package:helper/Components/user_avatar_circle.dart';
 import 'package:helper/Components/User_Name.dart'; // Add this import
 import 'package:helper/Components/User_Email_Or_Phone_Number.dart'; // Add this import
+import 'package:helper/Document%20Upload/Profile/Support_Screen.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -818,14 +819,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       ),
                                       child: GestureDetector(
                                         onTap: () {
-                                          // Add logic for Contact Support
-                                          ScaffoldMessenger.of(
-                                            context,
-                                          ).showSnackBar(
-                                            const SnackBar(
-                                              content: Text(
-                                                'Contact Support tapped',
-                                              ),
+                                          Navigator.of(context).push(
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  const SupportScreen(),
                                             ),
                                           );
                                         },
@@ -989,7 +986,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       ),
                                       child: GestureDetector(
                                         onTap: () {
-                                           _showAboutUsSheet(context);
+                                          _showAboutUsSheet(context);
                                         },
                                         child: Row(
                                           children: [
