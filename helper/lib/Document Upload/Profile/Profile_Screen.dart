@@ -18,8 +18,10 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   String? _imageUrl; // To store the uploaded image URL
   bool _isExpanded = false; // To control expansion
+  bool _isWalletExpanded = false; // To control Wallet PIN expansion
 
-  final TextEditingController _previousPasswordController = TextEditingController();
+  final TextEditingController _previousPasswordController =
+      TextEditingController();
   final TextEditingController _newPasswordController = TextEditingController();
 
   Future<void> _pickAndUploadImage() async {
@@ -63,9 +65,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SnackBar(content: Text('Profile picture updated!')),
         );
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error uploading image: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error uploading image: $e')));
       }
     }
   }
@@ -91,7 +93,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     .doc(user.uid)
                     .get();
                 if (doc.exists && doc.data() != null) {
-                  return (doc.data() as Map<String, dynamic>)['password'] as String?;
+                  return (doc.data() as Map<String, dynamic>)['password']
+                      as String?;
                 }
                 return null;
               } catch (e) {
@@ -101,7 +104,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
             return Padding(
               padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).viewInsets.bottom, // Adjust for keyboard
+                bottom: MediaQuery.of(
+                  context,
+                ).viewInsets.bottom, // Adjust for keyboard
                 left: 16,
                 right: 16,
                 top: 16,
@@ -111,10 +116,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 children: [
                   const Text(
                     'Change Password',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
@@ -147,7 +149,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   const SizedBox(height: 16),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: _isButtonEnabled ? Colors.orange : Colors.grey, // Orange when enabled, grey when disabled
+                      backgroundColor: _isButtonEnabled
+                          ? Colors.orange
+                          : Colors
+                                .grey, // Orange when enabled, grey when disabled
                     ),
                     onPressed: _isButtonEnabled
                         ? () async {
@@ -161,18 +166,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       .doc(user.uid)
                                       .update({'password': newPass});
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Password updated successfully!')),
+                                    const SnackBar(
+                                      content: Text(
+                                        'Password updated successfully!',
+                                      ),
+                                    ),
                                   );
                                   Navigator.pop(context); // Close the sheet
                                 }
                               } catch (e) {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text('Error updating password: $e')),
+                                  SnackBar(
+                                    content: Text(
+                                      'Error updating password: $e',
+                                    ),
+                                  ),
                                 );
                               }
                             } else {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Please enter a new password')),
+                                const SnackBar(
+                                  content: Text('Please enter a new password'),
+                                ),
                               );
                             }
                           }
@@ -216,13 +231,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
               );
             }
             Map<String, dynamic>? data = snapshot.data;
-            final TextEditingController _fullNameController = TextEditingController(text: data?['fullName'] ?? '');
-            final TextEditingController _contactController = TextEditingController();
+            final TextEditingController _fullNameController =
+                TextEditingController(text: data?['fullName'] ?? '');
+            final TextEditingController _contactController =
+                TextEditingController();
             String _contactLabel = '';
             if (data?.containsKey('email') == true && data!['email'] != null) {
               _contactController.text = data['email'];
               _contactLabel = 'Email Address';
-            } else if (data?.containsKey('phoneNumber') == true && data!['phoneNumber'] != null) {
+            } else if (data?.containsKey('phoneNumber') == true &&
+                data!['phoneNumber'] != null) {
               _contactController.text = data['phoneNumber'];
               _contactLabel = 'Phone Number';
             }
@@ -239,10 +257,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 children: [
                   const Text(
                     'Edit Profile',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
@@ -278,9 +293,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           if (_fullNameController.text.isNotEmpty) {
                             updates['fullName'] = _fullNameController.text;
                           }
-                          if (_contactLabel == 'Email Address' && _contactController.text.isNotEmpty) {
+                          if (_contactLabel == 'Email Address' &&
+                              _contactController.text.isNotEmpty) {
                             updates['email'] = _contactController.text;
-                          } else if (_contactLabel == 'Phone Number' && _contactController.text.isNotEmpty) {
+                          } else if (_contactLabel == 'Phone Number' &&
+                              _contactController.text.isNotEmpty) {
                             updates['phoneNumber'] = _contactController.text;
                           }
                           if (updates.isNotEmpty) {
@@ -289,7 +306,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 .doc(user.uid)
                                 .update(updates);
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Profile updated successfully!')),
+                              const SnackBar(
+                                content: Text('Profile updated successfully!'),
+                              ),
                             );
                             Navigator.pop(context);
                           } else {
@@ -493,9 +512,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                             const Spacer(),
                             GestureDetector(
-                              onTap: () => setState(() => _isExpanded = !_isExpanded),
+                              onTap: () =>
+                                  setState(() => _isExpanded = !_isExpanded),
                               child: Icon(
-                                _isExpanded ? Icons.arrow_drop_up : Icons.arrow_drop_down,
+                                _isExpanded
+                                    ? Icons.arrow_drop_up
+                                    : Icons.arrow_drop_down,
                                 color: Colors.black,
                               ),
                             ),
@@ -504,18 +526,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       AnimatedContainer(
                         duration: const Duration(milliseconds: 300),
-                        height: _isExpanded ? 200 : 0, // Increased height to prevent overflow
+                        height: _isExpanded
+                            ? 50
+                            : 20, // Increased height to prevent overflow
                         child: _isExpanded
                             ? SingleChildScrollView(
                                 child: Column(
                                   children: [
                                     Padding(
-                                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 16.0,
+                                      ),
                                       child: GestureDetector(
-                                        onTap: () => _showEditProfileSheet(context),
+                                        onTap: () =>
+                                            _showEditProfileSheet(context),
                                         child: Row(
                                           children: [
-                                            const SizedBox(width: 45), // Space for removed square
+                                            const SizedBox(
+                                              width: 45,
+                                            ), // Space for removed square
                                             const Text(
                                               'Edit Profile',
                                               style: TextStyle(
@@ -533,12 +562,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       ),
                                     ),
                                     Padding(
-                                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 16.0,
+                                      ),
                                       child: GestureDetector(
-                                        onTap: () => _showChangePasswordSheet(context),
+                                        onTap: () =>
+                                            _showChangePasswordSheet(context),
                                         child: Row(
                                           children: [
-                                            const SizedBox(width: 45), // Space for removed square
+                                            const SizedBox(
+                                              width: 45,
+                                            ), // Space for removed square
                                             const Text(
                                               'Change Password',
                                               style: TextStyle(
@@ -556,23 +590,106 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       ),
                                     ),
                                     Padding(
-                                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 16.0,
+                                      ),
                                       child: Row(
                                         children: [
-                                          const SizedBox(width: 45), // Space for removed square
-                                          const Text(
-                                            'Settings',
-                                            style: TextStyle(
-                                              color: Colors.black,
-                                              fontSize: 13,
-                                            ),
-                                          ),
-                                          const Spacer(),
-                                          const Icon(
-                                            Icons.chevron_right,
-                                            color: Colors.black,
-                                          ),
+                                          const SizedBox(
+                                            width: 45,
+                                          ), // Space for removed square
                                         ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            : null,
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 35,
+                              height: 35,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFEFEF96),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Icon(
+                                Icons.wallet,
+                                color: Colors.black,
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            const Text(
+                              'Wallet PIN',
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontSize: 16,
+                              ),
+                            ),
+                            const Spacer(),
+                            GestureDetector(
+                              onTap: () => setState(
+                                () => _isWalletExpanded = !_isWalletExpanded,
+                              ),
+                              child: Icon(
+                                _isWalletExpanded
+                                    ? Icons.arrow_drop_up
+                                    : Icons.arrow_drop_down,
+                                color: Colors.black,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        height: _isWalletExpanded
+                            ? 100
+                            : 0, // Height for Wallet PIN options
+                        child: _isWalletExpanded
+                            ? SingleChildScrollView(
+                                child: Column(
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 16.0,
+                                      ),
+                                      child: GestureDetector(
+                                        onTap: () {
+                                          // Add logic to change wallet PIN, e.g., show a sheet
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                'Change Wallet PIN tapped',
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                        child: Row(
+                                          children: [
+                                            const SizedBox(
+                                              width: 45,
+                                            ), // Space for removed square
+                                            const Text(
+                                              'Change Wallet PIN',
+                                              style: TextStyle(
+                                                color: Colors.black,
+                                                fontSize: 13,
+                                              ),
+                                            ),
+                                            const Spacer(),
+                                            const Icon(
+                                              Icons.chevron_right,
+                                              color: Colors.black,
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                     ),
                                   ],
