@@ -895,7 +895,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         duration: const Duration(milliseconds: 300),
                         height: _isAboutExpanded
                             ? 100
-                            : 0, // Height for About the App options
+                            : 25, // Height for About the App options
                         child: _isAboutExpanded
                             ? SingleChildScrollView(
                                 child: Column(
