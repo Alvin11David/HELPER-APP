@@ -11,6 +11,7 @@ class MapScreen extends StatefulWidget {
 
 class _MapScreenState extends State<MapScreen> {
   final String _googleApiKey = 'AIzaSyBTk9548rr1JiKe1guF1i8z2wqHV8CZjRA';
+  bool _showFilters = false;
 
   late GoogleMapController mapController;
 
@@ -189,43 +190,61 @@ class _MapScreenState extends State<MapScreen> {
             ),
           ),
           Positioned(
-            top: 80,
-            left: w * 0.03,
-            child: Container(
-              height: 40,
-              width: w * 0.76,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(30),
-                boxShadow: [
+              top: 75,
+              right: w * 0.04,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    height: 40,
+                    width: w * 0.76,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(30),
+                      boxShadow: [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.2),
                     blurRadius: 10,
                     offset: Offset(0, 5),
                   ),
                 ],
-              ),
-              child: Row(
-                children: [
+                    ),
+                    child: Row(
+                      children: [
+                        SizedBox(width: 10),
+                        Icon(Icons.search, color: Colors.black),
+                        SizedBox(width: 10),
+                        Expanded(
+                          child: TextField(
+                            controller: _controller,
+                            focusNode: _focusNode,
+                            decoration: InputDecoration(
+                              hintText: 'Search for services here...',
+                              border: InputBorder.none,
+                              hintStyle: TextStyle(color: Colors.black),
+                            ),
+                            style: TextStyle(color: Colors.black),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                   SizedBox(width: 10),
-                  Icon(Icons.search, color: Colors.black),
-                  SizedBox(width: 10),
-                  Expanded(
-                    child: TextField(
-                      controller: _controller,
-                      focusNode: _focusNode,
-                      decoration: InputDecoration(
-                        hintText: 'Search for services here...',
-                        border: InputBorder.none,
-                        hintStyle: TextStyle(color: Colors.black),
+                  GestureDetector(
+                    onTap: () => setState(() => _showFilters = !_showFilters),
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
                       ),
-                      style: TextStyle(color: Colors.black),
+                      child: const Icon(Icons.tune, color: Colors.black),
                     ),
                   ),
                 ],
               ),
             ),
-          ),
         ],
       ),
       bottomNavigationBar: BottomNavBar(
