@@ -313,7 +313,7 @@ class _SupportScreenState extends State<SupportScreen> {
                             child: ElevatedButton(
                               onPressed: () async {
                                 const phoneNumber =
-                                    'tel:+1234567890'; // Replace with actual support number
+                                    'tel:+256705428245'; // Replace with actual support number
                                 if (await canLaunch(phoneNumber)) {
                                   await launch(phoneNumber);
                                 } else {
