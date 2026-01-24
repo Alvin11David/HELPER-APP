@@ -200,42 +200,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
       ),
       builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (BuildContext context, StateSetter setState) {
-            final TextEditingController _fullNameController = TextEditingController();
-            final TextEditingController _contactController = TextEditingController();
-            bool _hasEmail = false;
-            bool _hasPhone = false;
-            String _contactLabel = '';
-
-            Future<void> _fetchUserData() async {
-              try {
-                User? user = FirebaseAuth.instance.currentUser;
-                if (user == null) return;
-                DocumentSnapshot doc = await FirebaseFirestore.instance
-                    .collection('Sign Up')
-                    .doc(user.uid)
-                    .get();
-                if (doc.exists && doc.data() != null) {
-                  Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
-                  _fullNameController.text = data['fullName'] ?? '';
-                  if (data.containsKey('email') && data['email'] != null) {
-                    _hasEmail = true;
-                    _contactController.text = data['email'];
-                    _contactLabel = 'Email Address';
-                  } else if (data.containsKey('phoneNumber') && data['phoneNumber'] != null) {
-                    _hasPhone = true;
-                    _contactController.text = data['phoneNumber'];
-                    _contactLabel = 'Phone Number';
-                  }
-                }
-              } catch (e) {
-                // Handle error
-              }
+        return FutureBuilder<Map<String, dynamic>?>(
+          future: _fetchUserData(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Padding(
+                padding: EdgeInsets.all(16.0),
+                child: CircularProgressIndicator(),
+              );
             }
-
-            // Fetch data on build
-            WidgetsBinding.instance.addPostFrameCallback((_) => _fetchUserData());
+            if (snapshot.hasError) {
+              return Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Text('Error: ${snapshot.error}'),
+              );
+            }
+            Map<String, dynamic>? data = snapshot.data;
+            final TextEditingController _fullNameController = TextEditingController(text: data?['fullName'] ?? '');
+            final TextEditingController _contactController = TextEditingController();
+            String _contactLabel = '';
+            if (data?.containsKey('email') == true && data!['email'] != null) {
+              _contactController.text = data['email'];
+              _contactLabel = 'Email Address';
+            } else if (data?.containsKey('phoneNumber') == true && data!['phoneNumber'] != null) {
+              _contactController.text = data['phoneNumber'];
+              _contactLabel = 'Phone Number';
+            }
 
             return Padding(
               padding: EdgeInsets.only(
@@ -265,7 +255,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  if (_hasEmail || _hasPhone)
+                  if (_contactLabel.isNotEmpty)
                     TextFormField(
                       controller: _contactController,
                       decoration: InputDecoration(
@@ -288,9 +278,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           if (_fullNameController.text.isNotEmpty) {
                             updates['fullName'] = _fullNameController.text;
                           }
-                          if (_hasEmail && _contactController.text.isNotEmpty) {
+                          if (_contactLabel == 'Email Address' && _contactController.text.isNotEmpty) {
                             updates['email'] = _contactController.text;
-                          } else if (_hasPhone && _contactController.text.isNotEmpty) {
+                          } else if (_contactLabel == 'Phone Number' && _contactController.text.isNotEmpty) {
                             updates['phoneNumber'] = _contactController.text;
                           }
                           if (updates.isNotEmpty) {
@@ -327,6 +317,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
         );
       },
     );
+  }
+
+  Future<Map<String, dynamic>?> _fetchUserData() async {
+    try {
+      User? user = FirebaseAuth.instance.currentUser;
+      if (user == null) return null;
+      DocumentSnapshot doc = await FirebaseFirestore.instance
+          .collection('Sign Up')
+          .doc(user.uid)
+          .get();
+      if (doc.exists && doc.data() != null) {
+        return doc.data() as Map<String, dynamic>;
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
   }
 
   @override
@@ -383,7 +390,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               Positioned(
                 top: screenHeight * 0.10, // Moved below the Profile row
-                left: screenWidth / 2 - 100, // Center horizontally
+                left: screenWidth / 2 - 100,
+                right: screenWidth / 2 - 100, // Center horizontally
                 child: Column(
                   mainAxisSize: MainAxisSize.min, // Squeezed to form 5 rows
                   children: [

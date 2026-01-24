@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../Employer Dashboard/Create_Wallet_PIN_Screen.dart';
 import '../Chats/Chat_List_Screen.dart';
+import '../Document Upload/Profile/Profile_Screen.dart'; // Add this import
 
 class BottomNavBar extends StatefulWidget {
   final Function(int)? onItemTapped;
@@ -177,6 +178,11 @@ class _BottomNavBarState extends State<BottomNavBar> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => ChatListScreen()),
+                );
+              } else if (index == 4) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => ProfileScreen()),
                 );
               } else {
                 setState(() {
