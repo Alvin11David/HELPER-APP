@@ -4,6 +4,7 @@ import 'package:flutter/services.dart'; // Add this import for TextInputFormatte
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:url_launcher/url_launcher.dart'; // Add this import for launching calls
+import 'package:helper/Components/Bottom_Nav_Bar.dart'; // Add this import
 
 class SupportScreen extends StatefulWidget {
   const SupportScreen({super.key});
@@ -365,6 +366,7 @@ class _SupportScreenState extends State<SupportScreen> {
           ),
         ),
       ),
+      bottomNavigationBar: BottomNavBar(currentIndex: 4), // Set Profile as active tab
     );
   }
 }
