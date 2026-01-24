@@ -24,6 +24,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _isWalletExpanded = false; // To control Wallet PIN expansion
   bool _isHelpExpanded = false; // To control Help & Support expansion
   bool _isLogoutExpanded = false; // To control Logout Option expansion
+  bool _isAboutExpanded = false; // To control About the App expansion
 
   final TextEditingController _previousPasswordController =
       TextEditingController();
@@ -854,7 +855,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         duration: const Duration(milliseconds: 300),
                         height: _isLogoutExpanded
                             ? 50
-                            : 0, // Height for Logout Option
+                            : 25, // Height for Logout Option
                         child: _isLogoutExpanded
                             ? SingleChildScrollView(
                                 child: Column(
@@ -872,6 +873,95 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                             ), // Space for removed square
                                             const Text(
                                               'Logout',
+                                              style: TextStyle(
+                                                color: Colors.black,
+                                                fontSize: 13,
+                                              ),
+                                            ),
+                                            const Spacer(),
+                                            const Icon(
+                                              Icons.chevron_right,
+                                              color: Colors.black,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            : null,
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 35,
+                              height: 35,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF98EE81),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Icon(
+                                Icons.info,
+                                color: Colors.black,
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            const Text(
+                              'About the App',
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontSize: 16,
+                              ),
+                            ),
+                            const Spacer(),
+                            GestureDetector(
+                              onTap: () => setState(
+                                () => _isAboutExpanded = !_isAboutExpanded,
+                              ),
+                              child: Icon(
+                                _isAboutExpanded
+                                    ? Icons.arrow_drop_up
+                                    : Icons.arrow_drop_down,
+                                color: Colors.black,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        height: _isAboutExpanded
+                            ? 100
+                            : 0, // Height for About the App options
+                        child: _isAboutExpanded
+                            ? SingleChildScrollView(
+                                child: Column(
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 16.0,
+                                      ),
+                                      child: GestureDetector(
+                                        onTap: () {
+                                          // Add logic for About Us
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            const SnackBar(
+                                              content: Text('About Us tapped'),
+                                            ),
+                                          );
+                                        },
+                                        child: Row(
+                                          children: [
+                                            const SizedBox(
+                                              width: 45,
+                                            ), // Space for removed square
+                                            const Text(
+                                              'About Us',
                                               style: TextStyle(
                                                 color: Colors.black,
                                                 fontSize: 13,
