@@ -8,3 +8,7 @@ typings/
 # Node.js dependency directory
 node_modules/
 *.local
+
+
+# things we don't want to public
+serviceAccount.json

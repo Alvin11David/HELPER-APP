@@ -445,6 +445,7 @@ class _AcademicCertificateUploadScreenState
     'International Relations Specialist',
   ];
 
+
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
