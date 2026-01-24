@@ -117,12 +117,12 @@ class _MapScreenState extends State<MapScreen> {
                     color: Colors.white,
                     shape: BoxShape.circle,
                     boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
-                    blurRadius: 10,
-                    offset: Offset(0, 5),
-                  ),
-                ],
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 10,
+                        offset: Offset(0, 5),
+                      ),
+                    ],
                   ),
                   child: const Icon(Icons.person, color: Colors.black),
                 ),
@@ -134,12 +134,12 @@ class _MapScreenState extends State<MapScreen> {
                     color: Colors.white,
                     shape: BoxShape.circle,
                     boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
-                    blurRadius: 10,
-                    offset: Offset(0, 5),
-                  ),
-                ],
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 10,
+                        offset: Offset(0, 5),
+                      ),
+                    ],
                   ),
                   child: const Icon(Icons.notifications, color: Colors.black),
                 ),
@@ -159,12 +159,12 @@ class _MapScreenState extends State<MapScreen> {
                     color: Colors.white,
                     shape: BoxShape.circle,
                     boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
-                    blurRadius: 10,
-                    offset: const Offset(0, 5),
-                  ),
-                ],
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 10,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
                   ),
                   child: const Icon(Icons.menu, color: Colors.black),
                 ),
@@ -190,61 +190,68 @@ class _MapScreenState extends State<MapScreen> {
             ),
           ),
           Positioned(
-              top: 75,
-              right: w * 0.04,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
+            top: 75,
+            right: w * 0.04,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  height: 40,
+                  width: w * 0.76,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(30),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 10,
+                        offset: Offset(0, 5),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      SizedBox(width: 10),
+                      Icon(Icons.search, color: Colors.black),
+                      SizedBox(width: 10),
+                      Expanded(
+                        child: TextField(
+                          controller: _controller,
+                          focusNode: _focusNode,
+                          decoration: InputDecoration(
+                            hintText: 'Search for services here...',
+                            border: InputBorder.none,
+                            hintStyle: TextStyle(color: Colors.black),
+                          ),
+                          style: TextStyle(color: Colors.black),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(width: 10),
+                GestureDetector(
+                  onTap: () => setState(() => _showFilters = !_showFilters),
+                  child: Container(
+                    width: 40,
                     height: 40,
-                    width: w * 0.76,
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(30),
+                      shape: BoxShape.circle,
                       boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
-                    blurRadius: 10,
-                    offset: Offset(0, 5),
-                  ),
-                ],
-                    ),
-                    child: Row(
-                      children: [
-                        SizedBox(width: 10),
-                        Icon(Icons.search, color: Colors.black),
-                        SizedBox(width: 10),
-                        Expanded(
-                          child: TextField(
-                            controller: _controller,
-                            focusNode: _focusNode,
-                            decoration: InputDecoration(
-                              hintText: 'Search for services here...',
-                              border: InputBorder.none,
-                              hintStyle: TextStyle(color: Colors.black),
-                            ),
-                            style: TextStyle(color: Colors.black),
-                          ),
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 10,
+                          offset: Offset(0, 5),
                         ),
                       ],
                     ),
+                    child: const Icon(Icons.tune, color: Colors.black),
                   ),
-                  SizedBox(width: 10),
-                  GestureDetector(
-                    onTap: () => setState(() => _showFilters = !_showFilters),
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.tune, color: Colors.black),
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
+          ),
         ],
       ),
       bottomNavigationBar: BottomNavBar(
