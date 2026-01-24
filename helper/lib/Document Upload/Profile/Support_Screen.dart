@@ -12,6 +12,26 @@ class SupportScreen extends StatefulWidget {
 class _SupportScreenState extends State<SupportScreen> {
   final TextEditingController issueTitleCtrl = TextEditingController();
   final TextEditingController issueDescCtrl = TextEditingController();
+  static const Color _brandOrange = Color(0xFFFFA10D);
+
+  void _submit() {
+    // Handle submission logic here
+    String title = issueTitleCtrl.text.trim();
+    String description = issueDescCtrl.text.trim();
+    if (title.isEmpty || description.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fill in all fields')),
+      );
+      return;
+    }
+    // Example: Submit to Firestore or API
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Issue submitted successfully')),
+    );
+    // Clear fields
+    issueTitleCtrl.clear();
+    issueDescCtrl.clear();
+  }
 
   @override
   void dispose() {
@@ -181,6 +201,36 @@ class _SupportScreenState extends State<SupportScreen> {
                           return 'Issue description is required';
                         return null;
                       },
+                    ),
+                    SizedBox(height: screenHeight * 0.02),
+                    Row(
+                      children: [
+                        SizedBox(width: screenWidth * 0.06),
+                        Expanded(
+                          child: SizedBox(
+                            height: screenHeight * 0.060,
+                            child: ElevatedButton(
+                              onPressed: _submit, // submit
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: _brandOrange,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
+                              ),
+                              child: Text(
+                                'Submit',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontFamily: 'Inter',
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: screenWidth * 0.040,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
