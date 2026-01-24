@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import '../Components/Bottom_Nav_Bar.dart';
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
@@ -15,6 +16,8 @@ class _MapScreenState extends State<MapScreen> {
 
   final LatLng _center = const LatLng(45.521563, -122.677433);
 
+  int _selectedIndex = 0;
+
   void _onMapCreated(GoogleMapController controller) {
     mapController = controller;
   }
@@ -28,6 +31,13 @@ class _MapScreenState extends State<MapScreen> {
     } else {
       return 'Good Evening';
     }
+  }
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+    // Add navigation logic if needed
   }
 
   @override
@@ -142,6 +152,7 @@ class _MapScreenState extends State<MapScreen> {
           ),
         ],
       ),
+      bottomNavigationBar: BottomNavBar(onItemTapped: _onItemTapped),
     );
   }
 }
