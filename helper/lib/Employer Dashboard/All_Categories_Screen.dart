@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:helper/Components/User_Name.dart';
 
 class AllCategoriesScreen extends StatefulWidget {
   const AllCategoriesScreen({super.key});
@@ -135,10 +136,7 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      const Text(
-                        'User',
-                        style: TextStyle(color: Colors.white, fontSize: 14),
-                      ),
+                      UserName()
                     ],
                   ),
                 ],

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart'; // Add this import
 import '../Components/Bottom_Nav_Bar.dart';
+import '../Components/User_Name.dart'; // Add this import
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
@@ -172,10 +173,7 @@ class _MapScreenState extends State<MapScreen> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      const Text(
-                        'User',
-                        style: TextStyle(color: Colors.white, fontSize: 14),
-                      ),
+                      UserName(), // Replaced const Text('User', ...) with UserName()
                     ],
                   ),
                 ],
@@ -257,10 +255,7 @@ class _MapScreenState extends State<MapScreen> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      const Text(
-                        'User',
-                        style: TextStyle(color: Colors.black, fontSize: 14),
-                      ),
+                      UserName(), // Replaced const Text('User', ...) with UserName()
                     ],
                   ),
                 ],
@@ -376,8 +371,7 @@ class _MapScreenState extends State<MapScreen> {
         ),
       ),
       bottomNavigationBar: BottomNavBar(
-        onItemTapped: _onItemTapped,
-        initialSelectedIndex: 1,
+        currentIndex: 1,
       ),
     );
   }

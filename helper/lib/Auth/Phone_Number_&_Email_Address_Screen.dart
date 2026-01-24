@@ -1,5 +1,3 @@
-// ignore_for_file: depend_on_referenced_packages
-
 import 'dart:ui';
 import 'dart:math';
 
@@ -86,6 +84,7 @@ class _PhoneNumberEmailAddressScreenState
   static const _pureWhite = Color(0xFFFFFFFF);
 
   _AuthMode _mode = _AuthMode.phone;
+  
 
   final _formKey = GlobalKey<FormState>();
 
@@ -200,7 +199,7 @@ class _PhoneNumberEmailAddressScreenState
 
                   // ✅ Send needed data so OTP can save Sign Up/{uid}
                   fullName: fullName,
-                  password: '', // phone flow no password
+                  password: '', referralCode: '', // phone flow no password
                 ),
               ),
             ).then((_) {
@@ -282,7 +281,7 @@ class _PhoneNumberEmailAddressScreenState
               emailOrPhone: email,
               verificationId: '', // not used for email
               fullName: fullName,
-              password: password,
+              password: password, referralCode: '',
             ),
           ),
         );

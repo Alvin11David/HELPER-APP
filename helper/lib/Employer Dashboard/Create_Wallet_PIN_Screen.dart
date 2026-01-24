@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'dart:ui'; // For ImageFilter
-import 'package:flutter/services.dart'; // For FilteringTextInputFormatter
+import 'dart:ui';
+import 'package:flutter/services.dart'; 
+import 'package:helper/Wallet/Wallet_Cancelled_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:cloud_firestore/cloud_firestore.dart'; // Add this import
-import 'package:firebase_auth/firebase_auth.dart'; // Add this import for user authentication
-import 'WalletFlowScreen.dart';  // Add this import (adjust path if needed)
+import 'package:cloud_firestore/cloud_firestore.dart'; 
+import 'package:firebase_auth/firebase_auth.dart'; 
 
 class CreateWalletPINScreen extends StatefulWidget {
   const CreateWalletPINScreen({super.key});
@@ -44,16 +44,18 @@ class _CreateWalletPINScreenState extends State<CreateWalletPINScreen> {
         User? user = FirebaseAuth.instance.currentUser;
         if (user == null) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('User not authenticated. Please log in.')),
+            const SnackBar(
+              content: Text('User not authenticated. Please log in.'),
+            ),
           );
           return;
         }
 
         // Save to Firestore in "Sign Up" collection
-        await FirebaseFirestore.instance.collection('Sign Up').doc(user.uid).update({
-          'wallet_pin': pin,
-          'wallet_pin_set': true,
-        });
+        await FirebaseFirestore.instance
+            .collection('Sign Up')
+            .doc(user.uid)
+            .update({'wallet_pin': pin, 'wallet_pin_set': true});
 
         // Also save locally for quick access (optional)
         SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -71,9 +73,9 @@ class _CreateWalletPINScreenState extends State<CreateWalletPINScreen> {
         );
       } catch (e) {
         print('Error saving PIN: $e');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error saving PIN: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error saving PIN: $e')));
       }
     } else {
       // Show error
