@@ -1,8 +1,19 @@
 // ignore_for_file: depend_on_referenced_packages
 
 import 'dart:ui';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'dart:io';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:uuid/uuid.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:dio/dio.dart';
+
 
 class WorkerSkillsJobDetailsScreen extends StatefulWidget {
   const WorkerSkillsJobDetailsScreen({super.key});
@@ -22,6 +33,7 @@ class _WorkerSkillsJobDetailsScreenState
   final _formStep2 = GlobalKey<FormState>();
 
   // Step 1 controllers/values
+  String? _jobCategoryId;
   String? _jobCategory;
   final _businessNameCtrl = TextEditingController();
   final _skillsDescCtrl = TextEditingController();
@@ -35,7 +47,30 @@ class _WorkerSkillsJobDetailsScreenState
   bool _pickedPlaceOnMap = false; // optional
 
   // Step 3 state
-  final List<String> _fakeSelectedImages = []; // placeholder list
+  final List<PlatformFile> _pickedFiles = [];
+  
+  bool _saving = false;
+
+  // professions loaded from Firestore
+  bool _loadingCategories = true;
+  List<Map<String, dynamic>> _categories = []; // {id,name,...}
+
+  // Google Maps state
+  GoogleMapController? _mapCtrl;
+  LatLng? _pickedLatLng;
+  Marker? _pickedMarker;
+  bool _loadingLoc = false;
+  Position? _myPos;
+
+  // Places autocomplete
+  final _places = Dio();
+  List<Map<String, dynamic>> _suggestions = [];
+  bool _searching = false;
+
+  static const String _googleKey = "AIzaSyBTk9548rr1JiKe1guF1i8z2wqHV8CZjRA"; // better: load from env
+
+  Timer? _debounce;
+
 
   @override
   void initState() {
@@ -45,6 +80,9 @@ class _WorkerSkillsJobDetailsScreenState
     _amountCtrl.addListener(_recalcProgress);
     _workplaceCtrl.addListener(_recalcProgress);
     _recalcProgress();
+    _loadCategories();
+    _initMyLocation();
+
   }
 
   @override
@@ -53,6 +91,7 @@ class _WorkerSkillsJobDetailsScreenState
     _skillsDescCtrl.dispose();
     _amountCtrl.dispose();
     _workplaceCtrl.dispose();
+    _debounce?.cancel();
     super.dispose();
   }
 
@@ -124,7 +163,7 @@ class _WorkerSkillsJobDetailsScreenState
 
     if (_step == 2) {
       // step3 -> preview (job preview)
-      if (_fakeSelectedImages.isEmpty) {
+      if (_pickedFiles.isEmpty) {
         _toast('Please upload at least 1 file (tap Upload File).');
         return;
       }
@@ -133,7 +172,7 @@ class _WorkerSkillsJobDetailsScreenState
     }
 
     // submit from preview
-    _toast('Submitted ✅ (hook API later)');
+    _submitToBackend();
   }
 
   void _back() {
@@ -157,6 +196,23 @@ class _WorkerSkillsJobDetailsScreenState
         backgroundColor: Colors.black.withOpacity(0.85),
       ),
     );
+  }
+
+  Future<void> _loadCategories() async {
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection('professions')
+          .orderBy('name')
+          .get();
+
+      _categories = snap.docs
+          .map((d) => {'id': d.id, ...d.data()})
+          .toList();
+    } catch (e) {
+      _toast('Failed to load categories: $e');
+    } finally {
+      if (mounted) setState(() => _loadingCategories = false);
+    }
   }
 
   // ----------------------------
@@ -184,6 +240,240 @@ class _WorkerSkillsJobDetailsScreenState
     );
     if (selected != null) {
       setState(() => _pricingType = selected);
+      _recalcProgress();
+    }
+  }
+
+  Future<void> _pickFiles() async {
+    final res = await FilePicker.platform.pickFiles(
+      allowMultiple: true,
+      type: FileType.custom,
+      allowedExtensions: ['pdf', 'png', 'jpeg', 'jpg'],
+      withData: false,
+    );
+
+    if (res == null) return;
+
+    // 5MB limit
+    final files = res.files.where((f) => (f.size) <= 5 * 1024 * 1024).toList();
+    if (files.length != res.files.length) {
+      _toast('Some files were skipped (max 5MB).');
+    }
+
+    setState(() {
+      _pickedFiles.clear();
+      _pickedFiles.addAll(files);
+    });
+
+    _toast('${_pickedFiles.length} file(s) selected');
+  }
+
+  Future<void> _initMyLocation() async {
+    setState(() => _loadingLoc = true);
+    try {
+      final enabled = await Geolocator.isLocationServiceEnabled();
+      if (!enabled) {
+        _toast('Turn on location services');
+        return;
+      }
+
+      var perm = await Geolocator.checkPermission();
+      if (perm == LocationPermission.denied) {
+        perm = await Geolocator.requestPermission();
+      }
+      if (perm == LocationPermission.deniedForever ||
+          perm == LocationPermission.denied) {
+        _toast('Location permission denied');
+        return;
+      }
+
+      _myPos = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
+      // Move map to user location if map already created
+      if (_mapCtrl != null && _myPos != null) {
+        _mapCtrl!.animateCamera(
+          CameraUpdate.newLatLngZoom(
+            LatLng(_myPos!.latitude, _myPos!.longitude),
+            14,
+          ),
+        );
+      }
+    } catch (e) {
+      _toast('Location error: $e');
+    } finally {
+      if (mounted) setState(() => _loadingLoc = false);
+    }
+  }
+
+  Future<void> _searchPlaces(String input) async {
+    final q = input.trim();
+    if (q.length < 2) {
+      setState(() => _suggestions = []);
+      return;
+    }
+
+    setState(() => _searching = true);
+
+    try {
+      final locBias = _myPos != null
+          ? "${_myPos!.latitude},${_myPos!.longitude}"
+          : null;
+
+      final res = await _places.get(
+        "https://maps.googleapis.com/maps/api/place/autocomplete/json",
+        queryParameters: {
+          "input": q,
+          "key": _googleKey,
+          "language": "en",
+          // bias results around user
+          if (locBias != null) "location": locBias,
+          if (locBias != null) "radius": 30000, // 30km bias
+          // optional: restrict to Uganda
+          "components": "country:ug",
+        },
+      );
+
+      final preds = (res.data["predictions"] as List? ?? []);
+      setState(() {
+        _suggestions = preds.map((p) {
+          return {
+            "description": p["description"],
+            "place_id": p["place_id"],
+          };
+        }).toList();
+      });
+    } catch (e) {
+      _toast("Search failed: $e");
+    } finally {
+      if (mounted) setState(() => _searching = false);
+    }
+  }
+
+  Future<void> _selectPlace(String placeId, String description) async {
+    FocusScope.of(context).unfocus();
+    setState(() => _suggestions = []);
+
+    try {
+      final res = await _places.get(
+        "https://maps.googleapis.com/maps/api/place/details/json",
+        queryParameters: {
+          "place_id": placeId,
+          "key": _googleKey,
+          "fields": "geometry,name,formatted_address",
+        },
+      );
+
+      final result = res.data["result"];
+      final loc = result["geometry"]["location"];
+      final lat = (loc["lat"] as num).toDouble();
+      final lng = (loc["lng"] as num).toDouble();
+
+      final latLng = LatLng(lat, lng);
+
+      setState(() {
+        _workplaceCtrl.text = result["formatted_address"] ?? description;
+        _pickedLatLng = latLng;
+        _pickedMarker = Marker(
+          markerId: const MarkerId("picked"),
+          position: latLng,
+        );
+        _pickedPlaceOnMap = true;
+      });
+
+      _mapCtrl?.animateCamera(CameraUpdate.newLatLngZoom(latLng, 16));
+      _recalcProgress();
+    } catch (e) {
+      _toast("Failed to select place: $e");
+    }
+  }
+
+  Future<void> _submitToBackend() async {
+    if (_saving) return;
+
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      _toast('Please sign in first.');
+      return;
+    }
+
+    setState(() => _saving = true);
+
+    try {
+      // 1) Upload files
+      final urls = await _uploadPickedFiles(user.uid);
+
+      // 2) Save profile
+      final doc = FirebaseFirestore.instance
+          .collection('serviceProviders')
+          .doc(user.uid);
+
+      await doc.set(
+        {
+          'uid': user.uid,
+          'jobCategoryId': _jobCategoryId,
+          'jobCategoryName': _jobCategory,
+          'businessName': _businessNameCtrl.text.trim(),
+          'skillsDescription': _skillsDescCtrl.text.trim(),
+          'yearsExperience': _yearsExp,
+          'pricingType': _pricingType,
+          'amount': int.tryParse(_amountCtrl.text.trim()) ?? 0,
+          'workplaceLocationText': _workplaceCtrl.text.trim(),
+          'workplaceLatLng': _pickedLatLng == null
+              ? null
+              : GeoPoint(_pickedLatLng!.latitude, _pickedLatLng!.longitude),
+          'experienceLevel': _experienceLevel,
+          'pickedPlaceOnMap': _pickedPlaceOnMap,
+          'portfolioFiles': urls, // list of download urls
+          'updatedAt': FieldValue.serverTimestamp(),
+          'onboardingStep': 'skills_job_details_done',
+        },
+        SetOptions(merge: true),
+      );
+
+      _toast('Submitted ✅ Saved to backend');
+      // TODO: Navigate to next screen
+    } catch (e) {
+      _toast('Submit failed: $e');
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  Future<List<String>> _uploadPickedFiles(String uid) async {
+    final storage = FirebaseStorage.instance;
+    final out = <String>[];
+
+    for (final f in _pickedFiles) {
+      if (f.path == null) continue;
+      final file = File(f.path!);
+
+      final ext = (f.extension ?? 'file').toLowerCase();
+      final name = const Uuid().v4();
+      final ref =
+          storage.ref('serviceProviders/$uid/portfolio/$name.$ext');
+
+      await ref.putFile(file);
+      final url = await ref.getDownloadURL();
+      out.add(url);
+    }
+    return out;
+  }
+
+  Future<void> _pickJobCategory() async {
+    final selected = await showModalBottomSheet<Map<String, dynamic>>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _CategoryPickerSheet(items: _categories),
+    );
+
+    if (selected != null) {
+      setState(() {
+        _jobCategoryId = selected['id']?.toString();
+        _jobCategory = (selected['name'] ?? '').toString();
+      });
       _recalcProgress();
     }
   }
@@ -476,23 +766,15 @@ class _WorkerSkillsJobDetailsScreenState
         children: [
           _label('Job Category', w),
           SizedBox(height: h * 0.012),
-          _pillDropdown(
+          _designPickerPill(
             w: w,
             h: h,
-            hint: 'Select/ Search your Job category',
-            value: _jobCategory,
-            items: const [
-              'Plumber',
-              'Electrician',
-              'Carpenter',
-              'Cleaner',
-              'Mechanic',
-              'Painter',
-            ],
-            onChanged: (v) {
-              setState(() => _jobCategory = v);
-              _recalcProgress();
-            },
+            text: _jobCategory ??
+                (_loadingCategories
+                    ? 'Loading categories...'
+                    : 'Select Job Category'),
+            onTap:
+                _loadingCategories ? () {} : () => _pickJobCategory(),
           ),
 
           SizedBox(height: h * 0.018),
@@ -609,6 +891,10 @@ class _WorkerSkillsJobDetailsScreenState
               return null;
             },
           ),
+          if (_suggestions.isNotEmpty) ...[
+            SizedBox(height: h * 0.01),
+            _suggestionsBox(w, h),
+          ],
 
           SizedBox(height: h * 0.018),
 
@@ -645,7 +931,7 @@ class _WorkerSkillsJobDetailsScreenState
           ),
           SizedBox(height: h * 0.012),
 
-          _mapPlaceholder(w, h),
+          _liveMap(w, h),
         ],
       ),
     );
@@ -657,19 +943,14 @@ class _WorkerSkillsJobDetailsScreenState
       key: const ValueKey('step3'),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _mapPlaceholder(w, h, taller: true),
+        _liveMap(w, h, taller: true),
         SizedBox(height: h * 0.02),
         _label('Upload Images', w),
         SizedBox(height: h * 0.012),
         _uploadBox(
           w: w,
           h: h,
-          onTap: () {
-            setState(() {
-              _fakeSelectedImages.add('file_${_fakeSelectedImages.length + 1}');
-            });
-            _toast('Picked (hook file picker later)');
-          },
+          onTap: _pickFiles,
         ),
       ],
     );
@@ -1011,7 +1292,13 @@ class _WorkerSkillsJobDetailsScreenState
                 );
                 return res;
               },
-              onChanged: (_) => _recalcProgress(),
+              onChanged: (v) {
+                _recalcProgress();
+                _debounce?.cancel();
+                _debounce = Timer(const Duration(milliseconds: 350), () {
+                  _searchPlaces(v);
+                });
+              },
               style: TextStyle(
                 color: Colors.black,
                 fontFamily: 'Inter',
@@ -1163,6 +1450,75 @@ class _WorkerSkillsJobDetailsScreenState
     );
   }
 
+  Widget _liveMap(double w, double h, {bool taller = false}) {
+    final mapH = taller ? h * 0.34 : h * 0.24;
+
+    final initial = _myPos != null
+        ? LatLng(_myPos!.latitude, _myPos!.longitude)
+        : const LatLng(0.3476, 32.5825); // Kampala fallback
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(18),
+      child: SizedBox(
+        height: mapH,
+        width: double.infinity,
+        child: GoogleMap(
+          initialCameraPosition: CameraPosition(target: initial, zoom: 13),
+          myLocationEnabled: true,
+          myLocationButtonEnabled: true,
+          zoomControlsEnabled: false,
+          onMapCreated: (c) {
+            _mapCtrl = c;
+            if (_myPos != null) {
+              c.animateCamera(CameraUpdate.newLatLngZoom(initial, 14));
+            }
+          },
+          markers: {
+            if (_pickedMarker != null) _pickedMarker!,
+          },
+          onTap: (latLng) async {
+            setState(() {
+              _pickedLatLng = latLng;
+              _pickedMarker = Marker(
+                markerId: const MarkerId("picked"),
+                position: latLng,
+              );
+              _pickedPlaceOnMap = true;
+            });
+
+            // Optional: reverse geocode (address) so field is filled too
+            await _reverseGeocode(latLng);
+            _recalcProgress();
+          },
+        ),
+      ),
+    );
+  }
+
+  Future<void> _reverseGeocode(LatLng latLng) async {
+    try {
+      final res = await _places.get(
+        "https://maps.googleapis.com/maps/api/geocode/json",
+        queryParameters: {
+          "latlng": "${latLng.latitude},${latLng.longitude}",
+          "key": _googleKey,
+          "language": "en",
+        },
+      );
+
+      final results = (res.data["results"] as List? ?? []);
+      if (results.isEmpty) return;
+
+      final addr = results.first["formatted_address"] as String?;
+      if (addr != null && addr.trim().isNotEmpty) {
+        setState(() => _workplaceCtrl.text = addr);
+      }
+    } catch (e) {
+      // don't block user if reverse geocode fails
+    }
+  }
+
+
   Widget _mapPlaceholder(double w, double h, {bool taller = false}) {
     final mapH = taller ? h * 0.34 : h * 0.24;
     return ClipRRect(
@@ -1260,6 +1616,42 @@ class _WorkerSkillsJobDetailsScreenState
     );
   }
 
+  Widget _suggestionsBox(double w, double h) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        color: Colors.white,
+        constraints: BoxConstraints(maxHeight: h * 0.28),
+        child: ListView.separated(
+          shrinkWrap: true,
+          itemCount: _suggestions.length,
+          separatorBuilder: (_, __) => Divider(
+            height: 1,
+            color: Colors.black.withOpacity(0.08),
+          ),
+          itemBuilder: (_, i) {
+            final s = _suggestions[i];
+            return ListTile(
+              title: Text(
+                s["description"] ?? "",
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontWeight: FontWeight.w800,
+                  fontSize: w * 0.033,
+                ),
+              ),
+              onTap: () async {
+                final placeId = s["place_id"];
+                final desc = s["description"] ?? "";
+                await _selectPlace(placeId, desc);
+              },
+            );
+          },
+        ),
+      ),
+    );
+  }
+
   Widget _uploadBox({
     required double w,
     required double h,
@@ -1319,10 +1711,10 @@ class _WorkerSkillsJobDetailsScreenState
                     height: 1.25,
                   ),
                 ),
-                if (_fakeSelectedImages.isNotEmpty) ...[
+                if (_pickedFiles.isNotEmpty) ...[
                   SizedBox(height: h * 0.012),
                   Text(
-                    '${_fakeSelectedImages.length} file(s) selected',
+                    '${_pickedFiles.length} file(s) selected',
                     style: TextStyle(
                       color: _brandOrange,
                       fontFamily: 'Inter',
@@ -1528,3 +1920,79 @@ class _DashedLinePainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _DashedLinePainter oldDelegate) => false;
 }
+
+// ---------------- Category picker sheet ----------------
+
+class _CategoryPickerSheet extends StatefulWidget {
+  final List<Map<String, dynamic>> items;
+  const _CategoryPickerSheet({required this.items});
+
+  @override
+  State<_CategoryPickerSheet> createState() => _CategoryPickerSheetState();
+}
+
+class _CategoryPickerSheetState extends State<_CategoryPickerSheet> {
+  String q = '';
+
+  @override
+  Widget build(BuildContext context) {
+    final filtered = widget.items.where((e) {
+      final name = (e['name'] ?? '').toString().toLowerCase();
+      return name.contains(q.toLowerCase());
+    }).toList();
+
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
+      child: Container(
+        color: Colors.black.withOpacity(0.85),
+        padding: const EdgeInsets.all(16),
+        child: SafeArea(
+          top: false,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                style: const TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  hintText: 'Search category...',
+                  hintStyle: TextStyle(color: Colors.white.withOpacity(0.6)),
+                  filled: true,
+                  fillColor: Colors.white.withOpacity(0.12),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+                onChanged: (v) => setState(() => q = v),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.45,
+                child: ListView.separated(
+                  itemCount: filtered.length,
+                  separatorBuilder: (_, __) =>
+                      Divider(color: Colors.white.withOpacity(0.1)),
+                  itemBuilder: (_, i) {
+                    final item = filtered[i];
+                    final name = (item['name'] ?? '').toString();
+                    return ListTile(
+                      title: Text(
+                        name,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      onTap: () => Navigator.pop(context, item),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
