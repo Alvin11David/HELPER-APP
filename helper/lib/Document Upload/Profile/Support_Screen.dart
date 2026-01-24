@@ -3,6 +3,7 @@ import 'dart:ui'; // Add this import for ImageFilter
 import 'package:flutter/services.dart'; // Add this import for TextInputFormatter
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:url_launcher/url_launcher.dart'; // Add this import for launching calls
 
 class SupportScreen extends StatefulWidget {
   const SupportScreen({super.key});
@@ -51,9 +52,9 @@ class _SupportScreenState extends State<SupportScreen> {
     try {
       User? user = FirebaseAuth.instance.currentUser;
       if (user == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('User not authenticated')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('User not authenticated')));
         setState(() {
           _isLoading = false;
         });
@@ -76,9 +77,9 @@ class _SupportScreenState extends State<SupportScreen> {
       issueTitleCtrl.clear();
       issueDescCtrl.clear();
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error submitting issue: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error submitting issue: $e')));
     } finally {
       setState(() {
         _isLoading = false;
@@ -263,7 +264,9 @@ class _SupportScreenState extends State<SupportScreen> {
                           child: SizedBox(
                             height: screenHeight * 0.060,
                             child: ElevatedButton(
-                              onPressed: _isLoading ? null : _submit, // Disable when loading
+                              onPressed: _isLoading
+                                  ? null
+                                  : _submit, // Disable when loading
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: _brandOrange,
                                 elevation: 0,
@@ -272,7 +275,9 @@ class _SupportScreenState extends State<SupportScreen> {
                                 ),
                               ),
                               child: _isLoading
-                                  ? const CircularProgressIndicator(color: Colors.white)
+                                  ? const CircularProgressIndicator(
+                                      color: Colors.white,
+                                    )
                                   : Text(
                                       'Submit',
                                       style: TextStyle(
@@ -299,49 +304,59 @@ class _SupportScreenState extends State<SupportScreen> {
                       ),
                     ),
                     SizedBox(height: screenHeight * 0.02),
-                    Center(
-                      child: GestureDetector(
-                        onTap: () {
-                          // Handle WhatsApp chat redirection
-                        },
-                        child: Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: screenWidth * 0.06,
-                            vertical: screenHeight * 0.018,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(30),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.2),
-                                blurRadius: 10,
-                                offset: Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Image.asset(
-                                'assets/icons/whatsapp.png',
-                                width: screenWidth * 0.08,
-                                height: screenWidth * 0.08,
-                              ),
-                              SizedBox(width: screenWidth * 0.03),
-                              Text(
-                                'Chat with us on WhatsApp',
-                                style: TextStyle(
-                                  color: Colors.black,
-                                  fontSize: screenWidth * 0.038,
-                                  fontWeight: FontWeight.w500,
-                                  fontFamily: 'Inter',
+                    Row(
+                      children: [
+                        SizedBox(width: screenWidth * 0.06),
+                        Expanded(
+                          child: SizedBox(
+                            height: screenHeight * 0.060,
+                            child: ElevatedButton(
+                              onPressed: () async {
+                                const phoneNumber =
+                                    'tel:+1234567890'; // Replace with actual support number
+                                if (await canLaunch(phoneNumber)) {
+                                  await launch(phoneNumber);
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'Could not launch phone app',
+                                      ),
+                                    ),
+                                  );
+                                }
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: _brandOrange,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(30),
                                 ),
                               ),
-                            ],
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.call,
+                                    color: Colors.white,
+                                    size: screenWidth * 0.05,
+                                  ),
+                                  SizedBox(width: screenWidth * 0.03),
+                                  Text(
+                                    'Call Now',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontFamily: 'Inter',
+                                      fontWeight: FontWeight.w900,
+                                      fontSize: screenWidth * 0.040,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
                         ),
-                      ),
+                      ],
                     ),
                   ],
                 ),
