@@ -13,7 +13,7 @@ class UserAvatarCircle extends StatelessWidget {
     this.size = 40,
     this.backgroundColor = Colors.white,
     this.iconColor = Colors.black,
-    this.borderWidth = 1.5,
+    this.borderWidth = 1.5, String? imageUrl,
   });
 
   @override
@@ -57,7 +57,7 @@ class UserAvatarCircle extends StatelessWidget {
       decoration: BoxDecoration(
         color: backgroundColor,
         shape: BoxShape.circle,
-        border: Border.all(color: iconColor, width: borderWidth),
+        border: Border.all(color: Colors.white, width: borderWidth),
       ),
       child: Center(
         child: Icon(

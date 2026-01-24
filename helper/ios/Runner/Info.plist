@@ -24,10 +24,16 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>NSCameraUsageDescription</key>
 	<string>This app needs camera access to scan documents.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>This app needs access to photo library for uploading documents</string>
+	<key>NSDocumentsFolderUsageDescription</key>
+	<string>This app needs access to documents folder for uploading files</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+    <string>This app needs access to your location to show it on the map.</string>
 	<key>UIMainStoryboardFile</key>
 	<string>Main</string>
 	<key>UISupportedInterfaceOrientations</key>

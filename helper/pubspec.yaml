@@ -63,6 +63,14 @@ dependencies:
   # Google Sign-In
   google_sign_in: ^6.2.1
   firebase_storage: ^12.4.10
+  # For combining streams
+  rxdart: ^0.28.0
+  # For file picking
+  file_picker: ^10.0.0
+  # For location
+  geolocator: ^10.0.0
+  # URL launcher
+  url_launcher: ^6.1.10
 
 
   # for the woker skilland job details screen

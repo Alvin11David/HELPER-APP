@@ -296,7 +296,7 @@ class _SignInScreenState extends State<SignInScreen> {
               emailOrPhone: phone,
               verificationId: verificationId,
               fullName: '', // sign-in doesn't need it
-              password: '',
+              password: '', referralCode: '',
             ),
           ),
         ).then((_) {

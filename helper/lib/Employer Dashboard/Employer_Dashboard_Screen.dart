@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:helper/Components/User_Name.dart';
 import '../Components/Bottom_Nav_Bar.dart';
 
 class EmployerDashboardScreen extends StatefulWidget {
@@ -966,10 +967,7 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          const Text(
-                            'User',
-                            style: TextStyle(color: Colors.white, fontSize: 14),
-                          ),
+                          UserName()
                         ],
                       ),
                     ],
@@ -980,7 +978,8 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
           ),
         ),
       ),
-      bottomNavigationBar: BottomNavBar(onItemTapped: _onItemTapped),
+      bottomNavigationBar: BottomNavBar(
+        currentIndex: 0,),
     );
   }
 }

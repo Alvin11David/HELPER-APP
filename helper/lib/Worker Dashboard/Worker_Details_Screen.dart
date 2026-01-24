@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
+import 'package:helper/Components/User_Name.dart';
 
 class WorkerDetailsScreen extends StatefulWidget {
   const WorkerDetailsScreen({super.key});
@@ -577,20 +578,7 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                                 ],
                               ),
                             ),
-                            const Text(
-                              'User',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 14,
-                                shadows: [
-                                  Shadow(
-                                    color: Colors.black54,
-                                    offset: Offset(1, 1),
-                                    blurRadius: 2,
-                                  ),
-                                ],
-                              ),
-                            ),
+                            UserName()
                           ],
                         ),
                       ],

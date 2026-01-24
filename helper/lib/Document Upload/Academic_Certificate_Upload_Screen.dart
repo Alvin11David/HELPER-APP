@@ -1,9 +1,17 @@
+import 'dart:io';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:helper/Document%20Upload/Add_Profession_Screen.dart';
+import 'package:helper/Document%20Upload/Document_Upload_screen.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class AcademicCertificateUploadScreen extends StatefulWidget {
-  const AcademicCertificateUploadScreen({super.key});
+  const AcademicCertificateUploadScreen({super.key, this.selectedProfession});
+  final String? selectedProfession;
   static List<String> professions = [];
 
   @override
@@ -15,12 +23,152 @@ class _AcademicCertificateUploadScreenState
     extends State<AcademicCertificateUploadScreen> {
   late List<String> searchHistory;
   late List<String> selectedProfessions;
+  String? _selectedProfession;
+  PlatformFile? _selectedFile;
+  bool _isUploading = false;
+  bool _isAlreadyUploaded = false;
+  String? _uploadedProfession;
+  String? _uploadedFileUrl;
+
+  Future<void> _pickFile() async {
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.any,
+        allowMultiple: false,
+      );
+
+      if (result != null && result.files.isNotEmpty) {
+        final file = result.files.first;
+        // Check extension
+        final extension = file.extension?.toLowerCase();
+        if (extension == 'pdf' ||
+            extension == 'png' ||
+            extension == 'jpeg' ||
+            extension == 'jpg') {
+          setState(() {
+            _selectedFile = file;
+          });
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Please select a PDF, PNG, JPEG, or JPG file'),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      // Show error message
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error picking file: $e')));
+    }
+  }
+
+  void _removeFile() {
+    setState(() {
+      _selectedFile = null;
+    });
+  }
+
+  Future<void> _uploadToFirebase() async {
+    if (_selectedProfession == null || _selectedFile == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select profession and file')),
+      );
+      return;
+    }
+
+    setState(() {
+      _isUploading = true;
+    });
+
+    try {
+      final userId = FirebaseAuth.instance.currentUser!.uid;
+      final extension = _selectedFile!.extension ?? 'pdf';
+      final fileName = 'Professional Workers Academic Certificate.$extension';
+      final storageRef = FirebaseStorage.instance.ref().child(
+        'documents/$userId/$fileName',
+      );
+
+      UploadTask uploadTask;
+      if (_selectedFile!.path != null) {
+        uploadTask = storageRef.putFile(File(_selectedFile!.path!));
+      } else if (_selectedFile!.bytes != null) {
+        uploadTask = storageRef.putData(_selectedFile!.bytes!);
+      } else {
+        throw 'No file data available';
+      }
+
+      await uploadTask;
+      final downloadUrl = await storageRef.getDownloadURL();
+
+      // Save to Firestore
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('documents')
+          .doc('Professional Workers')
+          .set({
+            'Academic Certificate': {
+              'url': downloadUrl,
+              'profession': _selectedProfession,
+            },
+          }, SetOptions(merge: true));
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Uploaded successfully')));
+
+      // Navigate back to DocumentUploadScreen
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => DocumentUploadScreen()),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Upload failed: $e')));
+    } finally {
+      setState(() {
+        _isUploading = false;
+      });
+    }
+  }
 
   @override
   void initState() {
     super.initState();
     searchHistory = [];
     selectedProfessions = [];
+    _selectedProfession = widget.selectedProfession;
+    if (_selectedProfession != null) {
+      selectedProfessions.add(_selectedProfession!);
+    }
+    _checkIfAlreadyUploaded();
+  }
+
+  Future<void> _checkIfAlreadyUploaded() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final doc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .collection('documents')
+        .doc('Professional Workers')
+        .get();
+
+    if (doc.exists && doc.data()!.containsKey('Academic Certificate')) {
+      final data = doc.data()!['Academic Certificate'] as Map<String, dynamic>;
+      setState(() {
+        _isAlreadyUploaded = true;
+        _uploadedProfession = data['profession'] as String?;
+        _uploadedFileUrl = data['url'] as String?;
+        if (_uploadedProfession != null &&
+            !selectedProfessions.contains(_uploadedProfession!)) {
+          selectedProfessions.add(_uploadedProfession!);
+        }
+      });
+    }
   }
 
   static List<String> professions = [
@@ -387,17 +535,17 @@ class _AcademicCertificateUploadScreenState
                       ),
                     ],
                   ),
-                  height: 33,
+                  height: 42,
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        'Search or add your profession/Job',
+                        'Search your profession/Job and upload\nits certificate',
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: screenWidth * 0.038,
+                          fontSize: screenWidth * 0.033,
                           fontWeight: FontWeight.w500,
-                          fontFamily: 'Poppins',
+                          fontFamily: 'Inter',
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -420,7 +568,7 @@ class _AcademicCertificateUploadScreenState
               ),
               child: Autocomplete<String>(
                 optionsBuilder: (TextEditingValue textEditingValue) {
-                  if (textEditingValue.text.isEmpty) {
+                  if (_isAlreadyUploaded || textEditingValue.text.isEmpty) {
                     return const Iterable<String>.empty();
                   }
                   return professions.where((String option) {
@@ -429,17 +577,21 @@ class _AcademicCertificateUploadScreenState
                     );
                   });
                 },
-                onSelected: (String selection) {
-                  setState(() {
-                    if (!searchHistory.contains(selection)) {
-                      searchHistory.insert(0, selection);
-                      if (searchHistory.length > 5) searchHistory.removeLast();
-                    }
-                    if (!selectedProfessions.contains(selection)) {
-                      selectedProfessions.add(selection);
-                    }
-                  });
-                },
+                onSelected: _isAlreadyUploaded
+                    ? null
+                    : (String selection) {
+                        setState(() {
+                          if (!searchHistory.contains(selection)) {
+                            searchHistory.insert(0, selection);
+                            if (searchHistory.length > 5)
+                              searchHistory.removeLast();
+                          }
+                          if (!selectedProfessions.contains(selection)) {
+                            selectedProfessions.add(selection);
+                          }
+                          _selectedProfession = selection;
+                        });
+                      },
                 fieldViewBuilder:
                     (
                       BuildContext context,
@@ -450,12 +602,22 @@ class _AcademicCertificateUploadScreenState
                       return TextField(
                         controller: textEditingController,
                         focusNode: focusNode,
+                        enabled: !_isAlreadyUploaded,
                         decoration: InputDecoration(
-                          prefixIcon: Icon(Icons.search, color: Colors.black),
-                          hintText: 'Search your Profession here',
+                          prefixIcon: Icon(
+                            Icons.search,
+                            color: _isAlreadyUploaded
+                                ? Colors.grey
+                                : Colors.black,
+                          ),
+                          hintText: _isAlreadyUploaded
+                              ? 'Profession already selected'
+                              : 'Search your Profession here',
                           hintStyle: TextStyle(
-                            color: Colors.grey,
-                            fontSize: screenWidth * 0.045,
+                            color: _isAlreadyUploaded
+                                ? Colors.grey
+                                : Colors.grey,
+                            fontSize: screenWidth * 0.043,
                             fontFamily: 'Inter',
                             fontWeight: FontWeight.w600,
                           ),
@@ -521,7 +683,7 @@ class _AcademicCertificateUploadScreenState
                   color: Colors.white,
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  fontFamily: 'Poppins',
+                  fontFamily: 'Inter',
                 ),
               ),
             ),
@@ -550,39 +712,233 @@ class _AcademicCertificateUploadScreenState
                         ? 'Selected Professions will appear here'
                         : selectedProfessions.join(', '),
                     style: TextStyle(
-                      fontSize: screenWidth * 0.04,
+                      fontSize: screenWidth * 0.035,
                       fontWeight: FontWeight.w500,
-                      fontFamily: 'Poppins',
+                      fontFamily: 'Inter',
                     ),
                   ),
                 ],
               ),
             ),
           ),
+          if (selectedProfessions.isNotEmpty)
+            Positioned(
+              top: screenHeight * 0.33,
+              left: (screenWidth - screenWidth * 0.9) / 2,
+              child: _isAlreadyUploaded
+                  ? Container(
+                      width: screenWidth * 0.9,
+                      height: 180,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(25),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.4),
+                          width: 2,
+                        ),
+                      ),
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.check_circle,
+                              color: Colors.green,
+                              size: 40,
+                            ),
+                            const SizedBox(height: 10),
+                            Text(
+                              'Certificate Uploaded',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'Inter',
+                              ),
+                            ),
+                            const SizedBox(height: 5),
+                            Text(
+                              'File: Academic Certificate',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontFamily: 'Inter',
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  : GestureDetector(
+                      onTap: _pickFile,
+                      child: Container(
+                        width: screenWidth * 0.9,
+                        height: 180,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(25),
+                        ),
+                        child: CustomPaint(
+                          painter: DashedBorderPainter(),
+                          child: Container(
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.upload,
+                                  color: Colors.white,
+                                  size: 40,
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'Select File',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    fontFamily: 'Inter',
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'Supported files: PDF/PNG/JPEG/JPG',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    fontFamily: 'Inter',
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'Max Size: 5MB',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    fontFamily: 'Inter',
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+            ),
+          if (selectedProfessions.isNotEmpty)
+            Positioned(
+              top: screenHeight * 0.33 + 200,
+              left: (screenWidth - 190) / 2,
+              child: Center(
+                child: GestureDetector(
+                  onTap: (_isUploading || _isAlreadyUploaded)
+                      ? null
+                      : _uploadToFirebase,
+                  child: Container(
+                    width: screenWidth * 0.5,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: (_isUploading || _isAlreadyUploaded)
+                          ? Colors.grey
+                          : Colors.white,
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    child: Center(
+                      child: _isUploading
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : Text(
+                              _isAlreadyUploaded
+                                  ? 'Already Uploaded'
+                                  : 'Upload',
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'Inter',
+                              ),
+                            ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          if (selectedProfessions.isNotEmpty &&
+              (_selectedFile != null || _isAlreadyUploaded))
+            Positioned(
+              top: screenHeight * 0.33 + 280,
+              left: (screenWidth - screenWidth * 0.8) / 2,
+              child: Container(
+                width: screenWidth * 0.8,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        _isAlreadyUploaded
+                            ? 'Academic Certificate'
+                            : _selectedFile!.name,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontFamily: 'Inter',
+                        ),
+                      ),
+                    ),
+                    if (!_isAlreadyUploaded)
+                      GestureDetector(
+                        onTap: _removeFile,
+                        child: Icon(
+                          Icons.delete,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
           Positioned(
             bottom: screenHeight * 0.05,
             left: (screenWidth - 290) / 2,
-            child: Container(
-              width: 290,
-              height: 38,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.add, color: Colors.black),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Add Your Profession',
-                    style: TextStyle(
-                      fontSize: screenWidth * 0.04,
-                      fontWeight: FontWeight.w500,
-                      fontFamily: 'Poppins',
+            child: GestureDetector(
+              onTap: _isAlreadyUploaded
+                  ? null
+                  : () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => AddProfessionScreen(),
+                        ),
+                      );
+                    },
+              child: Container(
+                width: 290,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: _isAlreadyUploaded ? Colors.grey : Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.add,
+                      color: _isAlreadyUploaded ? Colors.white : Colors.black,
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 8),
+                    Text(
+                      'Add Your Profession',
+                      style: TextStyle(
+                        fontSize: screenWidth * 0.04,
+                        fontWeight: FontWeight.w500,
+                        fontFamily: 'Inter',
+                        color: _isAlreadyUploaded ? Colors.white : Colors.black,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -590,4 +946,61 @@ class _AcademicCertificateUploadScreenState
       ),
     );
   }
+}
+
+class DashedBorderPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white
+      ..strokeWidth = 2
+      ..style = PaintingStyle.stroke;
+
+    const dashWidth = 10.0;
+    const dashSpace = 5.0;
+
+    final path = Path();
+    path.addRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(0, 0, size.width, size.height),
+        const Radius.circular(25),
+      ),
+    );
+
+    canvas.drawPath(_createDashedPath(path, dashWidth, dashSpace), paint);
+  }
+
+  Path _createDashedPath(Path source, double dashWidth, double dashSpace) {
+    final Path dashedPath = Path();
+    final PathMetrics pathMetrics = source.computeMetrics();
+
+    for (final PathMetric pathMetric in pathMetrics) {
+      double distance = 0.0;
+      bool draw = true;
+      while (distance < pathMetric.length) {
+        final double length = draw ? dashWidth : dashSpace;
+        if (draw) {
+          final Tangent? startTangent = pathMetric.getTangentForOffset(
+            distance,
+          );
+          final Tangent? endTangent = pathMetric.getTangentForOffset(
+            distance + dashWidth,
+          );
+          if (startTangent != null && endTangent != null) {
+            dashedPath.moveTo(
+              startTangent.position.dx,
+              startTangent.position.dy,
+            );
+            dashedPath.lineTo(endTangent.position.dx, endTangent.position.dy);
+          }
+        }
+        distance += length;
+        draw = !draw;
+      }
+    }
+    return dashedPath;
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) => false;
 }

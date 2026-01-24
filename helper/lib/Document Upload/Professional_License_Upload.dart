@@ -1,5 +1,10 @@
 import 'dart:ui';
+import 'dart:io';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 class ProfessionalLicenseUploadScreen extends StatefulWidget {
   const ProfessionalLicenseUploadScreen({super.key});
@@ -14,13 +19,108 @@ class _ProfessionalLicenseUploadScreenState
   static const _brandYellow = Color(0xFFFFC700);
 
   String? _selectedType;
+  PlatformFile? _selectedFile;
+  bool _loading = false;
+  final TextEditingController _professionController = TextEditingController();
+  Map<String, dynamic>? _existingDocument;
 
-  void _onContinue() {
-    // TODO: next
+  void _onContinue() async {
+    if (_selectedFile == null || _selectedType == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Please select both a license type and upload a document.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    setState(() => _loading = true);
+
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('User not authenticated.')),
+        );
+        return;
+      }
+
+      // Upload to Firebase Storage
+      final storageRef = FirebaseStorage.instance.ref().child(
+        'users/${user.uid}/documents/Professional Workers/Professional License/${_selectedFile!.name}',
+      );
+
+      await storageRef.putFile(File(_selectedFile!.path!));
+      final downloadUrl = await storageRef.getDownloadURL();
+
+      // Save to Firestore
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('documents')
+          .doc('Professional Workers')
+          .set({
+            'Professional License': {
+              'type': _selectedType,
+              'url': downloadUrl,
+              'uploadedAt': FieldValue.serverTimestamp(),
+            },
+          }, SetOptions(merge: true));
+
+      // Success
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Document uploaded successfully!')),
+      );
+
+      // Navigate back or to next screen
+      Navigator.of(context).maybePop();
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Upload failed: $e')));
+    } finally {
+      setState(() => _loading = false);
+    }
   }
 
-  void _uploadFile() {
-    // TODO: pick file
+  void _uploadFile() async {
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['pdf', 'png', 'jpeg', 'jpg'],
+    );
+    if (result != null) {
+      setState(() {
+        _selectedFile = result.files.first;
+      });
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchExistingDocument();
+  }
+
+  Future<void> _fetchExistingDocument() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final doc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .collection('documents')
+        .doc('Professional Workers')
+        .get();
+
+    if (doc.exists && doc.data()!.containsKey('Professional License')) {
+      setState(() {
+        _existingDocument =
+            doc.data()!['Professional License'] as Map<String, dynamic>;
+        _selectedType = _existingDocument!['type'];
+      });
+    }
   }
 
   @override
@@ -467,9 +567,11 @@ class _ProfessionalLicenseUploadScreenState
                                       child: Text('Truck Driver License'),
                                     ),
                                   ],
-                                  onChanged: (val) {
-                                    setState(() => _selectedType = val);
-                                  },
+                                  onChanged: _existingDocument != null
+                                      ? null
+                                      : (val) {
+                                          setState(() => _selectedType = val);
+                                        },
                                 ),
                               ),
                             ),
@@ -480,7 +582,15 @@ class _ProfessionalLicenseUploadScreenState
                           // ✅ Dashed upload box (responsive height)
                           _DashedUploadBox(
                             height: (h * 0.26).clamp(180, 240),
-                            onTap: _uploadFile,
+                            selectedFile: _selectedFile,
+                            existingDocument: _existingDocument,
+                            onTap:
+                                _selectedFile == null &&
+                                    _existingDocument == null
+                                ? _uploadFile
+                                : null,
+                            onRemove: () =>
+                                setState(() => _selectedFile = null),
                           ),
                           const SizedBox(height: 16),
                           Text(
@@ -506,12 +616,16 @@ class _ProfessionalLicenseUploadScreenState
 
                           // Continue button
                           GestureDetector(
-                            onTap: _onContinue,
+                            onTap: _loading || _existingDocument != null
+                                ? null
+                                : _onContinue,
                             child: Container(
                               width: double.infinity,
                               height: 54,
                               decoration: BoxDecoration(
-                                color: _brandYellow,
+                                color: _loading || _existingDocument != null
+                                    ? Colors.grey
+                                    : _brandYellow,
                                 borderRadius: BorderRadius.circular(30),
                                 boxShadow: [
                                   BoxShadow(
@@ -522,17 +636,160 @@ class _ProfessionalLicenseUploadScreenState
                                 ],
                               ),
                               child: Center(
-                                child: Text(
-                                  'Continue →',
-                                  style: TextStyle(
-                                    color: Colors.black,
-                                    fontFamily: 'Poppins',
-                                    fontWeight: FontWeight.w900,
-                                    fontSize: (w * 0.040).clamp(14, 16),
+                                child: _loading
+                                    ? const CircularProgressIndicator(
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                              Colors.black,
+                                            ),
+                                      )
+                                    : Text(
+                                        'Continue →',
+                                        style: TextStyle(
+                                          color:
+                                              _loading ||
+                                                  _existingDocument != null
+                                              ? Colors.white
+                                              : Colors.black,
+                                          fontFamily: 'Poppins',
+                                          fontWeight: FontWeight.w900,
+                                          fontSize: (w * 0.040).clamp(14, 16),
+                                        ),
+                                      ),
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(height: 18),
+
+                          // Manual add license section
+                          Column(
+                            children: [
+                              Text(
+                                'Or Manually add a license',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontFamily: 'Inter',
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              SizedBox(
+                                width: double.infinity,
+                                height: 54,
+                                child: ElevatedButton(
+                                  onPressed: _existingDocument != null
+                                      ? null
+                                      : () {
+                                          showModalBottomSheet(
+                                            context: context,
+                                            isScrollControlled: true,
+                                            backgroundColor: Colors.transparent,
+                                            builder: (context) => Container(
+                                              decoration: const BoxDecoration(
+                                                color: Colors.white,
+                                                borderRadius: BorderRadius.only(
+                                                  topLeft: Radius.circular(30),
+                                                  topRight: Radius.circular(30),
+                                                ),
+                                              ),
+                                              padding: const EdgeInsets.all(20),
+                                              child: Column(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Text(
+                                                    'Profession',
+                                                    style: TextStyle(
+                                                      color: Colors.black,
+                                                      fontFamily: 'Inter',
+                                                      fontWeight:
+                                                          FontWeight.w900,
+                                                      fontSize: 16,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(height: 10),
+                                                  TextField(
+                                                    controller:
+                                                        _professionController,
+                                                    decoration: InputDecoration(
+                                                      hintText:
+                                                          'Add Your profession here',
+                                                      border: OutlineInputBorder(
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                              30,
+                                                            ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  const SizedBox(height: 20),
+                                                  SizedBox(
+                                                    width: double.infinity,
+                                                    height: 54,
+                                                    child: ElevatedButton(
+                                                      onPressed: () {
+                                                        setState(() {
+                                                          _selectedType =
+                                                              _professionController
+                                                                  .text
+                                                                  .trim();
+                                                        });
+                                                        Navigator.pop(context);
+                                                      },
+                                                      style: ElevatedButton.styleFrom(
+                                                        backgroundColor:
+                                                            _brandYellow,
+                                                        foregroundColor:
+                                                            Colors.black,
+                                                        elevation: 4,
+                                                        shadowColor: Colors
+                                                            .black
+                                                            .withOpacity(0.2),
+                                                        shape: RoundedRectangleBorder(
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                                30,
+                                                              ),
+                                                        ),
+                                                      ),
+                                                      child: Text(
+                                                        'Continue',
+                                                        style: TextStyle(
+                                                          fontFamily: 'Poppins',
+                                                          fontWeight:
+                                                              FontWeight.w900,
+                                                          fontSize: (w * 0.040)
+                                                              .clamp(14, 16),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.white,
+                                    foregroundColor: Colors.black,
+                                    elevation: 4,
+                                    shadowColor: Colors.black.withOpacity(0.2),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(30),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    'Add a license',
+                                    style: TextStyle(
+                                      fontFamily: 'Poppins',
+                                      fontWeight: FontWeight.w900,
+                                      fontSize: (w * 0.040).clamp(14, 16),
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
+                            ],
                           ),
 
                           const SizedBox(height: 18),
@@ -598,9 +855,18 @@ class _GlassPill extends StatelessWidget {
 
 class _DashedUploadBox extends StatelessWidget {
   final double height;
-  final VoidCallback onTap;
+  final PlatformFile? selectedFile;
+  final Map<String, dynamic>? existingDocument;
+  final VoidCallback? onTap;
+  final VoidCallback? onRemove;
 
-  const _DashedUploadBox({required this.height, required this.onTap});
+  const _DashedUploadBox({
+    required this.height,
+    this.selectedFile,
+    this.existingDocument,
+    this.onTap,
+    this.onRemove,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -623,41 +889,99 @@ class _DashedUploadBox extends StatelessWidget {
               color: Colors.black.withOpacity(0.35),
               borderRadius: BorderRadius.circular(24),
             ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.cloud_upload_rounded, color: Colors.white, size: 56),
-                const SizedBox(height: 10),
-                Text(
-                  'Upload File',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontFamily: 'AbrilFatface',
-                    fontSize: 18,
+            child: existingDocument != null
+                ? Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        Icon(Icons.description, color: Colors.white, size: 40),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            '${existingDocument!['type']} License',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontFamily: 'Inter',
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : selectedFile != null
+                ? Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        Icon(
+                          selectedFile!.extension == 'pdf'
+                              ? Icons.picture_as_pdf
+                              : Icons.image,
+                          color: Colors.white,
+                          size: 40,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            selectedFile!.name,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontFamily: 'Inter',
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: onRemove,
+                          icon: const Icon(Icons.delete, color: Colors.white),
+                        ),
+                      ],
+                    ),
+                  )
+                : Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.cloud_upload_rounded,
+                        color: Colors.white,
+                        size: 56,
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        'Upload File',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontFamily: 'AbrilFatface',
+                          fontSize: 18,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Supported files: PDF/PNG/JPEG/JPG',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.8),
+                          fontFamily: 'Inter',
+                          fontWeight: FontWeight.w900,
+                          fontSize: 12,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Max Size: 5MB',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.8),
+                          fontFamily: 'Inter',
+                          fontWeight: FontWeight.w900,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Supported files: PDF/PNG/JPEG/JPG',
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.8),
-                    fontFamily: 'Inter',
-                    fontWeight: FontWeight.w900,
-                    fontSize: 12,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  'Max Size: 5MB',
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.8),
-                    fontFamily: 'Inter',
-                    fontWeight: FontWeight.w900,
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
           ),
         ),
       ),
