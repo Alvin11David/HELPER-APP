@@ -665,8 +665,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       AnimatedContainer(
                         duration: const Duration(milliseconds: 300),
                         height: _isWalletExpanded
-                            ? 100
-                            : 20, // Height for Wallet PIN options
+                            ? 30
+                            : 0, // Height for Wallet PIN options
                         child: _isWalletExpanded
                             ? SingleChildScrollView(
                                 child: Column(
@@ -712,7 +712,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               width: 35,
                               height: 35,
                               decoration: BoxDecoration(
-                                color: const Color(0xFFEFEF96),
+                                color: const Color(0xFFC491E2),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: const Icon(
