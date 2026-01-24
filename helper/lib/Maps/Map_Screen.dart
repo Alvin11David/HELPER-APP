@@ -262,8 +262,8 @@ class _MapScreenState extends State<MapScreen> {
               child: Row(
                 children: [
                   Container(
-                    width: 6,
-                    height: 6,
+                    width: 20,
+                    height: 20,
                     decoration: const BoxDecoration(
                       color: Colors.green,
                       shape: BoxShape.circle,
@@ -276,19 +276,19 @@ class _MapScreenState extends State<MapScreen> {
                   ),
                   const SizedBox(width: 8),
                   Container(
-                    width: 6,
-                    height: 6,
+                    width: 20,
+                    height: 20,
                     decoration: const BoxDecoration(
                       color: Colors.orange,
                       shape: BoxShape.circle,
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 10),
                   const Text('On Job', style: TextStyle(color: Colors.black)),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 10),
                   Container(
-                    width: 6,
-                    height: 6,
+                    width: 20,
+                    height: 20,
                     decoration: const BoxDecoration(
                       color: Colors.red,
                       shape: BoxShape.circle,
