@@ -57,7 +57,7 @@ class UserAvatarCircle extends StatelessWidget {
       decoration: BoxDecoration(
         color: backgroundColor,
         shape: BoxShape.circle,
-        border: Border.all(color: iconColor, width: borderWidth),
+        border: Border.all(color: Colors.white, width: borderWidth),
       ),
       child: Center(
         child: Icon(
