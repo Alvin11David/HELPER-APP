@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:helper/Components/user_avatar_circle.dart';
+import 'package:helper/Components/User_Name.dart'; // Add this import
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -119,36 +120,44 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Positioned(
                 top: screenHeight * 0.12,
                 left: (screenWidth - 100) / 2,
-                child: Stack(
+                child: Column(
                   children: [
-                    Container(
-                      width: 100,
-                      height: 100,
-                      child: UserAvatarCircle(
-                        imageUrl: _imageUrl,
-                      ), // Pass imageUrl if supported
-                    ),
-                    Positioned(
-                      bottom: 0,
-                      right: 0,
-                      child: GestureDetector(
-                        onTap: _pickAndUploadImage,
-                        child: Container(
-                          width: 30,
-                          height: 30,
-                          decoration: BoxDecoration(
-                            color: Colors.orange,
-                            border: Border.all(color: Colors.white, width: 2),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Icon(
-                            Icons.upload,
-                            color: Colors.black,
-                            size: 20,
+                    Stack(
+                      children: [
+                        Container(
+                          width: 100,
+                          height: 100,
+                          child: UserAvatarCircle(
+                            imageUrl: _imageUrl,
+                          ), // Pass imageUrl if supported
+                        ),
+                        Positioned(
+                          bottom: 0,
+                          right: 0,
+                          child: GestureDetector(
+                            onTap: _pickAndUploadImage,
+                            child: Container(
+                              width: 30,
+                              height: 30,
+                              decoration: BoxDecoration(
+                                color: Colors.orange,
+                                border: Border.all(
+                                  color: Colors.white,
+                                  width: 2,
+                                ),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Icon(
+                                Icons.upload,
+                                color: Colors.black,
+                                size: 20,
+                              ),
+                            ),
                           ),
                         ),
-                      ),
+                      ],
                     ),
+                    UserName(), // Added below the circle
                   ],
                 ),
               ),
