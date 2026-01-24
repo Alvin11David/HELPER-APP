@@ -209,23 +209,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Future<String?> _fetchCurrentPin() async {
-    try {
-      User? user = FirebaseAuth.instance.currentUser;
-      if (user == null) return null;
-      DocumentSnapshot doc = await FirebaseFirestore.instance
-          .collection('Sign Up')
-          .doc(user.uid)
-          .get();
-      if (doc.exists && doc.data() != null) {
-        return (doc.data() as Map<String, dynamic>)['wallet_pin'] as String?;
-      }
-      return null;
-    } catch (e) {
-      return null;
-    }
-  }
-
   void _showChangeWalletPinSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -235,111 +218,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
       ),
       builder: (BuildContext context) {
-        return FutureBuilder<String?>(
-          future: _fetchCurrentPin(),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            if (snapshot.hasError) {
-              return Center(child: Text('Error: ${snapshot.error}'));
-            }
-            String? currentPin = snapshot.data;
-            return StatefulBuilder(
-              builder: (BuildContext context, StateSetter setState) {
-                final TextEditingController _newPinController = TextEditingController();
-                bool _isButtonEnabled = false;
-                return Padding(
-                  padding: EdgeInsets.only(
-                    bottom: MediaQuery.of(context).viewInsets.bottom,
-                    left: 16,
-                    right: 16,
-                    top: 16,
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Text(
-                        'Change Wallet PIN',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        initialValue: currentPin ?? '',
-                        readOnly: true,
-                        obscureText: true,
-                        decoration: const InputDecoration(
-                          labelText: 'Current PIN',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.all(Radius.circular(30)),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _newPinController,
-                        obscureText: true,
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                          LengthLimitingTextInputFormatter(4),
-                        ],
-                        decoration: const InputDecoration(
-                          labelText: 'New PIN (4 digits)',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.all(Radius.circular(30)),
-                          ),
-                        ),
-                        onChanged: (value) {
-                          setState(() {
-                            _isButtonEnabled = value.length == 4 && value != currentPin;
-                          });
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _isButtonEnabled ? Colors.orange : Colors.grey,
-                        ),
-                        onPressed: _isButtonEnabled
-                            ? () async {
-                                String newPin = _newPinController.text;
-                                if (newPin.length == 4) {
-                                  try {
-                                    User? user = FirebaseAuth.instance.currentUser;
-                                    if (user != null) {
-                                      await FirebaseFirestore.instance
-                                          .collection('Sign Up')
-                                          .doc(user.uid)
-                                          .update({'wallet_pin': newPin});
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(
-                                          content: Text('Wallet PIN updated successfully!'),
-                                        ),
-                                      );
-                                      Navigator.pop(context);
-                                    }
-                                  } catch (e) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text('Error updating PIN: $e')),
-                                    );
-                                  }
-                                }
-                              }
-                            : null,
-                        child: const Text(
-                          'Change PIN',
-                          style: TextStyle(color: Colors.white),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                    ],
-                  ),
-                );
-              },
-            );
-          },
-        );
+        return const _ChangeWalletPinSheet();
       },
     );
   }
@@ -833,6 +712,154 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
       ),
       bottomNavigationBar: BottomNavBar(), // Add BottomNavBar at the bottom
+    );
+  }
+}
+
+class _ChangeWalletPinSheet extends StatefulWidget {
+  const _ChangeWalletPinSheet();
+
+  @override
+  _ChangeWalletPinSheetState createState() => _ChangeWalletPinSheetState();
+}
+
+class _ChangeWalletPinSheetState extends State<_ChangeWalletPinSheet> {
+  String? currentPin;
+  final TextEditingController _currentPinController = TextEditingController();
+  final TextEditingController _newPinController = TextEditingController();
+  bool _isButtonEnabled = false;
+  String _enteredCurrentPin = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchCurrentPin();
+  }
+
+  Future<void> _fetchCurrentPin() async {
+    try {
+      User? user = FirebaseAuth.instance.currentUser;
+      if (user == null) return;
+      DocumentSnapshot doc = await FirebaseFirestore.instance
+          .collection('Sign Up')
+          .doc(user.uid)
+          .get();
+      if (doc.exists && doc.data() != null) {
+        setState(() {
+          currentPin =
+              (doc.data() as Map<String, dynamic>)['wallet_pin'] as String?;
+        });
+      }
+    } catch (e) {
+      // Handle error
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+        left: 16,
+        right: 16,
+        top: 16,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text(
+            'Change Wallet PIN',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _currentPinController,
+            obscureText: true,
+            keyboardType: TextInputType.number,
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+              LengthLimitingTextInputFormatter(4),
+            ],
+            decoration: const InputDecoration(
+              labelText: 'Current PIN (4 digits)',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.all(Radius.circular(30)),
+              ),
+            ),
+            onChanged: (value) {
+              _enteredCurrentPin = value;
+              setState(() {
+                _isButtonEnabled =
+                    (_enteredCurrentPin == currentPin) &&
+                    _newPinController.text.length == 4 &&
+                    _newPinController.text != currentPin;
+              });
+            },
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _newPinController,
+            obscureText: true,
+            keyboardType: TextInputType.number,
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+              LengthLimitingTextInputFormatter(4),
+            ],
+            decoration: const InputDecoration(
+              labelText: 'New PIN (4 digits)',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.all(Radius.circular(30)),
+              ),
+            ),
+            onChanged: (value) {
+              setState(() {
+                _isButtonEnabled =
+                    (_enteredCurrentPin == currentPin) &&
+                    value.length == 4 &&
+                    value != currentPin;
+              });
+            },
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _isButtonEnabled ? Colors.orange : Colors.grey,
+            ),
+            onPressed: _isButtonEnabled
+                ? () async {
+                    String newPin = _newPinController.text;
+                    if (newPin.length == 4 &&
+                        _enteredCurrentPin == currentPin) {
+                      try {
+                        User? user = FirebaseAuth.instance.currentUser;
+                        if (user != null) {
+                          await FirebaseFirestore.instance
+                              .collection('Sign Up')
+                              .doc(user.uid)
+                              .update({'wallet_pin': newPin});
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Wallet PIN updated successfully!'),
+                            ),
+                          );
+                          Navigator.pop(context);
+                        }
+                      } catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Error updating PIN: $e')),
+                        );
+                      }
+                    }
+                  }
+                : null,
+            child: const Text(
+              'Change PIN',
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
+      ),
     );
   }
 }
