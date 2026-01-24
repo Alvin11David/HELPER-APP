@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:helper/Auth/Sign_In_Screen.dart';
 import 'package:helper/Chats/Chat_List_Screen.dart';
 import 'package:helper/Chats/Chat_Screen.dart';
+import 'package:helper/Document%20Upload/Profile/Profile_Screen.dart';
 import 'package:helper/Employer%20Dashboard/All_Categories_Screen.dart';
 import 'package:helper/Employer%20Dashboard/Create_Wallet_PIN_Screen.dart';
 import 'package:helper/Employer%20Dashboard/Set_New_Wallet_PIN_Screen.dart';
@@ -39,11 +40,11 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       navigatorKey: appNavKey,
       debugShowCheckedModeBanner: false,
-      title: 'Helper App',
+      title: 'Helper\'s App',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home:  SplashScreen(),
+      home:  ProfileScreen(),
     );
   }
 }
