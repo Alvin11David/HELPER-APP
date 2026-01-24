@@ -21,17 +21,55 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
   }
 
   late String _greeting;
+  String? _businessName;
   int _imageIndex = 0;
   bool _isDescriptionExpanded = false;
   int _rating = 0;
   final TextEditingController _commentController = TextEditingController();
   List<String> _portfolioFiles = [];
+  String? _jobCategoryName;
+  int? _yearsExperience;
+  String? _skillsDescription;
 
   @override
   void initState() {
     super.initState();
     _greeting = _getGreeting();
     _loadPortfolio();
+    _loadBusinessName();
+  }
+
+  Future<void> _loadBusinessName() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      try {
+        final doc = await FirebaseFirestore.instance
+            .collection('serviceProviders')
+            .doc(user.uid)
+            .get();
+        if (doc.exists) {
+          final data = doc.data();
+          setState(() {
+            if (data != null && data['businessName'] != null) {
+              _businessName = data['businessName'];
+            }
+            if (data != null && data['jobCategoryName'] != null) {
+              _jobCategoryName = data['jobCategoryName'];
+            }
+            if (data != null && data['yearsExperience'] != null) {
+              _yearsExperience = int.tryParse(
+                data['yearsExperience'].toString(),
+              );
+            }
+            if (data != null && data['skillsDescription'] != null) {
+              _skillsDescription = data['skillsDescription'];
+            }
+          });
+        }
+      } catch (e) {
+        // Handle error if needed
+      }
+    }
   }
 
   Future<void> _loadPortfolio() async {
@@ -177,9 +215,9 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                     Positioned(
                       top: h * 0.4 + 10,
                       left: w * 0.04,
-                      child: const Text(
-                        'Business Name',
-                        style: TextStyle(
+                      child: Text(
+                        _businessName ?? '',
+                        style: const TextStyle(
                           color: Colors.white,
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -189,9 +227,12 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                     Positioned(
                       top: h * 0.4 + 35,
                       left: w * 0.04,
-                      child: const Text(
-                        'Profession - Years of Experience',
-                        style: TextStyle(color: Colors.white, fontSize: 14),
+                      child: Text(
+                        '${_jobCategoryName ?? ''} - ${_yearsExperience != null ? _yearsExperience.toString() : ''} Years of Experience',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                        ),
                       ),
                     ),
                     Positioned(
@@ -273,8 +314,7 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                       right: w * 0.04,
                       child: RichText(
                         text: TextSpan(
-                          text:
-                              'Worker’s Profession Description appears here like what the profession is all about, the location, the specialities and many more ',
+                          text: _skillsDescription ?? '',
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 14,
