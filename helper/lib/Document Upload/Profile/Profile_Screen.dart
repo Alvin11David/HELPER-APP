@@ -389,6 +389,49 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  void _showAboutUsSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+      ),
+      builder: (BuildContext context) {
+        return Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'About Helper\'s App',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Helper\'s App is designed to assist users with various tasks, including profile management, wallet PIN setup, and secure navigation. Our goal is to provide a seamless and user-friendly experience for all your needs.',
+                style: TextStyle(fontSize: 16, color: Colors.black),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
+                child: const Text(
+                  'Close',
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
@@ -946,14 +989,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       ),
                                       child: GestureDetector(
                                         onTap: () {
-                                          // Add logic for About Us
-                                          ScaffoldMessenger.of(
-                                            context,
-                                          ).showSnackBar(
-                                            const SnackBar(
-                                              content: Text('About Us tapped'),
-                                            ),
-                                          );
+                                           _showAboutUsSheet(context);
                                         },
                                         child: Row(
                                           children: [
