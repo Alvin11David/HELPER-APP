@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'dart:ui'; // For ImageFilter
 import 'package:flutter/services.dart'; // For FilteringTextInputFormatter
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';  // Add this import
+import 'package:firebase_auth/firebase_auth.dart';  // Add this import for user authentication
 
 class CreateWalletPINScreen extends StatefulWidget {
   const CreateWalletPINScreen({super.key});
@@ -37,20 +39,43 @@ class _CreateWalletPINScreenState extends State<CreateWalletPINScreen> {
     print('Saving PIN: $pin');
     if (pin.length == 4) {
       try {
+        // Get current user
+        User? user = FirebaseAuth.instance.currentUser;
+        if (user == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('User not authenticated. Please log in.')),
+          );
+          return;
+        }
+
+        // Save to Firestore in "Sign Up" collection
+        await FirebaseFirestore.instance.collection('Sign Up').doc(user.uid).update({
+          'wallet_pin': pin,
+          'wallet_pin_set': true,
+        });
+
+        // Also save locally for quick access (optional)
         SharedPreferences prefs = await SharedPreferences.getInstance();
         await prefs.setString('wallet_pin', pin);
         await prefs.setBool('wallet_pin_set', true);
-        print('PIN saved successfully');
+
+        print('PIN saved successfully to Firestore and locally');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('PIN created successfully!')),
+        );
         Navigator.pop(context); // Go back to dashboard
       } catch (e) {
         print('Error saving PIN: $e');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error saving PIN: $e')),
+        );
       }
     } else {
       // Show error
       print('PIN length not 4');
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Please enter a 4-digit PIN')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a 4-digit PIN')),
+      );
     }
   }
 
@@ -153,7 +178,7 @@ class _CreateWalletPINScreenState extends State<CreateWalletPINScreen> {
                           'Create a 4-digit PIN',
                           style: TextStyle(
                             color: Colors.white,
-                            fontSize: screenWidth * 0.04,
+                            fontSize: screenWidth * 0.035,
                             fontWeight: FontWeight.w500,
                             fontFamily: 'Poppins',
                           ),
@@ -166,8 +191,7 @@ class _CreateWalletPINScreenState extends State<CreateWalletPINScreen> {
               ),
             ),
             Positioned(
-              top:
-                  screenHeight * 0.14 +
+              top: screenHeight * 0.14 +
                   50, // Position below the glassy rectangle
               left: screenWidth * 0.4,
               right: screenWidth * 0.4,
@@ -308,7 +332,7 @@ class _CreateWalletPINScreenState extends State<CreateWalletPINScreen> {
                           'Set Your PIN Here',
                           style: TextStyle(
                             color: Colors.white,
-                            fontSize: screenWidth * 0.04,
+                            fontSize: screenWidth * 0.035,
                             fontWeight: FontWeight.w500,
                             fontFamily: 'Poppins',
                           ),

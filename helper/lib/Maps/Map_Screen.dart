@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:geolocator/geolocator.dart'; // Add this import
 import '../Components/Bottom_Nav_Bar.dart';
 
 class MapScreen extends StatefulWidget {
@@ -15,7 +16,12 @@ class _MapScreenState extends State<MapScreen> {
 
   late GoogleMapController mapController;
 
-  final LatLng _center = const LatLng(45.521563, -122.677433);
+  final LatLng _center = const LatLng(
+    45.521563,
+    -122.677433,
+  ); // Fallback center
+  LatLng? _currentPosition; // To store current location
+  Set<Marker> _markers = {}; // To add a marker for current location
 
   int _selectedIndex = 1;
 
@@ -44,11 +50,75 @@ class _MapScreenState extends State<MapScreen> {
     // Add navigation logic if needed
   }
 
+  Future<void> _getCurrentLocation() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    // Check if location services are enabled
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      // Location services are not enabled, show a message
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Location services are disabled. Please enable them.'),
+        ),
+      );
+      return;
+    }
+
+    // Check for location permissions
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        // Permissions are denied, show a message
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Location permissions are denied.')),
+        );
+        return;
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      // Permissions are permanently denied
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Location permissions are permanently denied. Please enable them in settings.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    // Get current position
+    Position position = await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high,
+    );
+
+    setState(() {
+      _currentPosition = LatLng(position.latitude, position.longitude);
+      _markers.add(
+        Marker(
+          markerId: const MarkerId('currentLocation'),
+          position: _currentPosition!,
+          infoWindow: const InfoWindow(title: 'Your Location'),
+        ),
+      );
+    });
+
+    // Move camera to current location
+    mapController.animateCamera(
+      CameraUpdate.newLatLngZoom(_currentPosition!, 15.0),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
     _controller = TextEditingController();
     _focusNode = FocusNode();
+    _getCurrentLocation(); // Request location on load
   }
 
   @override
@@ -68,9 +138,12 @@ class _MapScreenState extends State<MapScreen> {
             GoogleMap(
               onMapCreated: _onMapCreated,
               initialCameraPosition: CameraPosition(
-                target: _center,
+                target:
+                    _currentPosition ??
+                    _center, // Use current position if available, else fallback
                 zoom: 11.0,
               ),
+              markers: _markers, // Add markers to the map
             ),
             Positioned(
               top: 20,
