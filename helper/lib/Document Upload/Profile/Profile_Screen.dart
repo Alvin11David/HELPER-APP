@@ -4,6 +4,7 @@ import 'package:helper/Components/Bottom_Nav_Bar.dart';
 import 'package:helper/Components/user_avatar_circle.dart';
 import 'package:helper/Components/User_Name.dart'; // Add this import
 import 'package:helper/Components/User_Email_Or_Phone_Number.dart'; // Add this import
+import 'package:helper/Document%20Upload/Profile/Support_Screen.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -806,7 +807,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       AnimatedContainer(
                         duration: const Duration(milliseconds: 300),
                         height: _isHelpExpanded
-                            ? 100
+                            ? 30
                             : 25, // Height for Help & Support options
                         child: _isHelpExpanded
                             ? SingleChildScrollView(
@@ -818,14 +819,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       ),
                                       child: GestureDetector(
                                         onTap: () {
-                                          // Add logic for Contact Support
-                                          ScaffoldMessenger.of(
-                                            context,
-                                          ).showSnackBar(
-                                            const SnackBar(
-                                              content: Text(
-                                                'Contact Support tapped',
-                                              ),
+                                          Navigator.of(context).push(
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  const SupportScreen(),
                                             ),
                                           );
                                         },
@@ -836,6 +833,88 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                             ), // Space for removed square
                                             const Text(
                                               'Contact Support',
+                                              style: TextStyle(
+                                                color: Colors.black,
+                                                fontSize: 13,
+                                              ),
+                                            ),
+                                            const Spacer(),
+                                            const Icon(
+                                              Icons.chevron_right,
+                                              color: Colors.black,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            : null,
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 35,
+                              height: 35,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF98EE81),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Icon(
+                                Icons.info,
+                                color: Colors.black,
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            const Text(
+                              'About the App',
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontSize: 16,
+                              ),
+                            ),
+                            const Spacer(),
+                            GestureDetector(
+                              onTap: () => setState(
+                                () => _isAboutExpanded = !_isAboutExpanded,
+                              ),
+                              child: Icon(
+                                _isAboutExpanded
+                                    ? Icons.arrow_drop_up
+                                    : Icons.arrow_drop_down,
+                                color: Colors.black,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        height: _isAboutExpanded
+                            ? 30
+                            : 25, // Height for About the App options
+                        child: _isAboutExpanded
+                            ? SingleChildScrollView(
+                                child: Column(
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 16.0,
+                                      ),
+                                      child: GestureDetector(
+                                        onTap: () {
+                                          _showAboutUsSheet(context);
+                                        },
+                                        child: Row(
+                                          children: [
+                                            const SizedBox(
+                                              width: 45,
+                                            ), // Space for removed square
+                                            const Text(
+                                              'About Us',
                                               style: TextStyle(
                                                 color: Colors.black,
                                                 fontSize: 13,
@@ -916,88 +995,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                             ), // Space for removed square
                                             const Text(
                                               'Logout',
-                                              style: TextStyle(
-                                                color: Colors.black,
-                                                fontSize: 13,
-                                              ),
-                                            ),
-                                            const Spacer(),
-                                            const Icon(
-                                              Icons.chevron_right,
-                                              color: Colors.black,
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              )
-                            : null,
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 35,
-                              height: 35,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF98EE81),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: const Icon(
-                                Icons.info,
-                                color: Colors.black,
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            const Text(
-                              'About the App',
-                              style: TextStyle(
-                                color: Colors.black,
-                                fontSize: 16,
-                              ),
-                            ),
-                            const Spacer(),
-                            GestureDetector(
-                              onTap: () => setState(
-                                () => _isAboutExpanded = !_isAboutExpanded,
-                              ),
-                              child: Icon(
-                                _isAboutExpanded
-                                    ? Icons.arrow_drop_up
-                                    : Icons.arrow_drop_down,
-                                color: Colors.black,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      AnimatedContainer(
-                        duration: const Duration(milliseconds: 300),
-                        height: _isAboutExpanded
-                            ? 100
-                            : 0, // Height for About the App options
-                        child: _isAboutExpanded
-                            ? SingleChildScrollView(
-                                child: Column(
-                                  children: [
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 16.0,
-                                      ),
-                                      child: GestureDetector(
-                                        onTap: () {
-                                           _showAboutUsSheet(context);
-                                        },
-                                        child: Row(
-                                          children: [
-                                            const SizedBox(
-                                              width: 45,
-                                            ), // Space for removed square
-                                            const Text(
-                                              'About Us',
                                               style: TextStyle(
                                                 color: Colors.black,
                                                 fontSize: 13,

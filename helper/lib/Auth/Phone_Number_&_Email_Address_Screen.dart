@@ -267,12 +267,6 @@ class _PhoneNumberEmailAddressScreenState
 
         if (!mounted) return;
         setState(() => _loading = false);
-
-        // ✅ Move to OTP screen and pass signup data.
-        // OTP screen will:
-        // 1) confirm OTP matches
-        // 2) create FirebaseAuth user with email/password
-        // 3) save Firestore Sign Up/{uid}
         Navigator.push(
           context,
           MaterialPageRoute(

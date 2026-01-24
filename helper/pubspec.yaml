@@ -69,6 +69,8 @@ dependencies:
   file_picker: ^10.0.0
   # For location
   geolocator: ^10.0.0
+  # URL launcher
+  url_launcher: ^6.1.10
 
 dev_dependencies:
   flutter_test:
