@@ -5,7 +5,9 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:helper/Worker%20Dashboard/Workers_skills_and_Job_Details.dart';
 import 'Non_Professional_Selfie_Capture_Screen.dart';
+import '../../Worker Dashboard/Worker_Details_Screen.dart';
 
 class NonProfessionalDocumentUploadScreen extends StatefulWidget {
   const NonProfessionalDocumentUploadScreen({super.key});
@@ -49,18 +51,9 @@ class _NonProfessionalDocumentUploadScreenState
     final formKey = GlobalKey<FormState>();
 
     Future<void> onContinue() async {
-      FocusScope.of(context).unfocus();
-      if (!(formKey.currentState?.validate() ?? false)) return;
-
-      setState(() => loading = true);
-
-      // TODO:
-      // phone: send OTP -> navigate to OTPVerificationScreen
-      // email: login/register -> next
-      await Future.delayed(const Duration(milliseconds: 650));
-
-      if (!mounted) return;
-      setState(() => loading = false);
+      Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (context) => WorkerSkillsJobDetailsScreen()));
     }
 
     Future<void> openNationalIdPassportUpload() async {
@@ -76,9 +69,11 @@ class _NonProfessionalDocumentUploadScreenState
 
     Future<void> openSelfieUpload() async {
       setState(() => _selectedRows.add(3));
-      await Navigator.of(
-        context,
-      ).push(MaterialPageRoute(builder: (context) => NonProfessionalSelfieCaptureScreen()));
+      await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => NonProfessionalSelfieCaptureScreen(),
+        ),
+      );
       // The StreamBuilder will update when the document is added
     }
 
