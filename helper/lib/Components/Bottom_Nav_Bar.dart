@@ -10,7 +10,7 @@ class BottomNavBar extends StatefulWidget {
   const BottomNavBar({
     super.key,
     this.onItemTapped,
-    this.initialSelectedIndex = 0,
+    this.initialSelectedIndex = 0, required int currentIndex,
   });
 
   @override

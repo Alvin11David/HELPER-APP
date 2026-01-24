@@ -324,7 +324,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
       ),
       bottomNavigationBar: BottomNavBar(
         onItemTapped: _onItemTapped,
-        initialSelectedIndex: 3,
+        currentIndex: 2,
       ),
     );
   }

@@ -978,7 +978,8 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
           ),
         ),
       ),
-      bottomNavigationBar: BottomNavBar(onItemTapped: _onItemTapped),
+      bottomNavigationBar: BottomNavBar(
+        currentIndex: 0,),
     );
   }
 }

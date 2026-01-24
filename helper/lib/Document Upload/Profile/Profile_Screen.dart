@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:helper/Auth/Sign_In_Screen.dart';
 import 'package:helper/Components/Bottom_Nav_Bar.dart';
 import 'package:helper/Components/user_avatar_circle.dart';
 import 'package:helper/Components/User_Name.dart'; // Add this import
@@ -377,7 +378,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     try {
       await FirebaseAuth.instance.signOut();
       // Navigate to SignInScreen
-      Navigator.of(context).pushReplacementNamed('/SignInScreen');
+      Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (context) => const SignInScreen()));
     } catch (e) {
       ScaffoldMessenger.of(
         context,
@@ -896,7 +899,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ),
       ),
-      bottomNavigationBar: BottomNavBar(), // Add BottomNavBar at the bottom
+      bottomNavigationBar: BottomNavBar(
+        currentIndex: 4,
+      ), // Add BottomNavBar at the bottom
     );
   }
 }

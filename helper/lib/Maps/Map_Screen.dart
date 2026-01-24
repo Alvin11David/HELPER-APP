@@ -371,8 +371,7 @@ class _MapScreenState extends State<MapScreen> {
         ),
       ),
       bottomNavigationBar: BottomNavBar(
-        onItemTapped: _onItemTapped,
-        initialSelectedIndex: 1,
+        currentIndex: 1,
       ),
     );
   }
