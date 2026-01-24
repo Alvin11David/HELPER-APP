@@ -67,7 +67,10 @@ class _MapScreenState extends State<MapScreen> {
           children: [
             GoogleMap(
               onMapCreated: _onMapCreated,
-              initialCameraPosition: CameraPosition(target: _center, zoom: 11.0),
+              initialCameraPosition: CameraPosition(
+                target: _center,
+                zoom: 11.0,
+              ),
             ),
             Positioned(
               top: 20,
@@ -250,6 +253,49 @@ class _MapScreenState extends State<MapScreen> {
                       child: const Icon(Icons.tune, color: Colors.black),
                     ),
                   ),
+                ],
+              ),
+            ),
+            Positioned(
+              top: 125,
+              left: w * 0.04,
+              child: Row(
+                children: [
+                  Container(
+                    width: 6,
+                    height: 6,
+                    decoration: const BoxDecoration(
+                      color: Colors.green,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'Available',
+                    style: TextStyle(color: Colors.black),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    width: 6,
+                    height: 6,
+                    decoration: const BoxDecoration(
+                      color: Colors.orange,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  const Text('On Job', style: TextStyle(color: Colors.black)),
+                  const SizedBox(width: 8),
+                  Container(
+                    width: 6,
+                    height: 6,
+                    decoration: const BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  const Text('Offline', style: TextStyle(color: Colors.black)),
                 ],
               ),
             ),
