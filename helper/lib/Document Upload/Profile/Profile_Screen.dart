@@ -22,6 +22,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _isExpanded = false; // To control expansion
   bool _isWalletExpanded = false; // To control Wallet PIN expansion
   bool _isHelpExpanded = false; // To control Help & Support expansion
+  bool _isLogoutExpanded = false; // To control Logout Option expansion
 
   final TextEditingController _previousPasswordController =
       TextEditingController();
@@ -369,6 +370,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
       return null;
     } catch (e) {
       return null;
+    }
+  }
+
+  void _logout() async {
+    try {
+      await FirebaseAuth.instance.signOut();
+      // Navigate to login screen, assuming it's the first screen
+      Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error logging out: $e')));
     }
   }
 
@@ -747,7 +760,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         duration: const Duration(milliseconds: 300),
                         height: _isHelpExpanded
                             ? 100
-                            : 0, // Height for Help & Support options
+                            : 25, // Height for Help & Support options
                         child: _isHelpExpanded
                             ? SingleChildScrollView(
                                 child: Column(
@@ -790,28 +803,72 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         ),
                                       ),
                                     ),
+                                  ],
+                                ),
+                              )
+                            : null,
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 35,
+                              height: 35,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF89E0C4),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Icon(
+                                Icons.logout,
+                                color: Colors.black,
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            const Text(
+                              'Logout Option',
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontSize: 16,
+                              ),
+                            ),
+                            const Spacer(),
+                            GestureDetector(
+                              onTap: () => setState(
+                                () => _isLogoutExpanded = !_isLogoutExpanded,
+                              ),
+                              child: Icon(
+                                _isLogoutExpanded
+                                    ? Icons.arrow_drop_up
+                                    : Icons.arrow_drop_down,
+                                color: Colors.black,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        height: _isLogoutExpanded
+                            ? 50
+                            : 0, // Height for Logout Option
+                        child: _isLogoutExpanded
+                            ? SingleChildScrollView(
+                                child: Column(
+                                  children: [
                                     Padding(
                                       padding: const EdgeInsets.symmetric(
                                         horizontal: 16.0,
                                       ),
                                       child: GestureDetector(
-                                        onTap: () {
-                                          // Add logic for FAQ
-                                          ScaffoldMessenger.of(
-                                            context,
-                                          ).showSnackBar(
-                                            const SnackBar(
-                                              content: Text('FAQ tapped'),
-                                            ),
-                                          );
-                                        },
+                                        onTap: _logout,
                                         child: Row(
                                           children: [
                                             const SizedBox(
                                               width: 45,
                                             ), // Space for removed square
                                             const Text(
-                                              'FAQ',
+                                              'Logout',
                                               style: TextStyle(
                                                 color: Colors.black,
                                                 fontSize: 13,
