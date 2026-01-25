@@ -260,7 +260,7 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                                   ),
                                   SizedBox(width: 15),
                                   Text(
-                                    "Availability & Schedule",
+                                    "Availability &\nSchedule",
                                     style: TextStyle(
                                       color: _selectedIndex == 2
                                           ? Colors.orange

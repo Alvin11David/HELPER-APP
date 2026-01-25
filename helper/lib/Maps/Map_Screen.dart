@@ -8,6 +8,7 @@ import 'dart:ui' as ui;
 import 'dart:async';
 import '../Components/Bottom_Nav_Bar.dart';
 import '../Components/User_Name.dart'; // Add this import
+import '../Components/Side_Bar.dart'; // Add this import
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
@@ -17,6 +18,7 @@ class MapScreen extends StatefulWidget {
 }
 
 class _MapScreenState extends State<MapScreen> {
+  final GlobalKey<SideBarState> _sidebarKey = GlobalKey();
   final String _googleApiKey = 'AIzaSyBTk9548rr1JiKe1guF1i8z2wqHV8CZjRA';
   bool _showFilters = false;
 
@@ -486,39 +488,7 @@ class _MapScreenState extends State<MapScreen> {
               ),
               markers: _markers, // Add markers to the map
             ),
-            Positioned(
-              top: 20,
-              left: w * 0.04,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.menu, color: Colors.black),
-                  ),
-                  const SizedBox(width: 10),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _getGreeting(),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      UserName(), // Replaced const Text('User', ...) with UserName()
-                    ],
-                  ),
-                ],
-              ),
-            ),
+            
             Positioned(
               top: 20,
               right: w * 0.04,
@@ -567,21 +537,24 @@ class _MapScreenState extends State<MapScreen> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.2),
-                          blurRadius: 10,
-                          offset: const Offset(0, 5),
-                        ),
-                      ],
+                  GestureDetector(
+                    onTap: () => _sidebarKey.currentState?.toggleDrawer(),
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.2),
+                            blurRadius: 10,
+                            offset: const Offset(0, 5),
+                          ),
+                        ],
+                      ),
+                      child: const Icon(Icons.menu, color: Colors.black),
                     ),
-                    child: const Icon(Icons.menu, color: Colors.black),
                   ),
                   const SizedBox(width: 10),
                   Column(
@@ -756,6 +729,7 @@ class _MapScreenState extends State<MapScreen> {
                   ),
                 ),
               ),
+              SideBar(key: _sidebarKey),
           ],
         ),
       ),
