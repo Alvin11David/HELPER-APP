@@ -224,70 +224,101 @@ class _MapScreenState extends State<MapScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => Container(
-        width: double.infinity,
-        height: 200,
-        child: Stack(
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(top: 16, left: 16),
-                  child: Text(
-                    worker['businessName'] ?? 'Unknown',
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(left: 16),
-                  child: Text(
-                    worker['workplaceLocationText'] ?? 'Unknown',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.normal,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Padding(
-                  padding: const EdgeInsets.only(left: 16),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.green,
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    child: const Text(
-                      'Available',
-                      style: TextStyle(color: Colors.black),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            Positioned(
-              top: 10,
-              right: 10,
-              child: Row(
+      builder: (context) {
+        final workerLatLng = worker['workplaceLatLng'] as GeoPoint?;
+        final distance = (_currentPosition != null && workerLatLng != null)
+            ? Geolocator.distanceBetween(
+                _currentPosition!.latitude,
+                _currentPosition!.longitude,
+                workerLatLng.latitude,
+                workerLatLng.longitude,
+              )
+            : 0.0;
+        final distanceText = distance > 1000
+            ? '${(distance / 1000).toStringAsFixed(1)} km'
+            : '${distance.toInt()} m';
+        return Container(
+          width: double.infinity,
+          height: 200,
+          child: Stack(
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.star, color: Colors.black),
-                  const SizedBox(width: 4),
-                  const Text('4.6'),
-                  const SizedBox(width: 4),
-                  const Text('(200)'),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 16, left: 16),
+                    child: Text(
+                      worker['businessName'] ?? 'Unknown',
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 16),
+                    child: Text(
+                      worker['workplaceLocationText'] ?? 'Unknown',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.normal,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 16),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.green,
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      child: const Text(
+                        'Available',
+                        style: TextStyle(color: Colors.black),
+                      ),
+                    ),
+                  ),
                 ],
               ),
-            ),
-          ],
-        ),
-      ),
+              Positioned(
+                top: 10,
+                right: 10,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.star, color: Colors.black),
+                        const SizedBox(width: 4),
+                        const Text('4.6'),
+                        const SizedBox(width: 4),
+                        const Text('(200)'),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        Icon(Icons.location_on, color: Colors.black),
+                        const SizedBox(width: 4),
+                        Text(distanceText),
+                        const SizedBox(width: 4),
+                        const Text(
+                          'from you',
+                          style: TextStyle(color: Colors.black),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
