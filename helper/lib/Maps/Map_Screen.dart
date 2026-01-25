@@ -239,7 +239,7 @@ class _MapScreenState extends State<MapScreen> {
             : '${distance.toInt()} m';
         return Container(
           width: double.infinity,
-          height: 200,
+          height: 600,
           child: Stack(
             children: [
               Column(
@@ -281,6 +281,69 @@ class _MapScreenState extends State<MapScreen> {
                         'Available',
                         style: TextStyle(color: Colors.black),
                       ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Center(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.orange,
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.directions, color: Colors.black),
+                          const SizedBox(width: 4),
+                          const Text(
+                            'Directions',
+                            style: TextStyle(color: Colors.black),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    height: 128, // Height for huge rectangular images
+                    child: GridView(
+                      scrollDirection: Axis.horizontal,
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 1,
+                          ),
+                      shrinkWrap: true,
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      children:
+                          (worker['portfolioFiles'] as List<dynamic>? ?? [])
+                              .take(4)
+                              .map(
+                                (url) => GestureDetector(
+                                  onTap: () => showDialog(
+                                    context: context,
+                                    builder: (context) => Dialog(
+                                      child: Image.network(url as String),
+                                    ),
+                                  ),
+                                  child: Container(
+                                    height: 120,
+                                    width: 180,
+                                    margin: const EdgeInsets.all(4),
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(10),
+                                      image: DecorationImage(
+                                        image: NetworkImage(url as String),
+                                        fit: BoxFit.cover,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              )
+                              .toList(),
                     ),
                   ),
                 ],
