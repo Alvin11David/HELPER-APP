@@ -246,7 +246,28 @@ class _MapScreenState extends State<MapScreen> {
                   padding: const EdgeInsets.only(left: 16),
                   child: Text(
                     worker['workplaceLocationText'] ?? 'Unknown',
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.normal),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.normal,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Padding(
+                  padding: const EdgeInsets.only(left: 16),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.green,
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    child: const Text(
+                      'Available',
+                      style: TextStyle(color: Colors.black),
+                    ),
                   ),
                 ),
               ],
