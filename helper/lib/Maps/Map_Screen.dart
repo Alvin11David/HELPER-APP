@@ -370,8 +370,10 @@ class _MapScreenState extends State<MapScreen> {
                   ),
                   const SizedBox(height: 10),
                   Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Container(
+                        width: 120,
                         padding: const EdgeInsets.symmetric(
                           horizontal: 16,
                           vertical: 8,
@@ -383,10 +385,12 @@ class _MapScreenState extends State<MapScreen> {
                         child: const Text(
                           'Schedule',
                           style: TextStyle(color: Colors.orange),
+                          textAlign: TextAlign.center,
                         ),
                       ),
-                      const Spacer(),
+                      const SizedBox(width: 20),
                       Container(
+                        width: 120,
                         padding: const EdgeInsets.symmetric(
                           horizontal: 16,
                           vertical: 8,
@@ -398,6 +402,7 @@ class _MapScreenState extends State<MapScreen> {
                         child: const Text(
                           'Book',
                           style: TextStyle(color: Colors.white),
+                          textAlign: TextAlign.center,
                         ),
                       ),
                     ],
