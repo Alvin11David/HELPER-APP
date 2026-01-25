@@ -219,62 +219,37 @@ class _MapScreenState extends State<MapScreen> {
   void _showWorkerDetails(Map<String, dynamic> worker) {
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) {
-        final portfolioFiles = worker['portfolioFiles'] as List<dynamic>? ?? [];
-        final imageUrl = portfolioFiles.isNotEmpty ? portfolioFiles[0] : null;
-        return Container(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (imageUrl != null)
-                Container(
-                  height: 100,
-                  width: 100,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    image: DecorationImage(
-                      image: NetworkImage(imageUrl),
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                ),
-              const SizedBox(height: 16),
-              Text(
+      builder: (context) => Container(
+        width: double.infinity,
+        height: 200,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(top: 16, left: 16),
+              child: Text(
                 worker['businessName'] ?? 'Unknown',
                 style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 8),
-              Text(
-                'Category: ${worker['jobCategoryName'] ?? 'N/A'}',
+            ),
+            Padding(
+              padding: const EdgeInsets.only(left: 16),
+              child: Text(
+                worker['workplaceLocationText'] ?? 'Unknown',
                 style: const TextStyle(fontSize: 16),
               ),
-              const SizedBox(height: 8),
-              Text(
-                'Location: ${worker['workplaceLocationText'] ?? 'N/A'}',
-                style: const TextStyle(fontSize: 16),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Experience: ${worker['yearsExperience'] ?? 'N/A'} years',
-                style: const TextStyle(fontSize: 16),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Pricing: ${worker['pricingType'] ?? 'N/A'} - ${worker['amount'] ?? 'N/A'}',
-                style: const TextStyle(fontSize: 16),
-              ),
-            ],
-          ),
-        );
-      },
+            ),
+          ],
+        ),
+      ),
     );
   }
 
