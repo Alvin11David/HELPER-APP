@@ -346,6 +346,25 @@ class _MapScreenState extends State<MapScreen> {
                               .toList(),
                     ),
                   ),
+                  const SizedBox(height: 8),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'About me',
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        worker['skillsDescription'] ??
+                            'No description available',
+                        style: const TextStyle(color: Colors.black, fontWeight: FontWeight.normal),
+                      ),
+                    ],
+                  ),
                 ],
               ),
               Positioned(
