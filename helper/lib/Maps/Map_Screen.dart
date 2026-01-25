@@ -8,6 +8,7 @@ import 'dart:ui' as ui;
 import 'dart:async';
 import '../Components/Bottom_Nav_Bar.dart';
 import '../Components/User_Name.dart'; // Add this import
+import '../Components/Side_Bar.dart'; // Add this import
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
@@ -138,6 +139,7 @@ class _MapScreenState extends State<MapScreen> {
           imageUrl,
           LatLng(latLng.latitude, latLng.longitude),
           worker['uid'] ?? 'unknown',
+          worker,
         );
         setState(() {
           _markers.add(marker);
@@ -150,6 +152,7 @@ class _MapScreenState extends State<MapScreen> {
     String url,
     LatLng position,
     String id,
+    Map<String, dynamic> worker,
   ) async {
     final response = await http.get(Uri.parse(url));
     final bytes = response.bodyBytes;
@@ -177,6 +180,7 @@ class _MapScreenState extends State<MapScreen> {
       markerId: MarkerId(id),
       position: position,
       icon: BitmapDescriptor.bytes(pngBytes),
+      onTap: () => _showWorkerDetails(worker),
     );
   }
 
@@ -239,7 +243,7 @@ class _MapScreenState extends State<MapScreen> {
             : '${distance.toInt()} m';
         return Container(
           width: double.infinity,
-          height: 600,
+          height: 560,
           child: Stack(
             children: [
               Column(
@@ -368,7 +372,7 @@ class _MapScreenState extends State<MapScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 20),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
