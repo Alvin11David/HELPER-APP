@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:helper/Components/User_Name.dart';
 import 'package:helper/Components/Worker_Profession.dart';
+import 'package:helper/Components/User_Avatar_Circle.dart'; // Add this import
 import '../Document Upload/Profile/Profile_Screen.dart'; // Add this import
 import '../Auth/Sign_In_Screen.dart'; // Add this import
 
@@ -100,27 +101,26 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                   child: Column(
                     children: [
                       // Add your sidebar content here
-                      Container(
-                        margin: EdgeInsets.only(
+                      // Replace the black circle Container with UserAvatarCircle
+                      Padding(
+                        padding: EdgeInsets.only(
                           top: 20,
-                          right: screenWidth * 0.47,
-                        ), // Padding from top and left
-                        width: screenWidth * 0.20 > 70
-                            ? 70
-                            : screenWidth * 0.20, // Max 70, responsive
-                        height: screenWidth * 0.20 > 70
-                            ? 70
-                            : screenWidth * 0.20,
-                        decoration: BoxDecoration(
-                          color: Colors.black,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.4),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
+                          right: screenWidth * 0.40, // adjust if needed
+                        ),
+                        child: Container(
+                          width: 80, // increased width
+                          height: 80, // increased height
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.4),
+                                blurRadius: 16,
+                                offset: Offset(0, 6),
+                              ),
+                            ],
+                          ),
+                          child: UserAvatarCircle(),
                         ),
                       ),
                       // Add Worker's Name text below the circle
@@ -260,7 +260,7 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                                   ),
                                   SizedBox(width: 15),
                                   Text(
-                                    "Availability & Schedule",
+                                    "Availability &\nSchedule",
                                     style: TextStyle(
                                       color: _selectedIndex == 2
                                           ? Colors.orange
@@ -331,7 +331,7 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                           ),
                           const SizedBox(height: 20),
                           GestureDetector(
-                           onTap: () async {
+                            onTap: () async {
                               setState(() => _selectedIndex = 7);
                               toggleDrawer();
                               await FirebaseAuth.instance.signOut();
