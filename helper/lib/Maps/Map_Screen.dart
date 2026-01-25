@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart'; // Add this import
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:http/http.dart' as http;
+import 'dart:typed_data';
+import 'dart:ui' as ui;
+import 'dart:async';
 import '../Components/Bottom_Nav_Bar.dart';
 import '../Components/User_Name.dart'; // Add this import
 
@@ -114,12 +119,80 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
+  Future<void> _loadWorkers() async {
+    final snapshot = await FirebaseFirestore.instance
+        .collection('serviceProviders')
+        .get();
+    for (var doc in snapshot.docs) {
+      final data = doc.data();
+      final latLng = data['workplaceLatLng'] as GeoPoint?;
+      final portfolioFiles = data['portfolioFiles'] as List<dynamic>?;
+      if (latLng != null &&
+          portfolioFiles != null &&
+          portfolioFiles.isNotEmpty) {
+        final imageUrl = portfolioFiles[0] as String;
+        final marker = await _createMarkerFromImage(
+          imageUrl,
+          LatLng(latLng.latitude, latLng.longitude),
+          doc.id,
+        );
+        setState(() {
+          _markers.add(marker);
+        });
+      }
+    }
+  }
+
+  Future<Marker> _createMarkerFromImage(
+    String url,
+    LatLng position,
+    String id,
+  ) async {
+    final response = await http.get(Uri.parse(url));
+    final bytes = response.bodyBytes;
+    final ui.Image image = await _loadImage(bytes);
+    final pictureRecorder = ui.PictureRecorder();
+    final canvas = Canvas(pictureRecorder);
+    final paint = Paint()..isAntiAlias = true;
+    final radius = 35.0;
+    final rect = Rect.fromCircle(
+      center: Offset(radius, radius),
+      radius: radius,
+    );
+    canvas.clipPath(Path()..addOval(rect));
+    canvas.drawImageRect(
+      image,
+      Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble()),
+      Rect.fromLTWH(0, 0, 70, 70),
+      paint,
+    );
+    final picture = pictureRecorder.endRecording();
+    final img = await picture.toImage(70, 70);
+    final byteData = await img.toByteData(format: ui.ImageByteFormat.png);
+    final pngBytes = byteData!.buffer.asUint8List();
+    return Marker(
+      markerId: MarkerId(id),
+      position: position,
+      icon: BitmapDescriptor.bytes(pngBytes),
+    );
+  }
+
+  Future<ui.Image> _loadImage(Uint8List bytes) async {
+    final Completer<ui.Image> completer = Completer();
+    ui.decodeImageFromList(bytes, (ui.Image img) {
+      completer.complete(img);
+    });
+    return completer.future;
+  }
+
   @override
   void initState() {
     super.initState();
     _controller = TextEditingController();
     _focusNode = FocusNode();
-    _getCurrentLocation(); // Request location on load
+    _getCurrentLocation().then(
+      (_) => _loadWorkers(),
+    ); // Request location on load and then load workers
   }
 
   @override
@@ -370,9 +443,7 @@ class _MapScreenState extends State<MapScreen> {
           ],
         ),
       ),
-      bottomNavigationBar: BottomNavBar(
-        currentIndex: 1,
-      ),
+      bottomNavigationBar: BottomNavBar(currentIndex: 1),
     );
   }
 }
