@@ -361,7 +361,44 @@ class _MapScreenState extends State<MapScreen> {
                       Text(
                         worker['skillsDescription'] ??
                             'No description available',
-                        style: const TextStyle(color: Colors.black, fontWeight: FontWeight.normal),
+                        style: const TextStyle(
+                          color: Colors.black,
+                          fontWeight: FontWeight.normal,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.orange),
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        child: const Text(
+                          'Schedule',
+                          style: TextStyle(color: Colors.orange),
+                        ),
+                      ),
+                      const Spacer(),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.orange,
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        child: const Text(
+                          'Book',
+                          style: TextStyle(color: Colors.white),
+                        ),
                       ),
                     ],
                   ),
