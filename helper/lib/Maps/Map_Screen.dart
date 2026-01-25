@@ -8,7 +8,6 @@ import 'dart:ui' as ui;
 import 'dart:async';
 import '../Components/Bottom_Nav_Bar.dart';
 import '../Components/User_Name.dart'; // Add this import
-import '../Components/Side_Bar.dart'; // Add this import
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
