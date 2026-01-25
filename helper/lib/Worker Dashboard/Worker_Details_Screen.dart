@@ -80,6 +80,9 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
             if (data != null && data['amount'] != null) {
               _amount = int.tryParse(data['amount'].toString());
             }
+            if (data != null && data['experienceLevel'] != null) {
+              _experienceLevel = data['experienceLevel'];
+            }
           });
         }
       } catch (e) {
@@ -263,7 +266,7 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                       top: h * 0.4 + 35,
                       left: w * 0.04,
                       child: Text(
-                        '${_jobCategoryName ?? ''} - ${_yearsExperience != null ? _yearsExperience.toString() : ''} Years of Experience',
+                        '${_jobCategoryName ?? ''} - ${_experienceLevel ?? ''} ${_yearsExperience != null ? _yearsExperience.toString() : ''} Years of Experience',
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 14,
@@ -392,7 +395,7 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                       top: h * 0.4 + 230,
                       left: w * 0.04,
                       child: SizedBox(
-                        height: 110,
+                        height: 120,
                         width: w * 0.92,
                         child: SingleChildScrollView(
                           scrollDirection: Axis.horizontal,
@@ -403,7 +406,7 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                                 children: [
                                   Container(
                                     width: 280,
-                                    height: 110,
+                                    height: 120,
                                     decoration: BoxDecoration(
                                       border: Border.all(
                                         color: Colors.white,
@@ -432,7 +435,7 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                                             'The employer’s review about the services provided by the worker...',
                                             style: TextStyle(
                                               color: Colors.white,
-                                              fontSize: 14,
+                                              fontSize: 12,
                                             ),
                                           ),
                                           const SizedBox(height: 5),

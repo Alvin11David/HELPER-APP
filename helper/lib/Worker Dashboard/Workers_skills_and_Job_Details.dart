@@ -1,5 +1,3 @@
-// ignore_for_file: depend_on_referenced_packages
-
 import 'dart:ui';
 import 'dart:async';
 import 'package:flutter/material.dart';
@@ -13,7 +11,8 @@ import 'package:uuid/uuid.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:dio/dio.dart';
-
+import 'package:intl/intl.dart'; // Add this import for NumberFormat
+import '../Worker Dashboard/Workers_Dashboard_Screen.dart'; // Add this import
 
 class WorkerSkillsJobDetailsScreen extends StatefulWidget {
   const WorkerSkillsJobDetailsScreen({super.key});
@@ -48,7 +47,7 @@ class _WorkerSkillsJobDetailsScreenState
 
   // Step 3 state
   final List<PlatformFile> _pickedFiles = [];
-  
+
   bool _saving = false;
 
   // professions loaded from Firestore
@@ -67,10 +66,10 @@ class _WorkerSkillsJobDetailsScreenState
   List<Map<String, dynamic>> _suggestions = [];
   bool _searching = false;
 
-  static const String _googleKey = "AIzaSyBTk9548rr1JiKe1guF1i8z2wqHV8CZjRA"; // better: load from env
+  static const String _googleKey =
+      "AIzaSyBUJXjLSEFn_8OfVkaaLAIHYGUcGJEDD9w"; // better: load from env
 
   Timer? _debounce;
-
 
   @override
   void initState() {
@@ -82,7 +81,6 @@ class _WorkerSkillsJobDetailsScreenState
     _recalcProgress();
     _loadCategories();
     _initMyLocation();
-
   }
 
   @override
@@ -205,9 +203,7 @@ class _WorkerSkillsJobDetailsScreenState
           .orderBy('name')
           .get();
 
-      _categories = snap.docs
-          .map((d) => {'id': d.id, ...d.data()})
-          .toList();
+      _categories = snap.docs.map((d) => {'id': d.id, ...d.data()}).toList();
     } catch (e) {
       _toast('Failed to load categories: $e');
     } finally {
@@ -338,10 +334,7 @@ class _WorkerSkillsJobDetailsScreenState
       final preds = (res.data["predictions"] as List? ?? []);
       setState(() {
         _suggestions = preds.map((p) {
-          return {
-            "description": p["description"],
-            "place_id": p["place_id"],
-          };
+          return {"description": p["description"], "place_id": p["place_id"]};
         }).toList();
       });
     } catch (e) {
@@ -409,31 +402,32 @@ class _WorkerSkillsJobDetailsScreenState
           .collection('serviceProviders')
           .doc(user.uid);
 
-      await doc.set(
-        {
-          'uid': user.uid,
-          'jobCategoryId': _jobCategoryId,
-          'jobCategoryName': _jobCategory,
-          'businessName': _businessNameCtrl.text.trim(),
-          'skillsDescription': _skillsDescCtrl.text.trim(),
-          'yearsExperience': _yearsExp,
-          'pricingType': _pricingType,
-          'amount': int.tryParse(_amountCtrl.text.trim()) ?? 0,
-          'workplaceLocationText': _workplaceCtrl.text.trim(),
-          'workplaceLatLng': _pickedLatLng == null
-              ? null
-              : GeoPoint(_pickedLatLng!.latitude, _pickedLatLng!.longitude),
-          'experienceLevel': _experienceLevel,
-          'pickedPlaceOnMap': _pickedPlaceOnMap,
-          'portfolioFiles': urls, // list of download urls
-          'updatedAt': FieldValue.serverTimestamp(),
-          'onboardingStep': 'skills_job_details_done',
-        },
-        SetOptions(merge: true),
-      );
+      await doc.set({
+        'uid': user.uid,
+        'jobCategoryId': _jobCategoryId,
+        'jobCategoryName': _jobCategory,
+        'businessName': _businessNameCtrl.text.trim(),
+        'skillsDescription': _skillsDescCtrl.text.trim(),
+        'yearsExperience': _yearsExp,
+        'pricingType': _pricingType,
+        'amount':
+            int.tryParse(_amountCtrl.text.trim().replaceAll(',', '')) ?? 0,
+        'workplaceLocationText': _workplaceCtrl.text.trim(),
+        'workplaceLatLng': _pickedLatLng == null
+            ? null
+            : GeoPoint(_pickedLatLng!.latitude, _pickedLatLng!.longitude),
+        'experienceLevel': _experienceLevel,
+        'pickedPlaceOnMap': _pickedPlaceOnMap,
+        'portfolioFiles': urls, // list of download urls
+        'updatedAt': FieldValue.serverTimestamp(),
+        'onboardingStep': 'skills_job_details_done',
+      }, SetOptions(merge: true));
 
       _toast('Submitted ✅ Saved to backend');
-      // TODO: Navigate to next screen
+      // Navigate to WorkersDashboardScreen
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => WorkersDashboardScreen()),
+      );
     } catch (e) {
       _toast('Submit failed: $e');
     } finally {
@@ -451,8 +445,7 @@ class _WorkerSkillsJobDetailsScreenState
 
       final ext = (f.extension ?? 'file').toLowerCase();
       final name = const Uuid().v4();
-      final ref =
-          storage.ref('serviceProviders/$uid/portfolio/$name.$ext');
+      final ref = storage.ref('serviceProviders/$uid/portfolio/$name.$ext');
 
       await ref.putFile(file);
       final url = await ref.getDownloadURL();
@@ -769,12 +762,12 @@ class _WorkerSkillsJobDetailsScreenState
           _designPickerPill(
             w: w,
             h: h,
-            text: _jobCategory ??
+            text:
+                _jobCategory ??
                 (_loadingCategories
                     ? 'Loading categories...'
                     : 'Select Job Category'),
-            onTap:
-                _loadingCategories ? () {} : () => _pickJobCategory(),
+            onTap: _loadingCategories ? () {} : () => _pickJobCategory(),
           ),
 
           SizedBox(height: h * 0.018),
@@ -858,11 +851,14 @@ class _WorkerSkillsJobDetailsScreenState
             controller: _amountCtrl,
             hint: 'Enter the Amount to be paid per {Hour/Fixed}',
             keyboardType: TextInputType.number,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            inputFormatters: [
+              NumberTextInputFormatter(),
+            ], // Replace digitsOnly with custom formatter
             validator: (v) {
               final t = (v ?? '').trim();
               if (t.isEmpty) return 'Amount is required';
-              if (int.tryParse(t) == null) return 'Enter a valid number';
+              if (int.tryParse(t.replaceAll(',', '')) == null)
+                return 'Enter a valid number'; // Parse without commas
               return null;
             },
           ),
@@ -943,15 +939,10 @@ class _WorkerSkillsJobDetailsScreenState
       key: const ValueKey('step3'),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _liveMap(w, h, taller: true),
         SizedBox(height: h * 0.02),
-        _label('Upload Images', w),
+        _label('Upload Work Images', w),
         SizedBox(height: h * 0.012),
-        _uploadBox(
-          w: w,
-          h: h,
-          onTap: _pickFiles,
-        ),
+        _uploadBox(w: w, h: h, onTap: _pickFiles),
       ],
     );
   }
@@ -1094,7 +1085,9 @@ class _WorkerSkillsJobDetailsScreenState
                       child: SizedBox(
                         height: h * 0.060,
                         child: ElevatedButton(
-                          onPressed: _next, // submit
+                          onPressed: _saving
+                              ? null
+                              : _next, // Disable when saving
                           style: ElevatedButton.styleFrom(
                             backgroundColor: _brandOrange,
                             elevation: 0,
@@ -1102,15 +1095,19 @@ class _WorkerSkillsJobDetailsScreenState
                               borderRadius: BorderRadius.circular(30),
                             ),
                           ),
-                          child: Text(
-                            'Submit',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontFamily: 'Inter',
-                              fontWeight: FontWeight.w900,
-                              fontSize: w * 0.040,
-                            ),
-                          ),
+                          child: _saving
+                              ? CircularProgressIndicator(
+                                  color: Colors.white,
+                                ) // White progress indicator
+                              : Text(
+                                  'Submit',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontFamily: 'Inter',
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: w * 0.040,
+                                  ),
+                                ),
                         ),
                       ),
                     ),
@@ -1473,9 +1470,7 @@ class _WorkerSkillsJobDetailsScreenState
               c.animateCamera(CameraUpdate.newLatLngZoom(initial, 14));
             }
           },
-          markers: {
-            if (_pickedMarker != null) _pickedMarker!,
-          },
+          markers: {if (_pickedMarker != null) _pickedMarker!},
           onTap: (latLng) async {
             setState(() {
               _pickedLatLng = latLng;
@@ -1517,7 +1512,6 @@ class _WorkerSkillsJobDetailsScreenState
       // don't block user if reverse geocode fails
     }
   }
-
 
   Widget _mapPlaceholder(double w, double h, {bool taller = false}) {
     final mapH = taller ? h * 0.34 : h * 0.24;
@@ -1625,10 +1619,8 @@ class _WorkerSkillsJobDetailsScreenState
         child: ListView.separated(
           shrinkWrap: true,
           itemCount: _suggestions.length,
-          separatorBuilder: (_, __) => Divider(
-            height: 1,
-            color: Colors.black.withOpacity(0.08),
-          ),
+          separatorBuilder: (_, __) =>
+              Divider(height: 1, color: Colors.black.withOpacity(0.08)),
           itemBuilder: (_, i) {
             final s = _suggestions[i];
             return ListTile(
@@ -1996,3 +1988,21 @@ class _CategoryPickerSheetState extends State<_CategoryPickerSheet> {
   }
 }
 
+class NumberTextInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    if (newValue.text.isEmpty) return newValue;
+
+    final intValue = int.tryParse(newValue.text.replaceAll(',', ''));
+    if (intValue == null) return oldValue;
+
+    final formatted = NumberFormat('#,###').format(intValue);
+    return newValue.copyWith(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
+    );
+  }
+}
