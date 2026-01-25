@@ -19,7 +19,7 @@ class MapScreen extends StatefulWidget {
 
 class _MapScreenState extends State<MapScreen> {
   final GlobalKey<SideBarState> _sidebarKey = GlobalKey();
-  final String _googleApiKey = 'AIzaSyBTk9548rr1JiKe1guF1i8z2wqHV8CZjRA';
+  final String _googleApiKey = 'AIzaSyBUJXjLSEFn_8OfVkaaLAIHYGUcGJEDD9w';
   bool _showFilters = false;
 
   late GoogleMapController mapController;
