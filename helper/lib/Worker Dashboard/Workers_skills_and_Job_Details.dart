@@ -12,6 +12,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:dio/dio.dart';
 import 'package:intl/intl.dart'; // Add this import for NumberFormat
+import '../Worker Dashboard/Workers_Dashboard_Screen.dart'; // Add this import
 
 class WorkerSkillsJobDetailsScreen extends StatefulWidget {
   const WorkerSkillsJobDetailsScreen({super.key});
@@ -409,7 +410,8 @@ class _WorkerSkillsJobDetailsScreenState
         'skillsDescription': _skillsDescCtrl.text.trim(),
         'yearsExperience': _yearsExp,
         'pricingType': _pricingType,
-        'amount': int.tryParse(_amountCtrl.text.trim()) ?? 0,
+        'amount':
+            int.tryParse(_amountCtrl.text.trim().replaceAll(',', '')) ?? 0,
         'workplaceLocationText': _workplaceCtrl.text.trim(),
         'workplaceLatLng': _pickedLatLng == null
             ? null
@@ -422,7 +424,10 @@ class _WorkerSkillsJobDetailsScreenState
       }, SetOptions(merge: true));
 
       _toast('Submitted ✅ Saved to backend');
-      // TODO: Navigate to next screen
+      // Navigate to WorkersDashboardScreen
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => WorkersDashboardScreen()),
+      );
     } catch (e) {
       _toast('Submit failed: $e');
     } finally {
@@ -934,9 +939,8 @@ class _WorkerSkillsJobDetailsScreenState
       key: const ValueKey('step3'),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _liveMap(w, h, taller: true),
         SizedBox(height: h * 0.02),
-        _label('Upload Images', w),
+        _label('Upload Work Images', w),
         SizedBox(height: h * 0.012),
         _uploadBox(w: w, h: h, onTap: _pickFiles),
       ],
@@ -1081,7 +1085,9 @@ class _WorkerSkillsJobDetailsScreenState
                       child: SizedBox(
                         height: h * 0.060,
                         child: ElevatedButton(
-                          onPressed: _next, // submit
+                          onPressed: _saving
+                              ? null
+                              : _next, // Disable when saving
                           style: ElevatedButton.styleFrom(
                             backgroundColor: _brandOrange,
                             elevation: 0,
@@ -1089,15 +1095,19 @@ class _WorkerSkillsJobDetailsScreenState
                               borderRadius: BorderRadius.circular(30),
                             ),
                           ),
-                          child: Text(
-                            'Submit',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontFamily: 'Inter',
-                              fontWeight: FontWeight.w900,
-                              fontSize: w * 0.040,
-                            ),
-                          ),
+                          child: _saving
+                              ? CircularProgressIndicator(
+                                  color: Colors.white,
+                                ) // White progress indicator
+                              : Text(
+                                  'Submit',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontFamily: 'Inter',
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: w * 0.040,
+                                  ),
+                                ),
                         ),
                       ),
                     ),
