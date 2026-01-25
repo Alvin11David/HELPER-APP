@@ -29,6 +29,9 @@ class _MapScreenState extends State<MapScreen> {
   LatLng? _currentPosition; // To store current location
   Set<Marker> _markers = {}; // To add a marker for current location
 
+  List<Map<String, dynamic>> _workers = [];
+  List<Map<String, dynamic>> _suggestions = [];
+
   int _selectedIndex = 1;
 
   late TextEditingController _controller;
@@ -123,10 +126,10 @@ class _MapScreenState extends State<MapScreen> {
     final snapshot = await FirebaseFirestore.instance
         .collection('serviceProviders')
         .get();
-    for (var doc in snapshot.docs) {
-      final data = doc.data();
-      final latLng = data['workplaceLatLng'] as GeoPoint?;
-      final portfolioFiles = data['portfolioFiles'] as List<dynamic>?;
+    _workers = snapshot.docs.map((doc) => doc.data()).toList();
+    for (var worker in _workers) {
+      final latLng = worker['workplaceLatLng'] as GeoPoint?;
+      final portfolioFiles = worker['portfolioFiles'] as List<dynamic>?;
       if (latLng != null &&
           portfolioFiles != null &&
           portfolioFiles.isNotEmpty) {
@@ -134,7 +137,7 @@ class _MapScreenState extends State<MapScreen> {
         final marker = await _createMarkerFromImage(
           imageUrl,
           LatLng(latLng.latitude, latLng.longitude),
-          doc.id,
+          worker['uid'] ?? 'unknown',
         );
         setState(() {
           _markers.add(marker);
@@ -154,7 +157,7 @@ class _MapScreenState extends State<MapScreen> {
     final pictureRecorder = ui.PictureRecorder();
     final canvas = Canvas(pictureRecorder);
     final paint = Paint()..isAntiAlias = true;
-    final radius = 35.0;
+    final radius = 22.5;
     final rect = Rect.fromCircle(
       center: Offset(radius, radius),
       radius: radius,
@@ -163,11 +166,11 @@ class _MapScreenState extends State<MapScreen> {
     canvas.drawImageRect(
       image,
       Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble()),
-      Rect.fromLTWH(0, 0, 70, 70),
+      Rect.fromLTWH(0, 0, 45, 45),
       paint,
     );
     final picture = pictureRecorder.endRecording();
-    final img = await picture.toImage(70, 70);
+    final img = await picture.toImage(45, 45);
     final byteData = await img.toByteData(format: ui.ImageByteFormat.png);
     final pngBytes = byteData!.buffer.asUint8List();
     return Marker(
@@ -185,11 +188,102 @@ class _MapScreenState extends State<MapScreen> {
     return completer.future;
   }
 
+  void _onSearchChanged() {
+    final query = _controller.text.toLowerCase();
+    if (query.isEmpty) {
+      setState(() => _suggestions = []);
+      return;
+    }
+    final filtered = _workers
+        .where((worker) {
+          final location = worker['workplaceLocationText']?.toLowerCase() ?? '';
+          final category = worker['jobCategoryName']?.toLowerCase() ?? '';
+          final categoryId = worker['jobCategoryId']?.toLowerCase() ?? '';
+          final business = worker['businessName']?.toLowerCase() ?? '';
+          return location.contains(query) ||
+              category.contains(query) ||
+              categoryId.contains(query) ||
+              business.contains(query);
+        })
+        .map(
+          (worker) => {
+            'text':
+                '${worker['businessName']} - ${worker['jobCategoryName']} in ${worker['workplaceLocationText']}',
+            'worker': worker,
+          },
+        )
+        .toList();
+    setState(() => _suggestions = filtered);
+  }
+
+  void _showWorkerDetails(Map<String, dynamic> worker) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        final portfolioFiles = worker['portfolioFiles'] as List<dynamic>? ?? [];
+        final imageUrl = portfolioFiles.isNotEmpty ? portfolioFiles[0] : null;
+        return Container(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (imageUrl != null)
+                Container(
+                  height: 100,
+                  width: 100,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    image: DecorationImage(
+                      image: NetworkImage(imageUrl),
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+              const SizedBox(height: 16),
+              Text(
+                worker['businessName'] ?? 'Unknown',
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Category: ${worker['jobCategoryName'] ?? 'N/A'}',
+                style: const TextStyle(fontSize: 16),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Location: ${worker['workplaceLocationText'] ?? 'N/A'}',
+                style: const TextStyle(fontSize: 16),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Experience: ${worker['yearsExperience'] ?? 'N/A'} years',
+                style: const TextStyle(fontSize: 16),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Pricing: ${worker['pricingType'] ?? 'N/A'} - ${worker['amount'] ?? 'N/A'}',
+                style: const TextStyle(fontSize: 16),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   void initState() {
     super.initState();
     _controller = TextEditingController();
     _focusNode = FocusNode();
+    _controller.addListener(_onSearchChanged);
     _getCurrentLocation().then(
       (_) => _loadWorkers(),
     ); // Request location on load and then load workers
@@ -197,6 +291,7 @@ class _MapScreenState extends State<MapScreen> {
 
   @override
   void dispose() {
+    _controller.removeListener(_onSearchChanged);
     _controller.dispose();
     _focusNode.dispose();
     super.dispose();
@@ -398,7 +493,7 @@ class _MapScreenState extends State<MapScreen> {
               ),
             ),
             Positioned(
-              top: 125,
+              top: 135,
               left: w * 0.04,
               child: Row(
                 children: [
@@ -440,6 +535,55 @@ class _MapScreenState extends State<MapScreen> {
                 ],
               ),
             ),
+            if (_suggestions.isNotEmpty)
+              Positioned(
+                top: 125,
+                left: w * 0.04,
+                right: w * 0.04,
+                child: Container(
+                  height: 200,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 10,
+                        offset: Offset(0, 5),
+                      ),
+                    ],
+                  ),
+                  child: ListView.builder(
+                    itemCount: _suggestions.length,
+                    itemBuilder: (context, index) {
+                      final suggestion = _suggestions[index];
+                      return ListTile(
+                        leading: Icon(Icons.search, color: Colors.black),
+                        title: Text(
+                          suggestion['text'],
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        onTap: () {
+                          final worker = suggestion['worker'];
+                          final latLng = worker['workplaceLatLng'] as GeoPoint?;
+                          if (latLng != null && mapController != null) {
+                            mapController.animateCamera(
+                              CameraUpdate.newLatLngZoom(
+                                LatLng(latLng.latitude, latLng.longitude),
+                                15.0,
+                              ),
+                            );
+                          }
+                          _showWorkerDetails(worker);
+                          setState(() => _suggestions = []);
+                          _focusNode.unfocus();
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ),
           ],
         ),
       ),
