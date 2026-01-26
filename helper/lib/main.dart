@@ -24,6 +24,7 @@ import 'package:helper/Worker%20Dashboard/Active_Job_detail.dart';
 import 'package:helper/Worker%20Dashboard/Workers_Earning_Detail_Screen.dart';
 import 'package:helper/Worker%20Dashboard/Workers_Reschedule_screen.dart';
 import 'package:helper/Worker%20Dashboard/Workers_skills_and_Job_Details.dart';
+import 'package:helper/Employer%20Dashboard/Employer_Dashboard_Screen.dart';
 import 'firebase_options.dart';
 
 final GlobalKey<NavigatorState> appNavKey = GlobalKey<NavigatorState>();
@@ -50,6 +51,7 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});

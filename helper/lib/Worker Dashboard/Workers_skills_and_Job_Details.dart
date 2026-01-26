@@ -17,6 +17,7 @@ import '../Worker Dashboard/Workers_Dashboard_Screen.dart'; // Add this import
 class WorkerSkillsJobDetailsScreen extends StatefulWidget {
   const WorkerSkillsJobDetailsScreen({super.key});
 
+
   @override
   State<WorkerSkillsJobDetailsScreen> createState() =>
       _WorkerSkillsJobDetailsScreenState();
@@ -402,6 +403,13 @@ class _WorkerSkillsJobDetailsScreenState
           .collection('serviceProviders')
           .doc(user.uid);
 
+      final searchableText = [
+        _businessNameCtrl.text.trim(),
+        _jobCategoryId ?? '',
+        _jobCategory ?? '',
+        _workplaceCtrl.text.trim(),
+      ].join(' ').toLowerCase().replaceAll(RegExp(r'\s+'), ' ').trim();
+
       await doc.set({
         'uid': user.uid,
         'jobCategoryId': _jobCategoryId,
@@ -421,6 +429,10 @@ class _WorkerSkillsJobDetailsScreenState
         'portfolioFiles': urls, // list of download urls
         'updatedAt': FieldValue.serverTimestamp(),
         'onboardingStep': 'skills_job_details_done',
+
+        // 🔍 SEARCH ENGINE FIELDS
+        'isActive': true,
+        'searchableText': searchableText,
       }, SetOptions(merge: true));
 
       _toast('Submitted ✅ Saved to backend');
