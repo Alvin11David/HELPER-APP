@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:helper/Components/User_Name.dart';
+import 'package:helper/Components/Side_Bar.dart';
 import 'package:helper/Worker%20Dashboard/Worker_Details_Screen.dart';
 import '../Components/Bottom_Nav_Bar.dart';
 
@@ -17,6 +18,7 @@ class EmployerDashboardScreen extends StatefulWidget {
 
 class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
   int _selectedIndex = 0;
+  final GlobalKey<SideBarState> _sidebarKey = GlobalKey();
 
   void _onItemTapped(int index) async {
     setState(() {
@@ -913,14 +915,17 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: const BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
+                      GestureDetector(
+                        onTap: () => _sidebarKey.currentState?.toggleDrawer(),
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: const BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.menu, color: Colors.black),
                         ),
-                        child: const Icon(Icons.menu, color: Colors.black),
                       ),
                       const SizedBox(width: 10),
                       Column(
@@ -940,6 +945,7 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                     ],
                   ),
                 ),
+                SideBar(key: _sidebarKey),
               ],
             ),
           ),
