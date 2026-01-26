@@ -7,6 +7,7 @@ import 'package:helper/Components/User_Name.dart';
 import 'package:helper/Components/Side_Bar.dart';
 import 'package:helper/Worker%20Dashboard/Worker_Details_Screen.dart';
 import '../Components/Bottom_Nav_Bar.dart';
+import 'All_Categories_Screen.dart';
 
 class EmployerDashboardScreen extends StatefulWidget {
   const EmployerDashboardScreen({super.key});
@@ -474,12 +475,18 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                                 color: Colors.white,
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(Icons.home, color: Colors.black),
+                              child: const Icon(
+                                Icons.home,
+                                color: Colors.black,
+                              ),
                             ),
                             const SizedBox(height: 5),
                             const Text(
                               'House',
-                              style: TextStyle(color: Colors.white, fontSize: 12),
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                              ),
                             ),
                           ],
                         ),
@@ -500,7 +507,10 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                             const SizedBox(height: 5),
                             const Text(
                               'Electricity',
-                              style: TextStyle(color: Colors.white, fontSize: 12),
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                              ),
                             ),
                           ],
                         ),
@@ -521,7 +531,10 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                             const SizedBox(height: 5),
                             const Text(
                               'Driver',
-                              style: TextStyle(color: Colors.white, fontSize: 12),
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                              ),
                             ),
                           ],
                         ),
@@ -542,30 +555,44 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                             const SizedBox(height: 5),
                             const Text(
                               'Plumber',
-                              style: TextStyle(color: Colors.white, fontSize: 12),
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                              ),
                             ),
                           ],
                         ),
-                        Column(
-                          children: [
-                            Container(
-                              width: 50,
-                              height: 50,
-                              decoration: const BoxDecoration(
-                                color: Colors.white,
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.more_horiz,
-                                color: Colors.black,
-                              ),
+                        GestureDetector(
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const AllCategoriesScreen(),
                             ),
-                            const SizedBox(height: 5),
-                            const Text(
-                              'More',
-                              style: TextStyle(color: Colors.white, fontSize: 12),
-                            ),
-                          ],
+                          ),
+                          child: Column(
+                            children: [
+                              Container(
+                                width: 50,
+                                height: 50,
+                                decoration: const BoxDecoration(
+                                  color: Colors.white,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.more_horiz,
+                                  color: Colors.black,
+                                ),
+                              ),
+                              const SizedBox(height: 5),
+                              const Text(
+                                'More',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
@@ -631,7 +658,7 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                               ),
                             );
                           }
-        
+
                           return StreamBuilder<
                             QuerySnapshot<Map<String, dynamic>>
                           >(
@@ -653,39 +680,39 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                                   child: CircularProgressIndicator(),
                                 );
                               }
-        
+
                               final docs = snap.data!.docs;
-        
+
                               // OPTIONAL geofence radius (km). Set to null to show all.
                               const double? radiusKm =
                                   15; // change to 5, 10, 20 etc
-        
+
                               // build list with distances
                               final scored = <Map<String, dynamic>>[];
-        
+
                               for (final doc in docs) {
                                 final d = doc.data();
                                 final gp = d['workplaceLatLng'];
                                 if (gp is! GeoPoint) continue;
-        
+
                                 final km = _kmFromCurrent(gp);
-        
+
                                 if (radiusKm != null && km > radiusKm) continue;
-        
+
                                 scored.add({
                                   ...d,
                                   '_distanceKm': km,
                                   '_docId': doc.id,
                                 });
                               }
-        
+
                               // sort shortest distance first
                               scored.sort((a, b) {
                                 final ak = (a['_distanceKm'] as num).toDouble();
                                 final bk = (b['_distanceKm'] as num).toDouble();
                                 return ak.compareTo(bk);
                               });
-        
+
                               if (scored.isEmpty) {
                                 return const Center(
                                   child: Text(
@@ -694,16 +721,17 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                                   ),
                                 );
                               }
-        
+
                               final show = scored.take(10).toList();
-        
+
                               return ListView.separated(
                                 scrollDirection: Axis.horizontal,
                                 padding: EdgeInsets.only(right: w * 0.04),
                                 itemCount: show.length,
                                 separatorBuilder: (_, __) =>
                                     SizedBox(width: w * 0.05),
-                                itemBuilder: (_, i) => _providerCard(w, show[i]),
+                                itemBuilder: (_, i) =>
+                                    _providerCard(w, show[i]),
                               );
                             },
                           );
@@ -751,7 +779,9 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                       height: w * 0.8,
                       child: _hasQuery
                           ? (_searching
-                                ? const Center(child: CircularProgressIndicator())
+                                ? const Center(
+                                    child: CircularProgressIndicator(),
+                                  )
                                 : (_searchResults.isEmpty
                                       ? const Center(child: Text("No matches"))
                                       : ListView.separated(
@@ -784,7 +814,9 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                                   return Center(
                                     child: Text(
                                       "Firestore error: ${snap.error}",
-                                      style: const TextStyle(color: Colors.white),
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                      ),
                                     ),
                                   );
                                 }
@@ -799,7 +831,7 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                                     child: Text("No providers yet"),
                                   );
                                 }
-        
+
                                 final docs = snap.data!.docs;
                                 return ListView.separated(
                                   scrollDirection: Axis.horizontal,
@@ -833,7 +865,8 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                             Padding(
                               padding: EdgeInsets.symmetric(vertical: 10),
                               child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceEvenly,
                                 children: [
                                   Container(
                                     width: 80,
@@ -898,9 +931,10 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                                       itemCount: _suggestionDocs.length,
                                       itemBuilder: (context, index) {
                                         final d = _suggestionDocs[index].data();
-        
+
                                         final businessName =
-                                            (d['businessName'] ?? '').toString();
+                                            (d['businessName'] ?? '')
+                                                .toString();
                                         final jobCategoryName =
                                             (d['jobCategoryName'] ?? '')
                                                 .toString();
@@ -910,14 +944,14 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                                         final searchable =
                                             (d['searchableText'] ?? '')
                                                 .toString();
-        
+
                                         final displayLabel =
                                             businessName.isNotEmpty
                                             ? businessName
                                             : jobCategoryName.isNotEmpty
                                             ? jobCategoryName
                                             : location;
-        
+
                                         return ListTile(
                                           title: Text(displayLabel),
                                           subtitle: Text(
@@ -928,12 +962,12 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                                           onTap: () async {
                                             _controller.text = searchable;
                                             _focusNode.unfocus();
-        
+
                                             await _runSearch(
                                               searchable,
                                               fetchResults: true,
                                             );
-        
+
                                             setState(() {
                                               _suggestionDocs = [];
                                             });

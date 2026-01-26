@@ -229,7 +229,7 @@ class _SignInScreenState extends State<SignInScreen> {
     if (!mounted) return;
     Navigator.pushAndRemoveUntil(
       context,
-      MaterialPageRoute(builder: (_) => const RoleSelectionScreen()),
+      MaterialPageRoute(builder: (_) => const WorkerSkillsJobDetailsScreen()),
       (_) => false,
     );
   }
