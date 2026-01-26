@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:helper/Components/User_Name.dart';
+import 'package:helper/Worker%20Dashboard/Worker_Details_Screen.dart';
 import '../Components/Bottom_Nav_Bar.dart';
 
 class EmployerDashboardScreen extends StatefulWidget {
@@ -208,9 +209,25 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
     
     final dist = d['_distanceKm'];
     final distText = (dist is num) ? "${dist.toStringAsFixed(1)} km" : "";
+    final docId = (d['_docId'] ?? '').toString();
 
-    return Stack(
-      children: [
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const WorkerDetailsScreen(),
+            settings: RouteSettings(
+              arguments: {
+                'docId': docId,
+                'data': d,
+              },
+            ),
+          ),
+        );
+      },
+      child: Stack(
+        children: [
         ClipRRect(
           borderRadius: BorderRadius.circular(20),
           child: img.isNotEmpty
@@ -285,6 +302,7 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
           ),
         ),
       ],
+    ),
     );
   }
 
@@ -625,6 +643,7 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                               scored.add({
                                 ...d,
                                 '_distanceKm': km,
+                                '_docId': doc.id,
                               });
                             }
 
@@ -709,7 +728,11 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                                     separatorBuilder: (_, __) =>
                                         SizedBox(width: w * 0.05),
                                     itemBuilder: (_, i) => _providerCard(
-                                        w, _searchResults[i].data()),
+                                        w,
+                                        {
+                                          ..._searchResults[i].data(),
+                                          '_docId': _searchResults[i].id,
+                                        }),
                                   )))
                         : StreamBuilder<
                             QuerySnapshot<Map<String, dynamic>>>(
@@ -748,8 +771,13 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                                 itemCount: docs.length,
                                 separatorBuilder: (_, __) =>
                                     SizedBox(width: w * 0.05),
-                                itemBuilder: (_, i) =>
-                                    _providerCard(w, docs[i].data()),
+                                itemBuilder: (_, i) => _providerCard(
+                                  w,
+                                  {
+                                    ...docs[i].data(),
+                                    '_docId': docs[i].id,
+                                  },
+                                ),
                               );
                             },
                           ),
