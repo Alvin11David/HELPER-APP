@@ -279,7 +279,9 @@ class _SelectWorkerTypeScreenState extends State<SelectWorkerTypeScreen> {
                             await FirebaseFirestore.instance
                                 .collection('Sign Up')
                                 .doc(user.uid)
-                                .update({'workerType': 'Non-Professional Worker'});
+                                .update({
+                                  'workerType': 'Non-Professional Worker',
+                                });
                           }
                           Navigator.of(context).push(
                             MaterialPageRoute(
