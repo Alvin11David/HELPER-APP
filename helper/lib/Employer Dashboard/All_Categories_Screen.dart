@@ -435,12 +435,26 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(10),
-                      boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 5)],
+                      boxShadow: [
+                        BoxShadow(color: Colors.black26, blurRadius: 5),
+                      ],
                     ),
                     child: ListView.builder(
-                      itemCount: suggestions.where((s) => s.toLowerCase().contains(_controller.text.toLowerCase())).length,
+                      itemCount: suggestions
+                          .where(
+                            (s) => s.toLowerCase().contains(
+                              _controller.text.toLowerCase(),
+                            ),
+                          )
+                          .length,
                       itemBuilder: (context, index) {
-                        List<String> filteredSuggestions = suggestions.where((s) => s.toLowerCase().contains(_controller.text.toLowerCase())).toList();
+                        List<String> filteredSuggestions = suggestions
+                            .where(
+                              (s) => s.toLowerCase().contains(
+                                _controller.text.toLowerCase(),
+                              ),
+                            )
+                            .toList();
                         return ListTile(
                           title: Text(filteredSuggestions[index]),
                           onTap: () {
@@ -571,156 +585,14 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                                 children: List.generate(
                                   half,
                                   (index) => Container(
-                                width: 183,
-                                height: 200,
-                                margin: const EdgeInsets.only(bottom: 10),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.9),
-                                  borderRadius: BorderRadius.circular(20),
-                                  image: DecorationImage(
-                                    image: AssetImage(filteredImages[index]),
-                                    fit: BoxFit.cover,
-                                  ),
-                                ),
-                                child: Stack(
-                                  children: [
-                                    Align(
-                                      alignment: Alignment.bottomLeft,
-                                      child: Container(
-                                        width: double.infinity,
-                                        padding: const EdgeInsets.all(10),
-                                        decoration: BoxDecoration(
-                                          color: Colors.white,
-                                          borderRadius: const BorderRadius.only(
-                                            bottomLeft: Radius.circular(30),
-                                            bottomRight: Radius.circular(30),
-                                          ),
-                                        ),
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Text(
-                                              filteredProfessions[index],
-                                              style: const TextStyle(
-                                                color: Colors.black,
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                            const Text(
-                                              'Number Providers',
-                                              style: TextStyle(
-                                                color: Colors.black,
-                                                fontSize: 12,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                    Align(
-                                      alignment: Alignment.topRight,
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(10),
-                                        child: AnimatedScale(
-                                          scale: filteredLiked[index] ? 1.2 : 1.0,
-                                          duration: const Duration(
-                                            milliseconds: 200,
-                                          ),
-                                          child: GestureDetector(
-                                            onTap: () => setState(
-                                              () =>
-                                                  filteredLiked[index] = !filteredLiked[index],
-                                            ),
-                                            child: Container(
-                                              width: 30,
-                                              height: 30,
-                                              decoration: BoxDecoration(
-                                                shape: BoxShape.circle,
-                                                color: Colors.white,
-                                                border: Border.all(
-                                                  color: Colors.black,
-                                                ),
-                                              ),
-                                              child: Icon(
-                                                filteredLiked[index]
-                                                    ? Icons.favorite
-                                                    : Icons.favorite_border,
-                                                color: filteredLiked[index]
-                                                    ? Colors.red
-                                                    : Colors.black,
-                                                size: 16,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    Align(
-                                      alignment: Alignment.topLeft,
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(10),
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 6,
-                                            vertical: 4,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: Colors.grey[100],
-                                            borderRadius: BorderRadius.circular(
-                                              10,
-                                            ),
-                                            border: Border.all(
-                                              color: Colors.black,
-                                            ),
-                                          ),
-                                          child: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              Icon(
-                                                Icons.star,
-                                                color: Colors.orange,
-                                                size: 12,
-                                              ),
-                                              const SizedBox(width: 4),
-                                              Text(
-                                                filteredRatings[index].toString(),
-                                                style: const TextStyle(
-                                                  color: Colors.black,
-                                                  fontSize: 10,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Column(
-                            children: List.generate(
-                              half,
-                              (index) {
-                                int idx = index + half;
-                                if (idx < filteredProfessions.length) {
-                                  return Container(
                                     width: 183,
                                     height: 200,
                                     margin: const EdgeInsets.only(bottom: 10),
                                     decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(0.9),
                                       borderRadius: BorderRadius.circular(20),
                                       image: DecorationImage(
                                         image: AssetImage(
-                                          filteredImages[idx],
+                                          filteredImages[index],
                                         ),
                                         fit: BoxFit.cover,
                                       ),
@@ -731,13 +603,17 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                                           alignment: Alignment.bottomLeft,
                                           child: Container(
                                             width: double.infinity,
-                                            color: Colors.white,
                                             padding: const EdgeInsets.all(10),
                                             decoration: BoxDecoration(
-                                              borderRadius: const BorderRadius.only(
-                                                bottomLeft: Radius.circular(30),
-                                                bottomRight: Radius.circular(30),
-                                              ),
+                                              color: Colors.white,
+                                              borderRadius:
+                                                  const BorderRadius.only(
+                                                    bottomLeft: Radius.circular(
+                                                      30,
+                                                    ),
+                                                    bottomRight:
+                                                        Radius.circular(30),
+                                                  ),
                                             ),
                                             child: Column(
                                               crossAxisAlignment:
@@ -745,7 +621,7 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                                               mainAxisSize: MainAxisSize.min,
                                               children: [
                                                 Text(
-                                                  filteredProfessions[idx],
+                                                  filteredProfessions[index],
                                                   style: const TextStyle(
                                                     color: Colors.black,
                                                     fontSize: 14,
@@ -764,19 +640,59 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                                           ),
                                         ),
                                         Align(
+                                          alignment: Alignment.topRight,
+                                          child: Padding(
+                                            padding: const EdgeInsets.all(10),
+                                            child: AnimatedScale(
+                                              scale: filteredLiked[index]
+                                                  ? 1.2
+                                                  : 1.0,
+                                              duration: const Duration(
+                                                milliseconds: 200,
+                                              ),
+                                              child: GestureDetector(
+                                                onTap: () => setState(
+                                                  () => filteredLiked[index] =
+                                                      !filteredLiked[index],
+                                                ),
+                                                child: Container(
+                                                  width: 30,
+                                                  height: 30,
+                                                  decoration: BoxDecoration(
+                                                    shape: BoxShape.circle,
+                                                    color: Colors.white,
+                                                    border: Border.all(
+                                                      color: Colors.black,
+                                                    ),
+                                                  ),
+                                                  child: Icon(
+                                                    filteredLiked[index]
+                                                        ? Icons.favorite
+                                                        : Icons.favorite_border,
+                                                    color: filteredLiked[index]
+                                                        ? Colors.red
+                                                        : Colors.black,
+                                                    size: 16,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        Align(
                                           alignment: Alignment.topLeft,
                                           child: Padding(
                                             padding: const EdgeInsets.all(10),
                                             child: Container(
-                                              padding: const EdgeInsets.symmetric(
-                                                horizontal: 6,
-                                                vertical: 4,
-                                              ),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 6,
+                                                    vertical: 4,
+                                                  ),
                                               decoration: BoxDecoration(
                                                 color: Colors.grey[100],
-                                                borderRadius: BorderRadius.circular(
-                                                  10,
-                                                ),
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
                                                 border: Border.all(
                                                   color: Colors.black,
                                                 ),
@@ -791,7 +707,8 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                                                   ),
                                                   const SizedBox(width: 4),
                                                   Text(
-                                                    filteredRatings[idx].toString(),
+                                                    filteredRatings[index]
+                                                        .toString(),
                                                     style: const TextStyle(
                                                       color: Colors.black,
                                                       fontSize: 10,
@@ -802,60 +719,170 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                                             ),
                                           ),
                                         ),
-                                        Align(
-                                          alignment: Alignment.topRight,
-                                          child: Padding(
-                                            padding: const EdgeInsets.all(10),
-                                            child: AnimatedScale(
-                                              scale: filteredLiked[idx] ? 1.2 : 1.0,
-                                              duration: const Duration(
-                                                milliseconds: 200,
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                children: List.generate(half, (index) {
+                                  int idx = index + half;
+                                  if (idx < filteredProfessions.length) {
+                                    return Container(
+                                      width: 183,
+                                      height: 200,
+                                      margin: const EdgeInsets.only(bottom: 10),
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(20),
+                                        image: DecorationImage(
+                                          image: AssetImage(
+                                            filteredImages[idx],
+                                          ),
+                                          fit: BoxFit.cover,
+                                        ),
+                                      ),
+                                      child: Stack(
+                                        children: [
+                                          Align(
+                                            alignment: Alignment.bottomLeft,
+                                            child: Container(
+                                              width: double.infinity,
+                                              color: Colors.white,
+                                              padding: const EdgeInsets.all(10),
+                                              decoration: BoxDecoration(
+                                                borderRadius:
+                                                    const BorderRadius.only(
+                                                      bottomLeft:
+                                                          Radius.circular(30),
+                                                      bottomRight:
+                                                          Radius.circular(30),
+                                                    ),
                                               ),
-                                              child: GestureDetector(
-                                                onTap: () => setState(
-                                                  () =>
-                                                      filteredLiked[idx] = !filteredLiked[idx],
-                                                ),
-                                                child: Container(
-                                                  width: 30,
-                                                  height: 30,
-                                                  decoration: BoxDecoration(
-                                                    shape: BoxShape.circle,
-                                                    color: Colors.white,
-                                                    border: Border.all(
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Text(
+                                                    filteredProfessions[idx],
+                                                    style: const TextStyle(
                                                       color: Colors.black,
+                                                      fontSize: 14,
+                                                      fontWeight:
+                                                          FontWeight.bold,
                                                     ),
                                                   ),
-                                                  child: Icon(
-                                                    filteredLiked[idx]
-                                                        ? Icons.favorite
-                                                        : Icons.favorite_border,
-                                                    color: filteredLiked[idx]
-                                                        ? Colors.red
-                                                        : Colors.black,
-                                                    size: 16,
+                                                  const Text(
+                                                    'Number Providers',
+                                                    style: TextStyle(
+                                                      color: Colors.black,
+                                                      fontSize: 12,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                          Align(
+                                            alignment: Alignment.topLeft,
+                                            child: Padding(
+                                              padding: const EdgeInsets.all(10),
+                                              child: Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 6,
+                                                      vertical: 4,
+                                                    ),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.grey[100],
+                                                  borderRadius:
+                                                      BorderRadius.circular(10),
+                                                  border: Border.all(
+                                                    color: Colors.black,
+                                                  ),
+                                                ),
+                                                child: Row(
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
+                                                  children: [
+                                                    Icon(
+                                                      Icons.star,
+                                                      color: Colors.orange,
+                                                      size: 12,
+                                                    ),
+                                                    const SizedBox(width: 4),
+                                                    Text(
+                                                      filteredRatings[idx]
+                                                          .toString(),
+                                                      style: const TextStyle(
+                                                        color: Colors.black,
+                                                        fontSize: 10,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                          Align(
+                                            alignment: Alignment.topRight,
+                                            child: Padding(
+                                              padding: const EdgeInsets.all(10),
+                                              child: AnimatedScale(
+                                                scale: filteredLiked[idx]
+                                                    ? 1.2
+                                                    : 1.0,
+                                                duration: const Duration(
+                                                  milliseconds: 200,
+                                                ),
+                                                child: GestureDetector(
+                                                  onTap: () => setState(
+                                                    () => filteredLiked[idx] =
+                                                        !filteredLiked[idx],
+                                                  ),
+                                                  child: Container(
+                                                    width: 30,
+                                                    height: 30,
+                                                    decoration: BoxDecoration(
+                                                      shape: BoxShape.circle,
+                                                      color: Colors.white,
+                                                      border: Border.all(
+                                                        color: Colors.black,
+                                                      ),
+                                                    ),
+                                                    child: Icon(
+                                                      filteredLiked[idx]
+                                                          ? Icons.favorite
+                                                          : Icons
+                                                                .favorite_border,
+                                                      color: filteredLiked[idx]
+                                                          ? Colors.red
+                                                          : Colors.black,
+                                                      size: 16,
+                                                    ),
                                                   ),
                                                 ),
                                               ),
                                             ),
                                           ),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                } else {
-                                  return SizedBox.shrink();
-                                }
-                              },
+                                        ],
+                                      ),
+                                    );
+                                  } else {
+                                    return SizedBox.shrink();
+                                  }
+                                }),
+                              ),
                             ),
-                          ),
+                          ],
                         ),
-                      ],
-                    ),
-                  );
+                      );
                     },
+                  ),
                 ),
-              ),
               ),
             ],
           ),
