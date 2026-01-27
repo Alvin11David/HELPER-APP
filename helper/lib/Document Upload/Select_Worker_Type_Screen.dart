@@ -3,6 +3,8 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:helper/Document%20Upload/Non%20Professional/Non_Professional_Worker_Verification_Information_Screen.dart';
 import 'Verification_Information_Screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class SelectWorkerTypeScreen extends StatefulWidget {
   const SelectWorkerTypeScreen({super.key});
@@ -155,10 +157,17 @@ class _SelectWorkerTypeScreenState extends State<SelectWorkerTypeScreen> {
                     SizedBox(height: screenHeight * 0.03),
                     Center(
                       child: GestureDetector(
-                        onTap: () {
+                        onTap: () async {
                           setState(() {
                             _selectedWorkerType = 1;
                           });
+                          final user = FirebaseAuth.instance.currentUser;
+                          if (user != null) {
+                            await FirebaseFirestore.instance
+                                .collection('Sign Up')
+                                .doc(user.uid)
+                                .update({'workerType': 'Professional Worker'});
+                          }
                           Navigator.of(context).push(
                             MaterialPageRoute(
                               builder: (context) =>
@@ -261,10 +270,17 @@ class _SelectWorkerTypeScreenState extends State<SelectWorkerTypeScreen> {
                     SizedBox(height: screenHeight * 0.03),
                     Center(
                       child: GestureDetector(
-                        onTap: () {
+                        onTap: () async {
                           setState(() {
                             _selectedWorkerType = 2;
                           });
+                          final user = FirebaseAuth.instance.currentUser;
+                          if (user != null) {
+                            await FirebaseFirestore.instance
+                                .collection('Sign Up')
+                                .doc(user.uid)
+                                .update({'workerType': 'Non-Professional Worker'});
+                          }
                           Navigator.of(context).push(
                             MaterialPageRoute(
                               builder: (context) =>
