@@ -9,6 +9,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:helper/Intro/Role_Selection_Screen.dart';
 
 import 'OTP_Verification_Screen.dart';
 import 'Sign_In_Screen.dart';
@@ -353,7 +354,7 @@ class _PhoneNumberEmailAddressScreenState
 
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (_) => const WorkersDashboardScreen()),
+        MaterialPageRoute(builder: (_) => const RoleSelectionScreen()),
         (_) => false,
       );
     } catch (e) {
