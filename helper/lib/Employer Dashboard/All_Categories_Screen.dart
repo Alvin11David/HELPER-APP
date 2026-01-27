@@ -231,7 +231,6 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
   List<String> filteredImages = [];
   List<double> filteredRatings = [];
   List<bool> filteredLiked = [];
-  bool showSuggestions = false;
   bool _showFilters = false;
 
   @override
@@ -259,7 +258,6 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
             filteredLiked.add(liked[i]);
           }
         }
-        showSuggestions = query.isNotEmpty;
       });
     });
   }
@@ -425,49 +423,6 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                   ],
                 ),
               ),
-              if (showSuggestions)
-                Positioned(
-                  top: 120,
-                  left: w * 0.2,
-                  right: w * 0.04,
-                  height: 200,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(10),
-                      boxShadow: [
-                        BoxShadow(color: Colors.black26, blurRadius: 5),
-                      ],
-                    ),
-                    child: ListView.builder(
-                      itemCount: suggestions
-                          .where(
-                            (s) => s.toLowerCase().contains(
-                              _controller.text.toLowerCase(),
-                            ),
-                          )
-                          .length,
-                      itemBuilder: (context, index) {
-                        List<String> filteredSuggestions = suggestions
-                            .where(
-                              (s) => s.toLowerCase().contains(
-                                _controller.text.toLowerCase(),
-                              ),
-                            )
-                            .toList();
-                        return ListTile(
-                          title: Text(filteredSuggestions[index]),
-                          onTap: () {
-                            _controller.text = filteredSuggestions[index];
-                            setState(() {
-                              showSuggestions = false;
-                            });
-                          },
-                        );
-                      },
-                    ),
-                  ),
-                ),
               AnimatedPositioned(
                 duration: const Duration(milliseconds: 300),
                 curve: Curves.easeInOut,
@@ -749,15 +704,15 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                                           Align(
                                             alignment: Alignment.bottomLeft,
                                             child: Container(
-                                              width: double.infinity, 
+                                              width: double.infinity,
                                               padding: const EdgeInsets.all(10),
                                               decoration: BoxDecoration(
                                                 borderRadius:
                                                     const BorderRadius.only(
                                                       bottomLeft:
-                                                          Radius.circular(30),
+                                                          Radius.circular(20),
                                                       bottomRight:
-                                                          Radius.circular(30),
+                                                          Radius.circular(20),
                                                     ),
                                               ),
                                               child: Column(
