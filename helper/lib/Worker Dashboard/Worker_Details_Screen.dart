@@ -2,8 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:helper/Components/User_Name.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:helper/Employer%20Dashboard/job_detail_booking_screen.dart';
 import 'package:helper/Employer%20Dashboard/Employer_Dashboard_Screen.dart';
+
+class Review {
+  final String reviewerName;
+  final int rating;
+  final String reviewText;
+
+  Review({
+    required this.reviewerName,
+    required this.rating,
+    required this.reviewText,
+  });
+}
 
 class WorkerDetailsScreen extends StatefulWidget {
   final String providerId;
@@ -40,6 +53,7 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
   bool _isDescriptionExpanded = false;
   int _rating = 0;
   final TextEditingController _commentController = TextEditingController();
+  List<Review> _reviews = [];
 
   @override
   void initState() {
@@ -47,6 +61,7 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
     _greeting = _getGreeting();
     if (widget.data != null) {
       _setData(widget.data!);
+      _loadReviews();
     } else {
       _loadProvider();
     }
@@ -96,8 +111,36 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
       if (data == null) return;
 
       _setData(data);
+      _loadReviews();
     } catch (e) {
       // Swallow errors to avoid breaking UI; consider logging in the future
+    }
+  }
+
+  Future<void> _loadReviews() async {
+    final providerId = widget.data?['uid'] ?? widget.providerId;
+    if (providerId.isEmpty) return;
+
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection('Reviews')
+          .where('providerId', isEqualTo: providerId)
+          .orderBy('timestamp', descending: true)
+          .limit(10)
+          .get();
+
+      setState(() {
+        _reviews = snap.docs.map((doc) {
+          final d = doc.data();
+          return Review(
+            reviewerName: (d['reviewerName'] ?? '').toString(),
+            rating: d['rating'] is int ? d['rating'] : 0,
+            reviewText: (d['reviewText'] ?? '').toString(),
+          );
+        }).toList();
+      });
+    } catch (e) {
+      // Handle error
     }
   }
 
@@ -416,61 +459,132 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                         child: SingleChildScrollView(
                           scrollDirection: Axis.horizontal,
                           child: Row(
-                            children: List.generate(
-                              3,
-                              (index) => Row(
-                                children: [
-                                  Container(
-                                    width: 280,
-                                    height: 120,
-                                    decoration: BoxDecoration(
-                                      border: Border.all(
-                                        color: Colors.white,
-                                        width: 1,
-                                      ),
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(10),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Row(
-                                            children: List.generate(
-                                              5,
-                                              (starIndex) => Icon(
-                                                Icons.star,
-                                                color: Colors.orange,
-                                                size: 16,
+                            children: _reviews.isNotEmpty
+                                ? _reviews
+                                      .map(
+                                        (review) => Row(
+                                          children: [
+                                            Container(
+                                              width: 280,
+                                              height: 120,
+                                              decoration: BoxDecoration(
+                                                border: Border.all(
+                                                  color: Colors.white,
+                                                  width: 1,
+                                                ),
+                                                borderRadius:
+                                                    BorderRadius.circular(20),
+                                              ),
+                                              child: Padding(
+                                                padding: const EdgeInsets.all(
+                                                  10,
+                                                ),
+                                                child: Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    Row(
+                                                      children: List.generate(
+                                                        5,
+                                                        (starIndex) => Icon(
+                                                          starIndex <
+                                                                  review.rating
+                                                              ? Icons.star
+                                                              : Icons
+                                                                    .star_border,
+                                                          color: Colors.orange,
+                                                          size: 16,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    const SizedBox(height: 10),
+                                                    Text(
+                                                      review.reviewText,
+                                                      style: const TextStyle(
+                                                        color: Colors.white,
+                                                        fontSize: 12,
+                                                      ),
+                                                      maxLines: 2,
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                    ),
+                                                    const SizedBox(height: 5),
+                                                    Text(
+                                                      review.reviewerName,
+                                                      style: const TextStyle(
+                                                        color: Colors.white,
+                                                        fontSize: 12,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
                                               ),
                                             ),
-                                          ),
-                                          const SizedBox(height: 10),
-                                          const Text(
-                                            'The employer’s review about the services provided by the worker...',
-                                            style: TextStyle(
+                                            const SizedBox(width: 10),
+                                          ],
+                                        ),
+                                      )
+                                      .toList()
+                                : List.generate(
+                                    3,
+                                    (index) => Row(
+                                      children: [
+                                        Container(
+                                          width: 280,
+                                          height: 120,
+                                          decoration: BoxDecoration(
+                                            border: Border.all(
                                               color: Colors.white,
-                                              fontSize: 12,
+                                              width: 1,
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              20,
                                             ),
                                           ),
-                                          const SizedBox(height: 5),
-                                          const Text(
-                                            'Employer\'s Name',
-                                            style: TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.bold,
+                                          child: Padding(
+                                            padding: const EdgeInsets.all(10),
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Row(
+                                                  children: List.generate(
+                                                    5,
+                                                    (starIndex) => Icon(
+                                                      Icons.star,
+                                                      color: Colors.orange,
+                                                      size: 16,
+                                                    ),
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 10),
+                                                const Text(
+                                                  'The employer\'s review about the services provided by the worker...',
+                                                  style: TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 12,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 5),
+                                                const Text(
+                                                  'Employer\'s Name',
+                                                  style: TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              ],
                                             ),
                                           ),
-                                        ],
-                                      ),
+                                        ),
+                                        if (index < 2)
+                                          const SizedBox(width: 10),
+                                      ],
                                     ),
                                   ),
-                                  if (index < 2) const SizedBox(width: 10),
-                                ],
-                              ),
-                            ),
                           ),
                         ),
                       ),
@@ -589,55 +703,106 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                       top: h * 0.4 + 580,
                       left: w * 0.04,
                       child: Container(
-                        width: 290,
-                        height: 110,
+                        width: 320,
+                        height: 130,
                         decoration: BoxDecoration(
                           border: Border.all(color: Colors.white, width: 1),
                           borderRadius: BorderRadius.circular(20),
                         ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(10),
-                          child: TextField(
-                            controller: _commentController,
-                            onChanged: (value) => setState(() {}),
-                            style: const TextStyle(color: Colors.white),
-                            decoration: const InputDecoration(
-                              hintText:
-                                  'Please share your ideas with us about this service',
-                              hintStyle: TextStyle(
-                                color: Colors.white70,
-                                fontSize: 12,
+                        child: Stack(
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.all(10),
+                              child: TextField(
+                                controller: _commentController,
+                                onChanged: (value) => setState(() {}),
+                                style: const TextStyle(color: Colors.white),
+                                decoration: const InputDecoration(
+                                  hintText:
+                                      'Please share your ideas with us about this service',
+                                  hintStyle: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 12,
+                                  ),
+                                  border: InputBorder.none,
+                                ),
+                                maxLines: 3,
                               ),
-                              border: InputBorder.none,
                             ),
-                            maxLines: 3,
-                          ),
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      top: h * 0.4 + 650,
-                      left: w * 0.06 + 240,
-                      child: GestureDetector(
-                        onTap: _commentController.text.isNotEmpty
-                            ? () {
-                                /* Send comment */
-                              }
-                            : null,
-                        child: Container(
-                          width: 30,
-                          height: 30,
-                          decoration: BoxDecoration(
-                            color: _commentController.text.isNotEmpty
-                                ? Colors.orange
-                                : Colors.grey,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.send,
-                            color: Colors.black,
-                            size: 16,
-                          ),
+                            Positioned(
+                              bottom: 10,
+                              right: 10,
+                              child: GestureDetector(
+                                onTap:
+                                    (_rating > 0 &&
+                                        _commentController.text.isNotEmpty)
+                                    ? () async {
+                                        final user =
+                                            FirebaseAuth.instance.currentUser;
+                                        if (user == null) return;
+
+                                        final reviewerId = user.uid;
+                                        final reviewerName =
+                                            user.displayName ?? 'Anonymous';
+                                        final providerId =
+                                            widget.data?['uid'] ??
+                                            widget.providerId;
+                                        final providerName =
+                                            _businessName ?? 'Provider';
+
+                                        try {
+                                          await FirebaseFirestore.instance
+                                              .collection('Reviews')
+                                              .add({
+                                                'reviewerId': reviewerId,
+                                                'reviewerName': reviewerName,
+                                                'providerId': providerId,
+                                                'providerName': providerName,
+                                                'rating': _rating,
+                                                'reviewText':
+                                                    _commentController.text,
+                                                'timestamp':
+                                                    FieldValue.serverTimestamp(),
+                                              });
+
+                                          setState(() {
+                                            _reviews.insert(
+                                              0,
+                                              Review(
+                                                reviewerName: reviewerName,
+                                                rating: _rating,
+                                                reviewText:
+                                                    _commentController.text,
+                                              ),
+                                            );
+                                            _rating = 0;
+                                            _commentController.clear();
+                                          });
+                                        } catch (e) {
+                                          // Handle error, maybe show snackbar
+                                        }
+                                      }
+                                    : null,
+                                child: Container(
+                                  width: 30,
+                                  height: 30,
+                                  decoration: BoxDecoration(
+                                    color:
+                                        (_rating > 0 &&
+                                            _commentController.text.isNotEmpty)
+                                        ? Colors.orange
+                                        : Colors.grey,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.send,
+                                    color: Colors.black,
+                                    size: 16,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
