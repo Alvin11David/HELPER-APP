@@ -516,15 +516,27 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                                 height: 200,
                                 margin: const EdgeInsets.only(bottom: 10),
                                 decoration: BoxDecoration(
-                                  color: Colors.white,
+                                  color: Colors.white.withOpacity(0.9),
                                   borderRadius: BorderRadius.circular(20),
+                                  image: DecorationImage(
+                                    image: AssetImage(professionImages[index]),
+                                    fit: BoxFit.cover,
+                                  ),
                                 ),
                                 child: Stack(
                                   children: [
                                     Align(
                                       alignment: Alignment.bottomLeft,
-                                      child: Padding(
+                                      child: Container(
+                                        width: double.infinity,
+                                        color: Colors.white,
                                         padding: const EdgeInsets.all(10),
+                                        decoration: BoxDecoration(
+                                          borderRadius: const BorderRadius.only(
+                                            bottomLeft: Radius.circular(30),
+                                            bottomRight: Radius.circular(30),
+                                          ),
+                                        ),
                                         child: Column(
                                           crossAxisAlignment:
                                               CrossAxisAlignment.start,
@@ -547,15 +559,6 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                                             ),
                                           ],
                                         ),
-                                      ),
-                                    ),
-                                    Align(
-                                      alignment: Alignment.center,
-                                      child: Image.asset(
-                                        professionImages[index],
-                                        width: 80,
-                                        height: 80,
-                                        fit: BoxFit.cover,
                                       ),
                                     ),
                                     Align(
@@ -651,15 +654,29 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                                 height: 200,
                                 margin: const EdgeInsets.only(bottom: 10),
                                 decoration: BoxDecoration(
-                                  color: Colors.white,
+                                  color: Colors.white.withOpacity(0.9),
                                   borderRadius: BorderRadius.circular(20),
+                                  image: DecorationImage(
+                                    image: AssetImage(
+                                      professionImages[index + 32],
+                                    ),
+                                    fit: BoxFit.cover,
+                                  ),
                                 ),
                                 child: Stack(
                                   children: [
                                     Align(
                                       alignment: Alignment.bottomLeft,
-                                      child: Padding(
+                                      child: Container(
+                                        width: double.infinity,
+                                        color: Colors.white,
                                         padding: const EdgeInsets.all(10),
+                                        decoration: BoxDecoration(
+                                          borderRadius: const BorderRadius.only(
+                                            bottomLeft: Radius.circular(30),
+                                            bottomRight: Radius.circular(30),
+                                          ),
+                                        ),
                                         child: Column(
                                           crossAxisAlignment:
                                               CrossAxisAlignment.start,
@@ -724,27 +741,18 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                                       ),
                                     ),
                                     Align(
-                                      alignment: Alignment.center,
-                                      child: Image.asset(
-                                        professionImages[index + 32],
-                                        width: 80,
-                                        height: 80,
-                                        fit: BoxFit.cover,
-                                      ),
-                                    ),
-                                    Align(
                                       alignment: Alignment.topRight,
                                       child: Padding(
                                         padding: const EdgeInsets.all(10),
                                         child: AnimatedScale(
-                                          scale: liked[index + 16] ? 1.2 : 1.0,
+                                          scale: liked[index + 32] ? 1.2 : 1.0,
                                           duration: const Duration(
                                             milliseconds: 200,
                                           ),
                                           child: GestureDetector(
                                             onTap: () => setState(
-                                              () => liked[index + 16] =
-                                                  !liked[index + 16],
+                                              () => liked[index + 32] =
+                                                  !liked[index + 32],
                                             ),
                                             child: Container(
                                               width: 30,
@@ -757,10 +765,10 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                                                 ),
                                               ),
                                               child: Icon(
-                                                liked[index + 16]
+                                                liked[index + 32]
                                                     ? Icons.favorite
                                                     : Icons.favorite_border,
-                                                color: liked[index + 16]
+                                                color: liked[index + 32]
                                                     ? Colors.red
                                                     : Colors.black,
                                                 size: 16,
