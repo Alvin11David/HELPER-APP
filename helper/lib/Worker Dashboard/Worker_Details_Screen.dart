@@ -125,12 +125,20 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
       final snap = await FirebaseFirestore.instance
           .collection('Reviews')
           .where('providerId', isEqualTo: providerId)
-          .orderBy('timestamp', descending: true)
-          .limit(10)
           .get();
 
+      final docs = snap.docs;
+      docs.sort((a, b) {
+        final ta = a.data()['timestamp'] as Timestamp?;
+        final tb = b.data()['timestamp'] as Timestamp?;
+        if (ta == null || tb == null) return 0;
+        return tb.compareTo(ta); // descending
+      });
+
+      final limitedDocs = docs.take(10).toList();
+
       setState(() {
-        _reviews = snap.docs.map((doc) {
+        _reviews = limitedDocs.map((doc) {
           final d = doc.data();
           return Review(
             reviewerName: (d['reviewerName'] ?? '').toString(),
