@@ -268,6 +268,7 @@ class _MapScreenState extends State<MapScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
+        final screenWidth = MediaQuery.of(context).size.width;
         final workerLatLng = worker['workplaceLatLng'] as GeoPoint?;
         final distance = (_currentPosition != null && workerLatLng != null)
             ? Geolocator.distanceBetween(
@@ -289,7 +290,10 @@ class _MapScreenState extends State<MapScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Padding(
-                    padding: const EdgeInsets.only(top: 16, left: 16),
+                    padding: EdgeInsets.only(
+                      top: screenWidth * 0.04,
+                      left: screenWidth * 0.04,
+                    ),
                     child: Text(
                       worker['businessName'] ?? 'Unknown',
                       style: const TextStyle(
@@ -300,7 +304,7 @@ class _MapScreenState extends State<MapScreen> {
                   ),
                   const SizedBox(height: 8),
                   Padding(
-                    padding: const EdgeInsets.only(left: 16),
+                    padding: EdgeInsets.only(left: screenWidth * 0.04),
                     child: Text(
                       worker['workplaceLocationText'] ?? 'Unknown',
                       style: const TextStyle(
@@ -311,14 +315,16 @@ class _MapScreenState extends State<MapScreen> {
                   ),
                   const SizedBox(height: 24),
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: screenWidth * 0.04,
+                    ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
+                          padding: EdgeInsets.symmetric(
+                            horizontal: screenWidth * 0.04,
+                            vertical: screenWidth * 0.02,
                           ),
                           decoration: BoxDecoration(
                             color: Colors.green,
@@ -330,9 +336,9 @@ class _MapScreenState extends State<MapScreen> {
                           ),
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
+                          padding: EdgeInsets.symmetric(
+                            horizontal: screenWidth * 0.04,
+                            vertical: screenWidth * 0.02,
                           ),
                           decoration: BoxDecoration(
                             color: Colors.orange,
@@ -355,7 +361,9 @@ class _MapScreenState extends State<MapScreen> {
                   ),
                   const SizedBox(height: 8),
                   SizedBox(
-                    height: 128, // Height for huge rectangular images
+                    height:
+                        screenWidth *
+                        0.32, // Height for huge rectangular images
                     child: GridView(
                       scrollDirection: Axis.horizontal,
                       gridDelegate:
@@ -375,8 +383,8 @@ class _MapScreenState extends State<MapScreen> {
                                         Dialog(child: Image.network(url)),
                                   ),
                                   child: Container(
-                                    height: 120,
-                                    width: 180,
+                                    height: screenWidth * 0.3,
+                                    width: screenWidth * 0.4,
                                     margin: const EdgeInsets.all(4),
                                     decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(10),
@@ -418,10 +426,10 @@ class _MapScreenState extends State<MapScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Container(
-                        width: 120,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
+                        width: screenWidth * 0.25,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: screenWidth * 0.05,
+                          vertical: screenWidth * 0.02,
                         ),
                         decoration: BoxDecoration(
                           border: Border.all(color: Colors.orange),
@@ -448,10 +456,10 @@ class _MapScreenState extends State<MapScreen> {
                           );
                         },
                         child: Container(
-                          width: 120,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
+                          width: screenWidth * 0.25,
+                          padding: EdgeInsets.symmetric(
+                            horizontal: screenWidth * 0.04,
+                            vertical: screenWidth * 0.02,
                           ),
                           decoration: BoxDecoration(
                             color: Colors.orange,
@@ -470,7 +478,7 @@ class _MapScreenState extends State<MapScreen> {
               ),
               Positioned(
                 top: 10,
-                right: 10,
+                right: screenWidth * 0.02,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
