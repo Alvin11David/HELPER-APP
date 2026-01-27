@@ -1,10 +1,30 @@
+import 'dart:async';
+import 'dart:io';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:dio/dio.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:uuid/uuid.dart';
 
 class JobDetailBookingScreen extends StatefulWidget {
-  final String businessName;
+  /// ✅ REQUIRED so we can read provider bookings + prevent overlaps
+  final String serviceProviderId;
 
-  const JobDetailBookingScreen({super.key, required this.businessName});
+  /// Optional (use whatever you have from WorkerDetailsScreen)
+  final String businessName;
+  final String profession;
+
+  const JobDetailBookingScreen({
+    super.key,
+    required this.serviceProviderId,
+    this.businessName = "Business Name",
+    this.profession = "Profession",
+  });
 
   @override
   State<JobDetailBookingScreen> createState() => _JobDetailBookingScreenState();
@@ -13,19 +33,38 @@ class JobDetailBookingScreen extends StatefulWidget {
 class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
   static const _brandOrange = Color(0xFFFFA10D);
 
+  // ===================== STEPS =====================
   int _step = 0; // 0..3
 
-  // -------------------- PHASE 1 (Describe) --------------------
+  // ===================== PHASE 1 (Job Details) =====================
   final _descCtrl = TextEditingController();
-  final List<String> _fakePhotos = []; // placeholder
-  String? _pickedJobLocation; // placeholder string (map later)
 
-  // -------------------- PHASE 2 (Workers & Pricing) --------------------
+  // Uploads
+  final List<PlatformFile> _pickedFiles = [];
+  bool _pickingFiles = false;
+
+  // Job location (required by you)
+  String? _jobLocationText;
+  GeoPoint? _jobLatLng;
+
+  // Google Map
+  GoogleMapController? _mapCtrl;
+  LatLng? _myLatLng;
+  LatLng? _pickedLatLng;
+  Marker? _pickedMarker;
+  bool _locLoading = false;
+  String? _locError;
+
+  // OPTIONAL: reverse geocode to get readable address (replace your key)
+  final Dio _dio = Dio();
+  static const String _googleKey = 'AIzaSyBUJXjLSEFn_8OfVkaaLAIHYGUcGJEDD9w';
+
+  // ===================== PHASE 2 (Workers & Pricing) =====================
   String? _workersCount;
   String? _jobDuration; // Hours / Fixed
   final _amountCtrl = TextEditingController();
 
-  // -------------------- PHASE 3 (Schedule) --------------------
+  // ===================== PHASE 3 (Schedule / Calendar) =====================
   DateTime _calendarMonth = DateTime(DateTime.now().year, DateTime.now().month);
   DateTime? _startDate;
   DateTime? _endDate;
@@ -33,14 +72,26 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
   TimeOfDay? _timeFrom;
   TimeOfDay? _timeTo;
 
-  // -------------------- PHASE 4 (Summary) --------------------
-  late final String _businessName;
-  final String _profession = "Profession";
+  // Availability caches for the visible calendar grid
+  bool _loadingMonthBookings = false;
+  String? _monthBookingsError;
+
+  // Map: dayKey -> status
+  final Map<DateTime, _DayStatus> _dayStatus = {}; // normalized day => status
+  final Map<DateTime, int> _dayBookingCounts = {}; // normalized day => count
+
+  // If you want capacity per day, set >1. If you want strict non-overlap only, set to 1.
+  final int maxDailyBookings = 3;
+
+  // ===================== PHASE 4 (Summary) =====================
+  String get _businessName => widget.businessName;
+  String get _profession => widget.profession;
 
   @override
   void initState() {
     super.initState();
-    _businessName = widget.businessName;
+    _initLocation();
+    _refreshMonthBookings(); // initial calendar availability
   }
 
   @override
@@ -50,11 +101,12 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
     super.dispose();
   }
 
-  // -------------------- VALIDATION --------------------
+  // ===================== VALIDATION =====================
   bool get _phase1Complete {
     final okDesc = _descCtrl.text.trim().isNotEmpty;
-    final okLocation =
-        (_pickedJobLocation != null && _pickedJobLocation!.trim().isNotEmpty);
+    final okLocation = _jobLocationText != null &&
+        _jobLocationText!.trim().isNotEmpty &&
+        _jobLatLng != null;
     return okDesc && okLocation;
   }
 
@@ -95,33 +147,190 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
     setState(() => _step -= 1);
   }
 
-  void _next() {
+  void _next() async {
     FocusScope.of(context).unfocus();
 
     if (_step == 0) {
+      if (!_phase1Complete) {
+        _toast("Please add a job description and select job location on the map.");
+        return;
+      }
       setState(() => _step = 1);
       return;
     }
 
     if (_step == 1) {
+      if (!_phase2Complete) {
+        _toast("Please complete workers, duration, and amount.");
+        return;
+      }
       setState(() => _step = 2);
       return;
     }
 
     if (_step == 2) {
+      if (_startDate == null) {
+        _toast("Please select a start date.");
+        return;
+      }
+      if (_endDate == null) {
+        _toast("Please select an end date.");
+        return;
+      }
+      if (_timeFrom == null || _timeTo == null) {
+        _toast("Please select time range.");
+        return;
+      }
+
+      // Final overlap check (date+time)
+      final ok = await _validateSelectedRangeOverlap();
+      if (!ok) return;
+
       setState(() => _step = 3);
       return;
     }
 
-    // step 3 -> payment
+    // step 3 -> payment (hook later)
     _toast('Continue to payment (hook later)');
   }
 
-  // -------------------- TIME PICKERS --------------------
+  // ===================== FILE PICK (PHASE 1) =====================
+  Future<void> _pickFiles() async {
+    if (_pickingFiles) return;
+    setState(() => _pickingFiles = true);
+
+    try {
+      final res = await FilePicker.platform.pickFiles(
+        allowMultiple: true,
+        type: FileType.custom,
+        allowedExtensions: const ['png', 'jpg', 'jpeg', 'pdf'],
+        withData: false,
+      );
+      if (res == null) return;
+
+      // Limit to 4 files
+      final files = res.files.take(4).toList();
+      setState(() {
+        _pickedFiles
+          ..clear()
+          ..addAll(files);
+      });
+      _toast("${_pickedFiles.length} file(s) selected");
+    } catch (e) {
+      _toast("File pick failed: $e");
+    } finally {
+      if (mounted) setState(() => _pickingFiles = false);
+    }
+  }
+
+  // OPTIONAL upload helper (if you later want uploads before payment)
+  Future<List<String>> _uploadPickedFiles({
+    required String bookingId,
+    required String clientId,
+  }) async {
+    final storage = FirebaseStorage.instance;
+    final out = <String>[];
+
+    for (final f in _pickedFiles) {
+      if (f.path == null) continue;
+      final file = File(f.path!);
+      final ext = (f.extension ?? 'file').toLowerCase();
+      final name = const Uuid().v4();
+      final ref = storage.ref('bookings/$bookingId/$clientId/$name.$ext');
+
+      await ref.putFile(file);
+      final url = await ref.getDownloadURL();
+      out.add(url);
+    }
+    return out;
+  }
+
+  // ===================== LOCATION (MAP) =====================
+  Future<void> _initLocation() async {
+    setState(() {
+      _locLoading = true;
+      _locError = null;
+    });
+
+    try {
+      final enabled = await Geolocator.isLocationServiceEnabled();
+      if (!enabled) throw Exception("Location services are OFF. Turn on GPS.");
+
+      var perm = await Geolocator.checkPermission();
+      if (perm == LocationPermission.denied) {
+        perm = await Geolocator.requestPermission();
+      }
+      if (perm == LocationPermission.denied) {
+        throw Exception("Location permission denied.");
+      }
+      if (perm == LocationPermission.deniedForever) {
+        throw Exception("Location permission denied forever. Enable it in settings.");
+      }
+
+      final pos = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
+      final me = LatLng(pos.latitude, pos.longitude);
+      setState(() => _myLatLng = me);
+
+      if (_mapCtrl != null) {
+        _mapCtrl!.animateCamera(CameraUpdate.newLatLngZoom(me, 14));
+      }
+    } catch (e) {
+      setState(() => _locError = e.toString());
+    } finally {
+      if (mounted) setState(() => _locLoading = false);
+    }
+  }
+
+  Future<void> _reverseGeocode(LatLng latLng) async {
+    // If you don't want reverse geocoding, you can delete this and just set lat/lng text
+    try {
+      if (_googleKey == "REPLACE_WITH_YOUR_GOOGLE_MAPS_KEY") return;
+
+      final res = await _dio.get(
+        "https://maps.googleapis.com/maps/api/geocode/json",
+        queryParameters: {
+          "latlng": "${latLng.latitude},${latLng.longitude}",
+          "key": _googleKey,
+          "language": "en",
+        },
+      );
+
+      final results = (res.data["results"] as List? ?? []);
+      if (results.isEmpty) return;
+
+      final addr = results.first["formatted_address"] as String?;
+      if (addr != null && addr.trim().isNotEmpty) {
+        setState(() => _jobLocationText = addr.trim());
+      }
+    } catch (_) {
+      // ignore reverse-geocode failures
+    }
+  }
+
+  void _onMapTap(LatLng latLng) async {
+    setState(() {
+      _pickedLatLng = latLng;
+      _pickedMarker = Marker(
+        markerId: const MarkerId("job_location"),
+        position: latLng,
+      );
+      _jobLatLng = GeoPoint(latLng.latitude, latLng.longitude);
+      _jobLocationText =
+          _jobLocationText ?? "${latLng.latitude.toStringAsFixed(5)}, ${latLng.longitude.toStringAsFixed(5)}";
+    });
+
+    await _reverseGeocode(latLng);
+  }
+
+  // ===================== TIME PICKERS =====================
   Future<void> _pickTime({required bool isFrom}) async {
     final initial = isFrom
         ? (_timeFrom ?? const TimeOfDay(hour: 9, minute: 0))
         : (_timeTo ?? const TimeOfDay(hour: 17, minute: 0));
+
     final picked = await showTimePicker(
       context: context,
       initialTime: initial,
@@ -154,12 +363,25 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
         _timeTo = picked;
       }
     });
+
+    // If you already selected a date range, validate with time too
+    if (_startDate != null && _endDate != null) {
+      await _validateSelectedRangeOverlap();
+    }
   }
 
-  // -------------------- DATE RANGE PICK --------------------
-  void _toggleDay(DateTime day) {
+  // ===================== CALENDAR: SELECTION + AVAILABILITY =====================
+  void _toggleDay(DateTime day) async {
     final d = DateTime(day.year, day.month, day.day);
 
+    // Block if fully booked
+    final status = _dayStatus[d] ?? _DayStatus.available;
+    if (status == _DayStatus.booked) {
+      _toast("That day is fully booked.");
+      return;
+    }
+
+    // Start new range if none or already completed
     if (_startDate == null || (_startDate != null && _endDate != null)) {
       setState(() {
         _startDate = d;
@@ -168,26 +390,194 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
       return;
     }
 
-    // start exists, end null
+    // Start exists, end null -> choose end
     if (d.isBefore(_startDate!)) {
       setState(() {
         _endDate = _startDate;
         _startDate = d;
       });
-      return;
+    } else {
+      setState(() => _endDate = d);
     }
 
-    setState(() => _endDate = d);
+    // As soon as range is formed, validate overlap (date-only)
+    final ok = await _validateSelectedRangeOverlap(dateOnly: true);
+    if (!ok) {
+      // keep start, clear end so user picks another end
+      setState(() => _endDate = null);
+    }
+  }
+
+  Future<void> _refreshMonthBookings() async {
+    setState(() {
+      _loadingMonthBookings = true;
+      _monthBookingsError = null;
+    });
+
+    try {
+      final grid = _buildMonthGrid(_calendarMonth);
+      final nonNullDays = grid.whereType<DateTime>().toList();
+      if (nonNullDays.isEmpty) {
+        setState(() {
+          _dayStatus.clear();
+          _dayBookingCounts.clear();
+        });
+        return;
+      }
+
+      final windowStart = DateTime(
+        nonNullDays.first.year,
+        nonNullDays.first.month,
+        nonNullDays.first.day,
+        0,
+        0,
+        0,
+      );
+      final windowEnd = DateTime(
+        nonNullDays.last.year,
+        nonNullDays.last.month,
+        nonNullDays.last.day,
+        23,
+        59,
+        59,
+      ).add(const Duration(seconds: 1));
+
+      // Query bookings that intersect this calendar window:
+      // existing.start < windowEnd AND existing.end > windowStart
+      final qs = await FirebaseFirestore.instance
+          .collection('bookings')
+          .where('serviceProviderId', isEqualTo: widget.serviceProviderId)
+          .where('status', whereIn: const ['pending', 'confirmed'])
+          .where('startDateTime', isLessThan: Timestamp.fromDate(windowEnd))
+          .where('endDateTime', isGreaterThan: Timestamp.fromDate(windowStart))
+          .get();
+
+      final bookings = qs.docs.map((d) => d.data()).toList();
+
+      final Map<DateTime, int> counts = {};
+      final Map<DateTime, _DayStatus> statusMap = {};
+
+      for (final day in nonNullDays) {
+        final dn = DateTime(day.year, day.month, day.day);
+        counts[dn] = 0;
+        statusMap[dn] = _DayStatus.available;
+      }
+
+      // For each booking, mark all covered days as partial/full
+      for (final b in bookings) {
+        final st = (b['startDateTime'] as Timestamp?)?.toDate();
+        final en = (b['endDateTime'] as Timestamp?)?.toDate();
+        if (st == null || en == null) continue;
+
+        final isFullDay = (b['isFullDay'] == true);
+
+        final startDay = DateTime(st.year, st.month, st.day);
+        final endDay = DateTime(en.year, en.month, en.day);
+
+        DateTime cursor = startDay;
+        while (!cursor.isAfter(endDay)) {
+          final key = DateTime(cursor.year, cursor.month, cursor.day);
+
+          if (statusMap.containsKey(key)) {
+            if (isFullDay) {
+              // full-day booking blocks the whole day
+              statusMap[key] = _DayStatus.booked;
+              counts[key] = maxDailyBookings; // force full
+            } else {
+              // time booking increments count (capacity)
+              counts[key] = (counts[key] ?? 0) + 1;
+
+              // If already booked, keep booked
+              if (statusMap[key] != _DayStatus.booked) {
+                statusMap[key] = _DayStatus.partial;
+              }
+            }
+
+            // Apply capacity rule if enabled
+            if ((counts[key] ?? 0) >= maxDailyBookings) {
+              statusMap[key] = _DayStatus.booked;
+            }
+          }
+
+          cursor = cursor.add(const Duration(days: 1));
+        }
+      }
+
+      setState(() {
+        _dayBookingCounts
+          ..clear()
+          ..addAll(counts);
+        _dayStatus
+          ..clear()
+          ..addAll(statusMap);
+      });
+    } catch (e) {
+      setState(() => _monthBookingsError = e.toString());
+    } finally {
+      if (mounted) setState(() => _loadingMonthBookings = false);
+    }
+  }
+
+  Future<bool> _validateSelectedRangeOverlap({bool dateOnly = false}) async {
+    if (_startDate == null || _endDate == null) return true;
+
+    // Build newStart/newEnd (date-only OR date+time)
+    final sDay = DateTime(_startDate!.year, _startDate!.month, _startDate!.day);
+    final eDay = DateTime(_endDate!.year, _endDate!.month, _endDate!.day);
+
+    DateTime newStart;
+    DateTime newEnd;
+
+    if (dateOnly || _timeFrom == null || _timeTo == null) {
+      // Date-only: treat as whole-day interval to prevent overlaps across ranges
+      newStart = DateTime(sDay.year, sDay.month, sDay.day, 0, 0, 0);
+      newEnd = DateTime(eDay.year, eDay.month, eDay.day, 23, 59, 59)
+          .add(const Duration(seconds: 1));
+    } else {
+      // Date+time:
+      // - If range is multiple days, we apply the same time window across all days for safety.
+      //   (If you later want "time only for first day", tell me and I'll adjust.)
+      final from = _timeFrom!;
+      final to = _timeTo!;
+
+      newStart = DateTime(sDay.year, sDay.month, sDay.day, from.hour, from.minute);
+
+      // end uses end day + to-time
+      newEnd = DateTime(eDay.year, eDay.month, eDay.day, to.hour, to.minute);
+      if (!newEnd.isAfter(newStart)) {
+        _toast("End time must be after start time.");
+        return false;
+      }
+    }
+
+    try {
+      // Overlap rule:
+      // existing.start < newEnd AND existing.end > newStart
+      final qs = await FirebaseFirestore.instance
+          .collection('bookings')
+          .where('serviceProviderId', isEqualTo: widget.serviceProviderId)
+          .where('status', whereIn: const ['pending', 'confirmed'])
+          .where('startDateTime', isLessThan: Timestamp.fromDate(newEnd))
+          .where('endDateTime', isGreaterThan: Timestamp.fromDate(newStart))
+          .limit(1)
+          .get();
+
+      if (qs.docs.isNotEmpty) {
+        _toast("That date/time range overlaps with an existing booking.");
+        return false;
+      }
+
+      return true;
+    } catch (e) {
+      _toast("Failed to validate booking availability: $e");
+      return false;
+    }
   }
 
   bool _inRange(DateTime d) {
     if (_startDate == null) return false;
     final day = DateTime(d.year, d.month, d.day);
-    final start = DateTime(
-      _startDate!.year,
-      _startDate!.month,
-      _startDate!.day,
-    );
+    final start = DateTime(_startDate!.year, _startDate!.month, _startDate!.day);
     if (_endDate == null) return day == start;
 
     final end = DateTime(_endDate!.year, _endDate!.month, _endDate!.day);
@@ -195,28 +585,13 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
         (day.isAtSameMomentAs(end) || day.isBefore(end));
   }
 
-  bool _isEdge(DateTime d) {
-    if (_startDate == null) return false;
-    final day = DateTime(d.year, d.month, d.day);
-    final start = DateTime(
-      _startDate!.year,
-      _startDate!.month,
-      _startDate!.day,
-    );
-    if (_endDate == null) return day == start;
-
-    final end = DateTime(_endDate!.year, _endDate!.month, _endDate!.day);
-    return day == start || day == end;
-  }
-
-  // -------------------- UI --------------------
+  // ===================== UI =====================
   @override
   Widget build(BuildContext context) {
     final w = MediaQuery.of(context).size.width;
     final h = MediaQuery.of(context).size.height;
 
     final sidePad = w * 0.06;
-    final topPad = h * 0.035;
 
     return Scaffold(
       body: SafeArea(
@@ -240,26 +615,18 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
                       subtitle: _businessName,
                       onBack: _back,
                     ),
-
                     SizedBox(height: h * 0.018),
 
-                    // stepper (dots + dashed)
                     Center(
                       child: _StepIndicator(
                         width: w,
                         activeIndex: _step < 3 ? _step : 2,
-                        labels: const [
-                          'Job Details',
-                          'Choose Date',
-                          'Payment Details',
-                        ],
+                        labels: const ['Job Details', 'Choose Date', 'Payment Details'],
                         accent: _brandOrange,
                       ),
                     ),
-
                     SizedBox(height: h * 0.019),
 
-                    // phase title (small centered)
                     Center(
                       child: Text(
                         _stepHeadline(),
@@ -280,16 +647,10 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
                       switchInCurve: Curves.easeOut,
                       switchOutCurve: Curves.easeIn,
                       transitionBuilder: (child, anim) {
-                        final slide =
-                            Tween<Offset>(
-                              begin: const Offset(0.04, 0),
-                              end: Offset.zero,
-                            ).animate(
-                              CurvedAnimation(
-                                parent: anim,
-                                curve: Curves.easeOut,
-                              ),
-                            );
+                        final slide = Tween<Offset>(
+                          begin: const Offset(0.04, 0),
+                          end: Offset.zero,
+                        ).animate(CurvedAnimation(parent: anim, curve: Curves.easeOut));
                         return FadeTransition(
                           opacity: anim,
                           child: SlideTransition(position: slide, child: child),
@@ -298,14 +659,14 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
                       child: _step == 0
                           ? _phase1(w, h)
                           : _step == 1
-                          ? _phase2(w, h)
-                          : _step == 2
-                          ? _phase3(w, h)
-                          : _phase4(w, h),
+                              ? _phase2(w, h)
+                              : _step == 2
+                                  ? _phase3(w, h)
+                                  : _phase4(w, h),
                     ),
 
                     SizedBox(height: h * 0.05),
-                    // CTA button
+
                     SizedBox(
                       width: double.infinity,
                       height: h * 0.070,
@@ -347,19 +708,18 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
   String _stepTitle() {
     if (_step == 3) return "Payments";
     if (_step == 2) return "Choose Date";
+    if (_step == 1) return "Job Details";
     return "Job Details";
   }
 
   String _stepHeadline() {
-    if (_step == 0) {
-      return "Choose Date"; // your first mock shows "Choose Date" even on details
-    }
-    if (_step == 1) return "Choose Date";
+    if (_step == 0) return "Job Details";
+    if (_step == 1) return "Workers & Pricing";
     if (_step == 2) return "Choose Date";
-    return "Choose Date";
+    return "Summary";
   }
 
-  // -------------------- PHASE 1 --------------------
+  // ===================== PHASE 1 (Job Details) =====================
   Widget _phase1(double w, double h) {
     return Column(
       key: const ValueKey('phase1'),
@@ -396,11 +756,10 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
         _uploadBox(
           w: w,
           h: h,
-          subtitle: "Supported files: PDF/PNG/JPEG/JPG\nLimit: 4 images",
-          onTap: () {
-            setState(() => _fakePhotos.add("img_${_fakePhotos.length + 1}"));
-            _toast("Picked (hook file picker later)");
-          },
+          subtitle: "Supported files: PDF/PNG/JPEG/JPG\nLimit: 4 files",
+          onTap: _pickFiles,
+          selectedCount: _pickedFiles.length,
+          loading: _pickingFiles,
         ),
 
         SizedBox(height: h * 0.018),
@@ -421,20 +780,67 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
           ],
         ),
         SizedBox(height: h * 0.010),
-        _mapPlaceholder(
+
+        // Location pill
+        _pillDisplay(
           w: w,
           h: h,
-          heightFactor: 0.24,
-          onTapPick: () {
-            setState(() => _pickedJobLocation = "Kampala");
-            _toast("Picked job location (placeholder)");
-          },
+          leading: Icons.location_on_rounded,
+          text: _jobLocationText == null ? "No location selected" : _jobLocationText!,
         ),
+        SizedBox(height: h * 0.010),
+
+        _liveJobMap(w, h),
+
+        if (_locLoading) ...[
+          SizedBox(height: h * 0.010),
+          const Center(child: CircularProgressIndicator()),
+        ],
+        if (_locError != null) ...[
+          SizedBox(height: h * 0.010),
+          Text(
+            _locError!,
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.9),
+              fontFamily: 'Inter',
+              fontWeight: FontWeight.w700,
+              fontSize: w * 0.030,
+            ),
+          )
+        ],
       ],
     );
   }
 
-  // -------------------- PHASE 2 --------------------
+  Widget _liveJobMap(double w, double h) {
+    final mapH = h * 0.26;
+
+    final initial = _myLatLng ?? const LatLng(0.3476, 32.5825); // Kampala fallback
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(18),
+      child: SizedBox(
+        height: mapH,
+        width: double.infinity,
+        child: GoogleMap(
+          initialCameraPosition: CameraPosition(target: initial, zoom: 13),
+          myLocationEnabled: true,
+          myLocationButtonEnabled: true,
+          zoomControlsEnabled: false,
+          onMapCreated: (c) {
+            _mapCtrl = c;
+            if (_myLatLng != null) {
+              c.animateCamera(CameraUpdate.newLatLngZoom(_myLatLng!, 14));
+            }
+          },
+          markers: {if (_pickedMarker != null) _pickedMarker!},
+          onTap: _onMapTap,
+        ),
+      ),
+    );
+  }
+
+  // ===================== PHASE 2 (Workers & Pricing) =====================
   Widget _phase2(double w, double h) {
     return Column(
       key: const ValueKey('phase2'),
@@ -469,7 +875,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
         _label("Amount", w),
         SizedBox(height: h * 0.006),
         Text(
-          "Business Name's Hourly/Fixed Price is (Amount)",
+          "$_businessName's Hourly/Fixed Price is (Amount)",
           style: TextStyle(
             color: Colors.white.withOpacity(0.75),
             fontFamily: 'Inter',
@@ -512,7 +918,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
     );
   }
 
-  // -------------------- PHASE 3 --------------------
+  // ===================== PHASE 3 (Calendar + Time) =====================
   Widget _phase3(double w, double h) {
     return Column(
       key: const ValueKey('phase3'),
@@ -525,7 +931,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
           h: h,
           leading: Icons.calendar_month_rounded,
           text: _startDate == null
-              ? "Selected Date Range"
+              ? "Select a date range"
               : "${_fmtDate(_startDate!)}  →  ${_fmtDate(_endDate ?? _startDate!)}",
         ),
 
@@ -541,7 +947,9 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
           w: w,
           h: h,
           leading: Icons.access_time_rounded,
-          text: "Selected Time Range",
+          text: (_timeFrom == null || _timeTo == null)
+              ? "Select time range"
+              : "${_timeFrom!.format(context)} → ${_timeTo!.format(context)}",
         ),
 
         SizedBox(height: h * 0.012),
@@ -587,474 +995,8 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
     );
   }
 
-  // -------------------- PHASE 4 --------------------
-  Widget _phase4(double w, double h) {
-    return Column(
-      key: const ValueKey('phase4'),
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _businessCard(w, h),
-
-        SizedBox(height: h * 0.016),
-
-        _breakdownCard(w, h),
-
-        SizedBox(height: h * 0.012),
-
-        Row(
-          children: [
-            GestureDetector(
-              onTap: () => setState(() => _step = 0),
-              child: Text(
-                "Edit Job details",
-                style: TextStyle(
-                  color: _brandOrange,
-                  fontFamily: 'Inter',
-                  fontWeight: FontWeight.w800,
-                  fontSize: w * 0.032,
-                  decoration: TextDecoration.underline,
-                ),
-              ),
-            ),
-            const Spacer(),
-            GestureDetector(
-              onTap: () => setState(() => _step = 2),
-              child: Text(
-                "Edit Schedule",
-                style: TextStyle(
-                  color: _brandOrange,
-                  fontFamily: 'Inter',
-                  fontWeight: FontWeight.w800,
-                  fontSize: w * 0.032,
-                  decoration: TextDecoration.underline,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  // -------------------- COMPONENTS --------------------
-  Widget _label(String t, double w) {
-    return Text(
-      t,
-      style: TextStyle(
-        color: Colors.white,
-        fontFamily: 'Inter',
-        fontSize: w * 0.038,
-        fontWeight: FontWeight.w900,
-      ),
-    );
-  }
-
-  Widget _whiteTextArea({
-    required double w,
-    required double h,
-    required TextEditingController controller,
-    required String hint,
-  }) {
-    final boxH = h * 0.15;
-    return Container(
-      height: boxH,
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-      ),
-      padding: EdgeInsets.only(
-        left: w * 0.04,
-        right: w * 0.04,
-        top: h * 0.006,
-        bottom: h * 0.018,
-      ),
-      child: TextFormField(
-        controller: controller,
-        maxLines: null,
-        expands: true,
-        style: TextStyle(
-          color: Colors.black,
-          fontFamily: 'Inter',
-          fontWeight: FontWeight.w700,
-          fontSize: w * 0.034,
-        ),
-        decoration: InputDecoration(
-          hintText: hint,
-          hintStyle: TextStyle(
-            color: Colors.black.withOpacity(0.55),
-            fontFamily: 'Inter',
-            fontWeight: FontWeight.w700,
-            fontSize: w * 0.032,
-            height: 1.20,
-          ),
-          border: InputBorder.none,
-        ),
-      ),
-    );
-  }
-
-  Widget _pillTextField({
-    required double w,
-    required double h,
-    required TextEditingController controller,
-    required String hint,
-    TextInputType keyboardType = TextInputType.text,
-    List<TextInputFormatter>? inputFormatters,
-  }) {
-    final fieldH = h * 0.062;
-    return Container(
-      height: fieldH,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(30),
-      ),
-      padding: EdgeInsets.symmetric(horizontal: w * 0.05),
-      alignment: Alignment.centerLeft,
-      child: TextFormField(
-        controller: controller,
-        keyboardType: keyboardType,
-        inputFormatters: inputFormatters,
-        style: TextStyle(
-          color: Colors.black,
-          fontFamily: 'Inter',
-          fontWeight: FontWeight.w800,
-          fontSize: w * 0.038,
-        ),
-        decoration: InputDecoration(
-          hintText: hint,
-          hintStyle: TextStyle(
-            color: Colors.black.withOpacity(0.55),
-            fontFamily: 'Inter',
-            fontWeight: FontWeight.w800,
-            fontSize: w * 0.034,
-          ),
-          border: InputBorder.none,
-          isCollapsed: true,
-          contentPadding: EdgeInsets.symmetric(vertical: fieldH * 0.22),
-        ),
-      ),
-    );
-  }
-
-  Widget _pillDropdown({
-    required double w,
-    required double h,
-    required String hint,
-    required String? value,
-    required List<String> items,
-    required ValueChanged<String?> onChanged,
-  }) {
-    final fieldH = h * 0.062;
-    return Container(
-      height: fieldH,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(30),
-      ),
-      padding: EdgeInsets.symmetric(horizontal: w * 0.05),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: value,
-          isExpanded: true,
-          icon: Icon(
-            Icons.keyboard_arrow_down_rounded,
-            color: Colors.black,
-            size: w * 0.075,
-          ),
-          hint: Text(
-            hint,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: Colors.black.withOpacity(0.60),
-              fontFamily: 'Inter',
-              fontWeight: FontWeight.w900,
-              fontSize: w * 0.032,
-            ),
-          ),
-          items: items
-              .map(
-                (e) => DropdownMenuItem(
-                  value: e,
-                  child: Text(
-                    e,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontFamily: 'Inter',
-                      fontWeight: FontWeight.w900,
-                      fontSize: w * 0.035,
-                    ),
-                  ),
-                ),
-              )
-              .toList(),
-          onChanged: onChanged,
-        ),
-      ),
-    );
-  }
-
-  Widget _pillDisplay({
-    required double w,
-    required double h,
-    required IconData leading,
-    required String text,
-  }) {
-    final fieldH = h * 0.060;
-    return Container(
-      height: fieldH,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(30),
-      ),
-      padding: EdgeInsets.symmetric(horizontal: w * 0.045),
-      child: Row(
-        children: [
-          Icon(leading, color: Colors.black, size: w * 0.055),
-          SizedBox(width: w * 0.03),
-          Expanded(
-            child: Text(
-              text,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: Colors.black,
-                fontFamily: 'Inter',
-                fontWeight: FontWeight.w900,
-                fontSize: w * 0.034,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _timePill({
-    required double w,
-    required double h,
-    required String label,
-    required TimeOfDay? time,
-    required VoidCallback onTap,
-  }) {
-    final fieldH = h * 0.060;
-    final r = fieldH / 2;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            color: Colors.white.withOpacity(0.9),
-            fontFamily: 'Inter',
-            fontWeight: FontWeight.w800,
-            fontSize: w * 0.030,
-          ),
-        ),
-        SizedBox(height: h * 0.008),
-        GestureDetector(
-          onTap: onTap,
-          child: Container(
-            height: fieldH,
-            padding: EdgeInsets.symmetric(horizontal: w * 0.04),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(r),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.access_time_rounded,
-                  color: Colors.black,
-                  size: w * 0.05,
-                ),
-                SizedBox(width: w * 0.03),
-                Expanded(
-                  child: Text(
-                    time == null ? "00:00 AM/PM" : time.format(context),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: Colors.black.withOpacity(
-                        time == null ? 0.55 : 1.0,
-                      ),
-                      fontFamily: 'Inter',
-                      fontWeight: FontWeight.w900,
-                      fontSize: w * 0.033,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _mapPlaceholder({
-    required double w,
-    required double h,
-    required double heightFactor,
-    required VoidCallback onTapPick,
-  }) {
-    final mapH = h * heightFactor;
-    return GestureDetector(
-      onTap: onTapPick,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(18),
-        child: Container(
-          height: mapH,
-          width: double.infinity,
-          color: Colors.white,
-          child: Stack(
-            children: [
-              // fake map background
-              Positioned.fill(
-                child: Container(
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [Color(0xFFEDEDED), Color(0xFFF8F8F8)],
-                    ),
-                  ),
-                ),
-              ),
-
-              Center(
-                child: Container(
-                  width: w * 0.20,
-                  height: w * 0.20,
-                  decoration: BoxDecoration(
-                    color: Colors.redAccent.withOpacity(0.22),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Center(
-                    child: Icon(
-                      Icons.location_pin,
-                      color: Colors.redAccent,
-                      size: w * 0.10,
-                    ),
-                  ),
-                ),
-              ),
-
-              Positioned(
-                right: w * 0.03,
-                top: mapH * 0.32,
-                child: Column(
-                  children: [
-                    _zoomBtn(icon: Icons.add, w: w),
-                    SizedBox(height: h * 0.01),
-                    _zoomBtn(icon: Icons.remove, w: w),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _zoomBtn({required IconData icon, required double w}) {
-    return Container(
-      width: w * 0.10,
-      height: w * 0.10,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.10),
-            blurRadius: 10,
-            spreadRadius: 1,
-          ),
-        ],
-      ),
-      child: Icon(icon, color: Colors.black, size: w * 0.06),
-    );
-  }
-
-  Widget _uploadBox({
-    required double w,
-    required double h,
-    required String subtitle,
-    required VoidCallback onTap,
-  }) {
-    final boxH = h * 0.19;
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: boxH,
-        width: double.infinity,
-        decoration: BoxDecoration(borderRadius: BorderRadius.circular(18)),
-        child: CustomPaint(
-          painter: _DashedBorderPainter(
-            color: Colors.white.withOpacity(0.75),
-            radius: 18,
-            dashWidth: 7,
-            dashSpace: 6,
-            strokeWidth: 1.6,
-          ),
-          child: Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.cloud_upload_rounded,
-                  color: Colors.white,
-                  size: w * 0.14,
-                ),
-                SizedBox(height: h * 0.008),
-                Text(
-                  "Upload File",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontFamily: 'Inter',
-                    fontWeight: FontWeight.w900,
-                    fontSize: w * 0.040,
-                  ),
-                ),
-                SizedBox(height: h * 0.004),
-                Text(
-                  subtitle,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.75),
-                    fontFamily: 'Inter',
-                    fontWeight: FontWeight.w600,
-                    fontSize: w * 0.028,
-                    height: 1.20,
-                  ),
-                ),
-                if (_fakePhotos.isNotEmpty) ...[
-                  SizedBox(height: h * 0.010),
-                  Text(
-                    "${_fakePhotos.length} file(s) selected",
-                    style: TextStyle(
-                      color: _brandOrange,
-                      fontFamily: 'Inter',
-                      fontWeight: FontWeight.w900,
-                      fontSize: w * 0.030,
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _calendarCard(double w, double h) {
-    final cardH = h * 0.42;
+    final cardH = h * 0.44;
 
     final monthName = _monthName(_calendarMonth.month);
     final year = _calendarMonth.year;
@@ -1080,13 +1022,11 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
                 _circleIconBtn(
                   w: w,
                   icon: Icons.chevron_left,
-                  onTap: () {
+                  onTap: () async {
                     setState(() {
-                      _calendarMonth = DateTime(
-                        _calendarMonth.year,
-                        _calendarMonth.month - 1,
-                      );
+                      _calendarMonth = DateTime(_calendarMonth.year, _calendarMonth.month - 1);
                     });
+                    await _refreshMonthBookings();
                   },
                 ),
                 const Spacer(),
@@ -1103,44 +1043,70 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
                 _circleIconBtn(
                   w: w,
                   icon: Icons.chevron_right,
-                  onTap: () {
+                  onTap: () async {
                     setState(() {
-                      _calendarMonth = DateTime(
-                        _calendarMonth.year,
-                        _calendarMonth.month + 1,
-                      );
+                      _calendarMonth = DateTime(_calendarMonth.year, _calendarMonth.month + 1);
                     });
+                    await _refreshMonthBookings();
                   },
                 ),
               ],
             ),
 
-            SizedBox(height: h * 0.012),
-
-            // weekdays
-            Row(
-              children: weekdays
-                  .map(
-                    (d) => Expanded(
-                      child: Center(
-                        child: Text(
-                          d,
-                          style: TextStyle(
-                            color: Colors.black.withOpacity(0.55),
-                            fontFamily: 'Inter',
-                            fontWeight: FontWeight.w800,
-                            fontSize: w * 0.028,
-                          ),
-                        ),
-                      ),
-                    ),
-                  )
-                  .toList(),
-            ),
-
             SizedBox(height: h * 0.010),
 
-            // grid
+            if (_loadingMonthBookings)
+              const LinearProgressIndicator(minHeight: 3),
+            if (_monthBookingsError != null) ...[
+              SizedBox(height: h * 0.006),
+              Text(
+                "Bookings load error: $_monthBookingsError",
+                style: TextStyle(
+                  color: Colors.redAccent,
+                  fontFamily: 'Inter',
+                  fontWeight: FontWeight.w800,
+                  fontSize: w * 0.030,
+                ),
+              ),
+            ],
+
+            SizedBox(height: h * 0.012),
+
+            // Legend
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _legendDot(color: Colors.green.shade400, label: "Available", w: w),
+                _legendDot(color: Colors.orange.shade400, label: "Partial", w: w),
+                _legendDot(color: Colors.red.shade400, label: "Booked", w: w),
+                _legendDot(color: Colors.purple.shade400, label: "Selected", w: w),
+              ],
+            ),
+
+            SizedBox(height: h * 0.012),
+
+            // Weekday labels
+            Row(
+              children: List.generate(7, (i) {
+                return Expanded(
+                  child: Center(
+                    child: Text(
+                      weekdays[i],
+                      style: TextStyle(
+                        color: Colors.black.withOpacity(0.55),
+                        fontFamily: 'Inter',
+                        fontWeight: FontWeight.w900,
+                        fontSize: w * 0.030,
+                      ),
+                    ),
+                  ),
+                );
+              }),
+            ),
+
+            SizedBox(height: h * 0.008),
+
+            // Grid
             Expanded(
               child: GridView.builder(
                 physics: const NeverScrollableScrollPhysics(),
@@ -1150,44 +1116,55 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
                   mainAxisSpacing: 8,
                   crossAxisSpacing: 8,
                 ),
-                itemBuilder: (context, i) {
+                itemBuilder: (_, i) {
                   final day = days[i];
                   if (day == null) return const SizedBox.shrink();
 
-                  final isToday = _isSameDate(day, DateTime.now());
-                  final inRange = _inRange(day);
-                  final edge = _isEdge(day);
+                  final normalized = DateTime(day.year, day.month, day.day);
+                  final isToday = _isSameDay(normalized, DateTime.now());
+                  final inRange = _inRange(normalized);
 
-                  Color bg = Colors.transparent;
-                  Color txt = Colors.black.withOpacity(0.80);
+                  final status = _dayStatus[normalized] ?? _DayStatus.available;
 
-                  // match your legend vibe: current day green
-                  if (isToday) {
-                    bg = Colors.green;
-                    txt = Colors.white;
-                  }
-
+                  Color bg;
                   if (inRange) {
-                    bg = Colors.orange;
-                    txt = Colors.white;
+                    bg = Colors.purple.shade400;
+                  } else {
+                    switch (status) {
+                      case _DayStatus.booked:
+                        bg = Colors.red.shade400;
+                        break;
+                      case _DayStatus.partial:
+                        bg = Colors.orange.shade400;
+                        break;
+                      case _DayStatus.available:
+                        bg = Colors.green.shade400;
+                        break;
+                    }
                   }
 
-                  return GestureDetector(
-                    onTap: () => _toggleDay(day),
+                  return InkWell(
+                    borderRadius: BorderRadius.circular(999),
+                    onTap: () => _toggleDay(normalized),
                     child: Container(
                       decoration: BoxDecoration(
                         color: bg,
                         shape: BoxShape.circle,
+                        border: isToday
+                            ? Border.all(
+                                color: Colors.blue.shade400,
+                                width: 2.2,
+                              )
+                            : null,
                       ),
-                      child: Center(
-                        child: Text(
-                          "${day.day}",
-                          style: TextStyle(
-                            color: txt,
-                            fontFamily: 'Inter',
-                            fontWeight: FontWeight.w900,
-                            fontSize: w * 0.032,
-                          ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        "${normalized.day}",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontFamily: 'Inter',
+                          fontWeight: FontWeight.w900,
+                          fontSize: w * 0.035,
                         ),
                       ),
                     ),
@@ -1198,16 +1175,44 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
 
             SizedBox(height: h * 0.010),
 
-            // legend
+            // Quick range buttons
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _legendDot(w, Colors.red, "Unavailable days"),
-                _legendDot(w, Colors.grey.withOpacity(0.35), "Available days"),
-                _legendDot(
-                  w,
-                  const Color.fromARGB(255, 0, 255, 8),
-                  "Current day",
+                Expanded(
+                  child: _smallChipBtn(
+                    w: w,
+                    label: "1 Week",
+                    onTap: () => _quickRange(days: 7),
+                  ),
+                ),
+                SizedBox(width: w * 0.02),
+                Expanded(
+                  child: _smallChipBtn(
+                    w: w,
+                    label: "2 Weeks",
+                    onTap: () => _quickRange(days: 14),
+                  ),
+                ),
+                SizedBox(width: w * 0.02),
+                Expanded(
+                  child: _smallChipBtn(
+                    w: w,
+                    label: "1 Month",
+                    onTap: () => _quickRange(days: 30),
+                  ),
+                ),
+                SizedBox(width: w * 0.02),
+                Expanded(
+                  child: _smallChipBtn(
+                    w: w,
+                    label: "Clear",
+                    onTap: () {
+                      setState(() {
+                        _startDate = null;
+                        _endDate = null;
+                      });
+                    },
+                  ),
                 ),
               ],
             ),
@@ -1217,26 +1222,152 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
     );
   }
 
-  Widget _legendDot(double w, Color c, String t) {
+  Future<void> _quickRange({required int days}) async {
+    if (_startDate == null) {
+      _toast("Tap a start date first.");
+      return;
+    }
+
+    // date-only quick range
+    final end = _startDate!.add(Duration(days: days - 1));
+
+    setState(() => _endDate = DateTime(end.year, end.month, end.day));
+
+    final ok = await _validateSelectedRangeOverlap(dateOnly: true);
+    if (!ok) {
+      setState(() => _endDate = null);
+    }
+  }
+
+  // ===================== PHASE 4 (Summary) =====================
+  Widget _phase4(double w, double h) {
+    return Column(
+      key: const ValueKey('phase4'),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _summaryCard(w, h),
+      ],
+    );
+  }
+
+  Widget _summaryCard(double w, double h) {
+    TextStyle left = TextStyle(
+      color: Colors.black,
+      fontFamily: 'Inter',
+      fontWeight: FontWeight.w900,
+      fontSize: w * 0.032,
+    );
+    TextStyle right = TextStyle(
+      color: Colors.black.withOpacity(0.75),
+      fontFamily: 'Inter',
+      fontWeight: FontWeight.w800,
+      fontSize: w * 0.032,
+    );
+
+    Widget row(String l, String r) {
+      return Padding(
+        padding: EdgeInsets.only(bottom: h * 0.010),
+        child: Row(
+          children: [
+            Expanded(child: Text(l, style: left)),
+            Expanded(
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: Text(
+                  r.isEmpty ? "-" : r,
+                  textAlign: TextAlign.right,
+                  style: right,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(18),
+      child: Container(
+        color: Colors.white,
+        padding: EdgeInsets.symmetric(horizontal: w * 0.05, vertical: h * 0.02),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Text(
+                "Summary",
+                style: TextStyle(
+                  color: Colors.black,
+                  fontFamily: 'Inter',
+                  fontWeight: FontWeight.w900,
+                  fontSize: w * 0.050,
+                ),
+              ),
+            ),
+            SizedBox(height: h * 0.015),
+            _dashedDivider(color: Colors.black.withOpacity(0.25)),
+            SizedBox(height: h * 0.015),
+
+            row("Business", _businessName),
+            row("Profession", _profession),
+            row("Job Description", _descCtrl.text.trim()),
+            row("Workers", _workersCount ?? ""),
+            row("Duration", _jobDuration ?? ""),
+            row("Amount", _amountCtrl.text.trim()),
+            row("Job Location", _jobLocationText ?? ""),
+            row(
+              "Dates",
+              _startDate == null
+                  ? "-"
+                  : "${_fmtDate(_startDate!)} → ${_fmtDate(_endDate ?? _startDate!)}",
+            ),
+            row(
+              "Time",
+              (_timeFrom == null || _timeTo == null)
+                  ? "-"
+                  : "${_timeFrom!.format(context)} → ${_timeTo!.format(context)}",
+            ),
+
+            SizedBox(height: h * 0.012),
+            _dashedDivider(color: Colors.black.withOpacity(0.25)),
+            SizedBox(height: h * 0.012),
+
+            Text(
+              "If everything is correct, tap Continue to Payment.",
+              style: TextStyle(
+                color: _brandOrange,
+                fontFamily: 'Inter',
+                fontWeight: FontWeight.w900,
+                fontSize: w * 0.032,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ===================== SMALL UI HELPERS =====================
+  Widget _legendDot({
+    required Color color,
+    required String label,
+    required double w,
+  }) {
     return Row(
-      mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          width: w * 0.035,
-          height: w * 0.035,
-          decoration: BoxDecoration(
-            color: c,
-            borderRadius: BorderRadius.circular(6),
-          ),
+          width: 10,
+          height: 10,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
-        SizedBox(width: w * 0.018),
+        SizedBox(width: w * 0.015),
         Text(
-          t,
+          label,
           style: TextStyle(
-            color: Colors.black.withOpacity(0.55),
+            color: Colors.black.withOpacity(0.65),
             fontFamily: 'Inter',
-            fontWeight: FontWeight.w700,
-            fontSize: w * 0.026,
+            fontWeight: FontWeight.w900,
+            fontSize: w * 0.028,
           ),
         ),
       ],
@@ -1248,283 +1379,410 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
     required IconData icon,
     required VoidCallback onTap,
   }) {
-    return GestureDetector(
+    return InkWell(
+      borderRadius: BorderRadius.circular(999),
       onTap: onTap,
       child: Container(
         width: w * 0.09,
         height: w * 0.09,
         decoration: BoxDecoration(
-          color: Colors.black.withOpacity(0.07),
+          color: Colors.black.withOpacity(0.06),
           shape: BoxShape.circle,
         ),
-        child: Center(
-          child: Icon(icon, color: Colors.black, size: w * 0.06),
+        child: Icon(icon, color: Colors.black, size: w * 0.06),
+      ),
+    );
+  }
+
+  Widget _smallChipBtn({
+    required double w,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(999),
+      onTap: onTap,
+      child: Container(
+        height: w * 0.09,
+        decoration: BoxDecoration(
+          color: Colors.black.withOpacity(0.06),
+          borderRadius: BorderRadius.circular(999),
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          label,
+          style: TextStyle(
+            color: Colors.black,
+            fontFamily: 'Inter',
+            fontWeight: FontWeight.w900,
+            fontSize: w * 0.030,
+          ),
         ),
       ),
     );
   }
 
-  Widget _businessCard(double w, double h) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.symmetric(horizontal: w * 0.04, vertical: h * 0.012),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: Stack(
-        children: [
-          Positioned(
-            left: w * 0.10 + w * 0.03,
-            top: 0,
-            right: 0,
-            bottom: 0,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _businessName,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontFamily: 'Inter',
-                    fontWeight: FontWeight.w900,
-                    fontSize: w * 0.038,
-                  ),
-                ),
-                SizedBox(height: h * 0.002),
-                Text(
-                  _profession,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: Colors.black.withOpacity(0.55),
-                    fontFamily: 'Inter',
-                    fontWeight: FontWeight.w700,
-                    fontSize: w * 0.030,
-                  ),
-                ),
-              ],
+  Widget _timePill({
+    required double w,
+    required double h,
+    required String label,
+    required TimeOfDay? time,
+    required VoidCallback onTap,
+  }) {
+    final fieldH = h * 0.065;
+    return InkWell(
+      borderRadius: BorderRadius.circular(30),
+      onTap: onTap,
+      child: Container(
+        height: fieldH,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(30),
+        ),
+        padding: EdgeInsets.symmetric(horizontal: w * 0.05),
+        child: Row(
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                color: Colors.black.withOpacity(0.60),
+                fontFamily: 'Inter',
+                fontWeight: FontWeight.w900,
+                fontSize: w * 0.034,
+              ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _breakdownCard(double w, double h) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.symmetric(horizontal: w * 0.05, vertical: h * 0.016),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Center(
-            child: Text(
-              "Job Cost Breakdown",
+            const Spacer(),
+            Text(
+              time == null ? "--:--" : time.format(context),
               style: TextStyle(
                 color: Colors.black,
-                fontFamily: 'AbrilFatface',
-                fontSize: w * 0.050,
+                fontFamily: 'Inter',
+                fontWeight: FontWeight.w900,
+                fontSize: w * 0.036,
               ),
             ),
-          ),
-
-          SizedBox(height: h * 0.010),
-
-          _dashedDivider(color: Colors.black.withOpacity(0.35)),
-
-          SizedBox(height: h * 0.012),
-
-          _kv(
-            "Selected Date Range",
-            _startDate == null
-                ? "Range"
-                : "${_fmtDate(_startDate!)} - ${_fmtDate(_endDate ?? _startDate!)}",
-            w,
-          ),
-          _kv(
-            "Selected Time Range",
-            (_timeFrom == null || _timeTo == null)
-                ? "Range"
-                : "${_timeFrom!.format(context)} - ${_timeTo!.format(context)}",
-            w,
-          ),
-
-          SizedBox(height: h * 0.010),
-          _dashedDivider(color: Colors.black.withOpacity(0.35)),
-          SizedBox(height: h * 0.010),
-
-          _kv("Number of Workers", _workersCount ?? "Number", w),
-          _kv(
-            "Number of Hours",
-            _jobDuration == null
-                ? "Number"
-                : (_jobDuration == "Hours" ? "Number" : "—"),
-            w,
-          ),
-          _kv("Hourly Pricing", "Amount", w),
-
-          SizedBox(height: h * 0.012),
-
-          Row(
-            children: [
-              Text(
-                "Total",
-                style: TextStyle(
-                  color: Colors.black,
-                  fontFamily: 'Inter',
-                  fontWeight: FontWeight.w900,
-                  fontSize: w * 0.040,
-                ),
-              ),
-              const Spacer(),
-              Text(
-                _amountCtrl.text.trim().isEmpty
-                    ? "Amount"
-                    : _amountCtrl.text.trim(),
-                style: TextStyle(
-                  color: Colors.black,
-                  fontFamily: 'Inter',
-                  fontWeight: FontWeight.w900,
-                  fontSize: w * 0.040,
-                ),
-              ),
-            ],
-          ),
-
-          SizedBox(height: h * 0.012),
-
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(
-                Icons.info_outline_rounded,
-                color: Colors.black.withOpacity(0.8),
-                size: w * 0.05,
-              ),
-              SizedBox(width: w * 0.02),
-              Expanded(
-                child: Text(
-                  "The Pricing is entirely set by the worker",
-                  style: TextStyle(
-                    color: Colors.black.withOpacity(0.7),
-                    fontFamily: 'Inter',
-                    fontWeight: FontWeight.w700,
-                    fontSize: w * 0.030,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
+            SizedBox(width: w * 0.02),
+            Icon(Icons.keyboard_arrow_down_rounded,
+                color: Colors.black, size: w * 0.07),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _kv(String k, String v, double w) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: w * 0.008),
+  // ===================== MONTH GRID =====================
+  List<DateTime?> _buildMonthGrid(DateTime month) {
+    final first = DateTime(month.year, month.month, 1);
+    final last = DateTime(month.year, month.month + 1, 0);
+    final daysInMonth = last.day;
+
+    // Monday=1..Sunday=7 => we want grid starting Monday.
+    final firstWeekday = first.weekday; // 1..7
+    final leading = firstWeekday - 1; // 0..6
+
+    final totalCells = leading + daysInMonth;
+    final rows = (totalCells / 7).ceil();
+    final gridSize = rows * 7;
+
+    final out = List<DateTime?>.filled(gridSize, null);
+    int idx = leading;
+    for (int d = 1; d <= daysInMonth; d++) {
+      out[idx++] = DateTime(month.year, month.month, d);
+    }
+    return out;
+  }
+
+  // ===================== FORMATTERS =====================
+  String _fmtDate(DateTime d) {
+    const months = [
+      "Jan","Feb","Mar","Apr","May","Jun",
+      "Jul","Aug","Sep","Oct","Nov","Dec"
+    ];
+    return "${d.day} ${months[d.month - 1]} ${d.year}";
+  }
+
+  String _monthName(int m) {
+    const months = [
+      "January","February","March","April","May","June",
+      "July","August","September","October","November","December"
+    ];
+    return months[m - 1];
+  }
+
+  bool _isSameDay(DateTime a, DateTime b) =>
+      a.year == b.year && a.month == b.month && a.day == b.day;
+
+  // ===================== COMMON WIDGETS (MATCH YOUR STYLE) =====================
+  Text _label(String t, double w) {
+    return Text(
+      t,
+      style: TextStyle(
+        color: Colors.white,
+        fontFamily: 'Inter',
+        fontSize: w * 0.038,
+        fontWeight: FontWeight.w900,
+      ),
+    );
+  }
+
+  Widget _pillDisplay({
+    required double w,
+    required double h,
+    required IconData leading,
+    required String text,
+  }) {
+    final fieldH = h * 0.065;
+    return Container(
+      height: fieldH,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(30),
+      ),
+      padding: EdgeInsets.symmetric(horizontal: w * 0.05),
       child: Row(
         children: [
+          Icon(leading, color: Colors.black, size: w * 0.06),
+          SizedBox(width: w * 0.03),
           Expanded(
             child: Text(
-              k,
+              text,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                color: Colors.black.withOpacity(0.80),
+                color: Colors.black,
                 fontFamily: 'Inter',
-                fontWeight: FontWeight.w800,
-                fontSize: w * 0.030,
+                fontWeight: FontWeight.w900,
+                fontSize: w * 0.035,
               ),
             ),
           ),
-          SizedBox(width: w * 0.03),
-          Text(
-            v,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+        ],
+      ),
+    );
+  }
+
+  Widget _whiteTextArea({
+    required double w,
+    required double h,
+    required TextEditingController controller,
+    required String hint,
+  }) {
+    final boxH = h * 0.17;
+    return Container(
+      height: boxH,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      padding: EdgeInsets.symmetric(horizontal: w * 0.04, vertical: h * 0.012),
+      child: TextField(
+        controller: controller,
+        maxLines: null,
+        expands: true,
+        style: TextStyle(
+          color: Colors.black,
+          fontFamily: 'Inter',
+          fontWeight: FontWeight.w700,
+          fontSize: w * 0.035,
+        ),
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: TextStyle(
+            color: Colors.black.withOpacity(0.55),
+            fontFamily: 'Inter',
+            fontWeight: FontWeight.w700,
+            fontSize: w * 0.033,
+            height: 1.25,
+          ),
+          border: InputBorder.none,
+        ),
+      ),
+    );
+  }
+
+  Widget _pillTextField({
+    required double w,
+    required double h,
+    required TextEditingController controller,
+    required String hint,
+    TextInputType keyboardType = TextInputType.text,
+    List<TextInputFormatter>? inputFormatters,
+  }) {
+    final fieldH = h * 0.065;
+    return Container(
+      height: fieldH,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(30),
+      ),
+      padding: EdgeInsets.symmetric(horizontal: w * 0.05),
+      alignment: Alignment.centerLeft,
+      child: TextField(
+        controller: controller,
+        keyboardType: keyboardType,
+        inputFormatters: inputFormatters,
+        style: TextStyle(
+          color: Colors.black,
+          fontFamily: 'Inter',
+          fontWeight: FontWeight.w900,
+          fontSize: w * 0.038,
+        ),
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: TextStyle(
+            color: Colors.black.withOpacity(0.55),
+            fontFamily: 'Inter',
+            fontWeight: FontWeight.w800,
+            fontSize: w * 0.035,
+          ),
+          border: InputBorder.none,
+          isCollapsed: true,
+          contentPadding: EdgeInsets.symmetric(vertical: fieldH * 0.22),
+        ),
+      ),
+    );
+  }
+
+  Widget _pillDropdown({
+    required double w,
+    required double h,
+    required String hint,
+    required String? value,
+    required List<String> items,
+    required ValueChanged<String?> onChanged,
+  }) {
+    final fieldH = h * 0.065;
+    return Container(
+      height: fieldH,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(30),
+      ),
+      padding: EdgeInsets.symmetric(horizontal: w * 0.05),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: value,
+          isExpanded: true,
+          icon: Icon(
+            Icons.keyboard_arrow_down_rounded,
+            color: Colors.black,
+            size: w * 0.07,
+          ),
+          hint: Text(
+            hint,
             style: TextStyle(
-              color: Colors.black.withOpacity(0.75),
+              color: Colors.black.withOpacity(0.65),
               fontFamily: 'Inter',
-              fontWeight: FontWeight.w800,
-              fontSize: w * 0.030,
+              fontWeight: FontWeight.w900,
+              fontSize: w * 0.034,
             ),
           ),
-        ],
+          items: items
+              .map(
+                (e) => DropdownMenuItem(
+                  value: e,
+                  child: Text(
+                    e,
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontFamily: 'Inter',
+                      fontWeight: FontWeight.w900,
+                      fontSize: w * 0.036,
+                    ),
+                  ),
+                ),
+              )
+              .toList(),
+          onChanged: onChanged,
+        ),
+      ),
+    );
+  }
+
+  Widget _uploadBox({
+    required double w,
+    required double h,
+    required String subtitle,
+    required VoidCallback onTap,
+    required int selectedCount,
+    required bool loading,
+  }) {
+    final boxH = h * 0.22;
+    return InkWell(
+      borderRadius: BorderRadius.circular(18),
+      onTap: loading ? null : onTap,
+      child: Container(
+        height: boxH,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: Colors.black.withOpacity(0.35),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: Colors.white.withOpacity(0.7),
+            width: 1.4,
+          ),
+        ),
+        child: Center(
+          child: loading
+              ? const CircularProgressIndicator(color: Colors.white)
+              : Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.cloud_upload_rounded,
+                        color: Colors.white, size: w * 0.14),
+                    SizedBox(height: h * 0.01),
+                    Text(
+                      "Upload File",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontFamily: 'Inter',
+                        fontWeight: FontWeight.w900,
+                        fontSize: w * 0.04,
+                      ),
+                    ),
+                    SizedBox(height: h * 0.004),
+                    Text(
+                      subtitle,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.75),
+                        fontFamily: 'Inter',
+                        fontWeight: FontWeight.w600,
+                        fontSize: w * 0.028,
+                        height: 1.25,
+                      ),
+                    ),
+                    if (selectedCount > 0) ...[
+                      SizedBox(height: h * 0.012),
+                      Text(
+                        "$selectedCount file(s) selected",
+                        style: TextStyle(
+                          color: _brandOrange,
+                          fontFamily: 'Inter',
+                          fontWeight: FontWeight.w900,
+                          fontSize: w * 0.03,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+        ),
       ),
     );
   }
 
   Widget _dashedDivider({required Color color}) {
-    return SizedBox(
-      width: double.infinity,
-      height: 1.6,
-      child: CustomPaint(painter: _DashedLinePainter(color: color)),
+    return CustomPaint(
+      painter: _DashedLinePainter(color: color),
+      child: const SizedBox(height: 1),
     );
-  }
-
-  // -------------------- CALENDAR HELPERS --------------------
-  List<DateTime?> _buildMonthGrid(DateTime month) {
-    final first = DateTime(month.year, month.month, 1);
-    final nextMonth = DateTime(month.year, month.month + 1, 1);
-    final daysInMonth = nextMonth.difference(first).inDays;
-
-    // We want Monday as first day (MON..SUN)
-    final weekday = first.weekday; // 1=Mon..7=Sun
-    final leadingEmpty = weekday - 1;
-
-    final List<DateTime?> grid = [];
-    for (int i = 0; i < leadingEmpty; i++) {
-      grid.add(null);
-    }
-    for (int d = 1; d <= daysInMonth; d++) {
-      grid.add(DateTime(month.year, month.month, d));
-    }
-
-    // pad to complete 6 rows (42 cells) for stable UI
-    while (grid.length < 42) {
-      grid.add(null);
-    }
-    return grid;
-  }
-
-  bool _isSameDate(DateTime a, DateTime b) =>
-      a.year == b.year && a.month == b.month && a.day == b.day;
-
-  String _fmtDate(DateTime d) {
-    final mm = d.month.toString().padLeft(2, '0');
-    final dd = d.day.toString().padLeft(2, '0');
-    return "${d.year}-$mm-$dd";
-  }
-
-  String _monthName(int m) {
-    const names = [
-      "January",
-      "February",
-      "March",
-      "April",
-      "May",
-      "June",
-      "July",
-      "August",
-      "September",
-      "October",
-      "November",
-      "December",
-    ];
-    return names[m - 1];
   }
 }
 
-// ======================= TOP BAR =======================
+// ===================== ENUMS =====================
+enum _DayStatus { available, partial, booked }
 
+// ===================== TOP BAR =====================
 class _TopBar extends StatelessWidget {
   final String title;
   final String subtitle;
@@ -1539,311 +1797,62 @@ class _TopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final w = MediaQuery.of(context).size.width;
-    final h = MediaQuery.of(context).size.height;
-
-    return Row(
-      children: [
-        GestureDetector(
-          onTap: onBack,
-          child: Container(
-            width: w * 0.13,
-            height: w * 0.13,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(15),
-            ),
-            child: Icon(
-              Icons.chevron_left,
-              color: Colors.black,
-              size: w * 0.10,
+    return Padding(
+      padding: EdgeInsets.only(top: w * 0.05),
+      child: Row(
+        children: [
+          InkWell(
+            borderRadius: BorderRadius.circular(14),
+            onTap: onBack,
+            child: Container(
+              width: w * 0.13,
+              height: w * 0.13,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(15),
+              ),
+              child: Icon(Icons.chevron_left,
+                  color: Colors.black, size: w * 0.10),
             ),
           ),
-        ),
-
-        SizedBox(width: w * 0.06),
-
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontFamily: 'Montserrat',
-                  fontSize: w * 0.052,
+          SizedBox(width: w * 0.05),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: w * 0.055,
+                    fontFamily: 'Inter',
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
-              ),
-              SizedBox(height: h * 0.002),
-              Text(
-                subtitle,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: Colors.white.withOpacity(0.75),
-                  fontFamily: 'Montserrat',
-                  fontWeight: FontWeight.w700,
-                  fontSize: w * 0.03,
+                SizedBox(height: w * 0.01),
+                Text(
+                  subtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.75),
+                    fontFamily: 'Inter',
+                    fontWeight: FontWeight.w700,
+                    fontSize: w * 0.032,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-
-        SizedBox(width: w * 0.03),
-
-        SizedBox(
-          width: 100,
-          height: 80,
-          child: Stack(
-            children: [
-              Positioned(
-                top: 20,
-                right: 0,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.person, color: Colors.black),
-                    ),
-                    const SizedBox(width: 10),
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.notifications,
-                        color: Colors.black,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Positioned(
-                bottom: w * 0.0,
-                left: 0,
-                right: 0,
-                child: Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: w * 0.0,
-                    vertical: h * 0.005,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color.fromARGB(255, 0, 254, 8),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    "Available",
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontFamily: 'Inter',
-                      fontWeight: FontWeight.w900,
-                      fontSize: w * 0.026,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
 
-// ======================= STEPPER =======================
-
-class _DotStepper extends StatelessWidget {
-  final int activeIndex;
-  final Color accent;
-
-  const _DotStepper({required this.activeIndex, required this.accent});
-
-  @override
-  Widget build(BuildContext context) {
-    final w = MediaQuery.of(context).size.width;
-
-    Widget dot(bool active) {
-      return Container(
-        width: w * 0.028,
-        height: w * 0.028,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: active ? accent : Colors.transparent,
-          border: Border.all(color: accent, width: 2),
-          boxShadow: active
-              ? [
-                  BoxShadow(
-                    color: accent.withOpacity(0.35),
-                    blurRadius: 12,
-                    spreadRadius: 1,
-                  ),
-                ]
-              : [],
-        ),
-      );
-    }
-
-    Widget dashed() {
-      return SizedBox(
-        width: w * 0.18,
-        height: 2,
-        child: CustomPaint(painter: _DashedLinePainter(color: accent)),
-      );
-    }
-
-    // labels
-    TextStyle labelStyle(bool on) => TextStyle(
-      color: Colors.white.withOpacity(on ? 0.95 : 0.75),
-      fontFamily: 'Inter',
-      fontWeight: FontWeight.w800,
-      fontSize: w * 0.026,
-    );
-
-    return Column(
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            dot(activeIndex >= 0),
-            SizedBox(width: w * 0.02),
-            dashed(),
-            SizedBox(width: w * 0.02),
-            dot(activeIndex >= 1),
-            SizedBox(width: w * 0.02),
-            dashed(),
-            SizedBox(width: w * 0.02),
-            dot(activeIndex >= 2),
-            SizedBox(width: w * 0.02),
-            dashed(),
-            SizedBox(width: w * 0.02),
-            dot(activeIndex >= 3),
-          ],
-        ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(
-              child: Center(
-                child: Text("Job Details", style: labelStyle(activeIndex == 0)),
-              ),
-            ),
-            Expanded(
-              child: Center(
-                child: Text(
-                  "Choose Date",
-                  style: labelStyle(activeIndex == 2 || activeIndex == 1),
-                ),
-              ),
-            ),
-            Expanded(
-              child: Center(
-                child: Text(
-                  "Payment Details",
-                  style: labelStyle(activeIndex == 3),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-class _DashedLinePainter extends CustomPainter {
-  final Color color;
-  const _DashedLinePainter({required this.color});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color.withOpacity(0.9)
-      ..strokeWidth = 2;
-
-    const dashWidth = 7.0;
-    const dashSpace = 6.0;
-    double startX = 0;
-    while (startX < size.width) {
-      canvas.drawLine(Offset(startX, 0), Offset(startX + dashWidth, 0), paint);
-      startX += dashWidth + dashSpace;
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _DashedLinePainter oldDelegate) =>
-      oldDelegate.color != color;
-}
-
-// ======================= DASHED BORDER =======================
-
-class _DashedBorderPainter extends CustomPainter {
-  final Color color;
-  final double radius;
-  final double dashWidth;
-  final double dashSpace;
-  final double strokeWidth;
-
-  _DashedBorderPainter({
-    required this.color,
-    required this.radius,
-    required this.dashWidth,
-    required this.dashSpace,
-    required this.strokeWidth,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final rrect = RRect.fromRectAndRadius(
-      Rect.fromLTWH(0, 0, size.width, size.height),
-      Radius.circular(radius),
-    );
-
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth;
-
-    final path = Path()..addRRect(rrect);
-    final metrics = path.computeMetrics().toList();
-    if (metrics.isEmpty) return;
-
-    for (final metric in metrics) {
-      double distance = 0;
-      while (distance < metric.length) {
-        final next = distance + dashWidth;
-        final extract = metric.extractPath(
-          distance,
-          next.clamp(0.0, metric.length),
-        );
-        canvas.drawPath(extract, paint);
-        distance = next + dashSpace;
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _DashedBorderPainter old) {
-    return old.color != color ||
-        old.radius != radius ||
-        old.dashWidth != dashWidth ||
-        old.dashSpace != dashSpace ||
-        old.strokeWidth != strokeWidth;
-  }
-}
-
+// ===================== STEP INDICATOR =====================
 class _StepIndicator extends StatelessWidget {
   final double width;
   final int activeIndex;
@@ -1859,74 +1868,62 @@ class _StepIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dot = width * 0.02;
-    final lineW = width * 0.18;
-
-    Widget dotW(bool active) {
-      return Container(
-        width: dot * 1.45,
-        height: dot * 1.45,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: active ? accent : Colors.transparent,
-          border: Border.all(color: accent, width: 2),
-          boxShadow: active
-              ? [
-                  BoxShadow(
-                    color: accent.withOpacity(0.35),
-                    blurRadius: 10,
-                    spreadRadius: 1,
-                  ),
-                ]
-              : [],
-        ),
-      );
-    }
-
-    Widget dashed() {
-      return SizedBox(
-        width: lineW,
-        child: CustomPaint(painter: _DashedLinePainter(color: accent)),
-      );
-    }
-
-    return Column(
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            dotW(activeIndex >= 0),
-            SizedBox(width: width * 0.02),
-            dashed(),
-            SizedBox(width: width * 0.02),
-            dotW(activeIndex >= 1),
-            SizedBox(width: width * 0.02),
-            dashed(),
-            SizedBox(width: width * 0.02),
-            dotW(activeIndex >= 2),
-          ],
-        ),
-        SizedBox(height: width * 0.02),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: labels
-              .map(
-                (t) => Expanded(
-                  child: Text(
-                    t,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: accent,
-                      fontSize: width * 0.032,
-                      fontWeight: FontWeight.w700,
-                      fontFamily: 'Poppins',
-                    ),
-                  ),
+    final dotSize = width * 0.030;
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(labels.length, (i) {
+        final isActive = i == activeIndex;
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 6),
+          child: Column(
+            children: [
+              Container(
+                width: dotSize,
+                height: dotSize,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: isActive ? accent : Colors.white.withOpacity(0.35),
                 ),
-              )
-              .toList(),
-        ),
-      ],
+              ),
+              const SizedBox(height: 6),
+              Text(
+                labels[i],
+                style: TextStyle(
+                  color: Colors.white.withOpacity(isActive ? 1 : 0.65),
+                  fontFamily: 'Inter',
+                  fontWeight: FontWeight.w900,
+                  fontSize: width * 0.028,
+                ),
+              ),
+            ],
+          ),
+        );
+      }),
     );
   }
+}
+
+// ===================== DASHED LINE =====================
+class _DashedLinePainter extends CustomPainter {
+  final Color color;
+  _DashedLinePainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1.2;
+
+    const dashWidth = 6.0;
+    const dashSpace = 5.0;
+    double startX = 0;
+
+    while (startX < size.width) {
+      canvas.drawLine(Offset(startX, 0), Offset(startX + dashWidth, 0), paint);
+      startX += dashWidth + dashSpace;
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _DashedLinePainter oldDelegate) => false;
 }

@@ -1,5 +1,4 @@
 import 'dart:ui';
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -7,7 +6,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:helper/Document%20Upload/Select_Worker_Type_Screen.dart';
 import 'package:helper/Employer%20Dashboard/Employer_Dashboard_Screen.dart';
 import 'package:helper/Intro/Role_Selection_Screen.dart';
-import 'package:helper/Worker%20Dashboard/Workers_Dashboard_Screen.dart';
 import 'package:helper/Worker%20Dashboard/Workers_skills_and_Job_details.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_sign_in/google_sign_in.dart';

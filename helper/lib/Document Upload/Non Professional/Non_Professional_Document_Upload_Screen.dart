@@ -7,7 +7,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:helper/Worker%20Dashboard/Workers_skills_and_Job_Details.dart';
 import 'Non_Professional_Selfie_Capture_Screen.dart';
-import '../../Worker Dashboard/Worker_Details_Screen.dart';
 
 class NonProfessionalDocumentUploadScreen extends StatefulWidget {
   const NonProfessionalDocumentUploadScreen({super.key});

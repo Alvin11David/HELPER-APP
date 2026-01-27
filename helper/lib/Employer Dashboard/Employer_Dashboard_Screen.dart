@@ -4,9 +4,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:helper/Components/User_Name.dart';
-import 'package:helper/Components/Side_Bar.dart';
+import 'package:helper/Components/user_avatar_circle.dart';
 import 'package:helper/Worker%20Dashboard/Worker_Details_Screen.dart';
 import '../Components/Bottom_Nav_Bar.dart';
+import '../Components/Side_Bar.dart';
 import 'All_Categories_Screen.dart';
 
 class EmployerDashboardScreen extends StatefulWidget {
@@ -223,8 +224,13 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => const WorkerDetailsScreen(),
-            settings: RouteSettings(arguments: {'docId': docId, 'data': d}),
+            builder: (context) => WorkerDetailsScreen(providerId: docId),
+            settings: RouteSettings(
+              arguments: {
+                'docId': docId,
+                'data': d,
+              },
+            ),
           ),
         );
       },
@@ -329,335 +335,297 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
   Widget build(BuildContext context) {
     final w = MediaQuery.of(context).size.width;
     return Scaffold(
-      body: SafeArea(
-        child: Container(
-          decoration: const BoxDecoration(
-            image: DecorationImage(
-              image: AssetImage('assets/background/normalscreenbg.png'),
-              fit: BoxFit.cover,
-            ),
+      body: Container(
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/background/normalscreenbg.png'),
+            fit: BoxFit.cover,
           ),
-          child: SingleChildScrollView(
-            child: SizedBox(
-              height: 1500,
-              child: Stack(
-                children: [
-                  Positioned(
-                    top: 20,
-                    right: w * 0.04,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: const BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.person, color: Colors.black),
+        ),
+        child: SingleChildScrollView(
+          child: SizedBox(
+            height: 1500,
+            child: Stack(
+              children: [
+                Positioned(
+                  top: 20,
+                  right: w * 0.04,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const UserAvatarCircle(
+                        size: 40,
+                        backgroundColor: Colors.white,
+                        iconColor: Colors.black,
+                        borderWidth: 0,
+                      ),
+                      const SizedBox(width: 10),
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
                         ),
-                        const SizedBox(width: 10),
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: const BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.notifications,
-                            color: Colors.black,
-                          ),
+                        child: const Icon(
+                          Icons.notifications,
+                          color: Colors.black,
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                  Positioned(
-                    top: 75,
-                    right: w * 0.04,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          height: 40,
-                          width: w * 0.76,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                          child: Row(
-                            children: [
-                              SizedBox(width: 10),
-                              Icon(Icons.search, color: Colors.black),
-                              SizedBox(width: 10),
-                              Expanded(
-                                child: TextField(
-                                  controller: _controller,
-                                  focusNode: _focusNode,
-                                  onChanged: (v) {
-                                    _debounce?.cancel();
-                                    _debounce = Timer(
-                                      const Duration(milliseconds: 300),
-                                      () {
-                                        _runSearch(v, fetchResults: true);
-                                      },
-                                    );
-                                  },
-                                  decoration: const InputDecoration(
-                                    hintText: 'Search for services here...',
-                                    border: InputBorder.none,
-                                  ),
-                                  style: const TextStyle(color: Colors.black),
+                ),
+                Positioned(
+                  top: 75,
+                  right: w * 0.04,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        height: 40,
+                        width: w * 0.76,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        child: Row(
+                          children: [
+                            SizedBox(width: 10),
+                            Icon(Icons.search, color: Colors.black),
+                            SizedBox(width: 10),
+                            Expanded(
+                              child: TextField(
+                                controller: _controller,
+                                focusNode: _focusNode,
+                                onChanged: (v) {
+                                  _debounce?.cancel();
+                                  _debounce =
+                                      Timer(const Duration(milliseconds: 300), () {
+                                    _runSearch(v, fetchResults: true);
+                                  });
+                                },
+                                decoration: const InputDecoration(
+                                  hintText: 'Search for services here...',
+                                  border: InputBorder.none,
                                 ),
+                                style: const TextStyle(color: Colors.black),
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
-                        SizedBox(width: 10),
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: const BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.tune, color: Colors.black),
+                      ),
+                      SizedBox(width: 10),
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
                         ),
-                      ],
-                    ),
+                        child: const Icon(Icons.tune, color: Colors.black),
+                      ),
+                    ],
                   ),
-                  Positioned(
-                    top: 125,
-                    left: w * 0.04,
-                    right: w * 0.04,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Categories',
+                ),
+                Positioned(
+                  top: 125,
+                  left: w * 0.04,
+                  right: w * 0.04,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Categories',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: w * 0.045,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 5,
+                        ),
+                        child: Text(
+                          'View All',
                           style: TextStyle(
-                            color: Colors.white,
-                            fontSize: w * 0.045,
+                            color: Color(0xFFF79F1A),
+                            fontSize: w * 0.04,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 5,
-                          ),
-                          child: Text(
-                            'View All',
-                            style: TextStyle(
-                              color: Color(0xFFF79F1A),
-                              fontSize: w * 0.04,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                  Positioned(
-                    top: 160,
-                    left: w * 0.04,
-                    right: w * 0.04,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        Column(
-                          children: [
-                            Container(
-                              width: 50,
-                              height: 50,
-                              decoration: const BoxDecoration(
-                                color: Colors.white,
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.home,
-                                color: Colors.black,
-                              ),
+                ),
+                Positioned(
+                  top: 160,
+                  left: w * 0.04,
+                  right: w * 0.04,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      Column(
+                        children: [
+                          Container(
+                            width: 50,
+                            height: 50,
+                            decoration: const BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
                             ),
-                            const SizedBox(height: 5),
-                            const Text(
-                              'House',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                              ),
+                            child: const Icon(Icons.home, color: Colors.black),
+                          ),
+                          const SizedBox(height: 5),
+                          const Text(
+                            'House',
+                            style: TextStyle(color: Colors.white, fontSize: 12),
+                          ),
+                        ],
+                      ),
+                      Column(
+                        children: [
+                          Container(
+                            width: 50,
+                            height: 50,
+                            decoration: const BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
                             ),
-                          ],
-                        ),
-                        Column(
-                          children: [
-                            Container(
-                              width: 50,
-                              height: 50,
-                              decoration: const BoxDecoration(
-                                color: Colors.white,
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.lightbulb,
-                                color: Colors.black,
-                              ),
-                            ),
-                            const SizedBox(height: 5),
-                            const Text(
-                              'Electricity',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
-                        ),
-                        Column(
-                          children: [
-                            Container(
-                              width: 50,
-                              height: 50,
-                              decoration: const BoxDecoration(
-                                color: Colors.white,
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.directions_car,
-                                color: Colors.black,
-                              ),
-                            ),
-                            const SizedBox(height: 5),
-                            const Text(
-                              'Driver',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
-                        ),
-                        Column(
-                          children: [
-                            Container(
-                              width: 50,
-                              height: 50,
-                              decoration: const BoxDecoration(
-                                color: Colors.white,
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.plumbing,
-                                color: Colors.black,
-                              ),
-                            ),
-                            const SizedBox(height: 5),
-                            const Text(
-                              'Plumber',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
-                        ),
-                        GestureDetector(
-                          onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const AllCategoriesScreen(),
+                            child: const Icon(
+                              Icons.lightbulb,
+                              color: Colors.black,
                             ),
                           ),
-                          child: Column(
-                            children: [
-                              Container(
-                                width: 50,
-                                height: 50,
-                                decoration: const BoxDecoration(
-                                  color: Colors.white,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  Icons.more_horiz,
-                                  color: Colors.black,
-                                ),
-                              ),
-                              const SizedBox(height: 5),
-                              const Text(
-                                'More',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
+                          const SizedBox(height: 5),
+                          const Text(
+                            'Electricity',
+                            style: TextStyle(color: Colors.white, fontSize: 12),
                           ),
-                        ),
-                      ],
-                    ),
+                        ],
+                      ),
+                      Column(
+                        children: [
+                          Container(
+                            width: 50,
+                            height: 50,
+                            decoration: const BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.directions_car,
+                              color: Colors.black,
+                            ),
+                          ),
+                          const SizedBox(height: 5),
+                          const Text(
+                            'Driver',
+                            style: TextStyle(color: Colors.white, fontSize: 12),
+                          ),
+                        ],
+                      ),
+                      Column(
+                        children: [
+                          Container(
+                            width: 50,
+                            height: 50,
+                            decoration: const BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.plumbing,
+                              color: Colors.black,
+                            ),
+                          ),
+                          const SizedBox(height: 5),
+                          const Text(
+                            'Plumber',
+                            style: TextStyle(color: Colors.white, fontSize: 12),
+                          ),
+                        ],
+                      ),
+                      Column(
+                        children: [
+                          Container(
+                            width: 50,
+                            height: 50,
+                            decoration: const BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.more_horiz,
+                              color: Colors.black,
+                            ),
+                          ),
+                          const SizedBox(height: 5),
+                          const Text(
+                            'More',
+                            style: TextStyle(color: Colors.white, fontSize: 12),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                  Positioned(
-                    top: 240,
-                    left: w * 0.04,
-                    right: w * 0.04,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Near You',
+                ),
+                Positioned(
+                  top: 240,
+                  left: w * 0.04,
+                  right: w * 0.04,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Near You',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: w * 0.045,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 5,
+                        ),
+                        child: Text(
+                          'View All',
                           style: TextStyle(
-                            color: Colors.white,
-                            fontSize: w * 0.045,
+                            color: Color(0xFFF79F1A),
+                            fontSize: w * 0.04,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 5,
-                          ),
-                          child: Text(
-                            'View All',
-                            style: TextStyle(
-                              color: Color(0xFFF79F1A),
-                              fontSize: w * 0.04,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                  Positioned(
-                    top: 280,
-                    left: w * 0.04,
-                    right: 0,
-                    child: SizedBox(
-                      height: w * 0.8,
-                      child: Builder(
-                        builder: (_) {
-                          if (_locLoading) {
-                            return const Center(
-                              child: CircularProgressIndicator(),
-                            );
-                          }
-                          if (_locError != null) {
-                            return Center(
-                              child: Text(
-                                _locError!,
-                                style: const TextStyle(color: Colors.white),
-                              ),
-                            );
-                          }
-                          if (_currentPos == null) {
-                            return const Center(
-                              child: Text(
-                                "Getting your location...",
-                                style: TextStyle(color: Colors.white),
-                              ),
-                            );
-                          }
+                ),
+                Positioned(
+                  top: 280,
+                  left: w * 0.04,
+                  right: 0,
+                  child: SizedBox(
+                    height: w * 0.8,
+                    child: Builder(
+                      builder: (_) {
+                        if (_locLoading) {
+                          return const Center(
+                              child: CircularProgressIndicator());
+                        }
+                        if (_locError != null) {
+                          return Center(
+                              child: Text(_locError!,
+                                  style:
+                                      const TextStyle(color: Colors.white)));
+                        }
+                        if (_currentPos == null) {
+                          return const Center(
+                              child: Text("Getting your location...",
+                                  style: TextStyle(color: Colors.white)));
+                        }
 
                           return StreamBuilder<
                             QuerySnapshot<Map<String, dynamic>>
@@ -683,9 +651,9 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
 
                               final docs = snap.data!.docs;
 
-                              // OPTIONAL geofence radius (km). Set to null to show all.
-                              const double? radiusKm =
-                                  15; // change to 5, 10, 20 etc
+                            // OPTIONAL geofence radius (km). Set to null to show all.
+                            const double radiusKm =
+                                15; // change to 5, 10, 20 etc
 
                               // build list with distances
                               final scored = <Map<String, dynamic>>[];
@@ -697,7 +665,7 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
 
                                 final km = _kmFromCurrent(gp);
 
-                                if (radiusKm != null && km > radiusKm) continue;
+                              if (km > radiusKm) continue;
 
                                 scored.add({
                                   ...d,

@@ -339,7 +339,7 @@ class WorkerRatingsReviewsScreen extends StatelessWidget {
                                   child: Row(
                                     children: [
                                       Text(
-                                        '${entry.key}',
+                                        entry.key,
                                         style: TextStyle(
                                           color: Colors.black,
                                           fontSize:

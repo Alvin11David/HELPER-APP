@@ -869,8 +869,9 @@ class _WorkerSkillsJobDetailsScreenState
             validator: (v) {
               final t = (v ?? '').trim();
               if (t.isEmpty) return 'Amount is required';
-              if (int.tryParse(t.replaceAll(',', '')) == null)
+              if (int.tryParse(t.replaceAll(',', '')) == null) {
                 return 'Enter a valid number'; // Parse without commas
+              }
               return null;
             },
           ),
