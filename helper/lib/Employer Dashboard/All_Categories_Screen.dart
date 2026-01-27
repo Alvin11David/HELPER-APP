@@ -588,9 +588,9 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                                       alignment: Alignment.bottomLeft,
                                       child: Container(
                                         width: double.infinity,
-                                        color: Colors.white,
                                         padding: const EdgeInsets.all(10),
                                         decoration: BoxDecoration(
+                                          color: Colors.white,
                                           borderRadius: const BorderRadius.only(
                                             bottomLeft: Radius.circular(30),
                                             bottomRight: Radius.circular(30),
