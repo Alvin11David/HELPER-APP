@@ -36,13 +36,16 @@ class _NonProfessionalSelfieCaptureScreenState
           .collection('users')
           .doc(user.uid)
           .collection('documents')
-          .doc('selfie')
+          .doc('Non Professional Workers')
           .get();
       if (doc.exists) {
         final data = doc.data() as Map<String, dynamic>;
-        setState(() {
-          _existingImageUrl = data['url'];
-        });
+        final selfieData = data['selfie'] as Map<String, dynamic>?;
+        if (selfieData != null) {
+          setState(() {
+            _existingImageUrl = selfieData['url'];
+          });
+        }
       }
     }
   }
@@ -98,14 +101,16 @@ class _NonProfessionalSelfieCaptureScreenState
           .collection('users')
           .doc(user.uid)
           .collection('documents')
-          .doc('selfie')
+          .doc('Non Professional Workers')
           .set({
-            'url': downloadUrl,
-            'uploadedAt': FieldValue.serverTimestamp(),
-            'type': 'selfie',
-            'workerType': 'Non Professional Workers',
-            'storagePath': 'Non Professional Workers Selfies/$fileName',
-          });
+            'selfie': {
+              'url': downloadUrl,
+              'uploadedAt': FieldValue.serverTimestamp(),
+              'type': 'selfie',
+              'workerType': 'Non Professional Workers',
+              'storagePath': 'Non Professional Workers Selfies/$fileName',
+            },
+          }, SetOptions(merge: true));
 
       setState(() => _isUploading = false);
       ScaffoldMessenger.of(context).showSnackBar(

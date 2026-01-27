@@ -4,6 +4,8 @@ import 'package:flutter/gestures.dart';
 import '../Auth/Sign_In_Screen.dart';
 import '../Document Upload/Select_Worker_Type_Screen.dart';
 import '../Employer Dashboard/Employer_Dashboard_Screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class RoleSelectionScreen extends StatefulWidget {
   const RoleSelectionScreen({super.key});
@@ -137,10 +139,17 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                 SizedBox(height: screenHeight * 0.03),
                 Center(
                   child: GestureDetector(
-                    onTap: () {
+                    onTap: () async {
                       setState(() {
                         _selectedRole = 'worker';
                       });
+                      final user = FirebaseAuth.instance.currentUser;
+                      if (user != null) {
+                        await FirebaseFirestore.instance
+                            .collection('Sign Up')
+                            .doc(user.uid)
+                            .update({'role': 'worker'});
+                      }
                       Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (context) => const SelectWorkerTypeScreen(),
@@ -242,10 +251,17 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                 SizedBox(height: screenHeight * 0.03),
                 Center(
                   child: GestureDetector(
-                    onTap: () {
+                    onTap: () async {
                       setState(() {
                         _selectedRole = 'employer';
                       });
+                      final user = FirebaseAuth.instance.currentUser;
+                      if (user != null) {
+                        await FirebaseFirestore.instance
+                            .collection('Sign Up')
+                            .doc(user.uid)
+                            .update({'role': 'employer'});
+                      }
                       Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (context) => const EmployerDashboardScreen(),

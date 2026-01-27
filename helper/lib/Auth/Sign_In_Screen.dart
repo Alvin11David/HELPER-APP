@@ -410,6 +410,7 @@ class _SignInScreenState extends State<SignInScreen> {
       'fullName': user.displayName ?? '',
       'photoUrl': user.photoURL ?? '',
       'phoneNumber': user.phoneNumber ?? '',
+      'role': '',
       'verified': true,
       'updatedAt': FieldValue.serverTimestamp(),
     };

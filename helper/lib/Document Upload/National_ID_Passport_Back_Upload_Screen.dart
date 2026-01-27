@@ -61,7 +61,9 @@ class _NationalIdPassportBackUploadScreenState
     }
     try {
       final file = File(_selectedImage!.path);
-      final folder = selected == 0 ? 'Professional Workers National IDS' : 'Professional Workers Passport ID';
+      final folder = selected == 0
+          ? 'Professional Workers National IDS'
+          : 'Professional Workers Passport ID';
       final fileName =
           '${DateTime.now().millisecondsSinceEpoch}_${user.uid}_back.jpg';
       final ref = FirebaseStorage.instance.ref().child('$folder/$fileName');
@@ -69,14 +71,16 @@ class _NationalIdPassportBackUploadScreenState
       final downloadUrl = await uploadTask.ref.getDownloadURL();
 
       // Save to Firestore under user's collection
-      final docType = selected == 0 ? 'professional_workers_national_id_back' : 'professional_workers_passport_id_back';
+      final docType = selected == 0
+          ? 'professional_workers_national_id_back'
+          : 'professional_workers_passport_id_back';
       await FirebaseFirestore.instance
           .collection('users')
           .doc(user.uid)
           .collection('documents')
           .doc('Professional Workers')
-            .collection('Professional Workers')
-          .doc(docType)
+          .collection(docType)
+          .doc('back')
           .set({
             'url': downloadUrl,
             'uploadedAt': FieldValue.serverTimestamp(),
@@ -99,9 +103,7 @@ class _NationalIdPassportBackUploadScreenState
       );
       // Navigate to NonProfessionalDocumentUploadScreen
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (context) => const DocumentUploadScreen(),
-        ),
+        MaterialPageRoute(builder: (context) => const DocumentUploadScreen()),
       );
     } catch (e) {
       setState(() => _isUploading = false);
@@ -114,14 +116,16 @@ class _NationalIdPassportBackUploadScreenState
   void _removeImage() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
-      final docType = selected == 0 ? 'professional_workers_national_id_back' : 'professional_workers_passport_id_back';
+      final docType = selected == 0
+          ? 'professional_workers_national_id_back'
+          : 'professional_workers_passport_id_back';
       final doc = await FirebaseFirestore.instance
           .collection('users')
           .doc(user.uid)
           .collection('documents')
           .doc('Professional Workers')
-            .collection('Professional Workers')
-          .doc(docType)
+          .collection(docType)
+          .doc('back')
           .get();
       if (doc.exists) {
         final data = doc.data() as Map<String, dynamic>;
@@ -131,7 +135,9 @@ class _NationalIdPassportBackUploadScreenState
             .collection('users')
             .doc(user.uid)
             .collection('documents')
-            .doc(docType)
+            .doc('Professional Workers')
+            .collection(docType)
+            .doc('back')
             .delete();
       }
     }
