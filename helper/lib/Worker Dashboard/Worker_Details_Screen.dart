@@ -176,17 +176,23 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
   }
 
   void _onWorkplaceLocationTap() {
-    if (_workplaceLatLng != null) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => MapScreen(
-            workerLocation: _workplaceLatLng,
-            workerData: widget.data,
-          ),
-        ),
-      );
-    }
+    final workerData = {
+      'businessName': _businessName,
+      'jobCategoryName': _jobCategoryName,
+      'skillsDescription': _skillsDescription,
+      'pricingType': _pricingType,
+      'amount': _amount,
+      'experienceLevel': _experienceLevel,
+      'yearsExperience': _yearsExperience,
+      'portfolioFiles': _portfolioFiles,
+      'workplaceLocationText': _workplaceLocationText,
+      'workplaceLatLng': _workplaceLatLng,
+      'uid': widget.data?['uid'] ?? widget.providerId,
+    };
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => MapScreen(worker: workerData)),
+    );
   }
 
   @override
