@@ -34,6 +34,7 @@ class _MapScreenState extends State<MapScreen> {
   LatLng? _currentPosition; // To store current location
   final Set<Marker> _markers = {}; // To add a marker for current location
   final Set<Polyline> _polylines = {}; // To add polylines for routes
+  List? _currentSteps; // To store current route steps
 
   List<Map<String, dynamic>> _workers = [];
   List<Map<String, dynamic>> _suggestions = [];
@@ -69,6 +70,30 @@ class _MapScreenState extends State<MapScreen> {
       points.add(LatLng(lat / 1E5, lng / 1E5));
     }
     return points;
+  }
+
+  IconData _getDirectionIcon(String? maneuver) {
+    switch (maneuver) {
+      case 'turn-left':
+        return Icons.turn_left;
+      case 'turn-right':
+        return Icons.turn_right;
+      case 'straight':
+        return Icons.arrow_upward;
+      case 'uturn-left':
+      case 'uturn-right':
+        return Icons.u_turn_left;
+      case 'merge':
+        return Icons.merge;
+      case 'fork-left':
+      case 'fork-right':
+        return Icons.fork_left;
+      case 'roundabout-left':
+      case 'roundabout-right':
+        return Icons.roundabout_left;
+      default:
+        return Icons.directions;
+    }
   }
 
   void _onMapCreated(GoogleMapController controller) {
@@ -577,8 +602,10 @@ class _MapScreenState extends State<MapScreen> {
         final route = data['routes'][0];
         final legs = route['legs'][0];
         final steps = legs['steps'] as List;
-        final polylinePoints = _decodePolyline(route['overview_polyline']['points']);
-        
+        final polylinePoints = _decodePolyline(
+          route['overview_polyline']['points'],
+        );
+
         // Calculate bounds
         double minLat = double.infinity;
         double maxLat = -double.infinity;
@@ -590,34 +617,32 @@ class _MapScreenState extends State<MapScreen> {
           if (point.longitude < minLng) minLng = point.longitude;
           if (point.longitude > maxLng) maxLng = point.longitude;
         }
-        
+
         setState(() {
           _polylines.clear();
-          _polylines.add(Polyline(
-            polylineId: const PolylineId('route'),
-            points: polylinePoints,
-            color: Colors.orange,
-            width: 5,
-          ));
+          _polylines.add(
+            Polyline(
+              polylineId: const PolylineId('route'),
+              points: polylinePoints,
+              color: Colors.orange,
+              width: 5,
+            ),
+          );
         });
-        
+
         // Animate camera to fit the route
         final bounds = LatLngBounds(
           southwest: LatLng(minLat, minLng),
           northeast: LatLng(maxLat, maxLng),
         );
         mapController.animateCamera(CameraUpdate.newLatLngBounds(bounds, 50));
-        
+
+        setState(() {
+          _currentSteps = steps;
+        });
+
         // Close the modal
         Navigator.of(context).pop();
-        
-        // Navigate to steps screen
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => DirectionsStepsScreen(steps: steps),
-          ),
-        );
       } else {
         print(
           'Failed with status: ${data['status']}, error: ${data['error_message']}',
@@ -635,6 +660,35 @@ class _MapScreenState extends State<MapScreen> {
         const SnackBar(content: Text('Error fetching directions')),
       );
     }
+  }
+
+  void _showStepsModal() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+      ),
+      builder: (context) {
+        return Container(
+          height: 400,
+          child: ListView.builder(
+            itemCount: _currentSteps!.length,
+            itemBuilder: (context, index) {
+              final step = _currentSteps![index] as Map<String, dynamic>;
+              final instruction = step['html_instructions'] as String;
+              final maneuver = step['maneuver'] as String?;
+              final icon = _getDirectionIcon(maneuver);
+              final cleanInstruction = instruction.replaceAll(RegExp(r'<[^>]*>'), '');
+              return ListTile(
+                leading: Icon(icon, color: Colors.black),
+                title: Text(cleanInstruction),
+              );
+            },
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -917,6 +971,28 @@ class _MapScreenState extends State<MapScreen> {
                         },
                       );
                     },
+                  ),
+                ),
+              ),
+            if (_currentSteps != null)
+              Positioned(
+                bottom: 80,
+                left: screenWidth * 0.5 - 50,
+                child: GestureDetector(
+                  onTap: _showStepsModal,
+                  child: Container(
+                    width: 100,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: Colors.orange,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Center(
+                      child: Text(
+                        'Steps',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
                   ),
                 ),
               ),

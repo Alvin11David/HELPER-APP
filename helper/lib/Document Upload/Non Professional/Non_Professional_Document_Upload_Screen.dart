@@ -50,9 +50,9 @@ class _NonProfessionalDocumentUploadScreenState
     final formKey = GlobalKey<FormState>();
 
     Future<void> onContinue() async {
-      Navigator.of(
-        context,
-      ).push(MaterialPageRoute(builder: (context) => WorkerSkillsJobDetailsScreen()));
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (context) => WorkerSkillsJobDetailsScreen()),
+      );
     }
 
     Future<void> openNationalIdPassportUpload() async {
