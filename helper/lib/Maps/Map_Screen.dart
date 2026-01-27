@@ -33,6 +33,7 @@ class _MapScreenState extends State<MapScreen> {
   ); // Fallback center
   LatLng? _currentPosition; // To store current location
   final Set<Marker> _markers = {}; // To add a marker for current location
+  final Set<Polyline> _polylines = {}; // To add polylines for routes
 
   List<Map<String, dynamic>> _workers = [];
   List<Map<String, dynamic>> _suggestions = [];
@@ -41,6 +42,34 @@ class _MapScreenState extends State<MapScreen> {
 
   late TextEditingController _controller;
   late FocusNode _focusNode;
+
+  List<LatLng> _decodePolyline(String encoded) {
+    List<LatLng> points = [];
+    int index = 0;
+    int len = encoded.length;
+    int lat = 0, lng = 0;
+    while (index < len) {
+      int b, shift = 0, result = 0;
+      do {
+        b = encoded.codeUnitAt(index++) - 63;
+        result |= (b & 0x1f) << shift;
+        shift += 5;
+      } while (b >= 0x20);
+      int dlat = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
+      lat += dlat;
+      shift = 0;
+      result = 0;
+      do {
+        b = encoded.codeUnitAt(index++) - 63;
+        result |= (b & 0x1f) << shift;
+        shift += 5;
+      } while (b >= 0x20);
+      int dlng = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
+      lng += dlng;
+      points.add(LatLng(lat / 1E5, lng / 1E5));
+    }
+    return points;
+  }
 
   void _onMapCreated(GoogleMapController controller) {
     mapController = controller;
@@ -548,6 +577,41 @@ class _MapScreenState extends State<MapScreen> {
         final route = data['routes'][0];
         final legs = route['legs'][0];
         final steps = legs['steps'] as List;
+        final polylinePoints = _decodePolyline(route['overview_polyline']['points']);
+        
+        // Calculate bounds
+        double minLat = double.infinity;
+        double maxLat = -double.infinity;
+        double minLng = double.infinity;
+        double maxLng = -double.infinity;
+        for (var point in polylinePoints) {
+          if (point.latitude < minLat) minLat = point.latitude;
+          if (point.latitude > maxLat) maxLat = point.latitude;
+          if (point.longitude < minLng) minLng = point.longitude;
+          if (point.longitude > maxLng) maxLng = point.longitude;
+        }
+        
+        setState(() {
+          _polylines.clear();
+          _polylines.add(Polyline(
+            polylineId: const PolylineId('route'),
+            points: polylinePoints,
+            color: Colors.orange,
+            width: 5,
+          ));
+        });
+        
+        // Animate camera to fit the route
+        final bounds = LatLngBounds(
+          southwest: LatLng(minLat, minLng),
+          northeast: LatLng(maxLat, maxLng),
+        );
+        mapController.animateCamera(CameraUpdate.newLatLngBounds(bounds, 50));
+        
+        // Close the modal
+        Navigator.of(context).pop();
+        
+        // Navigate to steps screen
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -613,6 +677,7 @@ class _MapScreenState extends State<MapScreen> {
                 zoom: 11.0,
               ),
               markers: _markers, // Add markers to the map
+              polylines: _polylines, // Add polylines for routes
             ),
 
             Positioned(
