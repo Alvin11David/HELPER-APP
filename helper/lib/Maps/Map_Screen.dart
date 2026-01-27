@@ -428,7 +428,7 @@ class _MapScreenState extends State<MapScreen> {
                       Container(
                         width: screenWidth * 0.25,
                         padding: EdgeInsets.symmetric(
-                          horizontal: screenWidth * 0.05,
+                          horizontal: screenWidth * 0.07,
                           vertical: screenWidth * 0.02,
                         ),
                         decoration: BoxDecoration(
@@ -458,8 +458,8 @@ class _MapScreenState extends State<MapScreen> {
                         child: Container(
                           width: screenWidth * 0.25,
                           padding: EdgeInsets.symmetric(
-                            horizontal: screenWidth * 0.04,
-                            vertical: screenWidth * 0.02,
+                            horizontal: screenWidth * 0.07,
+                          vertical: screenWidth * 0.02,
                           ),
                           decoration: BoxDecoration(
                             color: Colors.orange,
