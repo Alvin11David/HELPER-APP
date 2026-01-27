@@ -29,11 +29,13 @@ class _UgandaPhoneFormatter extends TextInputFormatter {
       );
     }
 
-    final digitsOnly =
-        newValue.text.substring(5).replaceAll(RegExp(r'[^0-9]'), '');
+    final digitsOnly = newValue.text
+        .substring(5)
+        .replaceAll(RegExp(r'[^0-9]'), '');
 
-    final limitedDigits =
-        digitsOnly.length > 9 ? digitsOnly.substring(0, 9) : digitsOnly;
+    final limitedDigits = digitsOnly.length > 9
+        ? digitsOnly.substring(0, 9)
+        : digitsOnly;
 
     final formattedText = '+256 $limitedDigits';
 
@@ -84,7 +86,6 @@ class _PhoneNumberEmailAddressScreenState
   static const _pureWhite = Color(0xFFFFFFFF);
 
   _AuthMode _mode = _AuthMode.phone;
-  
 
   final _formKey = GlobalKey<FormState>();
 
@@ -123,6 +124,17 @@ class _PhoneNumberEmailAddressScreenState
   String _generateOTP() {
     final random = Random();
     return (100000 + random.nextInt(900000)).toString();
+  }
+
+  String _generateReferralCode() {
+    final random = Random();
+    final digits1 = (100 + random.nextInt(900)).toString(); // 3 digits
+    final letters = String.fromCharCodes([
+      65 + random.nextInt(26), // A-Z
+      65 + random.nextInt(26),
+    ]);
+    final digits2 = (100 + random.nextInt(900)).toString(); // 3 digits
+    return 'UG$digits1$letters$digits2';
   }
 
   Future<void> _onContinue() async {
@@ -199,7 +211,8 @@ class _PhoneNumberEmailAddressScreenState
 
                   // ✅ Send needed data so OTP can save Sign Up/{uid}
                   fullName: fullName,
-                  password: '', referralCode: '', // phone flow no password
+                  password: '',
+                  referralCode: '', // phone flow no password
                 ),
               ),
             ).then((_) {
@@ -244,14 +257,17 @@ class _PhoneNumberEmailAddressScreenState
         final otpCode = _generateOTP();
 
         // ✅ Save OTP only (NOT Sign Up .add())
-        await FirebaseFirestore.instance.collection('OTP Codes').doc(email).set({
-          'email': email,
-          'otpCode': otpCode,
-          'timestamp': FieldValue.serverTimestamp(),
-          'expiresAt': Timestamp.fromDate(
-            DateTime.now().add(const Duration(minutes: 10)),
-          ),
-        });
+        await FirebaseFirestore.instance
+            .collection('OTP Codes')
+            .doc(email)
+            .set({
+              'email': email,
+              'otpCode': otpCode,
+              'timestamp': FieldValue.serverTimestamp(),
+              'expiresAt': Timestamp.fromDate(
+                DateTime.now().add(const Duration(minutes: 10)),
+              ),
+            });
 
         try {
           await FirebaseFunctions.instance.httpsCallable('sendOTPEmail').call({
@@ -275,7 +291,8 @@ class _PhoneNumberEmailAddressScreenState
               emailOrPhone: email,
               verificationId: '', // not used for email
               fullName: fullName,
-              password: password, referralCode: '',
+              password: password,
+              referralCode: '',
             ),
           ),
         );
@@ -359,15 +376,14 @@ class _PhoneNumberEmailAddressScreenState
       'fullName': user.displayName ?? '',
       'photoUrl': user.photoURL ?? '',
       'phoneNumber': user.phoneNumber ?? '',
+      'role': '',
+      'referralCode': _generateReferralCode(),
       'verified': true,
       'updatedAt': FieldValue.serverTimestamp(),
     };
 
     if (!snap.exists) {
-      await docRef.set({
-        ...payload,
-        'createdAt': FieldValue.serverTimestamp(),
-      });
+      await docRef.set({...payload, 'createdAt': FieldValue.serverTimestamp()});
     } else {
       await docRef.set(payload, SetOptions(merge: true));
     }
@@ -441,7 +457,11 @@ class _PhoneNumberEmailAddressScreenState
                       _StepIndicator(
                         width: w,
                         activeIndex: 0,
-                        labels: const ['Phone/Email', 'Verify', 'Payment Details'],
+                        labels: const [
+                          'Phone/Email',
+                          'Verify',
+                          'Payment Details',
+                        ],
                         accent: _brandOrange,
                       ),
 
@@ -481,15 +501,22 @@ class _PhoneNumberEmailAddressScreenState
                         switchInCurve: Curves.easeOut,
                         switchOutCurve: Curves.easeIn,
                         transitionBuilder: (child, anim) {
-                          final slide = Tween<Offset>(
-                            begin: const Offset(0.02, 0),
-                            end: Offset.zero,
-                          ).animate(
-                            CurvedAnimation(parent: anim, curve: Curves.easeOut),
-                          );
+                          final slide =
+                              Tween<Offset>(
+                                begin: const Offset(0.02, 0),
+                                end: Offset.zero,
+                              ).animate(
+                                CurvedAnimation(
+                                  parent: anim,
+                                  curve: Curves.easeOut,
+                                ),
+                              );
                           return FadeTransition(
                             opacity: anim,
-                            child: SlideTransition(position: slide, child: child),
+                            child: SlideTransition(
+                              position: slide,
+                              child: child,
+                            ),
                           );
                         },
                         child: _mode == _AuthMode.phone
@@ -518,8 +545,9 @@ class _PhoneNumberEmailAddressScreenState
                           onPressed: _loading ? null : _onContinue,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: _pureWhite,
-                            disabledBackgroundColor:
-                                _pureWhite.withOpacity(0.6),
+                            disabledBackgroundColor: _pureWhite.withOpacity(
+                              0.6,
+                            ),
                             elevation: 0,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(30),
@@ -762,7 +790,8 @@ class _PhoneBlock extends StatelessWidget {
           validator: (v) {
             final t = (v ?? '').trim();
             if (t.isEmpty) return 'Phone number is required';
-            if (!t.startsWith('+256 ')) return 'Phone number must start with +256';
+            if (!t.startsWith('+256 '))
+              return 'Phone number must start with +256';
             final digits = t.substring(5);
             if (digits.length != 9) return 'Enter exactly 9 digits after +256';
             if (!RegExp(r'^[0-9]{9}$').hasMatch(digits)) {

@@ -62,7 +62,9 @@ class _NonProfessionalNationalIdPassportFrontUploadScreenState
           .collection('users')
           .doc(user.uid)
           .collection('documents')
-          .doc(docType)
+          .doc('Non Professional Workers')
+          .collection(docType)
+          .doc('front')
           .set({
             'url': downloadUrl,
             'uploadedAt': FieldValue.serverTimestamp(),
@@ -116,7 +118,9 @@ class _NonProfessionalNationalIdPassportFrontUploadScreenState
           .collection('users')
           .doc(user.uid)
           .collection('documents')
-          .doc(docType)
+          .doc('Non Professional Workers')
+          .collection(docType)
+          .doc('back')
           .get();
       if (doc.exists) {
         final data = doc.data() as Map<String, dynamic>;
@@ -126,7 +130,9 @@ class _NonProfessionalNationalIdPassportFrontUploadScreenState
             .collection('users')
             .doc(user.uid)
             .collection('documents')
-            .doc(docType)
+            .doc('Non Professional Workers')
+            .collection(docType)
+            .doc('back')
             .delete();
         setState(() {
           _isBackUploaded = false;
@@ -155,7 +161,9 @@ class _NonProfessionalNationalIdPassportFrontUploadScreenState
           .collection('users')
           .doc(user.uid)
           .collection('documents')
-          .doc(docType)
+          .doc('Non Professional Workers')
+          .collection(docType)
+          .doc('front')
           .get();
       if (doc.exists) {
         final data = doc.data() as Map<String, dynamic>;
@@ -165,7 +173,9 @@ class _NonProfessionalNationalIdPassportFrontUploadScreenState
             .collection('users')
             .doc(user.uid)
             .collection('documents')
-            .doc(docType)
+            .doc('Non Professional Workers')
+            .collection(docType)
+            .doc('front')
             .delete();
         setState(() {
           _isAlreadyUploaded = false;
@@ -201,13 +211,17 @@ class _NonProfessionalNationalIdPassportFrontUploadScreenState
         .collection('users')
         .doc(user.uid)
         .collection('documents')
-        .doc(frontDocType)
+        .doc('Non Professional Workers')
+        .collection(frontDocType)
+        .doc('front')
         .get();
     final backDoc = await FirebaseFirestore.instance
         .collection('users')
         .doc(user.uid)
         .collection('documents')
-        .doc(backDocType)
+        .doc('Non Professional Workers')
+        .collection(backDocType)
+        .doc('back')
         .get();
     setState(() {
       if (frontDoc.exists) {

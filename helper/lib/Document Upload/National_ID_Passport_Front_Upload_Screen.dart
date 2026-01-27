@@ -60,33 +60,19 @@ class _NationalIdPassportFrontUploadScreenState
           ? 'professional_workers_national_id_front'
           : 'professional_workers_passport_id_front';
       // Store under users/{uid}/documents/Professional Workers/{docType} for professional workers
-      if (selected == 0) {
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .collection('documents')
-            .doc('Professional Workers')
-            .collection('Professional Workers')
-            .doc(docType)
-            .set({
-              'url': downloadUrl,
-              'uploadedAt': FieldValue.serverTimestamp(),
-              'type': docType,
-              'storagePath': '$folder/$fileName',
-            });
-      } else {
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .collection('documents')
-            .doc(docType)
-            .set({
-              'url': downloadUrl,
-              'uploadedAt': FieldValue.serverTimestamp(),
-              'type': docType,
-              'storagePath': '$folder/$fileName',
-            });
-      }
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('documents')
+          .doc('Professional Workers')
+          .collection(docType)
+          .doc('front')
+          .set({
+            'url': downloadUrl,
+            'uploadedAt': FieldValue.serverTimestamp(),
+            'type': docType,
+            'storagePath': '$folder/$fileName',
+          });
 
       setState(() => _isUploading = false);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -130,22 +116,13 @@ class _NationalIdPassportFrontUploadScreenState
       final docType = selected == 0
           ? 'professional_workers_national_id_back'
           : 'professional_workers_passport_id_back';
-      DocumentReference docRef;
-      if (selected == 0) {
-        docRef = FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .collection('documents')
-            .doc('Professional Workers')
-            .collection('Professional Workers')
-            .doc(docType);
-      } else {
-        docRef = FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .collection('documents')
-            .doc(docType);
-      }
+      DocumentReference docRef = FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('documents')
+          .doc('Professional Workers')
+          .collection(docType)
+          .doc('back');
       final doc = await docRef.get();
       if (doc.exists) {
         final data = doc.data() as Map<String, dynamic>;
@@ -177,22 +154,13 @@ class _NationalIdPassportFrontUploadScreenState
       final docType = selected == 0
           ? 'professional_workers_national_id_front'
           : 'professional_workers_passport_id_front';
-      DocumentReference docRef;
-      if (selected == 0) {
-        docRef = FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .collection('documents')
-            .doc('Professional Workers')
-            .collection('Professional Workers')
-            .doc(docType);
-      } else {
-        docRef = FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .collection('documents')
-            .doc(docType);
-      }
+      DocumentReference docRef = FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('documents')
+          .doc('Professional Workers')
+          .collection(docType)
+          .doc('front');
       final doc = await docRef.get();
       if (doc.exists) {
         final data = doc.data() as Map<String, dynamic>;
@@ -231,39 +199,22 @@ class _NationalIdPassportFrontUploadScreenState
     final backDocType = selected == 0
         ? 'professional_workers_national_id_back'
         : 'professional_workers_passport_id_back';
-    DocumentSnapshot frontDoc;
-    DocumentSnapshot backDoc;
-    if (selected == 0) {
-      frontDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .collection('documents')
-          .doc('Professional Workers')
-          .collection('Professional Workers')
-          .doc(frontDocType)
-          .get();
-      backDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .collection('documents')
-          .doc('Professional Workers')
-          .collection('Professional Workers')
-          .doc(backDocType)
-          .get();
-    } else {
-      frontDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .collection('documents')
-          .doc(frontDocType)
-          .get();
-      backDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .collection('documents')
-          .doc(backDocType)
-          .get();
-    }
+    DocumentSnapshot frontDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .collection('documents')
+        .doc('Professional Workers')
+        .collection(frontDocType)
+        .doc('front')
+        .get();
+    DocumentSnapshot backDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .collection('documents')
+        .doc('Professional Workers')
+        .collection(backDocType)
+        .doc('back')
+        .get();
     setState(() {
       if (frontDoc.exists) {
         final data = frontDoc.data() as Map<String, dynamic>;

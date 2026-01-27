@@ -75,7 +75,9 @@ class _NonProfessionalNationalIdPassportBackUploadScreenState
           .collection('users')
           .doc(user.uid)
           .collection('documents')
-          .doc(docType)
+          .doc('Non Professional Workers')
+          .collection(docType)
+          .doc('back')
           .set({
             'url': downloadUrl,
             'uploadedAt': FieldValue.serverTimestamp(),
@@ -119,7 +121,9 @@ class _NonProfessionalNationalIdPassportBackUploadScreenState
           .collection('users')
           .doc(user.uid)
           .collection('documents')
-          .doc(docType)
+          .doc('Non Professional Workers')
+          .collection(docType)
+          .doc('back')
           .get();
       if (doc.exists) {
         final data = doc.data() as Map<String, dynamic>;
@@ -129,7 +133,9 @@ class _NonProfessionalNationalIdPassportBackUploadScreenState
             .collection('users')
             .doc(user.uid)
             .collection('documents')
-            .doc(docType)
+            .doc('Non Professional Workers')
+            .collection(docType)
+            .doc('back')
             .delete();
       }
     }

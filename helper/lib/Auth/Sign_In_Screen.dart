@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -162,6 +163,17 @@ class _SignInScreenState extends State<SignInScreen> {
     phone = phone.replaceAll(' ', ''); // +2567xxxxxxxx
     if (!phone.startsWith('+256') || phone.length != 13) return '';
     return phone;
+  }
+
+  String _generateReferralCode() {
+    final random = Random();
+    final digits1 = (100 + random.nextInt(900)).toString(); // 3 digits
+    final letters = String.fromCharCodes([
+      65 + random.nextInt(26), // A-Z
+      65 + random.nextInt(26),
+    ]);
+    final digits2 = (100 + random.nextInt(900)).toString(); // 3 digits
+    return 'UG$digits1$letters$digits2';
   }
 
   // ✅ Ensures Firestore doc: Sign Up/{uid} exists (for avatars/profile reads)
@@ -408,6 +420,8 @@ class _SignInScreenState extends State<SignInScreen> {
       'fullName': user.displayName ?? '',
       'photoUrl': user.photoURL ?? '',
       'phoneNumber': user.phoneNumber ?? '',
+      'role': '',
+      'referralCode': _generateReferralCode(),
       'verified': true,
       'updatedAt': FieldValue.serverTimestamp(),
     };

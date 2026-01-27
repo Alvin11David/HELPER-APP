@@ -243,6 +243,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
       'phoneNumber': phoneNumber,
       'photoUrl': photoUrl,
       'referralCode': referralCode, // <-- Use the passed referralCode
+      'role': '',
       'verified': true,
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
@@ -309,7 +310,9 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
           await user.updateDisplayName(fullName);
         }
 
-        final referralCode = widget.referralCode.isNotEmpty ? widget.referralCode : _generateReferralCode(); // <-- Generate if empty
+        final referralCode = widget.referralCode.isNotEmpty
+            ? widget.referralCode
+            : _generateReferralCode(); // <-- Generate if empty
 
         await _writeUserProfileDoc(
           user: user,
@@ -396,7 +399,9 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
         await user.updateDisplayName(fullName);
       }
 
-      final referralCode = widget.referralCode.isNotEmpty ? widget.referralCode : _generateReferralCode(); // <-- Generate if empty
+      final referralCode = widget.referralCode.isNotEmpty
+          ? widget.referralCode
+          : _generateReferralCode(); // <-- Generate if empty
 
       await _writeUserProfileDoc(
         user: user,
@@ -416,7 +421,9 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
         'email': email,
         'fullName': fullName,
         'password': password,
-        'referralCode': referralCode, // <-- Use the generated or passed referralCode
+        'referralCode':
+            referralCode, // <-- Use the generated or passed referralCode
+        'role': '',
         'verified': true,
         'createdAt': FieldValue.serverTimestamp(),
         // Other fields...

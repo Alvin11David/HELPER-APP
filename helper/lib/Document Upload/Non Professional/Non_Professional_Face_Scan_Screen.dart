@@ -83,14 +83,16 @@ class _NonProfessionalFaceScanScreenState
             .collection('users')
             .doc(user.uid)
             .collection('documents')
-            .doc('selfie')
+            .doc('Non Professional Workers')
             .set({
-              'url': downloadUrl,
-              'uploadedAt': FieldValue.serverTimestamp(),
-              'type': 'selfie',
-              'workerType': 'Non Professional Workers',
-              'storagePath': 'Non Professional Workers Selfies/$fileName',
-            });
+              'selfie': {
+                'url': downloadUrl,
+                'uploadedAt': FieldValue.serverTimestamp(),
+                'type': 'selfie',
+                'workerType': 'Non Professional Workers',
+                'storagePath': 'Non Professional Workers Selfies/$fileName',
+              },
+            }, SetOptions(merge: true));
 
         Navigator.of(context).pop('uploaded');
       }
