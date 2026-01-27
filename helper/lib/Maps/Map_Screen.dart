@@ -30,7 +30,7 @@ class _MapScreenState extends State<MapScreen> {
     -122.677433,
   ); // Fallback center
   LatLng? _currentPosition; // To store current location
-  Set<Marker> _markers = {}; // To add a marker for current location
+  final Set<Marker> _markers = {}; // To add a marker for current location
 
   List<Map<String, dynamic>> _workers = [];
   List<Map<String, dynamic>> _suggestions = [];
@@ -243,7 +243,7 @@ class _MapScreenState extends State<MapScreen> {
         final distanceText = distance > 1000
             ? '${(distance / 1000).toStringAsFixed(1)} km'
             : '${distance.toInt()} m';
-        return Container(
+        return SizedBox(
           width: double.infinity,
           height: 560,
           child: Stack(
@@ -333,7 +333,7 @@ class _MapScreenState extends State<MapScreen> {
                                   onTap: () => showDialog(
                                     context: context,
                                     builder: (context) => Dialog(
-                                      child: Image.network(url as String),
+                                      child: Image.network(url),
                                     ),
                                   ),
                                   child: Container(
@@ -727,7 +727,7 @@ class _MapScreenState extends State<MapScreen> {
                         onTap: () {
                           final worker = suggestion['worker'];
                           final latLng = worker['workplaceLatLng'] as GeoPoint?;
-                          if (latLng != null && mapController != null) {
+                          if (latLng != null) {
                             mapController.animateCamera(
                               CameraUpdate.newLatLngZoom(
                                 LatLng(latLng.latitude, latLng.longitude),

@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:helper/Components/User_Name.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:helper/Employer%20Dashboard/job_detail_booking_screen.dart';
 
 class WorkerDetailsScreen extends StatefulWidget {
-  const WorkerDetailsScreen({super.key});
+  final String providerId;
+  const WorkerDetailsScreen({super.key, required this.providerId});
 
   @override
   State<WorkerDetailsScreen> createState() => _WorkerDetailsScreenState();
@@ -22,94 +22,65 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
   }
 
   late String _greeting;
+
   String? _businessName;
-  int _imageIndex = 0;
-  bool _isDescriptionExpanded = false;
-  int _rating = 0;
-  final TextEditingController _commentController = TextEditingController();
-  List<String> _portfolioFiles = [];
   String? _jobCategoryName;
   int? _yearsExperience;
   String? _skillsDescription;
   String? _pricingType;
   int? _amount;
   String? _experienceLevel;
-  // Workplace location variables
-  final String workplaceLocationText = 'Mbale';
-  final LatLng workplaceLatLng = const LatLng(
-    0.351719882423072,
-    32.59219899773598,
-  );
+  List<String> _portfolioFiles = [];
+  String? _workplaceLocationText;
+  GeoPoint? _workplaceLatLng;
+
+  int _imageIndex = 0;
+  bool _isDescriptionExpanded = false;
+  int _rating = 0;
+  final TextEditingController _commentController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _greeting = _getGreeting();
-    _loadPortfolio();
-    _loadBusinessName();
+    _loadProvider();
   }
 
-  Future<void> _loadBusinessName() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      try {
-        final doc = await FirebaseFirestore.instance
-            .collection('serviceProviders')
-            .doc(user.uid)
-            .get();
-        if (doc.exists) {
-          final data = doc.data();
-          setState(() {
-            if (data != null && data['businessName'] != null) {
-              _businessName = data['businessName'];
-            }
-            if (data != null && data['jobCategoryName'] != null) {
-              _jobCategoryName = data['jobCategoryName'];
-            }
-            if (data != null && data['yearsExperience'] != null) {
-              _yearsExperience = int.tryParse(
-                data['yearsExperience'].toString(),
-              );
-            }
-            if (data != null && data['skillsDescription'] != null) {
-              _skillsDescription = data['skillsDescription'];
-            }
-            if (data != null && data['pricingType'] != null) {
-              _pricingType = data['pricingType'];
-            }
-            if (data != null && data['amount'] != null) {
-              _amount = int.tryParse(data['amount'].toString());
-            }
-            if (data != null && data['experienceLevel'] != null) {
-              _experienceLevel = data['experienceLevel'];
-            }
-          });
-        }
-      } catch (e) {
-        // Handle error if needed
-      }
-    }
-  }
+  Future<void> _loadProvider() async {
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('serviceProviders')
+          .doc(widget.providerId)
+          .get();
 
-  Future<void> _loadPortfolio() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      try {
-        final doc = await FirebaseFirestore.instance
-            .collection('serviceProviders')
-            .doc(user.uid)
-            .get();
-        if (doc.exists) {
-          final data = doc.data();
-          if (data != null && data['portfolioFiles'] is List) {
-            setState(() {
-              _portfolioFiles = List<String>.from(data['portfolioFiles']);
-            });
+      if (!doc.exists) return;
+      final data = doc.data();
+      if (data == null) return;
+
+      setState(() {
+        _businessName = (data['businessName'] ?? '').toString();
+        _jobCategoryName = (data['jobCategoryName'] ?? '').toString();
+        _skillsDescription = (data['skillsDescription'] ?? '').toString();
+        _pricingType = (data['pricingType'] ?? '').toString();
+        _experienceLevel = (data['experienceLevel'] ?? '').toString();
+
+        _yearsExperience = int.tryParse((data['yearsExperience'] ?? '').toString());
+        _amount = int.tryParse((data['amount'] ?? '').toString());
+
+        _workplaceLocationText = (data['workplaceLocationText'] ?? '').toString();
+        final gp = data['workplaceLatLng'];
+        if (gp is GeoPoint) _workplaceLatLng = gp;
+
+        final portfolioFilesRaw = data['portfolioFiles'];
+        if (portfolioFilesRaw is List) {
+          _portfolioFiles = portfolioFilesRaw.map((e) => e.toString()).toList();
+          if (_imageIndex >= _portfolioFiles.length && _portfolioFiles.isNotEmpty) {
+            _imageIndex = 0;
           }
         }
-      } catch (e) {
-        // Handle error if needed
-      }
+      });
+    } catch (e) {
+      // Swallow errors to avoid breaking UI; consider logging in the future
     }
   }
 
@@ -119,18 +90,15 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
     super.dispose();
   }
 
-  void _onWorkplaceLocationTap() {
-    // Example: Show a dialog with the coordinates, or navigate to a map
+  void _showWorkplaceDialog(GeoPoint gp) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (_) => AlertDialog(
         title: const Text('Workplace Location'),
-        content: Text(
-          'Lat: ${workplaceLatLng.latitude}\nLng: ${workplaceLatLng.longitude}',
-        ),
+        content: Text('Lat: ${gp.latitude}\nLng: ${gp.longitude}'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () => Navigator.pop(context),
             child: const Text('Close'),
           ),
         ],
@@ -138,10 +106,16 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
     );
   }
 
+  void _onWorkplaceLocationTap() {
+    if (_workplaceLatLng != null) {
+      _showWorkplaceDialog(_workplaceLatLng!);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    double w = MediaQuery.of(context).size.width;
-    double h = MediaQuery.of(context).size.height;
+    final w = MediaQuery.of(context).size.width;
+    final h = MediaQuery.of(context).size.height;
     return Scaffold(
       body: SafeArea(
         child: Stack(
@@ -519,7 +493,7 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                           ),
                           children: [
                             TextSpan(
-                              text: workplaceLocationText,
+                              text: _workplaceLocationText ?? '',
                               style: const TextStyle(
                                 color: Colors.orange,
                                 fontSize: 14,
@@ -740,12 +714,23 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                             borderRadius: BorderRadius.circular(30),
                           ),
                         ),
-                        onPressed: () {},
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => JobDetailBookingScreen(
+                                serviceProviderId: widget.providerId,
+                                businessName: _businessName ?? 'Provider',
+                                profession: _jobCategoryName ?? 'Service',
+                              ),
+                            ),
+                          );
+                        },
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              'Hire Business Name',
+                              'Hire ${_businessName?.isNotEmpty ?? false ? _businessName : "Provider"}',
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: w * 0.045,

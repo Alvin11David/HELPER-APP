@@ -583,8 +583,9 @@ class _AcademicCertificateUploadScreenState
                         setState(() {
                           if (!searchHistory.contains(selection)) {
                             searchHistory.insert(0, selection);
-                            if (searchHistory.length > 5)
+                            if (searchHistory.length > 5) {
                               searchHistory.removeLast();
+                            }
                           }
                           if (!selectedProfessions.contains(selection)) {
                             selectedProfessions.add(selection);

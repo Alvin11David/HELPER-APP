@@ -230,7 +230,7 @@ class _SupportScreenState extends State<SupportScreen> {
                         final t = (v ?? '');
                         if (t.trim().isEmpty) return 'Issue title is required';
                         return null;
-                      },
+                      }, obscure: false,
                     ),
                     SizedBox(height: screenHeight * 0.018),
                     Text(
@@ -252,10 +252,11 @@ class _SupportScreenState extends State<SupportScreen> {
                       maxLines: 5, // Increased from 3 to 5 for taller field
                       validator: (v) {
                         final t = (v ?? '');
-                        if (t.trim().isEmpty)
+                        if (t.trim().isEmpty) {
                           return 'Issue description is required';
+                        }
                         return null;
-                      },
+                      }, obscure: false,
                     ),
                     SizedBox(height: screenHeight * 0.02),
                     Row(
@@ -389,11 +390,8 @@ class _PillInput extends StatelessWidget {
     required this.icon,
     required this.keyboardType,
     required this.contentFontSize,
-    this.obscure = false,
-    this.suffix,
-    this.inputFormatters,
     this.validator,
-    this.maxLines = 1,
+    this.maxLines = 1, required this.obscure, this.suffix, this.inputFormatters,
   });
 
   @override
