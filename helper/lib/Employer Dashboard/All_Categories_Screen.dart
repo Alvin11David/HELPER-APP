@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:helper/Components/User_Name.dart';
+import 'package:helper/Components/Side_Bar.dart';
 
 class AllCategoriesScreen extends StatefulWidget {
   const AllCategoriesScreen({super.key});
@@ -303,14 +304,24 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const SideBar(),
+                          ),
+                        );
+                      },
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.menu, color: Colors.black),
                       ),
-                      child: const Icon(Icons.menu, color: Colors.black),
                     ),
                     const SizedBox(width: 10),
                     Column(
