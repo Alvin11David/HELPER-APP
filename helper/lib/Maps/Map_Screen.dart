@@ -3,6 +3,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart'; // Add this import
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'dart:async';
@@ -63,7 +64,7 @@ class _MapScreenState extends State<MapScreen> {
     // Add navigation logic if needed
   }
 
-  Future<void> _getCurrentLocation() async {
+  Future<LatLng?> _getCurrentLocation() async {
     bool serviceEnabled;
     LocationPermission permission;
 
@@ -76,7 +77,7 @@ class _MapScreenState extends State<MapScreen> {
           content: Text('Location services are disabled. Please enable them.'),
         ),
       );
-      return;
+      return null;
     }
 
     // Check for location permissions
@@ -88,7 +89,7 @@ class _MapScreenState extends State<MapScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Location permissions are denied.')),
         );
-        return;
+        return null;
       }
     }
 
@@ -101,7 +102,7 @@ class _MapScreenState extends State<MapScreen> {
           ),
         ),
       );
-      return;
+      return null;
     }
 
     // Get current position
@@ -109,8 +110,9 @@ class _MapScreenState extends State<MapScreen> {
       desiredAccuracy: LocationAccuracy.high,
     );
 
+    final currentPos = LatLng(position.latitude, position.longitude);
     setState(() {
-      _currentPosition = LatLng(position.latitude, position.longitude);
+      _currentPosition = currentPos;
       _markers.add(
         Marker(
           markerId: const MarkerId('currentLocation'),
@@ -124,6 +126,7 @@ class _MapScreenState extends State<MapScreen> {
     mapController.animateCamera(
       CameraUpdate.newLatLngZoom(_currentPosition!, 15.0),
     );
+    return currentPos;
   }
 
   Future<void> _loadWorkers() async {
@@ -335,25 +338,28 @@ class _MapScreenState extends State<MapScreen> {
                             style: TextStyle(color: Colors.black),
                           ),
                         ),
-                        Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: screenWidth * 0.04,
-                            vertical: screenWidth * 0.02,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.orange,
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.directions, color: Colors.black),
-                              const SizedBox(width: 4),
-                              const Text(
-                                'Directions',
-                                style: TextStyle(color: Colors.black),
-                              ),
-                            ],
+                        GestureDetector(
+                          onTap: () => _showDirections(worker),
+                          child: Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: screenWidth * 0.04,
+                              vertical: screenWidth * 0.02,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.orange,
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.directions, color: Colors.black),
+                                const SizedBox(width: 4),
+                                const Text(
+                                  'Directions',
+                                  style: TextStyle(color: Colors.black),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ],
@@ -511,6 +517,60 @@ class _MapScreenState extends State<MapScreen> {
         );
       },
     );
+  }
+
+  Future<void> _showDirections(Map<String, dynamic> worker) async {
+    print('Directions tapped');
+    LatLng? origin = _currentPosition;
+    if (origin == null) {
+      print('Getting current location...');
+      origin = await _getCurrentLocation();
+      print('Got location: $origin');
+    }
+    final dest = worker['workplaceLatLng'] as GeoPoint?;
+    print('Origin: $origin, Dest: $dest');
+    if (origin == null || dest == null) {
+      print('Location data not available');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Location data not available')),
+      );
+      return;
+    }
+    try {
+      final url =
+          'https://maps.googleapis.com/maps/api/directions/json?origin=${origin.latitude},${origin.longitude}&destination=${dest.latitude},${dest.longitude}&key=${_googleApiKey}';
+      print('Fetching directions from: $url');
+      final response = await http.get(Uri.parse(url));
+      print('Response status: ${response.statusCode}');
+      final data = json.decode(response.body);
+      print('Response data status: ${data['status']}');
+      if (data['status'] == 'OK') {
+        final route = data['routes'][0];
+        final legs = route['legs'][0];
+        final steps = legs['steps'] as List;
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => DirectionsStepsScreen(steps: steps),
+          ),
+        );
+      } else {
+        print(
+          'Failed with status: ${data['status']}, error: ${data['error_message']}',
+        );
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Failed to get directions: ${data['status']} ${data['error_message'] ?? ''}',
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error fetching directions')),
+      );
+    }
   }
 
   @override
@@ -800,6 +860,61 @@ class _MapScreenState extends State<MapScreen> {
         ),
       ),
       bottomNavigationBar: BottomNavBar(currentIndex: 1),
+    );
+  }
+}
+
+class DirectionsStepsScreen extends StatelessWidget {
+  final List steps;
+
+  const DirectionsStepsScreen({super.key, required this.steps});
+
+  IconData _getDirectionIcon(String? maneuver) {
+    switch (maneuver) {
+      case 'turn-left':
+        return Icons.turn_left;
+      case 'turn-right':
+        return Icons.turn_right;
+      case 'straight':
+        return Icons.arrow_upward;
+      case 'uturn-left':
+      case 'uturn-right':
+        return Icons.u_turn_left;
+      case 'merge':
+        return Icons.merge;
+      case 'fork-left':
+      case 'fork-right':
+        return Icons.fork_left;
+      case 'roundabout-left':
+      case 'roundabout-right':
+        return Icons.roundabout_left;
+      default:
+        return Icons.directions;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Directions Steps')),
+      body: ListView.builder(
+        itemCount: steps.length,
+        itemBuilder: (context, index) {
+          final step = steps[index] as Map<String, dynamic>;
+          final instruction = step['html_instructions'] as String;
+          final maneuver = step['maneuver'] as String?;
+          final icon = _getDirectionIcon(maneuver);
+          // Remove HTML tags from instruction
+          final cleanInstruction = instruction.replaceAll(
+            RegExp(r'<[^>]*>'),
+            '',
+          );
+          return ListTile(
+            leading: Icon(icon, color: Colors.black),
+            title: Text(cleanInstruction),
+          );
+        },
+      ),
     );
   }
 }
