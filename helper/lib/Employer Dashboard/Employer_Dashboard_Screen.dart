@@ -223,7 +223,7 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => const WorkerDetailsScreen(providerId: '',),
+            builder: (context) => const WorkerDetailsScreen(providerId: ''),
             settings: RouteSettings(arguments: {'docId': docId, 'data': d}),
           ),
         );
@@ -659,10 +659,10 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                             );
                           }
 
-                          return StreamBuilder<
+                          return FutureBuilder<
                             QuerySnapshot<Map<String, dynamic>>
                           >(
-                            stream: FirebaseFirestore.instance
+                            future: FirebaseFirestore.instance
                                 .collection('serviceProviders')
                                 .where('isActive', isEqualTo: true)
                                 .where(
@@ -673,11 +673,28 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                                 .limit(
                                   250,
                                 ) // fetch enough then sort locally by distance
-                                .snapshots(),
+                                .get(),
                             builder: (context, snap) {
-                              if (!snap.hasData) {
+                              if (snap.connectionState ==
+                                  ConnectionState.waiting) {
                                 return const Center(
                                   child: CircularProgressIndicator(),
+                                );
+                              }
+                              if (snap.hasError) {
+                                return Center(
+                                  child: Text(
+                                    "Error: ${snap.error}",
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                );
+                              }
+                              if (!snap.hasData || snap.data!.docs.isEmpty) {
+                                return const Center(
+                                  child: Text(
+                                    "No nearby providers found",
+                                    style: TextStyle(color: Colors.white),
+                                  ),
                                 );
                               }
 
