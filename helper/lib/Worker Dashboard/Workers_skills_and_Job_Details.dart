@@ -17,7 +17,6 @@ import '../Worker Dashboard/Workers_Dashboard_Screen.dart'; // Add this import
 class WorkerSkillsJobDetailsScreen extends StatefulWidget {
   const WorkerSkillsJobDetailsScreen({super.key});
 
-
   @override
   State<WorkerSkillsJobDetailsScreen> createState() =>
       _WorkerSkillsJobDetailsScreenState();
@@ -53,7 +52,9 @@ class _WorkerSkillsJobDetailsScreenState
 
   // professions loaded from Firestore
   bool _loadingCategories = true;
-  List<Map<String, dynamic>> _categories = []; // {id,name,...}
+  List<Map<String, dynamic>> _categories = [];
+
+  String? _workerType;
 
   // Google Maps state
   GoogleMapController? _mapCtrl;
@@ -80,7 +81,7 @@ class _WorkerSkillsJobDetailsScreenState
     _amountCtrl.addListener(_recalcProgress);
     _workplaceCtrl.addListener(_recalcProgress);
     _recalcProgress();
-    _loadCategories();
+    _loadCategories().then((_) => _loadWorkerTypeAndProfession());
     _initMyLocation();
   }
 
@@ -209,6 +210,60 @@ class _WorkerSkillsJobDetailsScreenState
       _toast('Failed to load categories: $e');
     } finally {
       if (mounted) setState(() => _loadingCategories = false);
+    }
+  }
+
+  Future<void> _loadWorkerTypeAndProfession() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    try {
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+
+      if (userDoc.exists) {
+        final data = userDoc.data()!;
+        _workerType = data['workerType'] as String?;
+
+        if (_workerType == 'Professional Worker') {
+          // Fetch profession from documents
+          final docSnap = await FirebaseFirestore.instance
+              .collection('users')
+              .doc(user.uid)
+              .collection('documents')
+              .doc('Professional Workers')
+              .get();
+
+          if (docSnap.exists &&
+              docSnap.data()!.containsKey('Academic Certificate')) {
+            final acData =
+                docSnap.data()!['Academic Certificate'] as Map<String, dynamic>;
+            final profession = acData['profession'] as String?;
+            if (profession != null) {
+              // Find the category id
+              final category = _categories.firstWhere(
+                (cat) =>
+                    cat['name'].toString().toLowerCase() ==
+                    profession.toLowerCase(),
+                orElse: () => {},
+              );
+              setState(() {
+                _jobCategory = profession;
+                if (category.isNotEmpty) {
+                  _jobCategoryId = category['id'];
+                } else {
+                  _jobCategoryId = null; // Custom profession not in Firestore
+                }
+              });
+              _recalcProgress();
+            }
+          }
+        }
+      }
+    } catch (e) {
+      // Ignore errors, user can select manually
     }
   }
 

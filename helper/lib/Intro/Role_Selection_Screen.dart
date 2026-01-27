@@ -148,7 +148,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                         await FirebaseFirestore.instance
                             .collection('Sign Up')
                             .doc(user.uid)
-                            .update({'role': 'worker'});
+                            .update({'role': 'worker', 'workerType': ''});
                       }
                       Navigator.of(context).push(
                         MaterialPageRoute(

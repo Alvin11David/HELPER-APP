@@ -838,15 +838,16 @@ Stream<List<bool>> _nationalIdVerificationStream() {
       .collection('users')
       .doc(user.uid)
       .collection('documents')
-      .doc('Professional Workers')
-      .collection('Professional Workers');
+      .doc('Professional Workers');
 
   final frontStream = baseRef
-      .doc('professional_workers_national_id_front')
+      .collection('professional_workers_national_id_front')
+      .doc('front')
       .snapshots();
 
   final backStream = baseRef
-      .doc('professional_workers_national_id_back')
+      .collection('professional_workers_national_id_back')
+      .doc('back')
       .snapshots();
 
   return Rx.combineLatest2<DocumentSnapshot, DocumentSnapshot, List<bool>>(
