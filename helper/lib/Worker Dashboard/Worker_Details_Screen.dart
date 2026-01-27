@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:helper/Employer%20Dashboard/job_detail_booking_screen.dart';
 import 'package:helper/Employer%20Dashboard/Employer_Dashboard_Screen.dart';
+import 'package:helper/Maps/Map_Screen.dart';
 
 class Review {
   final String reviewerName;
@@ -176,7 +177,15 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
 
   void _onWorkplaceLocationTap() {
     if (_workplaceLatLng != null) {
-      _showWorkplaceDialog(_workplaceLatLng!);
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => MapScreen(
+            workerLocation: _workplaceLatLng,
+            workerData: widget.data,
+          ),
+        ),
+      );
     }
   }
 

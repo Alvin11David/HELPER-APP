@@ -12,7 +12,9 @@ import '../Components/Side_Bar.dart'; // Add this import
 import '../Employer Dashboard/job_detail_booking_screen.dart';
 
 class MapScreen extends StatefulWidget {
-  const MapScreen({super.key});
+  final GeoPoint? workerLocation;
+  final Map<String, dynamic>? workerData;
+  const MapScreen({super.key, this.workerLocation, this.workerData});
 
   @override
   State<MapScreen> createState() => _MapScreenState();
@@ -472,9 +474,38 @@ class _MapScreenState extends State<MapScreen> {
     _controller = TextEditingController();
     _focusNode = FocusNode();
     _controller.addListener(_onSearchChanged);
-    _getCurrentLocation().then(
-      (_) => _loadWorkers(),
-    ); // Request location on load and then load workers
+    if (widget.workerLocation != null) {
+      _setWorkerMarker();
+    } else {
+      _getCurrentLocation().then(
+        (_) => _loadWorkers(),
+      ); // Request location on load and then load workers
+    }
+  }
+
+  Future<void> _setWorkerMarker() async {
+    if (widget.workerLocation == null || widget.workerData == null) return;
+
+    final position = LatLng(widget.workerLocation!.latitude, widget.workerLocation!.longitude);
+    _currentPosition = position;
+
+    final marker = Marker(
+      markerId: const MarkerId('worker'),
+      position: position,
+      infoWindow: InfoWindow(
+        title: widget.workerData!['businessName'] ?? 'Worker',
+        snippet: widget.workerData!['jobCategoryName'] ?? '',
+      ),
+    );
+
+    setState(() {
+      _markers.add(marker);
+    });
+
+    // Move camera to the worker location
+    if (mapController != null) {
+      mapController.animateCamera(CameraUpdate.newLatLngZoom(position, 15));
+    }
   }
 
   @override
@@ -741,6 +772,113 @@ class _MapScreenState extends State<MapScreen> {
                         },
                       );
                     },
+                  ),
+                ),
+              ),
+            if (widget.workerData != null)
+              Positioned(
+                bottom: 80,
+                left: w * 0.04,
+                right: w * 0.04,
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 10,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            widget.workerData!['businessName'] ?? 'Worker',
+                            style: const TextStyle(
+                              color: Colors.black,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const Spacer(),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.orange,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.star, color: Colors.white, size: 16),
+                                const SizedBox(width: 4),
+                                const Text(
+                                  '4.6',
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        widget.workerData!['jobCategoryName'] ?? 'Service',
+                        style: const TextStyle(color: Colors.black),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          const Icon(Icons.location_on, color: Colors.black, size: 16),
+                          const SizedBox(width: 4),
+                          Text(
+                            widget.workerData!['workplaceLocationText'] ?? '',
+                            style: const TextStyle(color: Colors.black),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Text(
+                            '${widget.workerData!['amount'] ?? ''} ${widget.workerData!['pricingType'] ?? ''}',
+                            style: const TextStyle(
+                              color: Colors.black,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const Spacer(),
+                          GestureDetector(
+                            onTap: () {
+                              // Navigate to booking or something
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.orange,
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: const Text(
+                                'Hire Now',
+                                style: TextStyle(color: Colors.white),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
               ),
