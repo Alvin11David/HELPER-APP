@@ -35,6 +35,8 @@ class _MapScreenState extends State<MapScreen> {
   final Set<Marker> _markers = {}; // To add a marker for current location
   final Set<Polyline> _polylines = {}; // To add polylines for routes
   List? _currentSteps; // To store current route steps
+  LatLng? _destination; // To store destination for distance check
+  StreamSubscription<Position>? _positionStream; // For location updates
 
   List<Map<String, dynamic>> _workers = [];
   List<Map<String, dynamic>> _suggestions = [];
@@ -639,7 +641,61 @@ class _MapScreenState extends State<MapScreen> {
 
         setState(() {
           _currentSteps = steps;
+          _destination = LatLng(dest.latitude, dest.longitude);
         });
+
+        // Start location tracking for navigation
+        _positionStream?.cancel();
+        _positionStream =
+            Geolocator.getPositionStream(
+              locationSettings: const LocationSettings(
+                accuracy: LocationAccuracy.high,
+                distanceFilter: 5, // Update every 5 meters
+              ),
+            ).listen((Position position) {
+              final current = LatLng(position.latitude, position.longitude);
+              setState(() {
+                _currentPosition = current;
+                // Update marker
+                _markers.removeWhere(
+                  (m) => m.markerId.value == 'currentLocation',
+                );
+                _markers.add(
+                  Marker(
+                    markerId: const MarkerId('currentLocation'),
+                    position: current,
+                    infoWindow: const InfoWindow(title: 'Your Location'),
+                  ),
+                );
+              });
+              // Animate camera to current location
+              mapController.animateCamera(CameraUpdate.newLatLng(current));
+              // Check distance to destination
+              if (_destination != null) {
+                final distance = Geolocator.distanceBetween(
+                  current.latitude,
+                  current.longitude,
+                  _destination!.latitude,
+                  _destination!.longitude,
+                );
+                if (distance < 50) {
+                  // Within 50 meters
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('You have reached the destination!'),
+                    ),
+                  );
+                  // Stop tracking
+                  _positionStream?.cancel();
+                  _positionStream = null;
+                  setState(() {
+                    _polylines.clear();
+                    _currentSteps = null;
+                    _destination = null;
+                  });
+                }
+              }
+            });
 
         // Close the modal
         Navigator.of(context).pop();
@@ -679,7 +735,10 @@ class _MapScreenState extends State<MapScreen> {
               final instruction = step['html_instructions'] as String;
               final maneuver = step['maneuver'] as String?;
               final icon = _getDirectionIcon(maneuver);
-              final cleanInstruction = instruction.replaceAll(RegExp(r'<[^>]*>'), '');
+              final cleanInstruction = instruction.replaceAll(
+                RegExp(r'<[^>]*>'),
+                '',
+              );
               return ListTile(
                 leading: Icon(icon, color: Colors.black),
                 title: Text(cleanInstruction),
@@ -708,6 +767,7 @@ class _MapScreenState extends State<MapScreen> {
 
   @override
   void dispose() {
+    _positionStream?.cancel();
     _controller.removeListener(_onSearchChanged);
     _controller.dispose();
     _focusNode.dispose();
