@@ -785,7 +785,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
 }
 
 extension on Function() {
-  get length => null;
+  Null get length => null;
 }
 
 class _MiniStep123 extends StatelessWidget {

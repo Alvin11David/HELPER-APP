@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:helper/Components/User_Name.dart';
+import 'package:helper/Components/user_avatar_circle.dart';
 import 'package:helper/Worker%20Dashboard/Worker_Details_Screen.dart';
 import '../Components/Bottom_Nav_Bar.dart';
 
@@ -216,7 +217,7 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => const WorkerDetailsScreen(),
+            builder: (context) => WorkerDetailsScreen(providerId: docId),
             settings: RouteSettings(
               arguments: {
                 'docId': docId,
@@ -328,14 +329,11 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: const BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(Icons.person, color: Colors.black),
+                      const UserAvatarCircle(
+                        size: 40,
+                        backgroundColor: Colors.white,
+                        iconColor: Colors.black,
+                        borderWidth: 0,
                       ),
                       const SizedBox(width: 10),
                       Container(
@@ -625,7 +623,7 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                             final docs = snap.data!.docs;
 
                             // OPTIONAL geofence radius (km). Set to null to show all.
-                            const double? radiusKm =
+                            const double radiusKm =
                                 15; // change to 5, 10, 20 etc
 
                             // build list with distances
@@ -638,7 +636,7 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
 
                               final km = _kmFromCurrent(gp);
 
-                              if (radiusKm != null && km > radiusKm) continue;
+                              if (km > radiusKm) continue;
 
                               scored.add({
                                 ...d,

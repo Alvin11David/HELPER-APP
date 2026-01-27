@@ -89,9 +89,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       builder: (BuildContext context) {
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setState) {
-            bool _isButtonEnabled = false;
+            bool isButtonEnabled = false;
 
-            Future<String?> _fetchStoredPassword() async {
+            Future<String?> fetchStoredPassword() async {
               try {
                 User? user = FirebaseAuth.instance.currentUser;
                 if (user == null) return null;
@@ -136,9 +136,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                     ),
                     onChanged: (value) async {
-                      String? stored = await _fetchStoredPassword();
+                      String? stored = await fetchStoredPassword();
                       setState(() {
-                        _isButtonEnabled = value == stored && value.isNotEmpty;
+                        isButtonEnabled = value == stored && value.isNotEmpty;
                       });
                     },
                   ),
@@ -156,12 +156,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   const SizedBox(height: 16),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: _isButtonEnabled
+                      backgroundColor: isButtonEnabled
                           ? Colors.orange
                           : Colors
                                 .grey, // Orange when enabled, grey when disabled
                     ),
-                    onPressed: _isButtonEnabled
+                    onPressed: isButtonEnabled
                         ? () async {
                             String newPass = _newPasswordController.text;
                             if (newPass.isNotEmpty) {
@@ -252,18 +252,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
               );
             }
             Map<String, dynamic>? data = snapshot.data;
-            final TextEditingController _fullNameController =
+            final TextEditingController fullNameController =
                 TextEditingController(text: data?['fullName'] ?? '');
-            final TextEditingController _contactController =
+            final TextEditingController contactController =
                 TextEditingController();
-            String _contactLabel = '';
+            String contactLabel = '';
             if (data?.containsKey('email') == true && data!['email'] != null) {
-              _contactController.text = data['email'];
-              _contactLabel = 'Email Address';
+              contactController.text = data['email'];
+              contactLabel = 'Email Address';
             } else if (data?.containsKey('phoneNumber') == true &&
                 data!['phoneNumber'] != null) {
-              _contactController.text = data['phoneNumber'];
-              _contactLabel = 'Phone Number';
+              contactController.text = data['phoneNumber'];
+              contactLabel = 'Phone Number';
             }
 
             return Padding(
@@ -282,7 +282,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
-                    controller: _fullNameController,
+                    controller: fullNameController,
                     decoration: const InputDecoration(
                       labelText: 'Full Names',
                       border: OutlineInputBorder(
@@ -291,11 +291,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  if (_contactLabel.isNotEmpty)
+                  if (contactLabel.isNotEmpty)
                     TextFormField(
-                      controller: _contactController,
+                      controller: contactController,
                       decoration: InputDecoration(
-                        labelText: _contactLabel,
+                        labelText: contactLabel,
                         border: const OutlineInputBorder(
                           borderRadius: BorderRadius.all(Radius.circular(30)),
                         ),
@@ -311,15 +311,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         User? user = FirebaseAuth.instance.currentUser;
                         if (user != null) {
                           Map<String, dynamic> updates = {};
-                          if (_fullNameController.text.isNotEmpty) {
-                            updates['fullName'] = _fullNameController.text;
+                          if (fullNameController.text.isNotEmpty) {
+                            updates['fullName'] = fullNameController.text;
                           }
-                          if (_contactLabel == 'Email Address' &&
-                              _contactController.text.isNotEmpty) {
-                            updates['email'] = _contactController.text;
-                          } else if (_contactLabel == 'Phone Number' &&
-                              _contactController.text.isNotEmpty) {
-                            updates['phoneNumber'] = _contactController.text;
+                          if (contactLabel == 'Email Address' &&
+                              contactController.text.isNotEmpty) {
+                            updates['email'] = contactController.text;
+                          } else if (contactLabel == 'Phone Number' &&
+                              contactController.text.isNotEmpty) {
+                            updates['phoneNumber'] = contactController.text;
                           }
                           if (updates.isNotEmpty) {
                             await FirebaseFirestore.instance
@@ -494,7 +494,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   children: [
                     Stack(
                       children: [
-                        Container(
+                        SizedBox(
                           width: 100,
                           height: 100,
                           child: UserAvatarCircle(

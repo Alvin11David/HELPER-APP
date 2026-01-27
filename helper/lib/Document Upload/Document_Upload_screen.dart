@@ -9,7 +9,6 @@ import 'package:helper/Document%20Upload/Professional_License_Upload.dart';
 import 'package:helper/Document%20Upload/Selfie_Verification_Upload.dart';
 import 'package:helper/Worker%20Dashboard/Workers_skills_and_Job_Details.dart';
 import 'package:rxdart/rxdart.dart';
-import '../../Worker Dashboard/Worker_Details_Screen.dart';
 
 class DocumentUploadScreen extends StatefulWidget {
   const DocumentUploadScreen({super.key});
@@ -22,7 +21,7 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
   bool _loading = false;
   int _selectedIndex = -1;
   final _formKey = GlobalKey<FormState>();
-  bool _nationalIdSubmitted = false;
+  final bool _nationalIdSubmitted = false;
 
   Future<void> _onContinue() async {
     FocusScope.of(context).unfocus();
