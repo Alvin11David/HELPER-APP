@@ -166,6 +166,17 @@ class _SignInScreenState extends State<SignInScreen> {
     return phone;
   }
 
+  String _generateReferralCode() {
+    final random = Random();
+    final digits1 = (100 + random.nextInt(900)).toString(); // 3 digits
+    final letters = String.fromCharCodes([
+      65 + random.nextInt(26), // A-Z
+      65 + random.nextInt(26),
+    ]);
+    final digits2 = (100 + random.nextInt(900)).toString(); // 3 digits
+    return 'UG$digits1$letters$digits2';
+  }
+
   // ✅ Ensures Firestore doc: Sign Up/{uid} exists (for avatars/profile reads)
   Future<void> _ensureUserDocExists(
     User user, {
@@ -411,6 +422,7 @@ class _SignInScreenState extends State<SignInScreen> {
       'photoUrl': user.photoURL ?? '',
       'phoneNumber': user.phoneNumber ?? '',
       'role': '',
+      'referralCode': _generateReferralCode(),
       'verified': true,
       'updatedAt': FieldValue.serverTimestamp(),
     };

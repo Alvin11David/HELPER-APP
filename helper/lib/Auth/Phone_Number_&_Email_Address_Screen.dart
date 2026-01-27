@@ -126,6 +126,17 @@ class _PhoneNumberEmailAddressScreenState
     return (100000 + random.nextInt(900000)).toString();
   }
 
+  String _generateReferralCode() {
+    final random = Random();
+    final digits1 = (100 + random.nextInt(900)).toString(); // 3 digits
+    final letters = String.fromCharCodes([
+      65 + random.nextInt(26), // A-Z
+      65 + random.nextInt(26),
+    ]);
+    final digits2 = (100 + random.nextInt(900)).toString(); // 3 digits
+    return 'UG$digits1$letters$digits2';
+  }
+
   Future<void> _onContinue() async {
     FocusScope.of(context).unfocus();
     if (!(_formKey.currentState?.validate() ?? false)) return;
@@ -366,6 +377,7 @@ class _PhoneNumberEmailAddressScreenState
       'photoUrl': user.photoURL ?? '',
       'phoneNumber': user.phoneNumber ?? '',
       'role': '',
+      'referralCode': _generateReferralCode(),
       'verified': true,
       'updatedAt': FieldValue.serverTimestamp(),
     };
