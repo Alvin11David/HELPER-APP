@@ -45,6 +45,120 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
     'Designers',
     'Writers',
     'Musicians',
+    'Nurses',
+    'Pharmacists',
+    'Dentists',
+    'Surgeons',
+    'Accountants',
+    'Managers',
+    'Sales Representatives',
+    'Consultants',
+    'Programmers',
+    'Data Scientists',
+    'Teachers',
+    'Professors',
+    'Actors',
+    'Artists',
+    'Architects',
+    'Carpenters',
+    'Welders',
+    'HVAC Technicians',
+    'Locksmiths',
+    'Pest Control Specialists',
+    'Housekeepers',
+    'Nannies',
+    'Personal Trainers',
+    'Massage Therapists',
+    'Hair Stylists',
+    'Makeup Artists',
+    'Event Planners',
+    'Florists',
+    'Caterers',
+    'Bartenders',
+    'Waiters',
+    'Librarians',
+    'Tour Guides',
+    'Translators',
+    'IT Support Specialists',
+    'Web Developers',
+    'Fashion Designers',
+    'Interior Designers',
+    'Civil Engineers',
+    'Mechanical Engineers',
+    'Software Engineers',
+    'Data Analysts',
+    'Scientists',
+    'Researchers',
+    'Journalists',
+    'Editors',
+    'Public Relations Specialists',
+    'Marketing Specialists',
+  ];
+  List<String> professionImages = [
+    'assets/images/plumbers.png',
+    'assets/images/electricians.png',
+    'assets/images/engineers.png',
+    'assets/images/drivers.png',
+    'assets/images/cleaners.png',
+    'assets/images/gardeners.png',
+    'assets/images/painters.png',
+    'assets/images/mechanics.png',
+    'assets/images/chefs.png',
+    'assets/images/tutors.png',
+    'assets/images/doctors.png',
+    'assets/images/lawyers.png',
+    'assets/images/photographers.png',
+    'assets/images/designers.png',
+    'assets/images/writers.png',
+    'assets/images/musicians.png',
+    'assets/images/nurses.png',
+    'assets/images/pharmacists.png',
+    'assets/images/dentists.png',
+    'assets/images/surgeons.png',
+    'assets/images/accountants.png',
+    'assets/images/managers.png',
+    'assets/images/sales_representatives.png',
+    'assets/images/consultants.png',
+    'assets/images/programmers.png',
+    'assets/images/data_scientists.png',
+    'assets/images/teachers.png',
+    'assets/images/professors.png',
+    'assets/images/actors.png',
+    'assets/images/artists.png',
+    'assets/images/architects.png',
+    'assets/images/carpenters.png',
+    'assets/images/welders.png',
+    'assets/images/hvac_technicians.png',
+    'assets/images/locksmiths.png',
+    'assets/images/pest_control_specialists.png',
+    'assets/images/housekeepers.png',
+    'assets/images/nannies.png',
+    'assets/images/personal_trainers.png',
+    'assets/images/massage_therapists.png',
+    'assets/images/hair_stylists.png',
+    'assets/images/makeup_artists.png',
+    'assets/images/event_planners.png',
+    'assets/images/florists.png',
+    'assets/images/caterers.png',
+    'assets/images/bartenders.png',
+    'assets/images/waiters.png',
+    'assets/images/librarians.png',
+    'assets/images/tour_guides.png',
+    'assets/images/translators.png',
+    'assets/images/it_support_specialists.png',
+    'assets/images/web_developers.png',
+    'assets/images/fashion_designers.png',
+    'assets/images/interior_designers.png',
+    'assets/images/civil_engineers.png',
+    'assets/images/mechanical_engineers.png',
+    'assets/images/software_engineers.png',
+    'assets/images/data_analysts.png',
+    'assets/images/scientists.png',
+    'assets/images/researchers.png',
+    'assets/images/journalists.png',
+    'assets/images/editors.png',
+    'assets/images/public_relations_specialists.png',
+    'assets/images/marketing_specialists.png',
   ];
   List<double> ratings = [
     4.9,
@@ -63,8 +177,56 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
     3.2,
     4.4,
     3.7,
+    4.8,
+    4.1,
+    3.9,
+    4.4,
+    2.5,
+    4.2,
+    3.8,
+    4.6,
+    4.1,
+    3.6,
+    4.2,
+    2.9,
+    4.5,
+    3.3,
+    4.3,
+    3.8,
+    4.7,
+    4.0,
+    3.5,
+    4.3,
+    2.8,
+    4.6,
+    3.2,
+    4.4,
+    3.7,
+    4.8,
+    4.1,
+    3.9,
+    4.4,
+    2.5,
+    4.2,
+    3.8,
+    4.6,
+    4.1,
+    3.6,
+    4.2,
+    2.9,
+    4.5,
+    3.3,
+    4.3,
+    3.8,
+    4.7,
+    4.0,
+    3.5,
+    4.3,
+    2.8,
+    4.6,
+    3.2,
   ];
-  List<bool> liked = List.generate(16, (index) => false);
+  List<bool> liked = List.generate(64, (index) => false);
   bool _showFilters = false;
 
   @override
@@ -137,7 +299,7 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        UserName()
+                        UserName(),
                       ],
                     ),
                   ],
@@ -179,7 +341,10 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                         color: Colors.white,
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.notifications, color: Colors.black),
+                      child: const Icon(
+                        Icons.notifications,
+                        color: Colors.black,
+                      ),
                     ),
                   ],
                 ),
@@ -345,7 +510,7 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                         Expanded(
                           child: Column(
                             children: List.generate(
-                              8,
+                              32,
                               (index) => Container(
                                 width: 183,
                                 height: 200,
@@ -385,6 +550,15 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                                       ),
                                     ),
                                     Align(
+                                      alignment: Alignment.center,
+                                      child: Image.asset(
+                                        professionImages[index],
+                                        width: 80,
+                                        height: 80,
+                                        fit: BoxFit.cover,
+                                      ),
+                                    ),
+                                    Align(
                                       alignment: Alignment.topRight,
                                       child: Padding(
                                         padding: const EdgeInsets.all(10),
@@ -395,7 +569,8 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                                           ),
                                           child: GestureDetector(
                                             onTap: () => setState(
-                                              () => liked[index] = !liked[index],
+                                              () =>
+                                                  liked[index] = !liked[index],
                                             ),
                                             child: Container(
                                               width: 30,
@@ -470,7 +645,7 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                         Expanded(
                           child: Column(
                             children: List.generate(
-                              8,
+                              32,
                               (index) => Container(
                                 width: 183,
                                 height: 200,
@@ -491,7 +666,7 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                                           mainAxisSize: MainAxisSize.min,
                                           children: [
                                             Text(
-                                              professions[index + 8],
+                                              professions[index + 32],
                                               style: const TextStyle(
                                                 color: Colors.black,
                                                 fontSize: 14,
@@ -524,8 +699,8 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                                               10,
                                             ),
                                             border: Border.all(
-                                                  color: Colors.black,
-                                                ),
+                                              color: Colors.black,
+                                            ),
                                           ),
                                           child: Row(
                                             mainAxisSize: MainAxisSize.min,
@@ -537,7 +712,7 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                                               ),
                                               const SizedBox(width: 4),
                                               Text(
-                                                ratings[index + 8].toString(),
+                                                ratings[index + 32].toString(),
                                                 style: const TextStyle(
                                                   color: Colors.black,
                                                   fontSize: 10,
@@ -549,18 +724,27 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                                       ),
                                     ),
                                     Align(
+                                      alignment: Alignment.center,
+                                      child: Image.asset(
+                                        professionImages[index + 32],
+                                        width: 80,
+                                        height: 80,
+                                        fit: BoxFit.cover,
+                                      ),
+                                    ),
+                                    Align(
                                       alignment: Alignment.topRight,
                                       child: Padding(
                                         padding: const EdgeInsets.all(10),
                                         child: AnimatedScale(
-                                          scale: liked[index + 8] ? 1.2 : 1.0,
+                                          scale: liked[index + 16] ? 1.2 : 1.0,
                                           duration: const Duration(
                                             milliseconds: 200,
                                           ),
                                           child: GestureDetector(
                                             onTap: () => setState(
-                                              () => liked[index + 8] =
-                                                  !liked[index + 8],
+                                              () => liked[index + 16] =
+                                                  !liked[index + 16],
                                             ),
                                             child: Container(
                                               width: 30,
@@ -573,10 +757,10 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                                                 ),
                                               ),
                                               child: Icon(
-                                                liked[index + 8]
+                                                liked[index + 16]
                                                     ? Icons.favorite
                                                     : Icons.favorite_border,
-                                                color: liked[index + 8]
+                                                color: liked[index + 16]
                                                     ? Colors.red
                                                     : Colors.black,
                                                 size: 16,
