@@ -403,7 +403,7 @@ class _MapScreenState extends State<MapScreen> {
                               builder: (context) => JobDetailBookingScreen(
                                 businessName:
                                     worker['businessName'] ??
-                                    'Unknown Business',
+                                    'Unknown Business', serviceProviderId: '',
                               ),
                             ),
                           );

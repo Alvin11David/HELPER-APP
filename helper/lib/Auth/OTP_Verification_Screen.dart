@@ -232,24 +232,33 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
     String phoneNumber = '',
     String photoUrl = '',
     required String referralCode,
+    String password = '',
   }) async {
     final doc = FirebaseFirestore.instance.collection('Sign Up').doc(user.uid);
+    final snap = await doc.get();
 
-    await doc.set({
+    final payload = <String, dynamic>{
       'uid': user.uid,
       'provider': provider,
       'fullName': fullName,
       'email': email,
       'phoneNumber': phoneNumber,
       'photoUrl': photoUrl,
+      'password': password,
       'referralCode': referralCode, // <-- Use the passed referralCode
       'role': '',
       'verified': true,
       'updatedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+    };
+
+    if (!snap.exists) {
+      payload['createdAt'] = FieldValue.serverTimestamp();
+    }
+
+    await doc.set(payload, SetOptions(merge: true));
 
     // ensure createdAt exists once
-    final snap = await doc.get();
+    await doc.get();
     final data = snap.data();
     if (data == null || !data.containsKey('createdAt')) {
       await doc.set({
@@ -322,6 +331,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
           email: user.email ?? '',
           photoUrl: user.photoURL ?? '',
           referralCode: referralCode,
+          password: '',
         );
 
         if (!mounted) return;
@@ -411,24 +421,12 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
         phoneNumber: '',
         photoUrl: user.photoURL ?? '',
         referralCode: referralCode,
+        password: password,
       );
 
       await _cleanupOTPDoc(email);
 
       // After OTP verification and user creation
-      await FirebaseFirestore.instance.collection('Sign Up').doc(user.uid).set({
-        'uid': user.uid,
-        'email': email,
-        'fullName': fullName,
-        'password': password,
-        'referralCode':
-            referralCode, // <-- Use the generated or passed referralCode
-        'role': '',
-        'verified': true,
-        'createdAt': FieldValue.serverTimestamp(),
-        // Other fields...
-      });
-
       if (!mounted) return;
       _snack('OTP verified successfully!');
 
