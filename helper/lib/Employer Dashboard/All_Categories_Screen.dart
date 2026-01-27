@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:helper/Components/User_Name.dart';
 import 'package:helper/Components/Side_Bar.dart';
+import '../Components/Bottom_Nav_Bar.dart';
 
 class AllCategoriesScreen extends StatefulWidget {
   const AllCategoriesScreen({super.key});
@@ -10,6 +11,7 @@ class AllCategoriesScreen extends StatefulWidget {
 }
 
 class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
+  final GlobalKey<SideBarState> _sidebarKey = GlobalKey();
   String _getGreeting() {
     final hour = DateTime.now().hour;
     if (hour < 12) return 'Good Morning';
@@ -305,14 +307,7 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const SideBar(),
-                          ),
-                        );
-                      },
+                      onTap: () => _sidebarKey.currentState?.toggleDrawer(),
                       child: Container(
                         width: 40,
                         height: 40,
@@ -849,10 +844,12 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                   ),
                 ),
               ),
+              SideBar(key: _sidebarKey),
             ],
           ),
         ),
       ),
+      bottomNavigationBar: BottomNavBar(currentIndex: 0),
     );
   }
 }
