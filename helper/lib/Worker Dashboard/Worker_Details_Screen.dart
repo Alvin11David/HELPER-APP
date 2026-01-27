@@ -325,12 +325,12 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(15),
                             boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.2),
-                        blurRadius: 10,
-                        offset: Offset(0, 5),
-                      ),
-                    ],s
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.2),
+                                blurRadius: 10,
+                                offset: Offset(0, 5),
+                              ),
+                            ],
                           ),
                           child: const Icon(
                             Icons.chevron_left,
