@@ -3,6 +3,7 @@ import 'package:flutter/gestures.dart';
 import 'package:helper/Components/User_Name.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:helper/Employer%20Dashboard/job_detail_booking_screen.dart';
+import 'package:helper/Employer%20Dashboard/Employer_Dashboard_Screen.dart';
 
 class WorkerDetailsScreen extends StatefulWidget {
   final String providerId;
@@ -47,10 +48,14 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
   }
 
   Future<void> _loadProvider() async {
+    final args =
+        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+    final docId = args?['docId'] as String? ?? widget.providerId;
+
     try {
       final doc = await FirebaseFirestore.instance
           .collection('serviceProviders')
-          .doc(widget.providerId)
+          .doc(docId)
           .get();
 
       if (!doc.exists) return;
@@ -64,17 +69,21 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
         _pricingType = (data['pricingType'] ?? '').toString();
         _experienceLevel = (data['experienceLevel'] ?? '').toString();
 
-        _yearsExperience = int.tryParse((data['yearsExperience'] ?? '').toString());
+        _yearsExperience = int.tryParse(
+          (data['yearsExperience'] ?? '').toString(),
+        );
         _amount = int.tryParse((data['amount'] ?? '').toString());
 
-        _workplaceLocationText = (data['workplaceLocationText'] ?? '').toString();
+        _workplaceLocationText = (data['workplaceLocationText'] ?? '')
+            .toString();
         final gp = data['workplaceLatLng'];
         if (gp is GeoPoint) _workplaceLatLng = gp;
 
         final portfolioFilesRaw = data['portfolioFiles'];
         if (portfolioFilesRaw is List) {
           _portfolioFiles = portfolioFilesRaw.map((e) => e.toString()).toList();
-          if (_imageIndex >= _portfolioFiles.length && _portfolioFiles.isNotEmpty) {
+          if (_imageIndex >= _portfolioFiles.length &&
+              _portfolioFiles.isNotEmpty) {
             _imageIndex = 0;
           }
         }
@@ -222,6 +231,31 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                             ),
                           ),
                         ],
+                      ),
+                    ),
+                    Positioned(
+                      top: w * 0.2,
+                      left: w * 0.04,
+                      child: GestureDetector(
+                        onTap: () {
+                          Navigator.of(context).pushReplacement(
+                            MaterialPageRoute(
+                              builder: (context) => EmployerDashboardScreen(),
+                            ),
+                          );
+                        },
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                          child: const Icon(
+                            Icons.chevron_left,
+                            color: Colors.black,
+                          ),
+                        ),
                       ),
                     ),
                     Positioned(
