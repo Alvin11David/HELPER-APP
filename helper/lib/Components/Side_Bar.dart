@@ -67,6 +67,23 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
     }
   }
 
+  Future<String?> _fetchUserRole() async {
+    try {
+      User? user = FirebaseAuth.instance.currentUser;
+      if (user == null) return null;
+      DocumentSnapshot doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+      if (doc.exists && doc.data() != null) {
+        return (doc.data() as Map<String, dynamic>)['role'] as String?;
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
@@ -178,7 +195,20 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                           const SizedBox(height: 2),
                           Padding(
                             padding: EdgeInsets.only(left: 8),
-                            child: WorkerProfession(),
+                            child: FutureBuilder<String?>(
+                              future: _fetchUserRole(),
+                              builder: (context, snapshot) {
+                                if (snapshot.connectionState ==
+                                    ConnectionState.waiting) {
+                                  return const SizedBox.shrink();
+                                }
+                                if (snapshot.hasData &&
+                                    snapshot.data == 'worker') {
+                                  return WorkerProfession();
+                                }
+                                return const SizedBox.shrink();
+                              },
+                            ),
                           ),
                           const SizedBox(height: 12),
                           Container(
