@@ -2,11 +2,27 @@ import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:helper/Components/User_Name.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:helper/Employer%20Dashboard/job_detail_booking_screen.dart';
+import 'package:helper/Employer%20Dashboard/Employer_Dashboard_Screen.dart';
+import 'package:helper/Maps/Map_Screen.dart';
+
+class Review {
+  final String reviewerName;
+  final int rating;
+  final String reviewText;
+
+  Review({
+    required this.reviewerName,
+    required this.rating,
+    required this.reviewText,
+  });
+}
 
 class WorkerDetailsScreen extends StatefulWidget {
   final String providerId;
-  const WorkerDetailsScreen({super.key, required this.providerId});
+  final Map<String, dynamic>? data;
+  const WorkerDetailsScreen({super.key, required this.providerId, this.data});
 
   @override
   State<WorkerDetailsScreen> createState() => _WorkerDetailsScreenState();
@@ -38,49 +54,102 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
   bool _isDescriptionExpanded = false;
   int _rating = 0;
   final TextEditingController _commentController = TextEditingController();
+  List<Review> _reviews = [];
 
   @override
   void initState() {
     super.initState();
     _greeting = _getGreeting();
-    _loadProvider();
+    if (widget.data != null) {
+      _setData(widget.data!);
+      _loadReviews();
+    } else {
+      _loadProvider();
+    }
+  }
+
+  void _setData(Map<String, dynamic> data) {
+    setState(() {
+      _businessName = (data['businessName'] ?? '').toString();
+      _jobCategoryName = (data['jobCategoryName'] ?? '').toString();
+      _skillsDescription = (data['skillsDescription'] ?? '').toString();
+      _pricingType = (data['pricingType'] ?? '').toString();
+      _experienceLevel = (data['experienceLevel'] ?? '').toString();
+
+      _yearsExperience = int.tryParse(
+        (data['yearsExperience'] ?? '').toString(),
+      );
+      _amount = int.tryParse((data['amount'] ?? '').toString());
+
+      _workplaceLocationText = (data['workplaceLocationText'] ?? '').toString();
+      final gp = data['workplaceLatLng'];
+      if (gp is GeoPoint) _workplaceLatLng = gp;
+
+      final portfolioFilesRaw = data['portfolioFiles'];
+      if (portfolioFilesRaw is List) {
+        _portfolioFiles = portfolioFilesRaw.map((e) => e.toString()).toList();
+        if (_imageIndex >= _portfolioFiles.length &&
+            _portfolioFiles.isNotEmpty) {
+          _imageIndex = 0;
+        }
+      }
+    });
   }
 
   Future<void> _loadProvider() async {
+    final docId = widget.providerId;
+
+    if (docId.isEmpty) return;
+
     try {
       final doc = await FirebaseFirestore.instance
           .collection('serviceProviders')
-          .doc(widget.providerId)
+          .doc(docId)
           .get();
 
       if (!doc.exists) return;
       final data = doc.data();
       if (data == null) return;
 
-      setState(() {
-        _businessName = (data['businessName'] ?? '').toString();
-        _jobCategoryName = (data['jobCategoryName'] ?? '').toString();
-        _skillsDescription = (data['skillsDescription'] ?? '').toString();
-        _pricingType = (data['pricingType'] ?? '').toString();
-        _experienceLevel = (data['experienceLevel'] ?? '').toString();
-
-        _yearsExperience = int.tryParse((data['yearsExperience'] ?? '').toString());
-        _amount = int.tryParse((data['amount'] ?? '').toString());
-
-        _workplaceLocationText = (data['workplaceLocationText'] ?? '').toString();
-        final gp = data['workplaceLatLng'];
-        if (gp is GeoPoint) _workplaceLatLng = gp;
-
-        final portfolioFilesRaw = data['portfolioFiles'];
-        if (portfolioFilesRaw is List) {
-          _portfolioFiles = portfolioFilesRaw.map((e) => e.toString()).toList();
-          if (_imageIndex >= _portfolioFiles.length && _portfolioFiles.isNotEmpty) {
-            _imageIndex = 0;
-          }
-        }
-      });
+      _setData(data);
+      _loadReviews();
     } catch (e) {
       // Swallow errors to avoid breaking UI; consider logging in the future
+    }
+  }
+
+  Future<void> _loadReviews() async {
+    final providerId = widget.data?['uid'] ?? widget.providerId;
+    if (providerId.isEmpty) return;
+
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection('Reviews')
+          .where('providerId', isEqualTo: providerId)
+          .get();
+
+      final docs = snap.docs;
+      docs.sort((a, b) {
+        final ta = a.data()['timestamp'] as Timestamp?;
+        final tb = b.data()['timestamp'] as Timestamp?;
+        if (ta == null || tb == null) return 0;
+        return tb.compareTo(ta); // descending
+      });
+
+      final limitedDocs = docs.take(10).toList();
+
+      setState(() {
+        _reviews = limitedDocs.map((doc) {
+          final d = doc.data();
+          return Review(
+            reviewerName: (d['reviewerName'] ?? '').toString(),
+            rating: d['rating'] is int ? d['rating'] : 0,
+            reviewText: (d['reviewText'] ?? '').toString(),
+          );
+        }).toList();
+      });
+    } catch (e) {
+      // Handle error
     }
   }
 
@@ -107,9 +176,23 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
   }
 
   void _onWorkplaceLocationTap() {
-    if (_workplaceLatLng != null) {
-      _showWorkplaceDialog(_workplaceLatLng!);
-    }
+    final workerData = {
+      'businessName': _businessName,
+      'jobCategoryName': _jobCategoryName,
+      'skillsDescription': _skillsDescription,
+      'pricingType': _pricingType,
+      'amount': _amount,
+      'experienceLevel': _experienceLevel,
+      'yearsExperience': _yearsExperience,
+      'portfolioFiles': _portfolioFiles,
+      'workplaceLocationText': _workplaceLocationText,
+      'workplaceLatLng': _workplaceLatLng,
+      'uid': widget.data?['uid'] ?? widget.providerId,
+    };
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => MapScreen(worker: workerData)),
+    );
   }
 
   @override
@@ -222,6 +305,38 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                             ),
                           ),
                         ],
+                      ),
+                    ),
+                    Positioned(
+                      top: w * 0.2,
+                      left: w * 0.04,
+                      child: GestureDetector(
+                        onTap: () {
+                          Navigator.of(context).pushReplacement(
+                            MaterialPageRoute(
+                              builder: (context) => EmployerDashboardScreen(),
+                            ),
+                          );
+                        },
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(15),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.2),
+                                blurRadius: 10,
+                                offset: Offset(0, 5),
+                              ),
+                            ],
+                          ),
+                          child: const Icon(
+                            Icons.chevron_left,
+                            color: Colors.black,
+                          ),
+                        ),
                       ),
                     ),
                     Positioned(
@@ -374,61 +489,96 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                         child: SingleChildScrollView(
                           scrollDirection: Axis.horizontal,
                           child: Row(
-                            children: List.generate(
-                              3,
-                              (index) => Row(
-                                children: [
-                                  Container(
-                                    width: 280,
-                                    height: 120,
-                                    decoration: BoxDecoration(
-                                      border: Border.all(
-                                        color: Colors.white,
-                                        width: 1,
-                                      ),
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(10),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Row(
-                                            children: List.generate(
-                                              5,
-                                              (starIndex) => Icon(
-                                                Icons.star,
-                                                color: Colors.orange,
-                                                size: 16,
+                            children: _reviews.isNotEmpty
+                                ? _reviews
+                                      .map(
+                                        (review) => Row(
+                                          children: [
+                                            Container(
+                                              width: 280,
+                                              height: 120,
+                                              decoration: BoxDecoration(
+                                                border: Border.all(
+                                                  color: Colors.white,
+                                                  width: 1,
+                                                ),
+                                                borderRadius:
+                                                    BorderRadius.circular(20),
+                                              ),
+                                              child: Padding(
+                                                padding: const EdgeInsets.all(
+                                                  10,
+                                                ),
+                                                child: Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    Row(
+                                                      children: List.generate(
+                                                        5,
+                                                        (starIndex) => Icon(
+                                                          starIndex <
+                                                                  review.rating
+                                                              ? Icons.star
+                                                              : Icons
+                                                                    .star_border,
+                                                          color: Colors.orange,
+                                                          size: 16,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    const SizedBox(height: 10),
+                                                    Text(
+                                                      review.reviewText,
+                                                      style: const TextStyle(
+                                                        color: Colors.white,
+                                                        fontSize: 12,
+                                                      ),
+                                                      maxLines: 2,
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                    ),
+                                                    const SizedBox(height: 5),
+                                                    Text(
+                                                      review.reviewerName,
+                                                      style: const TextStyle(
+                                                        color: Colors.white,
+                                                        fontSize: 12,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
                                               ),
                                             ),
+                                            const SizedBox(width: 10),
+                                          ],
+                                        ),
+                                      )
+                                      .toList()
+                                : [
+                                    Container(
+                                      width: 280,
+                                      height: 120,
+                                      decoration: BoxDecoration(
+                                        border: Border.all(
+                                          color: Colors.white,
+                                          width: 1,
+                                        ),
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      child: const Center(
+                                        child: Text(
+                                          'No reviews as of yet',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 14,
                                           ),
-                                          const SizedBox(height: 10),
-                                          const Text(
-                                            'The employer’s review about the services provided by the worker...',
-                                            style: TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 12,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 5),
-                                          const Text(
-                                            'Employer\'s Name',
-                                            style: TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                        ],
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                  if (index < 2) const SizedBox(width: 10),
-                                ],
-                              ),
-                            ),
+                                  ],
                           ),
                         ),
                       ),
@@ -547,55 +697,106 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                       top: h * 0.4 + 580,
                       left: w * 0.04,
                       child: Container(
-                        width: 290,
-                        height: 110,
+                        width: 320,
+                        height: 130,
                         decoration: BoxDecoration(
                           border: Border.all(color: Colors.white, width: 1),
                           borderRadius: BorderRadius.circular(20),
                         ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(10),
-                          child: TextField(
-                            controller: _commentController,
-                            onChanged: (value) => setState(() {}),
-                            style: const TextStyle(color: Colors.white),
-                            decoration: const InputDecoration(
-                              hintText:
-                                  'Please share your ideas with us about this service',
-                              hintStyle: TextStyle(
-                                color: Colors.white70,
-                                fontSize: 12,
+                        child: Stack(
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.all(10),
+                              child: TextField(
+                                controller: _commentController,
+                                onChanged: (value) => setState(() {}),
+                                style: const TextStyle(color: Colors.white),
+                                decoration: const InputDecoration(
+                                  hintText:
+                                      'Please share your ideas with us about this service',
+                                  hintStyle: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 12,
+                                  ),
+                                  border: InputBorder.none,
+                                ),
+                                maxLines: 3,
                               ),
-                              border: InputBorder.none,
                             ),
-                            maxLines: 3,
-                          ),
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      top: h * 0.4 + 650,
-                      left: w * 0.06 + 240,
-                      child: GestureDetector(
-                        onTap: _commentController.text.isNotEmpty
-                            ? () {
-                                /* Send comment */
-                              }
-                            : null,
-                        child: Container(
-                          width: 30,
-                          height: 30,
-                          decoration: BoxDecoration(
-                            color: _commentController.text.isNotEmpty
-                                ? Colors.orange
-                                : Colors.grey,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.send,
-                            color: Colors.black,
-                            size: 16,
-                          ),
+                            Positioned(
+                              bottom: 10,
+                              right: 10,
+                              child: GestureDetector(
+                                onTap:
+                                    (_rating > 0 &&
+                                        _commentController.text.isNotEmpty)
+                                    ? () async {
+                                        final user =
+                                            FirebaseAuth.instance.currentUser;
+                                        if (user == null) return;
+
+                                        final reviewerId = user.uid;
+                                        final reviewerName =
+                                            user.displayName ?? 'Anonymous';
+                                        final providerId =
+                                            widget.data?['uid'] ??
+                                            widget.providerId;
+                                        final providerName =
+                                            _businessName ?? 'Provider';
+
+                                        try {
+                                          await FirebaseFirestore.instance
+                                              .collection('Reviews')
+                                              .add({
+                                                'reviewerId': reviewerId,
+                                                'reviewerName': reviewerName,
+                                                'providerId': providerId,
+                                                'providerName': providerName,
+                                                'rating': _rating,
+                                                'reviewText':
+                                                    _commentController.text,
+                                                'timestamp':
+                                                    FieldValue.serverTimestamp(),
+                                              });
+
+                                          setState(() {
+                                            _reviews.insert(
+                                              0,
+                                              Review(
+                                                reviewerName: reviewerName,
+                                                rating: _rating,
+                                                reviewText:
+                                                    _commentController.text,
+                                              ),
+                                            );
+                                            _rating = 0;
+                                            _commentController.clear();
+                                          });
+                                        } catch (e) {
+                                          // Handle error, maybe show snackbar
+                                        }
+                                      }
+                                    : null,
+                                child: Container(
+                                  width: 30,
+                                  height: 30,
+                                  decoration: BoxDecoration(
+                                    color:
+                                        (_rating > 0 &&
+                                            _commentController.text.isNotEmpty)
+                                        ? Colors.orange
+                                        : Colors.grey,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.send,
+                                    color: Colors.black,
+                                    size: 16,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),

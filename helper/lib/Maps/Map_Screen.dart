@@ -3,6 +3,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart'; // Add this import
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'dart:async';
@@ -12,7 +13,8 @@ import '../Components/Side_Bar.dart'; // Add this import
 import '../Employer Dashboard/job_detail_booking_screen.dart';
 
 class MapScreen extends StatefulWidget {
-  const MapScreen({super.key});
+  final Map<String, dynamic>? worker;
+  const MapScreen({super.key, this.worker});
 
   @override
   State<MapScreen> createState() => _MapScreenState();
@@ -31,6 +33,10 @@ class _MapScreenState extends State<MapScreen> {
   ); // Fallback center
   LatLng? _currentPosition; // To store current location
   final Set<Marker> _markers = {}; // To add a marker for current location
+  final Set<Polyline> _polylines = {}; // To add polylines for routes
+  List? _currentSteps; // To store current route steps
+  LatLng? _destination; // To store destination for distance check
+  StreamSubscription<Position>? _positionStream; // For location updates
 
   List<Map<String, dynamic>> _workers = [];
   List<Map<String, dynamic>> _suggestions = [];
@@ -39,6 +45,58 @@ class _MapScreenState extends State<MapScreen> {
 
   late TextEditingController _controller;
   late FocusNode _focusNode;
+
+  List<LatLng> _decodePolyline(String encoded) {
+    List<LatLng> points = [];
+    int index = 0;
+    int len = encoded.length;
+    int lat = 0, lng = 0;
+    while (index < len) {
+      int b, shift = 0, result = 0;
+      do {
+        b = encoded.codeUnitAt(index++) - 63;
+        result |= (b & 0x1f) << shift;
+        shift += 5;
+      } while (b >= 0x20);
+      int dlat = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
+      lat += dlat;
+      shift = 0;
+      result = 0;
+      do {
+        b = encoded.codeUnitAt(index++) - 63;
+        result |= (b & 0x1f) << shift;
+        shift += 5;
+      } while (b >= 0x20);
+      int dlng = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
+      lng += dlng;
+      points.add(LatLng(lat / 1E5, lng / 1E5));
+    }
+    return points;
+  }
+
+  IconData _getDirectionIcon(String? maneuver) {
+    switch (maneuver) {
+      case 'turn-left':
+        return Icons.turn_left;
+      case 'turn-right':
+        return Icons.turn_right;
+      case 'straight':
+        return Icons.arrow_upward;
+      case 'uturn-left':
+      case 'uturn-right':
+        return Icons.u_turn_left;
+      case 'merge':
+        return Icons.merge;
+      case 'fork-left':
+      case 'fork-right':
+        return Icons.fork_left;
+      case 'roundabout-left':
+      case 'roundabout-right':
+        return Icons.roundabout_left;
+      default:
+        return Icons.directions;
+    }
+  }
 
   void _onMapCreated(GoogleMapController controller) {
     mapController = controller;
@@ -62,7 +120,7 @@ class _MapScreenState extends State<MapScreen> {
     // Add navigation logic if needed
   }
 
-  Future<void> _getCurrentLocation() async {
+  Future<LatLng?> _getCurrentLocation() async {
     bool serviceEnabled;
     LocationPermission permission;
 
@@ -75,7 +133,7 @@ class _MapScreenState extends State<MapScreen> {
           content: Text('Location services are disabled. Please enable them.'),
         ),
       );
-      return;
+      return null;
     }
 
     // Check for location permissions
@@ -87,7 +145,7 @@ class _MapScreenState extends State<MapScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Location permissions are denied.')),
         );
-        return;
+        return null;
       }
     }
 
@@ -100,7 +158,7 @@ class _MapScreenState extends State<MapScreen> {
           ),
         ),
       );
-      return;
+      return null;
     }
 
     // Get current position
@@ -108,8 +166,9 @@ class _MapScreenState extends State<MapScreen> {
       desiredAccuracy: LocationAccuracy.high,
     );
 
+    final currentPos = LatLng(position.latitude, position.longitude);
     setState(() {
-      _currentPosition = LatLng(position.latitude, position.longitude);
+      _currentPosition = currentPos;
       _markers.add(
         Marker(
           markerId: const MarkerId('currentLocation'),
@@ -123,6 +182,7 @@ class _MapScreenState extends State<MapScreen> {
     mapController.animateCamera(
       CameraUpdate.newLatLngZoom(_currentPosition!, 15.0),
     );
+    return currentPos;
   }
 
   Future<void> _loadWorkers() async {
@@ -147,6 +207,42 @@ class _MapScreenState extends State<MapScreen> {
           _markers.add(marker);
         });
       }
+    }
+  }
+
+  void _handleWorkerNavigation() async {
+    final worker = widget.worker!;
+    final latLng = worker['workplaceLatLng'] as GeoPoint?;
+    if (latLng != null) {
+      final position = LatLng(latLng.latitude, latLng.longitude);
+      final portfolioFiles = worker['portfolioFiles'] as List<dynamic>?;
+      if (portfolioFiles != null && portfolioFiles.isNotEmpty) {
+        final imageUrl = portfolioFiles[0] as String;
+        final marker = await _createMarkerFromImage(
+          imageUrl,
+          position,
+          worker['uid'] ?? 'worker',
+          worker,
+        );
+        setState(() {
+          _markers.add(marker);
+        });
+      } else {
+        // Add a default marker if no portfolio
+        setState(() {
+          _markers.add(
+            Marker(
+              markerId: MarkerId(worker['uid'] ?? 'worker'),
+              position: position,
+              infoWindow: InfoWindow(title: worker['businessName'] ?? 'Worker'),
+            ),
+          );
+        });
+      }
+      // Center the map on the worker's location
+      mapController.animateCamera(CameraUpdate.newLatLngZoom(position, 15.0));
+      // Show the bottom sheet
+      _showWorkerDetails(worker);
     }
   }
 
@@ -231,6 +327,7 @@ class _MapScreenState extends State<MapScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
+        final screenWidth = MediaQuery.of(context).size.width;
         final workerLatLng = worker['workplaceLatLng'] as GeoPoint?;
         final distance = (_currentPosition != null && workerLatLng != null)
             ? Geolocator.distanceBetween(
@@ -252,7 +349,10 @@ class _MapScreenState extends State<MapScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Padding(
-                    padding: const EdgeInsets.only(top: 16, left: 16),
+                    padding: EdgeInsets.only(
+                      top: screenWidth * 0.04,
+                      left: screenWidth * 0.04,
+                    ),
                     child: Text(
                       worker['businessName'] ?? 'Unknown',
                       style: const TextStyle(
@@ -263,7 +363,7 @@ class _MapScreenState extends State<MapScreen> {
                   ),
                   const SizedBox(height: 8),
                   Padding(
-                    padding: const EdgeInsets.only(left: 16),
+                    padding: EdgeInsets.only(left: screenWidth * 0.04),
                     child: Text(
                       worker['workplaceLocationText'] ?? 'Unknown',
                       style: const TextStyle(
@@ -272,51 +372,60 @@ class _MapScreenState extends State<MapScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 24),
                   Padding(
-                    padding: const EdgeInsets.only(left: 16),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.green,
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                      child: const Text(
-                        'Available',
-                        style: TextStyle(color: Colors.black),
-                      ),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: screenWidth * 0.04,
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Center(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.orange,
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.directions, color: Colors.black),
-                          const SizedBox(width: 4),
-                          const Text(
-                            'Directions',
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: screenWidth * 0.04,
+                            vertical: screenWidth * 0.02,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.green,
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          child: const Text(
+                            'Available',
                             style: TextStyle(color: Colors.black),
                           ),
-                        ],
-                      ),
+                        ),
+                        GestureDetector(
+                          onTap: () => _showDirections(worker),
+                          child: Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: screenWidth * 0.04,
+                              vertical: screenWidth * 0.02,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.orange,
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.directions, color: Colors.black),
+                                const SizedBox(width: 4),
+                                const Text(
+                                  'Directions',
+                                  style: TextStyle(color: Colors.black),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 8),
                   SizedBox(
-                    height: 128, // Height for huge rectangular images
+                    height:
+                        screenWidth *
+                        0.32, // Height for huge rectangular images
                     child: GridView(
                       scrollDirection: Axis.horizontal,
                       gridDelegate:
@@ -332,13 +441,12 @@ class _MapScreenState extends State<MapScreen> {
                                 (url) => GestureDetector(
                                   onTap: () => showDialog(
                                     context: context,
-                                    builder: (context) => Dialog(
-                                      child: Image.network(url),
-                                    ),
+                                    builder: (context) =>
+                                        Dialog(child: Image.network(url)),
                                   ),
                                   child: Container(
-                                    height: 120,
-                                    width: 180,
+                                    height: screenWidth * 0.3,
+                                    width: screenWidth * 0.4,
                                     margin: const EdgeInsets.all(4),
                                     decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(10),
@@ -380,10 +488,10 @@ class _MapScreenState extends State<MapScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Container(
-                        width: 120,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
+                        width: screenWidth * 0.35,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: screenWidth * 0.03,
+                          vertical: screenWidth * 0.02,
                         ),
                         decoration: BoxDecoration(
                           border: Border.all(color: Colors.orange),
@@ -395,7 +503,7 @@ class _MapScreenState extends State<MapScreen> {
                           textAlign: TextAlign.center,
                         ),
                       ),
-                      const SizedBox(width: 20),
+                      SizedBox(width: screenWidth * 0.07),
                       GestureDetector(
                         onTap: () {
                           Navigator.of(context).push(
@@ -403,16 +511,17 @@ class _MapScreenState extends State<MapScreen> {
                               builder: (context) => JobDetailBookingScreen(
                                 businessName:
                                     worker['businessName'] ??
-                                    'Unknown Business', serviceProviderId: '',
+                                    'Unknown Business',
+                                serviceProviderId: '',
                               ),
                             ),
                           );
                         },
                         child: Container(
-                          width: 120,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
+                          width: screenWidth * 0.35,
+                          padding: EdgeInsets.symmetric(
+                            horizontal: screenWidth * 0.03,
+                            vertical: screenWidth * 0.02,
                           ),
                           decoration: BoxDecoration(
                             color: Colors.orange,
@@ -431,7 +540,7 @@ class _MapScreenState extends State<MapScreen> {
               ),
               Positioned(
                 top: 10,
-                right: 10,
+                right: screenWidth * 0.02,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -466,19 +575,199 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
+  Future<void> _showDirections(Map<String, dynamic> worker) async {
+    print('Directions tapped');
+    LatLng? origin = _currentPosition;
+    if (origin == null) {
+      print('Getting current location...');
+      origin = await _getCurrentLocation();
+      print('Got location: $origin');
+    }
+    final dest = worker['workplaceLatLng'] as GeoPoint?;
+    print('Origin: $origin, Dest: $dest');
+    if (origin == null || dest == null) {
+      print('Location data not available');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Location data not available')),
+      );
+      return;
+    }
+    try {
+      final url =
+          'https://maps.googleapis.com/maps/api/directions/json?origin=${origin.latitude},${origin.longitude}&destination=${dest.latitude},${dest.longitude}&key=${_googleApiKey}';
+      print('Fetching directions from: $url');
+      final response = await http.get(Uri.parse(url));
+      print('Response status: ${response.statusCode}');
+      final data = json.decode(response.body);
+      print('Response data status: ${data['status']}');
+      if (data['status'] == 'OK') {
+        final route = data['routes'][0];
+        final legs = route['legs'][0];
+        final steps = legs['steps'] as List;
+        final polylinePoints = _decodePolyline(
+          route['overview_polyline']['points'],
+        );
+
+        // Calculate bounds
+        double minLat = double.infinity;
+        double maxLat = -double.infinity;
+        double minLng = double.infinity;
+        double maxLng = -double.infinity;
+        for (var point in polylinePoints) {
+          if (point.latitude < minLat) minLat = point.latitude;
+          if (point.latitude > maxLat) maxLat = point.latitude;
+          if (point.longitude < minLng) minLng = point.longitude;
+          if (point.longitude > maxLng) maxLng = point.longitude;
+        }
+
+        setState(() {
+          _polylines.clear();
+          _polylines.add(
+            Polyline(
+              polylineId: const PolylineId('route'),
+              points: polylinePoints,
+              color: Colors.orange,
+              width: 5,
+            ),
+          );
+        });
+
+        // Animate camera to fit the route
+        final bounds = LatLngBounds(
+          southwest: LatLng(minLat, minLng),
+          northeast: LatLng(maxLat, maxLng),
+        );
+        mapController.animateCamera(CameraUpdate.newLatLngBounds(bounds, 50));
+
+        setState(() {
+          _currentSteps = steps;
+          _destination = LatLng(dest.latitude, dest.longitude);
+        });
+
+        // Start location tracking for navigation
+        _positionStream?.cancel();
+        _positionStream =
+            Geolocator.getPositionStream(
+              locationSettings: const LocationSettings(
+                accuracy: LocationAccuracy.high,
+                distanceFilter: 5, // Update every 5 meters
+              ),
+            ).listen((Position position) {
+              final current = LatLng(position.latitude, position.longitude);
+              setState(() {
+                _currentPosition = current;
+                // Update marker
+                _markers.removeWhere(
+                  (m) => m.markerId.value == 'currentLocation',
+                );
+                _markers.add(
+                  Marker(
+                    markerId: const MarkerId('currentLocation'),
+                    position: current,
+                    infoWindow: const InfoWindow(title: 'Your Location'),
+                  ),
+                );
+              });
+              // Animate camera to current location
+              mapController.animateCamera(CameraUpdate.newLatLng(current));
+              // Check distance to destination
+              if (_destination != null) {
+                final distance = Geolocator.distanceBetween(
+                  current.latitude,
+                  current.longitude,
+                  _destination!.latitude,
+                  _destination!.longitude,
+                );
+                if (distance < 50) {
+                  // Within 50 meters
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('You have reached the destination!'),
+                    ),
+                  );
+                  // Stop tracking
+                  _positionStream?.cancel();
+                  _positionStream = null;
+                  setState(() {
+                    _polylines.clear();
+                    _currentSteps = null;
+                    _destination = null;
+                  });
+                }
+              }
+            });
+
+        // Close the modal
+        Navigator.of(context).pop();
+      } else {
+        print(
+          'Failed with status: ${data['status']}, error: ${data['error_message']}',
+        );
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Failed to get directions: ${data['status']} ${data['error_message'] ?? ''}',
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error fetching directions')),
+      );
+    }
+  }
+
+  void _showStepsModal() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+      ),
+      builder: (context) {
+        return Container(
+          height: 400,
+          child: ListView.builder(
+            itemCount: _currentSteps!.length,
+            itemBuilder: (context, index) {
+              final step = _currentSteps![index] as Map<String, dynamic>;
+              final instruction = step['html_instructions'] as String;
+              final maneuver = step['maneuver'] as String?;
+              final icon = _getDirectionIcon(maneuver);
+              final cleanInstruction = instruction.replaceAll(
+                RegExp(r'<[^>]*>'),
+                '',
+              );
+              return ListTile(
+                leading: Icon(icon, color: Colors.black),
+                title: Text(cleanInstruction),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
   @override
   void initState() {
     super.initState();
     _controller = TextEditingController();
     _focusNode = FocusNode();
     _controller.addListener(_onSearchChanged);
-    _getCurrentLocation().then(
-      (_) => _loadWorkers(),
-    ); // Request location on load and then load workers
+    _getCurrentLocation().then((_) {
+      if (widget.worker != null) {
+        _handleWorkerNavigation();
+      } else {
+        _loadWorkers();
+      }
+    }); // Request location on load and then load workers or handle worker
   }
 
   @override
   void dispose() {
+    _positionStream?.cancel();
     _controller.removeListener(_onSearchChanged);
     _controller.dispose();
     _focusNode.dispose();
@@ -502,6 +791,7 @@ class _MapScreenState extends State<MapScreen> {
                 zoom: 11.0,
               ),
               markers: _markers, // Add markers to the map
+              polylines: _polylines, // Add polylines for routes
             ),
 
             Positioned(
@@ -653,6 +943,29 @@ class _MapScreenState extends State<MapScreen> {
               ),
             ),
             Positioned(
+              top: w * 0.35,
+              right: w * 0.04,
+              child: GestureDetector(
+                onTap: () => Navigator.of(context).pop(),
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(15),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 10,
+                        offset: Offset(0, 5),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(Icons.chevron_left, color: Colors.black),
+                ),
+              ),
+            ),
+            Positioned(
               top: 135,
               left: w * 0.04,
               child: Row(
@@ -744,11 +1057,88 @@ class _MapScreenState extends State<MapScreen> {
                   ),
                 ),
               ),
+            if (_currentSteps != null)
+              Positioned(
+                bottom: 80,
+                left: screenWidth * 0.5 - 50,
+                child: GestureDetector(
+                  onTap: _showStepsModal,
+                  child: Container(
+                    width: 100,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: Colors.orange,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Center(
+                      child: Text(
+                        'Steps',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             SideBar(key: _sidebarKey),
           ],
         ),
       ),
       bottomNavigationBar: BottomNavBar(currentIndex: 1),
+    );
+  }
+}
+
+class DirectionsStepsScreen extends StatelessWidget {
+  final List steps;
+
+  const DirectionsStepsScreen({super.key, required this.steps});
+
+  IconData _getDirectionIcon(String? maneuver) {
+    switch (maneuver) {
+      case 'turn-left':
+        return Icons.turn_left;
+      case 'turn-right':
+        return Icons.turn_right;
+      case 'straight':
+        return Icons.arrow_upward;
+      case 'uturn-left':
+      case 'uturn-right':
+        return Icons.u_turn_left;
+      case 'merge':
+        return Icons.merge;
+      case 'fork-left':
+      case 'fork-right':
+        return Icons.fork_left;
+      case 'roundabout-left':
+      case 'roundabout-right':
+        return Icons.roundabout_left;
+      default:
+        return Icons.directions;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Directions Steps')),
+      body: ListView.builder(
+        itemCount: steps.length,
+        itemBuilder: (context, index) {
+          final step = steps[index] as Map<String, dynamic>;
+          final instruction = step['html_instructions'] as String;
+          final maneuver = step['maneuver'] as String?;
+          final icon = _getDirectionIcon(maneuver);
+          // Remove HTML tags from instruction
+          final cleanInstruction = instruction.replaceAll(
+            RegExp(r'<[^>]*>'),
+            '',
+          );
+          return ListTile(
+            leading: Icon(icon, color: Colors.black),
+            title: Text(cleanInstruction),
+          );
+        },
+      ),
     );
   }
 }

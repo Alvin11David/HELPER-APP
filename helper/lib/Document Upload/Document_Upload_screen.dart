@@ -612,11 +612,44 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                           height: h * 0.062,
                           child: ElevatedButton(
                             onPressed: allUploaded
-                                ? () {
+                                ? () async {
+                                    final user =
+                                        FirebaseAuth.instance.currentUser;
+                                    String? profession;
+                                    if (user != null) {
+                                      final userDoc = await FirebaseFirestore
+                                          .instance
+                                          .collection('users')
+                                          .doc(user.uid)
+                                          .get();
+                                      if (userDoc.exists &&
+                                          userDoc.data()!['workerType'] ==
+                                              'Professional Worker') {
+                                        final docSnap = await FirebaseFirestore
+                                            .instance
+                                            .collection('users')
+                                            .doc(user.uid)
+                                            .collection('documents')
+                                            .doc('Professional Workers')
+                                            .get();
+                                        if (docSnap.exists &&
+                                            docSnap.data()!.containsKey(
+                                              'Academic Certificate',
+                                            )) {
+                                          final acData =
+                                              docSnap.data()!['Academic Certificate']
+                                                  as Map<String, dynamic>;
+                                          profession =
+                                              acData['profession'] as String?;
+                                        }
+                                      }
+                                    }
                                     Navigator.of(context).push(
                                       MaterialPageRoute(
                                         builder: (context) =>
-                                            WorkerSkillsJobDetailsScreen(),
+                                            WorkerSkillsJobDetailsScreen(
+                                              selectedProfession: profession,
+                                            ),
                                       ),
                                     );
                                   }

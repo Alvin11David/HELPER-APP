@@ -15,7 +15,8 @@ import 'package:intl/intl.dart'; // Add this import for NumberFormat
 import '../Worker Dashboard/Workers_Dashboard_Screen.dart'; // Add this import
 
 class WorkerSkillsJobDetailsScreen extends StatefulWidget {
-  const WorkerSkillsJobDetailsScreen({super.key});
+  final String? selectedProfession;
+  const WorkerSkillsJobDetailsScreen({super.key, this.selectedProfession});
 
   @override
   State<WorkerSkillsJobDetailsScreen> createState() =>
@@ -81,7 +82,26 @@ class _WorkerSkillsJobDetailsScreenState
     _amountCtrl.addListener(_recalcProgress);
     _workplaceCtrl.addListener(_recalcProgress);
     _recalcProgress();
-    _loadCategories().then((_) => _loadWorkerTypeAndProfession());
+    _loadCategories().then((_) {
+      if (widget.selectedProfession != null) {
+        setState(() {
+          _jobCategory = widget.selectedProfession;
+          final category = _categories.firstWhere(
+            (cat) =>
+                cat['name'].toString().toLowerCase() ==
+                _jobCategory!.toLowerCase(),
+            orElse: () => {},
+          );
+          if (category.isNotEmpty) {
+            _jobCategoryId = category['id'];
+          } else {
+            _jobCategoryId = null;
+          }
+        });
+        _recalcProgress();
+      }
+      _loadWorkerTypeAndProfession();
+    });
     _initMyLocation();
   }
 
