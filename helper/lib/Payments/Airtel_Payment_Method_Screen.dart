@@ -1,9 +1,8 @@
 import 'dart:ui';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:helper/Intro/Role_Selection_Screen.dart';
 
 class AirtelPaymentMethodScreen extends StatefulWidget {
@@ -103,14 +102,6 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
       return;
     }
 
-    // Format phone number for RELWORX (ensure international format)
-    String formattedPhone = cleanPhone;
-    if (formattedPhone.startsWith('0')) {
-      formattedPhone = '256${formattedPhone.substring(1)}';
-    } else if (!formattedPhone.startsWith('256')) {
-      formattedPhone = '256$formattedPhone';
-    }
-
     // Get current user
     final User? currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) {
@@ -123,18 +114,6 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
       return;
     }
 
-    // RELWORX API configuration
-    const String apiKey = "2902144e65b9a7.v3wxxu9iseWHI-dQzOh7Gg";
-    const String baseUrl = "https://payments.relworx.com/api";
-    const String accountNo =
-        "YOUR_BUSINESS_ACCOUNT_NO"; // TODO: Replace with actual account number
-    final String reference =
-        "reg_fee_${DateTime.now().millisecondsSinceEpoch}_${currentUser.uid}";
-    const double amount = 25000.0;
-    const String currency = "UGX";
-    const String webhookUrl =
-        "https://us-central1-helperapp-46849.cloudfunctions.net/relworxWebhook";
-
     try {
       // Show loading indicator
       ScaffoldMessenger.of(context).showSnackBar(
@@ -144,27 +123,19 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
         ),
       );
 
-      final response = await http.post(
-        Uri.parse('$baseUrl/mobile-money/request-payment'),
-        headers: {
-          'Authorization': 'Bearer $apiKey',
-          'Content-Type': 'application/json',
-          'Accept': 'application/vnd.relworx.v2',
-        },
-        body: jsonEncode({
-          'account_no': accountNo,
-          'reference': reference,
-          'msisdn': formattedPhone,
-          'currency': currency,
-          'amount': amount,
-          'description': 'Registration Fee Payment',
-          'webhook_url': webhookUrl,
-        }),
+      // Call Firebase function
+      final HttpsCallable callable = FirebaseFunctions.instance.httpsCallable(
+        'initiateAirtelPayment',
       );
+      final result = await callable.call({
+        'phoneNumber': phoneNumber,
+        'saveCard': isChecked,
+        'userId': currentUser.uid,
+      });
 
-      final responseData = jsonDecode(response.body);
+      final responseData = result.data as Map<String, dynamic>;
 
-      if (response.statusCode == 200 && responseData['success'] == true) {
+      if (responseData['success'] == true) {
         // Payment request successful - show pending status
         setState(() {
           _isPaymentSuccessful = false; // Wait for webhook confirmation
@@ -173,21 +144,17 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text(
-              'Payment request sent successfully! Please complete the payment on your phone.',
+              responseData['message'] ??
+                  'Payment request sent successfully! Please complete the payment on your phone.',
             ),
             backgroundColor: Colors.blue,
           ),
         );
 
-        // Save phone number if checkbox is checked
-        if (isChecked) {
-          await _savePhoneNumber(phoneNumber);
-        }
-
         // Start listening for payment status updates
-        _listenForPaymentStatus(reference);
+        _listenForPaymentStatus(responseData['reference']);
       } else {
         // Payment request failed
         ScaffoldMessenger.of(context).showSnackBar(
@@ -202,7 +169,7 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Payment error: $e'),
+          content: Text('Payment error: ${e.toString()}'),
           backgroundColor: Colors.red,
         ),
       );

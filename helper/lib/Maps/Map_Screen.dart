@@ -9,6 +9,7 @@ import 'dart:async';
 import '../Components/Bottom_Nav_Bar.dart';
 import '../Components/User_Name.dart'; // Add this import
 import '../Components/Side_Bar.dart'; // Add this import
+import '../Employer Dashboard/job_detail_booking_screen.dart';
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
@@ -260,6 +261,7 @@ class _MapScreenState extends State<MapScreen> {
                       ),
                     ),
                   ),
+                  const SizedBox(height: 8),
                   Padding(
                     padding: const EdgeInsets.only(left: 16),
                     child: Text(
@@ -394,20 +396,33 @@ class _MapScreenState extends State<MapScreen> {
                         ),
                       ),
                       const SizedBox(width: 20),
-                      Container(
-                        width: 120,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.orange,
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                        child: const Text(
-                          'Book',
-                          style: TextStyle(color: Colors.white),
-                          textAlign: TextAlign.center,
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => JobDetailBookingScreen(
+                                businessName:
+                                    worker['businessName'] ??
+                                    'Unknown Business',
+                              ),
+                            ),
+                          );
+                        },
+                        child: Container(
+                          width: 120,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.orange,
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          child: const Text(
+                            'Book',
+                            style: TextStyle(color: Colors.white),
+                            textAlign: TextAlign.center,
+                          ),
                         ),
                       ),
                     ],
@@ -488,7 +503,7 @@ class _MapScreenState extends State<MapScreen> {
               ),
               markers: _markers, // Add markers to the map
             ),
-            
+
             Positioned(
               top: 20,
               right: w * 0.04,
@@ -729,7 +744,7 @@ class _MapScreenState extends State<MapScreen> {
                   ),
                 ),
               ),
-              SideBar(key: _sidebarKey),
+            SideBar(key: _sidebarKey),
           ],
         ),
       ),

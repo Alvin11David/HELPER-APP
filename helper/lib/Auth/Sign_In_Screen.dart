@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:helper/Document%20Upload/Select_Worker_Type_Screen.dart';
+import 'package:helper/Employer%20Dashboard/Employer_Dashboard_Screen.dart';
+import 'package:helper/Intro/Role_Selection_Screen.dart';
 import 'package:helper/Worker%20Dashboard/Workers_skills_and_Job_details.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -25,11 +28,13 @@ class _UgandaPhoneFormatter extends TextInputFormatter {
       );
     }
 
-    final digitsOnly =
-        newValue.text.substring(5).replaceAll(RegExp(r'[^0-9]'), '');
+    final digitsOnly = newValue.text
+        .substring(5)
+        .replaceAll(RegExp(r'[^0-9]'), '');
 
-    final limitedDigits =
-        digitsOnly.length > 9 ? digitsOnly.substring(0, 9) : digitsOnly;
+    final limitedDigits = digitsOnly.length > 9
+        ? digitsOnly.substring(0, 9)
+        : digitsOnly;
 
     final formattedText = '+256 $limitedDigits';
 
@@ -160,9 +165,13 @@ class _SignInScreenState extends State<SignInScreen> {
   }
 
   // ✅ Ensures Firestore doc: Sign Up/{uid} exists (for avatars/profile reads)
-  Future<void> _ensureUserDocExists(User user, {required String provider}) async {
-    final docRef =
-        FirebaseFirestore.instance.collection('Sign Up').doc(user.uid);
+  Future<void> _ensureUserDocExists(
+    User user, {
+    required String provider,
+  }) async {
+    final docRef = FirebaseFirestore.instance
+        .collection('Sign Up')
+        .doc(user.uid);
     final snap = await docRef.get();
     if (snap.exists) return;
 
@@ -219,7 +228,7 @@ class _SignInScreenState extends State<SignInScreen> {
     if (!mounted) return;
     Navigator.pushAndRemoveUntil(
       context,
-      MaterialPageRoute(builder: (_) => const WorkerSkillsJobDetailsScreen()),
+      MaterialPageRoute(builder: (_) => const EmployerDashboardScreen()),
       (_) => false,
     );
   }
@@ -258,8 +267,9 @@ class _SignInScreenState extends State<SignInScreen> {
       // If Android auto-verifies, sign in and go dashboard
       verificationCompleted: (PhoneAuthCredential credential) async {
         try {
-          final cred =
-              await FirebaseAuth.instance.signInWithCredential(credential);
+          final cred = await FirebaseAuth.instance.signInWithCredential(
+            credential,
+          );
           final user = cred.user;
           if (user != null) {
             await _ensureUserDocExists(user, provider: 'phone');
@@ -295,7 +305,8 @@ class _SignInScreenState extends State<SignInScreen> {
               emailOrPhone: phone,
               verificationId: verificationId,
               fullName: '', // sign-in doesn't need it
-              password: '', referralCode: '',
+              password: '',
+              referralCode: '',
             ),
           ),
         ).then((_) {
@@ -402,10 +413,7 @@ class _SignInScreenState extends State<SignInScreen> {
     };
 
     if (!snap.exists) {
-      await docRef.set({
-        ...payload,
-        'createdAt': FieldValue.serverTimestamp(),
-      });
+      await docRef.set({...payload, 'createdAt': FieldValue.serverTimestamp()});
     } else {
       await docRef.set(payload, SetOptions(merge: true));
     }
@@ -484,7 +492,9 @@ class _SignInScreenState extends State<SignInScreen> {
               ),
               width: double.infinity,
               child: Padding(
-                padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.06),
+                padding: EdgeInsets.all(
+                  MediaQuery.of(context).size.width * 0.06,
+                ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -628,15 +638,22 @@ class _SignInScreenState extends State<SignInScreen> {
                         switchInCurve: Curves.easeOut,
                         switchOutCurve: Curves.easeIn,
                         transitionBuilder: (child, anim) {
-                          final slide = Tween<Offset>(
-                            begin: const Offset(0.02, 0),
-                            end: Offset.zero,
-                          ).animate(
-                            CurvedAnimation(parent: anim, curve: Curves.easeOut),
-                          );
+                          final slide =
+                              Tween<Offset>(
+                                begin: const Offset(0.02, 0),
+                                end: Offset.zero,
+                              ).animate(
+                                CurvedAnimation(
+                                  parent: anim,
+                                  curve: Curves.easeOut,
+                                ),
+                              );
                           return FadeTransition(
                             opacity: anim,
-                            child: SlideTransition(position: slide, child: child),
+                            child: SlideTransition(
+                              position: slide,
+                              child: child,
+                            ),
                           );
                         },
                         child: _mode == _AuthMode.phone
@@ -665,7 +682,9 @@ class _SignInScreenState extends State<SignInScreen> {
                           onPressed: _loading ? null : _onContinue,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: _pureWhite,
-                            disabledBackgroundColor: _pureWhite.withOpacity(0.6),
+                            disabledBackgroundColor: _pureWhite.withOpacity(
+                              0.6,
+                            ),
                             elevation: 0,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(30),
@@ -879,10 +898,12 @@ class _PhoneBlock extends StatelessWidget {
           validator: (v) {
             final t = (v ?? '').trim();
             if (t.isEmpty) return 'Phone number is required';
-            if (!t.startsWith('+256 ')) return 'Phone number must start with +256';
+            if (!t.startsWith('+256 '))
+              return 'Phone number must start with +256';
             final digits = t.substring(5);
             if (digits.length != 9) return 'Enter exactly 9 digits after +256';
-            if (!RegExp(r'^[0-9]{9}$').hasMatch(digits)) return 'Enter valid 9-digit number';
+            if (!RegExp(r'^[0-9]{9}$').hasMatch(digits))
+              return 'Enter valid 9-digit number';
             return null;
           },
         ),
@@ -891,7 +912,8 @@ class _PhoneBlock extends StatelessWidget {
           alignment: Alignment.centerRight,
           child: GestureDetector(
             onTap: () {
-              final state = context.findAncestorStateOfType<_SignInScreenState>();
+              final state = context
+                  .findAncestorStateOfType<_SignInScreenState>();
               state?._onReferralCodeTap();
             },
             child: Text(
@@ -1000,7 +1022,8 @@ class _EmailBlock extends StatelessWidget {
           children: [
             GestureDetector(
               onTap: () {
-                final state = context.findAncestorStateOfType<_SignInScreenState>();
+                final state = context
+                    .findAncestorStateOfType<_SignInScreenState>();
                 state?._onReferralCodeTap();
               },
               child: Text(
