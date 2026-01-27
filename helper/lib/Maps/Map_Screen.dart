@@ -943,6 +943,29 @@ class _MapScreenState extends State<MapScreen> {
               ),
             ),
             Positioned(
+              top: w * 0.35,
+              right: w * 0.04,
+              child: GestureDetector(
+                onTap: () => Navigator.of(context).pop(),
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(15),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 10,
+                        offset: Offset(0, 5),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(Icons.chevron_left, color: Colors.black),
+                ),
+              ),
+            ),
+            Positioned(
               top: 135,
               left: w * 0.04,
               child: Row(
