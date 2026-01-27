@@ -7,7 +7,8 @@ import 'package:helper/Employer%20Dashboard/Employer_Dashboard_Screen.dart';
 
 class WorkerDetailsScreen extends StatefulWidget {
   final String providerId;
-  const WorkerDetailsScreen({super.key, required this.providerId});
+  final Map<String, dynamic>? data;
+  const WorkerDetailsScreen({super.key, required this.providerId, this.data});
 
   @override
   State<WorkerDetailsScreen> createState() => _WorkerDetailsScreenState();
@@ -44,13 +45,45 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
   void initState() {
     super.initState();
     _greeting = _getGreeting();
-    _loadProvider();
+    if (widget.data != null) {
+      _setData(widget.data!);
+    } else {
+      _loadProvider();
+    }
+  }
+
+  void _setData(Map<String, dynamic> data) {
+    setState(() {
+      _businessName = (data['businessName'] ?? '').toString();
+      _jobCategoryName = (data['jobCategoryName'] ?? '').toString();
+      _skillsDescription = (data['skillsDescription'] ?? '').toString();
+      _pricingType = (data['pricingType'] ?? '').toString();
+      _experienceLevel = (data['experienceLevel'] ?? '').toString();
+
+      _yearsExperience = int.tryParse(
+        (data['yearsExperience'] ?? '').toString(),
+      );
+      _amount = int.tryParse((data['amount'] ?? '').toString());
+
+      _workplaceLocationText = (data['workplaceLocationText'] ?? '').toString();
+      final gp = data['workplaceLatLng'];
+      if (gp is GeoPoint) _workplaceLatLng = gp;
+
+      final portfolioFilesRaw = data['portfolioFiles'];
+      if (portfolioFilesRaw is List) {
+        _portfolioFiles = portfolioFilesRaw.map((e) => e.toString()).toList();
+        if (_imageIndex >= _portfolioFiles.length &&
+            _portfolioFiles.isNotEmpty) {
+          _imageIndex = 0;
+        }
+      }
+    });
   }
 
   Future<void> _loadProvider() async {
-    final args =
-        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-    final docId = args?['docId'] as String? ?? widget.providerId;
+    final docId = widget.providerId;
+
+    if (docId.isEmpty) return;
 
     try {
       final doc = await FirebaseFirestore.instance
@@ -62,32 +95,7 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
       final data = doc.data();
       if (data == null) return;
 
-      setState(() {
-        _businessName = (data['businessName'] ?? '').toString();
-        _jobCategoryName = (data['jobCategoryName'] ?? '').toString();
-        _skillsDescription = (data['skillsDescription'] ?? '').toString();
-        _pricingType = (data['pricingType'] ?? '').toString();
-        _experienceLevel = (data['experienceLevel'] ?? '').toString();
-
-        _yearsExperience = int.tryParse(
-          (data['yearsExperience'] ?? '').toString(),
-        );
-        _amount = int.tryParse((data['amount'] ?? '').toString());
-
-        _workplaceLocationText = (data['workplaceLocationText'] ?? '')
-            .toString();
-        final gp = data['workplaceLatLng'];
-        if (gp is GeoPoint) _workplaceLatLng = gp;
-
-        final portfolioFilesRaw = data['portfolioFiles'];
-        if (portfolioFilesRaw is List) {
-          _portfolioFiles = portfolioFilesRaw.map((e) => e.toString()).toList();
-          if (_imageIndex >= _portfolioFiles.length &&
-              _portfolioFiles.isNotEmpty) {
-            _imageIndex = 0;
-          }
-        }
-      });
+      _setData(data);
     } catch (e) {
       // Swallow errors to avoid breaking UI; consider logging in the future
     }

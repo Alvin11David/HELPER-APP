@@ -223,8 +223,7 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => const WorkerDetailsScreen(providerId: ''),
-            settings: RouteSettings(arguments: {'docId': docId, 'data': d}),
+            builder: (context) => WorkerDetailsScreen(providerId: '', data: d),
           ),
         );
       },
