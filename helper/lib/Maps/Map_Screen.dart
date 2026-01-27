@@ -426,9 +426,9 @@ class _MapScreenState extends State<MapScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Container(
-                        width: screenWidth * 0.25,
+                        width: screenWidth * 0.35,
                         padding: EdgeInsets.symmetric(
-                          horizontal: screenWidth * 0.07,
+                          horizontal: screenWidth * 0.03,
                           vertical: screenWidth * 0.02,
                         ),
                         decoration: BoxDecoration(
@@ -441,7 +441,7 @@ class _MapScreenState extends State<MapScreen> {
                           textAlign: TextAlign.center,
                         ),
                       ),
-                      const SizedBox(width: 20),
+                      SizedBox(width: screenWidth * 0.07),
                       GestureDetector(
                         onTap: () {
                           Navigator.of(context).push(
@@ -456,10 +456,10 @@ class _MapScreenState extends State<MapScreen> {
                           );
                         },
                         child: Container(
-                          width: screenWidth * 0.25,
+                          width: screenWidth * 0.35,
                           padding: EdgeInsets.symmetric(
-                            horizontal: screenWidth * 0.07,
-                          vertical: screenWidth * 0.02,
+                            horizontal: screenWidth * 0.03,
+                            vertical: screenWidth * 0.02,
                           ),
                           decoration: BoxDecoration(
                             color: Colors.orange,
