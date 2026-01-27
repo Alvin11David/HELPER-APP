@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../Employer Dashboard/Create_Wallet_PIN_Screen.dart';
 import '../Chats/Chat_List_Screen.dart';
 import '../Document Upload/Profile/Profile_Screen.dart'; // Add this import
+import '../Maps/Map_Screen.dart'; // Add this import
 
 class BottomNavBar extends StatefulWidget {
   final Function(int)? onItemTapped;
@@ -175,6 +176,11 @@ class _BottomNavBarState extends State<BottomNavBar> {
                 } catch (e) {
                   print('Error in wallet tap: $e');
                 }
+              } else if (index == 1) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => MapScreen()),
+                );
               } else if (index == 3) {
                 Navigator.push(
                   context,

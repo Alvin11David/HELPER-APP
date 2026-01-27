@@ -12,6 +12,7 @@ import { onCall, onRequest } from "firebase-functions/v2/https";
 import * as logger from "firebase-functions/logger";
 import * as nodemailer from "nodemailer";
 import * as admin from "firebase-admin";
+import axios from "axios";
 
 // Initialize Firebase Admin
 admin.initializeApp();
@@ -218,7 +219,10 @@ export const relworxWebhook = onRequest(
         paymentType: "registration_fee",
       };
 
-      const paymentRef = admin.firestore().collection("Payments").doc(customer_reference);
+      const paymentRef = admin
+        .firestore()
+        .collection("Payments")
+        .doc(customer_reference);
       await paymentRef.set(paymentData);
 
       // If payment is successful and we have userId, update user status
@@ -316,6 +320,108 @@ export const checkPaymentStatus = onCall(async (request) => {
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error";
     throw new Error(`Failed to check payment status: ${errorMessage}`);
+  }
+});
+
+// Function to initiate Airtel payment
+export const initiateAirtelPayment = onCall(async (request) => {
+  try {
+    const { phoneNumber, saveCard, userId } = request.data;
+
+    if (!phoneNumber || !userId) {
+      throw new Error("Phone number and user ID are required");
+    }
+
+    // Basic validation - Airtel Uganda prefixes: 075, 070, 074(0-2)
+    const cleanPhone = phoneNumber.replace(/\s/g, "").replace(/\+/g, "");
+    const airtelRegex = RegExp(
+      "^(256(75|70|74[0-2])\\d{7}|0(75|70|74[0-2])\\d{7}|(75|70|74[0-2])\\d{7})$",
+    );
+    if (!airtelRegex.test(cleanPhone)) {
+      throw new Error("Please enter a valid Airtel Uganda phone number");
+    }
+
+    // Format phone number for RELWORX (ensure international format)
+    let formattedPhone = cleanPhone;
+    if (formattedPhone.startsWith("0")) {
+      formattedPhone = "256" + formattedPhone.substring(1);
+    } else if (!formattedPhone.startsWith("256")) {
+      formattedPhone = "256" + formattedPhone;
+    }
+
+    // RELWORX API configuration
+    const apiKey = "2902144e65b9a7.v3wxxu9iseWHI-dQzOh7Gg";
+    const baseUrl = "https://payments.relworx.com/api";
+    const accountNo = "REL4E261389F7";
+    const reference = `reg_fee_${Date.now()}_${userId}`;
+    const amount = 25000.0;
+    const currency = "UGX";
+    const webhookUrl =
+      "https://us-central1-helperapp-46849.cloudfunctions.net/relworxWebhook";
+
+    const response = await axios.post(
+      `${baseUrl}/mobile-money/request-payment`,
+      {
+        account_no: accountNo,
+        reference: reference,
+        msisdn: formattedPhone,
+        currency: currency,
+        amount: amount,
+        description: "Registration Fee Payment",
+        webhook_url: webhookUrl,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+          Accept: "application/vnd.relworx.v2",
+        },
+      },
+    );
+
+    const responseData = response.data as {
+      success: boolean;
+      message?: string;
+      [key: string]: any;
+    };
+
+    if (response.status === 200 && responseData.success === true) {
+      // Save phone number if requested
+      if (saveCard) {
+        const userRef = admin
+          .firestore()
+          .collection("Saved Payment Methods")
+          .doc(userId)
+          .collection("Airtel Numbers")
+          .doc("latest");
+
+        await userRef.set({
+          phoneNumber: phoneNumber,
+          savedAt: admin.firestore.FieldValue.serverTimestamp(),
+          isActive: true,
+        });
+      }
+
+      logger.info(
+        `Payment request initiated successfully for user ${userId}: ${reference}`,
+      );
+      return {
+        success: true,
+        reference: reference,
+        message:
+          "Payment request sent successfully! Please complete the payment on your phone.",
+      };
+    } else {
+      logger.error("Payment request failed:", responseData);
+      throw new Error(
+        `Payment request failed: ${responseData.message || "Unknown error"}`,
+      );
+    }
+  } catch (error) {
+    logger.error("Error initiating Airtel payment:", error);
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+    throw new Error(`Failed to initiate payment: ${errorMessage}`);
   }
 });
 

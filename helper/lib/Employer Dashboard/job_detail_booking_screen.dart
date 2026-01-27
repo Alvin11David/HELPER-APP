@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class JobDetailBookingScreen extends StatefulWidget {
-  const JobDetailBookingScreen({super.key});
+  final String businessName;
+
+  const JobDetailBookingScreen({super.key, required this.businessName});
 
   @override
   State<JobDetailBookingScreen> createState() => _JobDetailBookingScreenState();
@@ -32,8 +34,14 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
   TimeOfDay? _timeTo;
 
   // -------------------- PHASE 4 (Summary) --------------------
-  final String _businessName = "Business Name";
+  late final String _businessName;
   final String _profession = "Profession";
+
+  @override
+  void initState() {
+    super.initState();
+    _businessName = widget.businessName;
+  }
 
   @override
   void dispose() {
