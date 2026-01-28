@@ -365,6 +365,18 @@ class _ChatScreenState extends State<ChatScreen> {
                                     final List<XFile> images = await picker
                                         .pickMultiImage();
                                     for (var image in images) {
+                                      // Ensure the chat document exists
+                                      final chatDoc = FirebaseFirestore.instance
+                                          .collection('chats')
+                                          .doc(chatId);
+                                      final docSnapshot = await chatDoc.get();
+                                      if (!docSnapshot.exists) {
+                                        await chatDoc.set({
+                                          'employerId': widget.employerId,
+                                          'providerId': widget.providerId,
+                                          'businessName': widget.businessName,
+                                        });
+                                      }
                                       final file = File(image.path);
                                       final fileName =
                                           '${DateTime.now().millisecondsSinceEpoch}_${image.name}';
@@ -408,6 +420,18 @@ class _ChatScreenState extends State<ChatScreen> {
                         GestureDetector(
                           onTap: () async {
                             if (_controller.text.isNotEmpty) {
+                              // Ensure the chat document exists
+                              final chatDoc = FirebaseFirestore.instance
+                                  .collection('chats')
+                                  .doc(chatId);
+                              final docSnapshot = await chatDoc.get();
+                              if (!docSnapshot.exists) {
+                                await chatDoc.set({
+                                  'employerId': widget.employerId,
+                                  'providerId': widget.providerId,
+                                  'businessName': widget.businessName,
+                                });
+                              }
                               final message = {
                                 'text': _controller.text,
                                 'senderId': widget.employerId,

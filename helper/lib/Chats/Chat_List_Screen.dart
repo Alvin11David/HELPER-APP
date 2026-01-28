@@ -68,12 +68,15 @@ class _ChatListScreenState extends State<ChatListScreen> {
         String otherId = doc['employerId'] == user.uid
             ? doc['providerId']
             : doc['employerId'];
+        bool isEmployer = doc['employerId'] == user.uid;
         fetchedChats.add({
           'chatId': chatId,
           'otherId': otherId,
           'businessName': businessName,
-          'lastMessage': lastMessageDoc['message'] ?? '',
+          'lastMessage':
+              lastMessageDoc['message'] ?? lastMessageDoc['text'] ?? '',
           'timestamp': lastMessageDoc['timestamp'],
+          'isEmployer': isEmployer,
         });
       }
     }
@@ -294,11 +297,18 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                     MaterialPageRoute(
                                       builder: (context) => ChatScreen(
                                         businessName: chat['businessName'],
-                                        providerId: chat['otherId'],
-                                        employerId: FirebaseAuth
-                                            .instance
-                                            .currentUser!
-                                            .uid,
+                                        providerId: chat['isEmployer']
+                                            ? chat['otherId']
+                                            : FirebaseAuth
+                                                  .instance
+                                                  .currentUser!
+                                                  .uid,
+                                        employerId: chat['isEmployer']
+                                            ? FirebaseAuth
+                                                  .instance
+                                                  .currentUser!
+                                                  .uid
+                                            : chat['otherId'],
                                       ),
                                     ),
                                   ),
