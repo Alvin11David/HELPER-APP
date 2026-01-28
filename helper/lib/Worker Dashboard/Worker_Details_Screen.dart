@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:helper/Employer%20Dashboard/job_detail_booking_screen.dart';
 import 'package:helper/Employer%20Dashboard/Employer_Dashboard_Screen.dart';
 import 'package:helper/Maps/Map_Screen.dart';
+import 'package:helper/Chats/Chat_Screen.dart';
 
 class Review {
   final String reviewerName;
@@ -396,28 +397,44 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                             ),
                           ),
                           const SizedBox(width: 10),
-                          Container(
-                            width: 148,
-                            height: 30,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFFFFA10D),
-                              borderRadius: BorderRadius.all(
-                                Radius.circular(20),
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.chat, color: Colors.white, size: 16),
-                                const SizedBox(width: 4),
-                                const Text(
-                                  'Message',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 12,
-                                  ),
+                          GestureDetector(
+                            onTap: () {
+                              final businessName = _businessName ?? 'Provider';
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      ChatScreen(businessName: businessName),
                                 ),
-                              ],
+                              );
+                            },
+                            child: Container(
+                              width: 148,
+                              height: 30,
+                              decoration: const BoxDecoration(
+                                color: Color(0xFFFFA10D),
+                                borderRadius: BorderRadius.all(
+                                  Radius.circular(20),
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.chat,
+                                    color: Colors.white,
+                                    size: 16,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  const Text(
+                                    'Message',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ],

@@ -4,7 +4,8 @@ import 'dart:io';
 import 'Voice_Call_Screen.dart';
 
 class ChatScreen extends StatefulWidget {
-  const ChatScreen({super.key});
+  final String businessName;
+  const ChatScreen({super.key, required this.businessName});
 
   @override
   _ChatScreenState createState() => _ChatScreenState();
@@ -56,9 +57,9 @@ class _ChatScreenState extends State<ChatScreen> {
                     const SizedBox(width: 10),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
+                      children: [
                         Text(
-                          'Names',
+                          widget.businessName,
                           style: TextStyle(color: Colors.white, fontSize: 16),
                         ),
                         Text(
