@@ -142,7 +142,9 @@ class _ChatListScreenState extends State<ChatListScreen> {
           'photoUrl': photoUrl,
           'displayName': isEmployer ? businessName : (fullName ?? 'Unknown'),
         });
-        print('Added chat: ${isEmployer ? businessName : (fullName ?? 'Unknown')}');
+        print(
+          'Added chat: ${isEmployer ? businessName : (fullName ?? 'Unknown')}',
+        );
       }
     }
 

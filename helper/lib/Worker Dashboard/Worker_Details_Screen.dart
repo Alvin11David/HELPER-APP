@@ -38,6 +38,7 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
     if (hour < 21) return 'Good Evening';
     return 'Good Night';
   }
+
   final GlobalKey<SideBarState> _sidebarKey = GlobalKey();
 
   late String _greeting;
@@ -934,7 +935,7 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                         children: [
                           GestureDetector(
                             onTap: () =>
-                                    _sidebarKey.currentState?.toggleDrawer(),
+                                _sidebarKey.currentState?.toggleDrawer(),
                             child: Container(
                               width: 40,
                               height: 40,
@@ -942,7 +943,10 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                                 color: Colors.white,
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(Icons.menu, color: Colors.black),
+                              child: const Icon(
+                                Icons.menu,
+                                color: Colors.black,
+                              ),
                             ),
                           ),
                           const SizedBox(width: 10),

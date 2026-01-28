@@ -23,6 +23,7 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _controller = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
   late String chatId;
 
   @override
@@ -31,6 +32,13 @@ class _ChatScreenState extends State<ChatScreen> {
     // Create a unique chat ID by sorting the IDs
     final ids = [widget.employerId, widget.providerId]..sort();
     chatId = '${ids[0]}_${ids[1]}';
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _scrollController.dispose();
+    super.dispose();
   }
 
   String _formatTime(Timestamp? timestamp) {
@@ -62,10 +70,22 @@ class _ChatScreenState extends State<ChatScreen> {
                 final data = doc.data() as Map<String, dynamic>;
                 return {
                   ...data,
-                  'isSent': data['senderId'] == widget.employerId,
+                  'isSent':
+                      data['senderId'] ==
+                      FirebaseAuth.instance.currentUser!.uid,
                   'time': _formatTime(data['timestamp'] as Timestamp?),
                 };
               }).toList();
+              // Scroll to bottom when new messages arrive
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (_scrollController.hasClients) {
+                  _scrollController.animateTo(
+                    _scrollController.position.maxScrollExtent,
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeOut,
+                  );
+                }
+              });
             }
             return Container(
               decoration: BoxDecoration(
@@ -74,12 +94,14 @@ class _ChatScreenState extends State<ChatScreen> {
                   fit: BoxFit.cover,
                 ),
               ),
-              child: Stack(
+              child: Column(
                 children: [
-                  Center(child: Text('Chat Screen')),
-                  Positioned(
-                    top: screenWidth * 0.05,
-                    left: screenWidth * 0.04,
+                  // Header
+                  Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: screenWidth * 0.04,
+                      vertical: screenWidth * 0.05,
+                    ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -136,126 +158,114 @@ class _ChatScreenState extends State<ChatScreen> {
                             ),
                           ],
                         ),
+                        const Spacer(),
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => VoiceCallScreen(),
+                              ),
+                            );
+                          },
+                          child: Container(
+                            width: screenWidth * 0.12,
+                            height: screenWidth * 0.12,
+                            decoration: const BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.phone, color: Colors.black),
+                          ),
+                        ),
+                        SizedBox(width: screenWidth * 0.025),
+                        StreamBuilder<DocumentSnapshot>(
+                          stream: FirebaseFirestore.instance
+                              .collection('serviceProviders')
+                              .doc(widget.providerId)
+                              .snapshots(),
+                          builder: (context, snapshot) {
+                            String? imageUrl;
+                            if (snapshot.hasData && snapshot.data!.exists) {
+                              final data =
+                                  snapshot.data!.data()
+                                      as Map<String, dynamic>?;
+                              final portfolioFiles =
+                                  data?['portfolioFiles'] as List<dynamic>?;
+                              if (portfolioFiles != null &&
+                                  portfolioFiles.isNotEmpty) {
+                                imageUrl = portfolioFiles.first as String?;
+                              }
+                            }
+                            return Container(
+                              width: screenWidth * 0.12,
+                              height: screenWidth * 0.12,
+                              decoration: const BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                              ),
+                              child: imageUrl != null
+                                  ? ClipOval(
+                                      child: Image.network(
+                                        imageUrl,
+                                        fit: BoxFit.cover,
+                                      ),
+                                    )
+                                  : const Icon(
+                                      Icons.person,
+                                      color: Colors.black,
+                                    ),
+                            );
+                          },
+                        ),
                       ],
                     ),
                   ),
-                  Positioned(
-                    top: screenWidth * 0.05 + 60,
-                    left: 0,
-                    child: Container(
-                      height: 1,
-                      width: screenWidth,
-                      color: Colors.white,
-                    ),
-                  ),
-                  Positioned(
-                    top: screenWidth * 0.05,
-                    right: screenWidth * 0.04,
-                    child: Transform.scale(
-                      scale: 1.0,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => VoiceCallScreen(),
-                                ),
-                              );
-                            },
-                            child: Stack(
-                              children: [
-                                Container(
-                                  width: screenWidth * 0.12,
-                                  height: screenWidth * 0.12,
-                                  decoration: const BoxDecoration(
-                                    color: Colors.white,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: const Icon(
-                                    Icons.phone,
-                                    color: Colors.black,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          SizedBox(width: screenWidth * 0.025),
-                          Stack(
-                            children: [
-                              StreamBuilder<DocumentSnapshot>(
-                                stream: FirebaseFirestore.instance
-                                    .collection('serviceProviders')
-                                    .doc(widget.providerId)
-                                    .snapshots(),
-                                builder: (context, snapshot) {
-                                  String? imageUrl;
-                                  if (snapshot.hasData &&
-                                      snapshot.data!.exists) {
-                                    final data =
-                                        snapshot.data!.data()
-                                            as Map<String, dynamic>?;
-                                    final portfolioFiles =
-                                        data?['portfolioFiles']
-                                            as List<dynamic>?;
-                                    if (portfolioFiles != null &&
-                                        portfolioFiles.isNotEmpty) {
-                                      imageUrl =
-                                          portfolioFiles.first as String?;
-                                    }
-                                  }
-                                  return Container(
-                                    width: screenWidth * 0.12,
-                                    height: screenWidth * 0.12,
-                                    decoration: const BoxDecoration(
-                                      color: Colors.white,
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: imageUrl != null
-                                        ? ClipOval(
-                                            child: Image.network(
-                                              imageUrl,
-                                              fit: BoxFit.cover,
-                                            ),
-                                          )
-                                        : const Icon(
-                                            Icons.person,
-                                            color: Colors.black,
-                                          ),
-                                  );
-                                },
-                              ),
-                            ],
-                          ),
-                        ],
+                  // Divider
+                  Container(height: 1, width: screenWidth, color: Colors.white),
+                  // Messages
+                  Expanded(
+                    child: ListView.builder(
+                      controller: _scrollController,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 10,
                       ),
-                    ),
-                  ),
-                  Positioned(
-                    bottom: 80,
-                    left: 20,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: messages
-                          .where((msg) => !msg['isSent'])
-                          .map(
-                            (msg) => Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Container(
-                                  margin: const EdgeInsets.only(bottom: 15),
-                                  padding: const EdgeInsets.all(10),
-                                  decoration: const BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.only(
-                                      topRight: Radius.circular(20),
-                                      topLeft: Radius.circular(20),
-                                      bottomRight: Radius.circular(20),
-                                    ),
-                                  ),
-                                  child: msg['type'] == 'text'
+                      itemCount: messages.length,
+                      itemBuilder: (context, index) {
+                        final msg = messages[index];
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 10),
+                          child: Align(
+                            alignment: msg['isSent']
+                                ? Alignment.centerRight
+                                : Alignment.centerLeft,
+                            child: Container(
+                              padding: const EdgeInsets.all(10),
+                              constraints: BoxConstraints(
+                                maxWidth: screenWidth * 0.7,
+                              ),
+                              decoration: BoxDecoration(
+                                color: msg['isSent']
+                                    ? const Color(0xFFFFA10D)
+                                    : Colors.white,
+                                borderRadius: BorderRadius.only(
+                                  topLeft: const Radius.circular(20),
+                                  topRight: const Radius.circular(20),
+                                  bottomLeft: msg['isSent']
+                                      ? const Radius.circular(20)
+                                      : Radius.zero,
+                                  bottomRight: msg['isSent']
+                                      ? Radius.zero
+                                      : const Radius.circular(20),
+                                ),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: msg['isSent']
+                                    ? CrossAxisAlignment.end
+                                    : CrossAxisAlignment.start,
+                                children: [
+                                  msg['type'] == 'text'
                                       ? Text(
                                           msg['text'],
                                           style: const TextStyle(
@@ -267,153 +277,123 @@ class _ChatScreenState extends State<ChatScreen> {
                                           width: 200,
                                           height: 200,
                                         ),
-                                ),
-                                Text(
-                                  msg['time'],
-                                  style: TextStyle(
-                                    color: Colors.white.withOpacity(0.7),
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          )
-                          .toList(),
-                    ),
-                  ),
-                  Positioned(
-                    bottom: 80,
-                    right: 20,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: messages
-                          .where((msg) => msg['isSent'])
-                          .map(
-                            (msg) => Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                Container(
-                                  margin: const EdgeInsets.only(bottom: 15),
-                                  padding: const EdgeInsets.all(10),
-                                  decoration: const BoxDecoration(
-                                    color: Color(0xFFFFA10D),
-                                    borderRadius: BorderRadius.only(
-                                      topRight: Radius.circular(20),
-                                      topLeft: Radius.circular(20),
-                                      bottomLeft: Radius.circular(20),
+                                  const SizedBox(height: 5),
+                                  Text(
+                                    msg['time'],
+                                    style: TextStyle(
+                                      color: Colors.black.withOpacity(0.6),
+                                      fontSize: 10,
                                     ),
                                   ),
-                                  child: msg['type'] == 'text'
-                                      ? Text(
-                                          msg['text'],
-                                          style: const TextStyle(
-                                            color: Colors.black,
-                                          ),
-                                        )
-                                      : Image.network(
-                                          msg['imageUrl'],
-                                          width: 200,
-                                          height: 200,
-                                        ),
-                                ),
-                                Text(
-                                  msg['time'],
-                                  style: TextStyle(
-                                    color: Colors.white.withOpacity(0.7),
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
-                          )
-                          .toList(),
+                          ),
+                        );
+                      },
                     ),
                   ),
-                  Positioned(
-                    bottom: 20,
-                    left: screenWidth * 0.05,
+                  // Input
+                  Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: screenWidth * 0.05,
+                      vertical: 10,
+                    ),
                     child: Row(
                       children: [
-                        Container(
-                          width: screenWidth * 0.75,
-                          height: 50,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(30),
-                            border: Border.all(color: Colors.grey, width: 1),
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Padding(
-                                  padding: const EdgeInsets.only(left: 20),
-                                  child: TextField(
-                                    controller: _controller,
-                                    decoration: const InputDecoration(
-                                      hintText: 'Message',
-                                      border: InputBorder.none,
+                        Expanded(
+                          child: Container(
+                            height: 50,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(30),
+                              border: Border.all(color: Colors.grey, width: 1),
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(left: 20),
+                                    child: TextField(
+                                      controller: _controller,
+                                      decoration: const InputDecoration(
+                                        hintText: 'Message',
+                                        border: InputBorder.none,
+                                      ),
+                                      style: const TextStyle(
+                                        color: Colors.black,
+                                      ),
                                     ),
-                                    style: const TextStyle(color: Colors.black),
                                   ),
                                 ),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.only(right: 10),
-                                child: GestureDetector(
-                                  onTap: () async {
-                                    final ImagePicker picker = ImagePicker();
-                                    final List<XFile> images = await picker
-                                        .pickMultiImage();
-                                    for (var image in images) {
-                                      // Ensure the chat document exists
-                                      final chatDoc = FirebaseFirestore.instance
-                                          .collection('chats')
-                                          .doc(chatId);
-                                      final docSnapshot = await chatDoc.get();
-                                      if (!docSnapshot.exists) {
-                                        await chatDoc.set({
-                                          'employerId': widget.employerId,
-                                          'providerId': widget.providerId,
-                                          'chatPartnerName': widget.chatPartnerName,
-                                        });
+                                Padding(
+                                  padding: const EdgeInsets.only(right: 10),
+                                  child: GestureDetector(
+                                    onTap: () async {
+                                      final ImagePicker picker = ImagePicker();
+                                      final List<XFile> images = await picker
+                                          .pickMultiImage();
+                                      for (var image in images) {
+                                        // Ensure the chat document exists
+                                        final chatDoc = FirebaseFirestore
+                                            .instance
+                                            .collection('chats')
+                                            .doc(chatId);
+                                        final docSnapshot = await chatDoc.get();
+                                        if (!docSnapshot.exists) {
+                                          await chatDoc.set({
+                                            'employerId': widget.employerId,
+                                            'providerId': widget.providerId,
+                                            'chatPartnerName':
+                                                widget.chatPartnerName,
+                                          });
+                                        }
+                                        final file = File(image.path);
+                                        final fileName =
+                                            '${DateTime.now().millisecondsSinceEpoch}_${image.name}';
+                                        final storageRef = FirebaseStorage
+                                            .instance
+                                            .ref()
+                                            .child('Chat Images')
+                                            .child(fileName);
+                                        final uploadTask = storageRef.putFile(
+                                          file,
+                                        );
+                                        final snapshot = await uploadTask
+                                            .whenComplete(() {});
+                                        final downloadUrl = await snapshot.ref
+                                            .getDownloadURL();
+                                        final currentUserId = FirebaseAuth
+                                            .instance
+                                            .currentUser!
+                                            .uid;
+                                        final receiverId =
+                                            currentUserId == widget.employerId
+                                            ? widget.providerId
+                                            : widget.employerId;
+                                        final message = {
+                                          'imageUrl': downloadUrl,
+                                          'senderId': currentUserId,
+                                          'receiverId': receiverId,
+                                          'timestamp':
+                                              FieldValue.serverTimestamp(),
+                                          'type': 'image',
+                                        };
+                                        await FirebaseFirestore.instance
+                                            .collection('chats')
+                                            .doc(chatId)
+                                            .collection('messages')
+                                            .add(message);
                                       }
-                                      final file = File(image.path);
-                                      final fileName =
-                                          '${DateTime.now().millisecondsSinceEpoch}_${image.name}';
-                                      final storageRef = FirebaseStorage
-                                          .instance
-                                          .ref()
-                                          .child('Chat Images')
-                                          .child(fileName);
-                                      final uploadTask = storageRef.putFile(
-                                        file,
-                                      );
-                                      final snapshot = await uploadTask
-                                          .whenComplete(() {});
-                                      final downloadUrl = await snapshot.ref
-                                          .getDownloadURL();
-                                      final message = {
-                                        'imageUrl': downloadUrl,
-                                        'senderId': widget.employerId,
-                                        'receiverId': widget.providerId,
-                                        'timestamp':
-                                            FieldValue.serverTimestamp(),
-                                        'type': 'image',
-                                      };
-                                      await FirebaseFirestore.instance
-                                          .collection('chats')
-                                          .doc(chatId)
-                                          .collection('messages')
-                                          .add(message);
-                                    }
-                                  },
-                                  child: const Icon(
-                                    Icons.image,
-                                    color: Colors.black,
+                                    },
+                                    child: const Icon(
+                                      Icons.image,
+                                      color: Colors.black,
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                         const SizedBox(width: 10),
@@ -432,10 +412,16 @@ class _ChatScreenState extends State<ChatScreen> {
                                   'chatPartnerName': widget.chatPartnerName,
                                 });
                               }
+                              final currentUserId =
+                                  FirebaseAuth.instance.currentUser!.uid;
+                              final receiverId =
+                                  currentUserId == widget.employerId
+                                  ? widget.providerId
+                                  : widget.employerId;
                               final message = {
                                 'text': _controller.text,
-                                'senderId': widget.employerId,
-                                'receiverId': widget.providerId,
+                                'senderId': currentUserId,
+                                'receiverId': receiverId,
                                 'timestamp': FieldValue.serverTimestamp(),
                                 'type': 'text',
                               };
