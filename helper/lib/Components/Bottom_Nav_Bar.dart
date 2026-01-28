@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../Employer Dashboard/Create_Wallet_PIN_Screen.dart';
 import '../Chats/Chat_List_Screen.dart';
 import '../Document Upload/Profile/Profile_Screen.dart'; // Add this import
 import '../Maps/Map_Screen.dart'; // Add this import
+import '../Employer Dashboard/Employer_Dashboard_Screen.dart';
+import '../Worker Dashboard/Workers_Dashboard_Screen.dart';
 
 class BottomNavBar extends StatefulWidget {
   final Function(int)? onItemTapped;

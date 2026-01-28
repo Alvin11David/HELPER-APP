@@ -143,7 +143,14 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
       return;
     }
 
-    setState(() => _searching = true);
+    setState(() {
+      _searching = true;
+      if (!fetchResults) {
+        _suggestionDocs = [];
+      } else {
+        _searchResults = [];
+      }
+    });
 
     try {
       final query = FirebaseFirestore.instance
@@ -399,11 +406,24 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                                   controller: _controller,
                                   focusNode: _focusNode,
                                   onChanged: (v) {
+                                    final trimmed = v.trim();
+                                    if (trimmed.length >= 2 && !_searching) {
+                                      _runSearch(trimmed, fetchResults: false);
+                                    } else if (trimmed.length < 2) {
+                                      setState(() => _suggestionDocs = []);
+                                    }
                                     _debounce?.cancel();
                                     _debounce = Timer(
                                       const Duration(milliseconds: 300),
                                       () {
-                                        _runSearch(v, fetchResults: true);
+                                        if (trimmed.length >= 2) {
+                                          _runSearch(
+                                            trimmed,
+                                            fetchResults: true,
+                                          );
+                                        } else {
+                                          setState(() => _searchResults = []);
+                                        }
                                       },
                                     );
                                   },
@@ -662,21 +682,22 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                             );
                           }
 
+                          _nearYouFuture ??= FirebaseFirestore.instance
+                              .collection('serviceProviders')
+                              .where('isActive', isEqualTo: true)
+                              .where(
+                                'onboardingStep',
+                                isEqualTo: 'skills_job_details_done',
+                              )
+                              .orderBy('updatedAt', descending: true)
+                              .limit(
+                                250,
+                              ) // fetch enough then sort locally by distance
+                              .get();
                           return FutureBuilder<
                             QuerySnapshot<Map<String, dynamic>>
                           >(
-                            future: FirebaseFirestore.instance
-                                .collection('serviceProviders')
-                                .where('isActive', isEqualTo: true)
-                                .where(
-                                  'onboardingStep',
-                                  isEqualTo: 'skills_job_details_done',
-                                )
-                                .orderBy('updatedAt', descending: true)
-                                .limit(
-                                  250,
-                                ) // fetch enough then sort locally by distance
-                                .get(),
+                            future: _nearYouFuture,
                             builder: (context, snap) {
                               if (snap.connectionState ==
                                   ConnectionState.waiting) {
@@ -981,6 +1002,10 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                                             : location;
 
                                         return ListTile(
+                                          leading: const Icon(
+                                            Icons.search,
+                                            color: Colors.black,
+                                          ),
                                           title: Text(displayLabel),
                                           subtitle: Text(
                                             '${jobCategoryName.isNotEmpty ? jobCategoryName : ''}${location.isNotEmpty ? " • $location" : ""}',
