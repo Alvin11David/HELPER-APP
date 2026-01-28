@@ -402,12 +402,15 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                               final businessName = _businessName ?? 'Provider';
                               final providerId =
                                   widget.data?['uid'] ?? widget.providerId;
+                              final employerId =
+                                  FirebaseAuth.instance.currentUser!.uid;
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) => ChatScreen(
                                     businessName: businessName,
                                     providerId: providerId,
+                                    employerId: employerId,
                                   ),
                                 ),
                               );

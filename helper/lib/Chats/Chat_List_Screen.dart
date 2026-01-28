@@ -226,7 +226,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                   onTap: () => Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) => ChatScreen(businessName: '', providerId: '',),
+                                      builder: (context) => ChatScreen(businessName: '', providerId: '', employerId: '',),
                                     ),
                                   ),
                                   child: Row(
