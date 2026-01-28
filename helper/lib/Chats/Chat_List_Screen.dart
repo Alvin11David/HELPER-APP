@@ -32,7 +32,11 @@ class _ChatListScreenState extends State<ChatListScreen> {
 
   Future<void> _fetchChats() async {
     User? user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
+    if (user == null) {
+      print('No current user');
+      return;
+    }
+    print('Fetching chats for user: ${user.uid}');
 
     // Query chats where current user is employer or provider
     QuerySnapshot chatSnapshot = await FirebaseFirestore.instance
@@ -50,9 +54,12 @@ class _ChatListScreenState extends State<ChatListScreen> {
       ...providerChats.docs,
     ];
 
+    print('Found ${allChats.length} chat documents');
+
     List<Map<String, dynamic>> fetchedChats = [];
     for (var doc in allChats) {
       String chatId = doc.id;
+      print('Checking chat: $chatId');
       // Check if there are messages in the subcollection
       QuerySnapshot messagesSnapshot = await FirebaseFirestore.instance
           .collection('chats')
@@ -62,22 +69,88 @@ class _ChatListScreenState extends State<ChatListScreen> {
           .limit(1)
           .get();
 
+      print('Messages in $chatId: ${messagesSnapshot.docs.length}');
       if (messagesSnapshot.docs.isNotEmpty) {
         var lastMessageDoc = messagesSnapshot.docs.first;
-        String businessName = doc['businessName'] ?? 'Unknown';
         String otherId = doc['employerId'] == user.uid
             ? doc['providerId']
             : doc['employerId'];
         bool isEmployer = doc['employerId'] == user.uid;
+
+        // Fetch online status and business name
+        bool isOnline = false;
+        String businessName = '';
+        List<String> portfolioFiles = [];
+        String? photoUrl;
+        String? fullName;
+        try {
+          DocumentSnapshot userDoc;
+          if (isEmployer) {
+            // If current user is employer, other is provider
+            userDoc = await FirebaseFirestore.instance
+                .collection('serviceProviders')
+                .doc(otherId)
+                .get();
+            if (userDoc.exists) {
+              final data = userDoc.data() as Map<String, dynamic>?;
+              businessName =
+                  data?['businessName'] ??
+                  fullName ??
+                  data?['name'] ??
+                  'Unknown';
+            }
+          } else {
+            // If current user is provider, other is employer
+            userDoc = await FirebaseFirestore.instance
+                .collection('Sign Up')
+                .doc(otherId)
+                .get();
+            if (userDoc.exists) {
+              final data = userDoc.data() as Map<String, dynamic>?;
+              fullName = data?['fullName'];
+              photoUrl = data?['photoUrl'];
+              businessName =
+                  fullName ??
+                  data?['businessName'] ??
+                  data?['name'] ??
+                  'Unknown';
+            }
+            // Fetch isOnline from users collection
+            final userDocForOnline = await FirebaseFirestore.instance
+                .collection('users')
+                .doc(otherId)
+                .get();
+            if (userDocForOnline.exists) {
+              final data = userDocForOnline.data() as Map<String, dynamic>?;
+              isOnline = data?['isOnline'] ?? false;
+            }
+          }
+        } catch (e) {
+          print('Error fetching user data for $otherId: $e');
+        }
+
+        String lastMessage = '';
+        if (lastMessageDoc.data() != null) {
+          final data = lastMessageDoc.data()! as Map<String, dynamic>;
+          if (data['type'] == 'image') {
+            lastMessage = 'Image';
+          } else {
+            lastMessage = data['text'] ?? data['message'] ?? '';
+          }
+        }
         fetchedChats.add({
           'chatId': chatId,
           'otherId': otherId,
           'businessName': businessName,
-          'lastMessage':
-              lastMessageDoc['message'] ?? lastMessageDoc['text'] ?? '',
+          'lastMessage': lastMessage,
           'timestamp': lastMessageDoc['timestamp'],
           'isEmployer': isEmployer,
+          'isOnline': isOnline,
+          'portfolioFiles': portfolioFiles,
+          'fullName': fullName,
+          'photoUrl': photoUrl,
         });
+        print('Added chat: $businessName');
       }
     }
 
@@ -85,11 +158,31 @@ class _ChatListScreenState extends State<ChatListScreen> {
       chats = fetchedChats;
       hasMessages = chats.isNotEmpty;
     });
+    print('hasMessages: $hasMessages, chats count: ${chats.length}');
   }
 
-  void _onItemTapped(int index) {
-    // Add navigation logic here based on the tapped index
-    print('Bottom nav item tapped: $index');
+  Widget _getProfileImage(Map<String, dynamic> chat, double size) {
+    String? imageUrl;
+    if (chat['photoUrl'] != null && chat['photoUrl'].toString().isNotEmpty) {
+      imageUrl = chat['photoUrl'];
+    } else if ((chat['portfolioFiles'] as List<String>).isNotEmpty) {
+      imageUrl = (chat['portfolioFiles'] as List<String>)[0];
+    }
+
+    if (imageUrl != null) {
+      return ClipOval(
+        child: Image.network(
+          imageUrl,
+          fit: BoxFit.cover,
+          width: size,
+          height: size,
+          errorBuilder: (context, error, stackTrace) =>
+              const Icon(Icons.person, color: Colors.black),
+        ),
+      );
+    } else {
+      return const Icon(Icons.person, color: Colors.black);
+    }
   }
 
   String _formatTime(Timestamp? timestamp) {
@@ -249,24 +342,29 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                           color: Colors.white,
                                           shape: BoxShape.circle,
                                         ),
-                                      ),
-                                      Positioned(
-                                        bottom: 0,
-                                        right: 0,
-                                        child: Container(
-                                          width: 10,
-                                          height: 10,
-                                          decoration: const BoxDecoration(
-                                            color: Color.fromARGB(
-                                              255,
-                                              0,
-                                              233,
-                                              8,
-                                            ),
-                                            shape: BoxShape.circle,
-                                          ),
+                                        child: _getProfileImage(
+                                          chat,
+                                          screenWidth * 0.12,
                                         ),
                                       ),
+                                      if (chat['isOnline'] == true)
+                                        Positioned(
+                                          bottom: 0,
+                                          right: 0,
+                                          child: Container(
+                                            width: 10,
+                                            height: 10,
+                                            decoration: const BoxDecoration(
+                                              color: Color.fromARGB(
+                                                255,
+                                                0,
+                                                233,
+                                                8,
+                                              ),
+                                              shape: BoxShape.circle,
+                                            ),
+                                          ),
+                                        ),
                                     ],
                                   ),
                                   const SizedBox(height: 8),
@@ -323,19 +421,21 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                               color: Colors.white,
                                               shape: BoxShape.circle,
                                             ),
+                                            child: _getProfileImage(chat, 40),
                                           ),
-                                          Positioned(
-                                            bottom: 0,
-                                            right: 0,
-                                            child: Container(
-                                              width: 10,
-                                              height: 10,
-                                              decoration: const BoxDecoration(
-                                                color: Colors.green,
-                                                shape: BoxShape.circle,
+                                          if (chat['isOnline'] == true)
+                                            Positioned(
+                                              bottom: 0,
+                                              right: 0,
+                                              child: Container(
+                                                width: 10,
+                                                height: 10,
+                                                decoration: const BoxDecoration(
+                                                  color: Colors.green,
+                                                  shape: BoxShape.circle,
+                                                ),
                                               ),
                                             ),
-                                          ),
                                         ],
                                       ),
                                       const SizedBox(width: 10),
@@ -405,10 +505,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
           ],
         ),
       ),
-      bottomNavigationBar: BottomNavBar(
-        onItemTapped: _onItemTapped,
-        currentIndex: 3,
-      ),
+      bottomNavigationBar: BottomNavBar(currentIndex: 3),
     );
   }
 }
