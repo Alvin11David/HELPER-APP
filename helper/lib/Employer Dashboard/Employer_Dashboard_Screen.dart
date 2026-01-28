@@ -57,7 +57,13 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
     super.initState();
     _focusNode = FocusNode();
     _controller = TextEditingController();
-    _focusNode.addListener(() => setState(() {}));
+    _focusNode.addListener(() {
+      if (!_focusNode.hasFocus) {
+        setState(() => _searchResults = []);
+      } else {
+        setState(() {});
+      }
+    });
 
     _initLocation(); // ✅ start GPS
   }
@@ -169,7 +175,7 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
             workplaceLocationText.contains(q);
       }).toList();
 
-      setState(() => _searchResults = filtered.take(30).toList());
+      setState(() => _searchResults = filtered.take(10).toList());
     } catch (e) {
       // ignore: avoid_print
       print("Search error: $e");
@@ -872,6 +878,62 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                     ),
                   ),
                   SideBar(key: _sidebarKey),
+                  if (_searchResults.isNotEmpty)
+                    Positioned(
+                      top: 120,
+                      left: w * 0.04,
+                      right: w * 0.04,
+                      height: 200,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black26,
+                              blurRadius: 5,
+                              offset: Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: ListView.builder(
+                          itemCount: _searchResults.length,
+                          itemBuilder: (context, index) {
+                            final data = _searchResults[index].data();
+                            final businessName =
+                                data['businessName'] ?? 'Unknown';
+                            final jobCategoryName =
+                                data['jobCategoryName'] ?? '';
+                            final workplaceLocationText =
+                                data['workplaceLocationText'] ?? '';
+                            return ListTile(
+                              leading: Icon(Icons.search, color: Colors.black),
+                              title: Text(
+                                businessName,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              subtitle: Text(
+                                '$jobCategoryName${workplaceLocationText.isNotEmpty ? ' - $workplaceLocationText' : ''}',
+                              ),
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => WorkerDetailsScreen(
+                                      providerId: '',
+                                      data: data,
+                                    ),
+                                  ),
+                                );
+                                setState(() => _searchResults = []);
+                              },
+                            );
+                          },
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),
