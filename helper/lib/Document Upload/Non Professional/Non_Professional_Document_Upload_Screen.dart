@@ -348,11 +348,14 @@ class _NonProfessionalDocumentUploadScreenState
                                   .collection('users')
                                   .doc(FirebaseAuth.instance.currentUser!.uid)
                                   .collection('documents')
-                                  .doc('selfie')
+                                  .doc('Non Professional Workers')
                                   .snapshots(),
                               builder: (context, snapshot) {
-                                final isSubmitted =
-                                    snapshot.hasData && snapshot.data!.exists;
+                                final data =
+                                    snapshot.data?.data()
+                                        as Map<String, dynamic>? ??
+                                    {};
+                                final isSubmitted = data['selfie'] != null;
                                 WidgetsBinding.instance.addPostFrameCallback((
                                   _,
                                 ) {

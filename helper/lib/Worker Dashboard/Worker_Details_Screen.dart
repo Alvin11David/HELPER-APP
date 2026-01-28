@@ -6,6 +6,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:helper/Employer%20Dashboard/job_detail_booking_screen.dart';
 import 'package:helper/Employer%20Dashboard/Employer_Dashboard_Screen.dart';
 import 'package:helper/Maps/Map_Screen.dart';
+import 'package:helper/Chats/Chat_Screen.dart';
+import '../Components/Side_Bar.dart';
 
 class Review {
   final String reviewerName;
@@ -36,6 +38,8 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
     if (hour < 21) return 'Good Evening';
     return 'Good Night';
   }
+
+  final GlobalKey<SideBarState> _sidebarKey = GlobalKey();
 
   late String _greeting;
 
@@ -278,31 +282,31 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                             bottom: 10,
                             left: 0,
                             right: 0,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: List.generate(
-                                _portfolioFiles.isNotEmpty
-                                    ? _portfolioFiles.length
-                                    : 2,
-                                (index) => GestureDetector(
-                                  onTap: () =>
-                                      setState(() => _imageIndex = index),
-                                  child: Container(
-                                    width: 9,
-                                    height: 9,
-                                    margin: const EdgeInsets.symmetric(
-                                      horizontal: 4,
+                            child: _portfolioFiles.isNotEmpty
+                                ? Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: List.generate(
+                                      _portfolioFiles.length,
+                                      (index) => GestureDetector(
+                                        onTap: () =>
+                                            setState(() => _imageIndex = index),
+                                        child: Container(
+                                          width: 9,
+                                          height: 9,
+                                          margin: const EdgeInsets.symmetric(
+                                            horizontal: 4,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: index == _imageIndex
+                                                ? Colors.orange
+                                                : const Color(0xFFD9D9D9),
+                                            shape: BoxShape.circle,
+                                          ),
+                                        ),
+                                      ),
                                     ),
-                                    decoration: BoxDecoration(
-                                      color: index == _imageIndex
-                                          ? Colors.orange
-                                          : const Color(0xFFD9D9D9),
-                                      shape: BoxShape.circle,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
+                                  )
+                                : const SizedBox.shrink(),
                           ),
                         ],
                       ),
@@ -396,28 +400,51 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                             ),
                           ),
                           const SizedBox(width: 10),
-                          Container(
-                            width: 148,
-                            height: 30,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFFFFA10D),
-                              borderRadius: BorderRadius.all(
-                                Radius.circular(20),
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.chat, color: Colors.white, size: 16),
-                                const SizedBox(width: 4),
-                                const Text(
-                                  'Message',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 12,
+                          GestureDetector(
+                            onTap: () {
+                              final businessName = _businessName ?? 'Provider';
+                              final providerId =
+                                  widget.data?['uid'] ?? widget.providerId;
+                              final employerId =
+                                  FirebaseAuth.instance.currentUser!.uid;
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ChatScreen(
+                                    chatPartnerName: businessName,
+                                    providerId: providerId,
+                                    employerId: employerId,
                                   ),
                                 ),
-                              ],
+                              );
+                            },
+                            child: Container(
+                              width: 148,
+                              height: 30,
+                              decoration: const BoxDecoration(
+                                color: Color(0xFFFFA10D),
+                                borderRadius: BorderRadius.all(
+                                  Radius.circular(20),
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.chat,
+                                    color: Colors.white,
+                                    size: 16,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  const Text(
+                                    'Message',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ],
@@ -838,17 +865,64 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                             ),
                           ),
                           const SizedBox(width: 10),
-                          Container(
-                            width: 40,
-                            height: 40,
-                            decoration: const BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.notifications,
-                              color: Colors.black,
-                            ),
+                          StreamBuilder<QuerySnapshot>(
+                            stream: FirebaseFirestore.instance
+                                .collectionGroup('messages')
+                                .where(
+                                  'receiverId',
+                                  isEqualTo:
+                                      FirebaseAuth.instance.currentUser!.uid,
+                                )
+                                .snapshots(),
+                            builder: (context, snapshot) {
+                              int unreadCount = 0;
+                              if (snapshot.hasData) {
+                                unreadCount = snapshot.data!.docs.length;
+                              }
+                              return Stack(
+                                children: [
+                                  Container(
+                                    width: 40,
+                                    height: 40,
+                                    decoration: const BoxDecoration(
+                                      color: Colors.white,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(
+                                      Icons.notifications,
+                                      color: Colors.black,
+                                    ),
+                                  ),
+                                  if (unreadCount > 0)
+                                    Positioned(
+                                      right: 0,
+                                      top: 0,
+                                      child: Container(
+                                        padding: const EdgeInsets.all(2),
+                                        decoration: const BoxDecoration(
+                                          color: Colors.red,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        constraints: const BoxConstraints(
+                                          minWidth: 16,
+                                          minHeight: 16,
+                                        ),
+                                        child: Text(
+                                          unreadCount > 99
+                                              ? '99+'
+                                              : unreadCount.toString(),
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              );
+                            },
                           ),
                         ],
                       ),
@@ -859,14 +933,21 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Container(
-                            width: 40,
-                            height: 40,
-                            decoration: const BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
+                          GestureDetector(
+                            onTap: () =>
+                                _sidebarKey.currentState?.toggleDrawer(),
+                            child: Container(
+                              width: 40,
+                              height: 40,
+                              decoration: const BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.menu,
+                                color: Colors.black,
+                              ),
                             ),
-                            child: const Icon(Icons.menu, color: Colors.black),
                           ),
                           const SizedBox(width: 10),
                           Column(
@@ -947,6 +1028,7 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                 ],
               ),
             ),
+            SideBar(key: _sidebarKey),
           ],
         ),
       ),

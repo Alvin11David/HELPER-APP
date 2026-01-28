@@ -537,7 +537,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 left: 0,
                 right: 0,
                 child: Container(
-                  height: screenHeight * 0.59, // Adjust height as needed
+                  height: screenHeight * 0.57, // Adjust height as needed
                   decoration: const BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.only(
