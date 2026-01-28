@@ -60,8 +60,6 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
     _focusNode.addListener(() {
       if (!_focusNode.hasFocus) {
         setState(() => _searchResults = []);
-      } else {
-        setState(() {});
       }
     });
 
@@ -884,53 +882,87 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                       left: w * 0.04,
                       right: w * 0.04,
                       height: 200,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(10),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black26,
-                              blurRadius: 5,
-                              offset: Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: ListView.builder(
-                          itemCount: _searchResults.length,
-                          itemBuilder: (context, index) {
-                            final data = _searchResults[index].data();
-                            final businessName =
-                                data['businessName'] ?? 'Unknown';
-                            final jobCategoryName =
-                                data['jobCategoryName'] ?? '';
-                            final workplaceLocationText =
-                                data['workplaceLocationText'] ?? '';
-                            return ListTile(
-                              leading: Icon(Icons.search, color: Colors.black),
-                              title: Text(
-                                businessName,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
+                      child: GestureDetector(
+                        onTap: () => setState(() => _searchResults = []),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(10),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black26,
+                                blurRadius: 5,
+                                offset: Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: ListView.builder(
+                            itemCount: _searchResults.length,
+                            itemBuilder: (context, index) {
+                              final data = _searchResults[index].data();
+                              final businessName =
+                                  data['businessName'] ?? 'Unknown';
+                              final jobCategoryName =
+                                  data['jobCategoryName'] ?? '';
+                              final workplaceLocationText =
+                                  data['workplaceLocationText'] ?? '';
+                              return ListTile(
+                                leading: Icon(
+                                  Icons.search,
+                                  color: Colors.black,
                                 ),
-                              ),
-                              subtitle: Text(
-                                '$jobCategoryName${workplaceLocationText.isNotEmpty ? ' - $workplaceLocationText' : ''}',
-                              ),
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => WorkerDetailsScreen(
-                                      providerId: '',
-                                      data: data,
-                                    ),
+                                title: Text(
+                                  businessName,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
                                   ),
-                                );
-                                setState(() => _searchResults = []);
-                              },
-                            );
-                          },
+                                ),
+                                subtitle: Text(
+                                  '$jobCategoryName${workplaceLocationText.isNotEmpty ? ' - $workplaceLocationText' : ''}',
+                                ),
+                                onTap: () {
+                                  final safeData = Map<String, dynamic>.from(
+                                    data,
+                                  );
+                                  if (safeData['portfolioFiles'] == null ||
+                                      !(safeData['portfolioFiles'] is List) ||
+                                      (safeData['portfolioFiles'] as List)
+                                          .isEmpty) {
+                                    safeData['portfolioFiles'] = [''];
+                                  }
+                                  final navData = {
+                                    ...safeData,
+                                    '_docId': _searchResults[index].id,
+                                  };
+                                  if (_currentPos != null) {
+                                    final gp = data['workplaceLatLng'];
+                                    if (gp is GeoPoint) {
+                                      navData['_distanceKm'] = _kmFromCurrent(
+                                        gp,
+                                      );
+                                    }
+                                  }
+                                  try {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            WorkerDetailsScreen(
+                                              providerId: '',
+                                              data: navData,
+                                            ),
+                                      ),
+                                    );
+                                  } catch (e) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text('Error: $e')),
+                                    );
+                                  }
+                                  setState(() => _searchResults = []);
+                                },
+                              );
+                            },
+                          ),
                         ),
                       ),
                     ),

@@ -278,31 +278,31 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                             bottom: 10,
                             left: 0,
                             right: 0,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: List.generate(
-                                _portfolioFiles.isNotEmpty
-                                    ? _portfolioFiles.length
-                                    : 2,
-                                (index) => GestureDetector(
-                                  onTap: () =>
-                                      setState(() => _imageIndex = index),
-                                  child: Container(
-                                    width: 9,
-                                    height: 9,
-                                    margin: const EdgeInsets.symmetric(
-                                      horizontal: 4,
+                            child: _portfolioFiles.isNotEmpty
+                                ? Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: List.generate(
+                                      _portfolioFiles.length,
+                                      (index) => GestureDetector(
+                                        onTap: () =>
+                                            setState(() => _imageIndex = index),
+                                        child: Container(
+                                          width: 9,
+                                          height: 9,
+                                          margin: const EdgeInsets.symmetric(
+                                            horizontal: 4,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: index == _imageIndex
+                                                ? Colors.orange
+                                                : const Color(0xFFD9D9D9),
+                                            shape: BoxShape.circle,
+                                          ),
+                                        ),
+                                      ),
                                     ),
-                                    decoration: BoxDecoration(
-                                      color: index == _imageIndex
-                                          ? Colors.orange
-                                          : const Color(0xFFD9D9D9),
-                                      shape: BoxShape.circle,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
+                                  )
+                                : const SizedBox.shrink(),
                           ),
                         ],
                       ),
