@@ -21,10 +21,12 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
   late Animation<double> _animation;
   bool _isOpen = false;
   int _selectedIndex = -1;
+  String? _userRole;
 
   @override
   void initState() {
     super.initState();
+    _fetchUserRole().then((role) => setState(() => _userRole = role));
     _controller = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
@@ -227,31 +229,39 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                               try {
                                 User? user = FirebaseAuth.instance.currentUser;
                                 if (user != null) {
-                                  DocumentSnapshot doc = await FirebaseFirestore.instance
+                                  DocumentSnapshot doc = await FirebaseFirestore
+                                      .instance
                                       .collection('Sign Up')
                                       .doc(user.uid)
                                       .get();
                                   if (doc.exists && doc.data() != null) {
-                                    final data = doc.data() as Map<String, dynamic>;
+                                    final data =
+                                        doc.data() as Map<String, dynamic>;
                                     String role = data['role'] ?? '';
                                     toggleDrawer();
                                     if (role == 'employer') {
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                          builder: (context) => EmployerDashboardScreen(),
+                                          builder: (context) =>
+                                              EmployerDashboardScreen(),
                                         ),
                                       );
                                     } else if (role == 'worker') {
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                          builder: (context) => WorkersDashboardScreen(),
+                                          builder: (context) =>
+                                              WorkersDashboardScreen(),
                                         ),
                                       );
                                     } else {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(content: Text('Role not found')),
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text('Role not found'),
+                                        ),
                                       );
                                     }
                                   }
@@ -259,7 +269,9 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                               } catch (e) {
                                 print('Error fetching role: $e');
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text('Error loading dashboard')),
+                                  SnackBar(
+                                    content: Text('Error loading dashboard'),
+                                  ),
                                 );
                               }
                             },
@@ -289,90 +301,96 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                             ),
                           ),
                           const SizedBox(height: 20),
-                          GestureDetector(
-                            onTap: () => setState(() => _selectedIndex = 1),
-                            child: Padding(
-                              padding: EdgeInsets.only(left: 8, right: 8),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    Icons.receipt_long,
-                                    color: _selectedIndex == 1
-                                        ? Colors.orange
-                                        : Colors.black.withOpacity(0.6),
-                                  ),
-                                  SizedBox(width: 15),
-                                  Text(
-                                    "My Jobs",
-                                    style: TextStyle(
+                          if (_userRole == 'worker')
+                            GestureDetector(
+                              onTap: () => setState(() => _selectedIndex = 1),
+                              child: Padding(
+                                padding: EdgeInsets.only(left: 8, right: 8),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.receipt_long,
                                       color: _selectedIndex == 1
                                           ? Colors.orange
-                                          : Colors.black,
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w600,
+                                          : Colors.black.withOpacity(0.6),
                                     ),
-                                  ),
-                                ],
+                                    SizedBox(width: 15),
+                                    Text(
+                                      "My Jobs",
+                                      style: TextStyle(
+                                        color: _selectedIndex == 1
+                                            ? Colors.orange
+                                            : Colors.black,
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
-                          const SizedBox(height: 20),
-                          GestureDetector(
-                            onTap: () => setState(() => _selectedIndex = 2),
-                            child: Padding(
-                              padding: EdgeInsets.only(left: 8, right: 8),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    Icons.calendar_today_rounded,
-                                    color: _selectedIndex == 2
-                                        ? Colors.orange
-                                        : Colors.black.withOpacity(0.6),
-                                  ),
-                                  SizedBox(width: 15),
-                                  Text(
-                                    "Availability &\nSchedule",
-                                    style: TextStyle(
+                          if (_userRole == 'worker')
+                            const SizedBox(height: 20),
+                          if (_userRole == 'worker')
+                            GestureDetector(
+                              onTap: () => setState(() => _selectedIndex = 2),
+                              child: Padding(
+                                padding: EdgeInsets.only(left: 8, right: 8),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.calendar_today_rounded,
                                       color: _selectedIndex == 2
                                           ? Colors.orange
-                                          : Colors.black,
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w600,
+                                          : Colors.black.withOpacity(0.6),
                                     ),
-                                  ),
-                                ],
+                                    SizedBox(width: 15),
+                                    Text(
+                                      "Availability &\nSchedule",
+                                      style: TextStyle(
+                                        color: _selectedIndex == 2
+                                            ? Colors.orange
+                                            : Colors.black,
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
-                          const SizedBox(height: 20),
-                          GestureDetector(
-                            onTap: () => setState(() => _selectedIndex = 3),
-                            child: Padding(
-                              padding: EdgeInsets.only(left: 8, right: 8),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    Icons.star,
-                                    color: _selectedIndex == 3
-                                        ? Colors.orange
-                                        : Colors.black.withOpacity(0.6),
-                                  ),
-                                  SizedBox(width: 15),
-                                  Text(
-                                    "Ratings & Reviews",
-                                    style: TextStyle(
+                          if (_userRole == 'worker')
+                            const SizedBox(height: 20),
+                          if (_userRole == 'worker')
+                            GestureDetector(
+                              onTap: () => setState(() => _selectedIndex = 3),
+                              child: Padding(
+                                padding: EdgeInsets.only(left: 8, right: 8),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.star,
                                       color: _selectedIndex == 3
                                           ? Colors.orange
-                                          : Colors.black,
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w600,
+                                          : Colors.black.withOpacity(0.6),
                                     ),
-                                  ),
-                                ],
+                                    SizedBox(width: 15),
+                                    Text(
+                                      "Ratings & Reviews",
+                                      style: TextStyle(
+                                        color: _selectedIndex == 3
+                                            ? Colors.orange
+                                            : Colors.black,
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
-                          const SizedBox(height: 20),
+                          if (_userRole == 'worker')
+                            const SizedBox(height: 20),
                           GestureDetector(
                             onTap: () => setState(() => _selectedIndex = 4),
                             child: Padding(
