@@ -3,6 +3,7 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'Voice_Call_Screen.dart';
 
 class ChatScreen extends StatefulWidget {
@@ -224,10 +225,16 @@ class _ChatScreenState extends State<ChatScreen> {
                                       bottomRight: Radius.circular(20),
                                     ),
                                   ),
-                                  child: Text(
-                                    msg['text'],
-                                    style: const TextStyle(color: Colors.black),
-                                  ),
+                                  child: msg['type'] == 'text'
+                                      ? Text(
+                                          msg['text'],
+                                          style: const TextStyle(color: Colors.black),
+                                        )
+                                      : Image.network(
+                                          msg['imageUrl'],
+                                          width: 200,
+                                          height: 200,
+                                        ),
                                 ),
                                 Text(
                                   msg['time'],
@@ -271,8 +278,8 @@ class _ChatScreenState extends State<ChatScreen> {
                                             color: Colors.black,
                                           ),
                                         )
-                                      : Image.file(
-                                          File(msg['path']!),
+                                      : Image.network(
+                                          msg['imageUrl'],
                                           width: 200,
                                           height: 200,
                                         ),
@@ -321,8 +328,29 @@ class _ChatScreenState extends State<ChatScreen> {
                               Padding(
                                 padding: const EdgeInsets.only(right: 10),
                                 child: GestureDetector(
-                                  onTap: () {
-                                    // TODO: Implement image sending
+                                  onTap: () async {
+                                    final ImagePicker picker = ImagePicker();
+                                    final List<XFile> images = await picker.pickMultiImage();
+                                    for (var image in images) {
+                                      final file = File(image.path);
+                                      final fileName = '${DateTime.now().millisecondsSinceEpoch}_${image.name}';
+                                      final storageRef = FirebaseStorage.instance.ref().child('Chat Images').child(fileName);
+                                      final uploadTask = storageRef.putFile(file);
+                                      final snapshot = await uploadTask.whenComplete(() {});
+                                      final downloadUrl = await snapshot.ref.getDownloadURL();
+                                      final message = {
+                                        'imageUrl': downloadUrl,
+                                        'senderId': widget.employerId,
+                                        'receiverId': widget.providerId,
+                                        'timestamp': FieldValue.serverTimestamp(),
+                                        'type': 'image',
+                                      };
+                                      await FirebaseFirestore.instance
+                                          .collection('chats')
+                                          .doc(chatId)
+                                          .collection('messages')
+                                          .add(message);
+                                    }
                                   },
                                   child: const Icon(
                                     Icons.image,
