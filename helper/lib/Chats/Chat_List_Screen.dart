@@ -230,9 +230,8 @@ class _ChatListScreenState extends State<ChatListScreen> {
                         height: screenWidth * 0.2,
                         child: ListView(
                           scrollDirection: Axis.horizontal,
-                          children: List.generate(
-                            9,
-                            (index) => Padding(
+                          children: chats.map((chat) {
+                            return Padding(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 9.0,
                               ),
@@ -269,7 +268,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
-                                    'Names',
+                                    chat['businessName'],
                                     style: TextStyle(
                                       color: Colors.white,
                                       fontSize: screenWidth * 0.03,
@@ -277,8 +276,8 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                   ),
                                 ],
                               ),
-                            ),
-                          ),
+                            );
+                          }).toList(),
                         ),
                       ),
                     if (hasMessages) SizedBox(height: 20),
