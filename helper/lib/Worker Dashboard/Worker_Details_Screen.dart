@@ -932,14 +932,18 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Container(
-                            width: 40,
-                            height: 40,
-                            decoration: const BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
+                          GestureDetector(
+                            onTap: () =>
+                                    _sidebarKey.currentState?.toggleDrawer(),
+                            child: Container(
+                              width: 40,
+                              height: 40,
+                              decoration: const BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.menu, color: Colors.black),
                             ),
-                            child: const Icon(Icons.menu, color: Colors.black),
                           ),
                           const SizedBox(width: 10),
                           Column(
