@@ -122,6 +122,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
         }
 
         String lastMessage = '';
+        int unreadCount = 0;
         if (lastMessageDoc.data() != null) {
           final data = lastMessageDoc.data()! as Map<String, dynamic>;
           if (data['type'] == 'image') {
@@ -130,6 +131,17 @@ class _ChatListScreenState extends State<ChatListScreen> {
             lastMessage = data['text'] ?? data['message'] ?? '';
           }
         }
+
+        // Count unread messages for this chat
+        final unreadSnapshot = await FirebaseFirestore.instance
+            .collection('chats')
+            .doc(chatId)
+            .collection('messages')
+            .where('receiverId', isEqualTo: user.uid)
+            .where('read', isEqualTo: false)
+            .get();
+        unreadCount = unreadSnapshot.docs.length;
+
         fetchedChats.add({
           'chatId': chatId,
           'otherId': otherId,
@@ -142,6 +154,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
           'fullName': fullName,
           'photoUrl': photoUrl,
           'displayName': isEmployer ? businessName : (fullName ?? 'Unknown'),
+          'unreadCount': unreadCount,
         });
         print(
           'Added chat: ${isEmployer ? businessName : (fullName ?? 'Unknown')}',
@@ -443,13 +456,45 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: [
-                                          Text(
-                                            chat['displayName'],
-                                            style: TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.bold,
-                                            ),
+                                          Row(
+                                            children: [
+                                              Text(
+                                                chat['displayName'],
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                              if (chat['unreadCount'] > 0)
+                                                Container(
+                                                  margin: const EdgeInsets.only(
+                                                    left: 8,
+                                                  ),
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                        horizontal: 6,
+                                                        vertical: 2,
+                                                      ),
+                                                  decoration:
+                                                      const BoxDecoration(
+                                                        color: Colors.red,
+                                                        shape: BoxShape.circle,
+                                                      ),
+                                                  child: Text(
+                                                    chat['unreadCount'] > 99
+                                                        ? '99+'
+                                                        : chat['unreadCount']
+                                                              .toString(),
+                                                    style: const TextStyle(
+                                                      color: Colors.white,
+                                                      fontSize: 10,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                    ),
+                                                  ),
+                                                ),
+                                            ],
                                           ),
                                           Text(
                                             chat['lastMessage'],
