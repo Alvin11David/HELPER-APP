@@ -7,6 +7,7 @@ import 'package:helper/Employer%20Dashboard/job_detail_booking_screen.dart';
 import 'package:helper/Employer%20Dashboard/Employer_Dashboard_Screen.dart';
 import 'package:helper/Maps/Map_Screen.dart';
 import 'package:helper/Chats/Chat_Screen.dart';
+import '../Components/Side_Bar.dart';
 
 class Review {
   final String reviewerName;
@@ -37,6 +38,7 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
     if (hour < 21) return 'Good Evening';
     return 'Good Night';
   }
+  final GlobalKey<SideBarState> _sidebarKey = GlobalKey();
 
   late String _greeting;
 
@@ -1018,6 +1020,7 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                 ],
               ),
             ),
+            SideBar(key: _sidebarKey),
           ],
         ),
       ),
