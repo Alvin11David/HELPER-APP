@@ -190,6 +190,23 @@ class _MapScreenState extends State<MapScreen> {
         .collection('serviceProviders')
         .get();
     _workers = snapshot.docs.map((doc) => doc.data()).toList();
+
+    // Fetch status for each worker
+    for (var i = 0; i < _workers.length; i++) {
+      final uid = _workers[i]['uid'] as String?;
+      if (uid != null) {
+        final userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .get();
+        if (userDoc.exists) {
+          final userData = userDoc.data();
+          _workers[i]['isOnline'] = userData?['isOnline'] ?? false;
+          _workers[i]['status'] = userData?['status'] ?? 'Not Available';
+        }
+      }
+    }
+
     for (var worker in _workers) {
       final latLng = worker['workplaceLatLng'] as GeoPoint?;
       final portfolioFiles = worker['portfolioFiles'] as List<dynamic>?;
@@ -212,6 +229,19 @@ class _MapScreenState extends State<MapScreen> {
 
   void _handleWorkerNavigation() async {
     final worker = widget.worker!;
+    final uid = worker['uid'] as String?;
+    if (uid != null) {
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .get();
+      if (userDoc.exists) {
+        final userData = userDoc.data();
+        worker['isOnline'] = userData?['isOnline'] ?? false;
+        worker['status'] = userData?['status'] ?? 'Not Available';
+      }
+    }
+
     final latLng = worker['workplaceLatLng'] as GeoPoint?;
     if (latLng != null) {
       final position = LatLng(latLng.latitude, latLng.longitude);
@@ -258,20 +288,45 @@ class _MapScreenState extends State<MapScreen> {
     final pictureRecorder = ui.PictureRecorder();
     final canvas = Canvas(pictureRecorder);
     final paint = Paint()..isAntiAlias = true;
-    final radius = 22.5;
-    final rect = Rect.fromCircle(
-      center: Offset(radius, radius),
-      radius: radius,
-    );
+    final radius = 18.0;
+    final center = Offset(radius, radius);
+    final rect = Rect.fromCircle(center: center, radius: radius);
+
+    // Determine stroke color based on status
+    Color strokeColor;
+    final status = worker['status'] as String? ?? 'Not Available';
+    final isOnline = worker['isOnline'] as bool? ?? false;
+    if (isOnline) {
+      if (status == 'Available') {
+        strokeColor = Colors.green;
+      } else if (status == 'On Job') {
+        strokeColor = Colors.orange;
+      } else {
+        strokeColor = Colors.red;
+      }
+    } else {
+      strokeColor = Colors.red;
+    }
+
+    // Draw stroke
+    final strokePaint = Paint()
+      ..color = strokeColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0
+      ..isAntiAlias = true;
+    canvas.drawCircle(center, radius + 0.5, strokePaint);
+
+    // Clip to circle and draw image
     canvas.clipPath(Path()..addOval(rect));
     canvas.drawImageRect(
       image,
       Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble()),
-      Rect.fromLTWH(0, 0, 45, 45),
+      Rect.fromLTWH(0, 0, 36, 36),
       paint,
     );
+
     final picture = pictureRecorder.endRecording();
-    final img = await picture.toImage(45, 45);
+    final img = await picture.toImage(37, 37); // Adjusted for thinner stroke
     final byteData = await img.toByteData(format: ui.ImageByteFormat.png);
     final pngBytes = byteData!.buffer.asUint8List();
     return Marker(
