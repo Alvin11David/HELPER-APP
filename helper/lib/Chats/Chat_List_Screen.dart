@@ -98,6 +98,11 @@ class _ChatListScreenState extends State<ChatListScreen> {
                   fullName ??
                   data?['name'] ??
                   'Unknown';
+              if (data?['portfolioFiles'] is List) {
+                portfolioFiles = (data!['portfolioFiles'] as List)
+                    .map((e) => e.toString())
+                    .toList();
+              }
             }
           } else {
             // If current user is provider, other is employer
@@ -107,22 +112,8 @@ class _ChatListScreenState extends State<ChatListScreen> {
                 .get();
             if (userDoc.exists) {
               final data = userDoc.data() as Map<String, dynamic>?;
-              fullName = data?['fullName'];
+              fullName = data?['fullName'] ?? data?['name'] ?? 'Unknown';
               photoUrl = data?['photoUrl'];
-              businessName =
-                  fullName ??
-                  data?['businessName'] ??
-                  data?['name'] ??
-                  'Unknown';
-            }
-            // Fetch isOnline from users collection
-            final userDocForOnline = await FirebaseFirestore.instance
-                .collection('users')
-                .doc(otherId)
-                .get();
-            if (userDocForOnline.exists) {
-              final data = userDocForOnline.data() as Map<String, dynamic>?;
-              isOnline = data?['isOnline'] ?? false;
             }
           }
         } catch (e) {
@@ -149,8 +140,9 @@ class _ChatListScreenState extends State<ChatListScreen> {
           'portfolioFiles': portfolioFiles,
           'fullName': fullName,
           'photoUrl': photoUrl,
+          'displayName': isEmployer ? businessName : (fullName ?? 'Unknown'),
         });
-        print('Added chat: $businessName');
+        print('Added chat: ${isEmployer ? businessName : (fullName ?? 'Unknown')}');
       }
     }
 
@@ -369,7 +361,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
-                                    chat['businessName'],
+                                    chat['displayName'],
                                     style: TextStyle(
                                       color: Colors.white,
                                       fontSize: screenWidth * 0.03,
@@ -394,7 +386,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                     context,
                                     MaterialPageRoute(
                                       builder: (context) => ChatScreen(
-                                        businessName: chat['businessName'],
+                                        chatPartnerName: chat['displayName'],
                                         providerId: chat['isEmployer']
                                             ? chat['otherId']
                                             : FirebaseAuth
@@ -444,7 +436,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                             CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                            chat['businessName'],
+                                            chat['displayName'],
                                             style: TextStyle(
                                               color: Colors.white,
                                               fontSize: 16,

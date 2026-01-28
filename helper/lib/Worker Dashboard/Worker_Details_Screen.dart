@@ -410,7 +410,7 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) => ChatScreen(
-                                    businessName: businessName,
+                                    chatPartnerName: businessName,
                                     providerId: providerId,
                                     employerId: employerId,
                                   ),

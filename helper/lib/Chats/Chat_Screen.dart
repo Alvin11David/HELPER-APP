@@ -7,12 +7,12 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'Voice_Call_Screen.dart';
 
 class ChatScreen extends StatefulWidget {
-  final String businessName;
+  final String chatPartnerName;
   final String providerId;
   final String employerId;
   const ChatScreen({
     super.key,
-    required this.businessName,
+    required this.chatPartnerName,
     required this.providerId,
     required this.employerId,
   });
@@ -106,7 +106,7 @@ class _ChatScreenState extends State<ChatScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              widget.businessName,
+                              widget.chatPartnerName,
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 14,
@@ -374,7 +374,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                         await chatDoc.set({
                                           'employerId': widget.employerId,
                                           'providerId': widget.providerId,
-                                          'businessName': widget.businessName,
+                                          'chatPartnerName': widget.chatPartnerName,
                                         });
                                       }
                                       final file = File(image.path);
@@ -429,7 +429,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                 await chatDoc.set({
                                   'employerId': widget.employerId,
                                   'providerId': widget.providerId,
-                                  'businessName': widget.businessName,
+                                  'chatPartnerName': widget.chatPartnerName,
                                 });
                               }
                               final message = {
