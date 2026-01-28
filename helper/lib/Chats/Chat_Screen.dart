@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'Voice_Call_Screen.dart';
 
 class ChatScreen extends StatefulWidget {
   final String businessName;
-  const ChatScreen({super.key, required this.businessName});
+  final String providerId;
+  const ChatScreen({
+    super.key,
+    required this.businessName,
+    required this.providerId,
+  });
 
   @override
   _ChatScreenState createState() => _ChatScreenState();
@@ -60,11 +66,27 @@ class _ChatScreenState extends State<ChatScreen> {
                       children: [
                         Text(
                           widget.businessName,
-                          style: TextStyle(color: Colors.white, fontSize: 16),
-                        ),
-                        Text(
-                          'online',
                           style: TextStyle(color: Colors.white, fontSize: 14),
+                        ),
+                        StreamBuilder<DocumentSnapshot>(
+                          stream: FirebaseFirestore.instance
+                              .collection('serviceProviders')
+                              .doc(widget.providerId)
+                              .snapshots(),
+                          builder: (context, snapshot) {
+                            bool isOnline = false;
+                            if (snapshot.hasData && snapshot.data!.exists) {
+                              final data = snapshot.data!.data() as Map<String, dynamic>?;
+                              isOnline = data?['isOnline'] ?? false;
+                            }
+                            return Text(
+                              isOnline ? 'Online' : 'Offline',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 14,
+                              ),
+                            );
+                          },
                         ),
                       ],
                     ),

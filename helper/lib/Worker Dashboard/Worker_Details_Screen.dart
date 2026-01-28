@@ -400,11 +400,15 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                           GestureDetector(
                             onTap: () {
                               final businessName = _businessName ?? 'Provider';
+                              final providerId =
+                                  widget.data?['uid'] ?? widget.providerId;
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) =>
-                                      ChatScreen(businessName: businessName),
+                                  builder: (context) => ChatScreen(
+                                    businessName: businessName,
+                                    providerId: providerId,
+                                  ),
                                 ),
                               );
                             },
