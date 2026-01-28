@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../Components/Bottom_Nav_Bar.dart';
+import '../Components/UnreadMessagesBadge.dart';
 import 'Chat_Screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -255,6 +256,11 @@ class _ChatListScreenState extends State<ChatListScreen> {
                             Icons.notifications,
                             color: Colors.black,
                           ),
+                        ),
+                        Positioned(
+                          top: 0,
+                          right: 0,
+                          child: UnreadMessagesBadge(),
                         ),
                       ],
                     ),

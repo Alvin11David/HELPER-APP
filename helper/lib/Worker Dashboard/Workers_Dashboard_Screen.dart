@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:helper/Components/User_Name.dart';
+import 'package:helper/Components/UnreadMessagesBadge.dart';
 import '../Components/Side_Bar.dart';
 import 'package:helper/Components/user_avatar_circle.dart';
 import 'package:helper/Components/Bottom_Nav_Bar.dart';
@@ -32,6 +33,85 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
     if (hour < 17) return 'Good Afternoon';
     if (hour < 21) return 'Good Evening';
     return 'Good Night';
+  }
+
+  Future<void> _showNotifications() async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) return;
+
+    // For worker dashboard, receiver is worker
+    bool isEmployer = false;
+
+    // Fetch unread messages
+    final snapshot = await FirebaseFirestore.instance
+        .collectionGroup('messages')
+        .where('receiverId', isEqualTo: currentUser.uid)
+        .where('read', isEqualTo: false)
+        .get();
+
+    List<String> notifications = [];
+    for (var doc in snapshot.docs) {
+      final data = doc.data();
+      final senderId = data['senderId'] as String?;
+      if (senderId == null) continue;
+
+      String name = '';
+      if (!isEmployer) {
+        // Sender is employer, from serviceProviders
+        final senderDoc = await FirebaseFirestore.instance
+            .collection('serviceProviders')
+            .doc(senderId)
+            .get();
+        if (senderDoc.exists) {
+          final senderData = senderDoc.data() as Map<String, dynamic>?;
+          name = senderData?['businessName'] ?? '';
+        }
+      }
+      if (name.isNotEmpty) {
+        notifications.add('You have received a message from $name');
+      }
+    }
+
+    if (!mounted) return;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.5,
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(30),
+              topRight: Radius.circular(30),
+            ),
+          ),
+          child: Column(
+            children: [
+              const Padding(
+                padding: EdgeInsets.all(16.0),
+                child: Text(
+                  'Notifications',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ),
+              Expanded(
+                child: notifications.isEmpty
+                    ? const Center(child: Text('No new notifications'))
+                    : ListView.builder(
+                        itemCount: notifications.length,
+                        itemBuilder: (context, index) {
+                          return ListTile(title: Text(notifications[index]));
+                        },
+                      ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -115,66 +195,29 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                                 borderWidth: 0,
                               ),
                               const SizedBox(width: 10),
-                              StreamBuilder<QuerySnapshot>(
-                                stream: FirebaseFirestore.instance
-                                    .collectionGroup('messages')
-                                    .where(
-                                      'receiverId',
-                                      isEqualTo: FirebaseAuth
-                                          .instance
-                                          .currentUser!
-                                          .uid,
-                                    )
-                                    .snapshots(),
-                                builder: (context, snapshot) {
-                                  int unreadCount = 0;
-                                  if (snapshot.hasData) {
-                                    unreadCount = snapshot.data!.docs.length;
-                                  }
-                                  return Stack(
-                                    children: [
-                                      Container(
-                                        width: 40,
-                                        height: 40,
-                                        decoration: const BoxDecoration(
-                                          color: Colors.white,
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: const Icon(
-                                          Icons.notifications,
-                                          color: Colors.black,
-                                        ),
+                              GestureDetector(
+                                onTap: _showNotifications,
+                                child: Stack(
+                                  children: [
+                                    Container(
+                                      width: 40,
+                                      height: 40,
+                                      decoration: const BoxDecoration(
+                                        color: Colors.white,
+                                        shape: BoxShape.circle,
                                       ),
-                                      if (unreadCount > 0)
-                                        Positioned(
-                                          right: 0,
-                                          top: 0,
-                                          child: Container(
-                                            padding: const EdgeInsets.all(2),
-                                            decoration: const BoxDecoration(
-                                              color: Colors.red,
-                                              shape: BoxShape.circle,
-                                            ),
-                                            constraints: const BoxConstraints(
-                                              minWidth: 16,
-                                              minHeight: 16,
-                                            ),
-                                            child: Text(
-                                              unreadCount > 99
-                                                  ? '99+'
-                                                  : unreadCount.toString(),
-                                              style: const TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 10,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                              textAlign: TextAlign.center,
-                                            ),
-                                          ),
-                                        ),
-                                    ],
-                                  );
-                                },
+                                      child: const Icon(
+                                        Icons.notifications,
+                                        color: Colors.black,
+                                      ),
+                                    ),
+                                    Positioned(
+                                      right: 0,
+                                      top: 0,
+                                      child: UnreadMessagesBadge(),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ],
                           ),

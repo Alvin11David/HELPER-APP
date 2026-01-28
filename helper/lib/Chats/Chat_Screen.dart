@@ -32,6 +32,28 @@ class _ChatScreenState extends State<ChatScreen> {
     // Create a unique chat ID by sorting the IDs
     final ids = [widget.employerId, widget.providerId]..sort();
     chatId = '${ids[0]}_${ids[1]}';
+    _markMessagesAsRead();
+  }
+
+  Future<void> _markMessagesAsRead() async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) return;
+
+    final snapshot = await FirebaseFirestore.instance
+        .collection('chats')
+        .doc(chatId)
+        .collection('messages')
+        .where('receiverId', isEqualTo: currentUser.uid)
+        .where('read', isEqualTo: false)
+        .get();
+
+    if (snapshot.docs.isNotEmpty) {
+      final batch = FirebaseFirestore.instance.batch();
+      for (var doc in snapshot.docs) {
+        batch.update(doc.reference, {'read': true});
+      }
+      await batch.commit();
+    }
   }
 
   @override
@@ -378,6 +400,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                           'timestamp':
                                               FieldValue.serverTimestamp(),
                                           'type': 'image',
+                                          'read': false,
                                         };
                                         await FirebaseFirestore.instance
                                             .collection('chats')
@@ -424,6 +447,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                 'receiverId': receiverId,
                                 'timestamp': FieldValue.serverTimestamp(),
                                 'type': 'text',
+                                'read': false,
                               };
                               await FirebaseFirestore.instance
                                   .collection('chats')
