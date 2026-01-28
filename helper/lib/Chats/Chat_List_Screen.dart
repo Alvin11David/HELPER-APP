@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../Components/Bottom_Nav_Bar.dart';
 import 'Chat_Screen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class ChatListScreen extends StatefulWidget {
   const ChatListScreen({super.key});
@@ -12,12 +14,14 @@ class ChatListScreen extends StatefulWidget {
 class _ChatListScreenState extends State<ChatListScreen> {
   final ScrollController _scrollController = ScrollController();
   double _scale = 1.0;
-  bool hasMessages = true; // Set to true when there are actual messages
+  bool hasMessages = false;
+  List<Map<String, dynamic>> chats = [];
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
+    _fetchChats();
   }
 
   @override
@@ -26,9 +30,73 @@ class _ChatListScreenState extends State<ChatListScreen> {
     super.dispose();
   }
 
+  Future<void> _fetchChats() async {
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    // Query chats where current user is employer or provider
+    QuerySnapshot chatSnapshot = await FirebaseFirestore.instance
+        .collection('chats')
+        .where('employerId', isEqualTo: user.uid)
+        .get();
+
+    QuerySnapshot providerChats = await FirebaseFirestore.instance
+        .collection('chats')
+        .where('providerId', isEqualTo: user.uid)
+        .get();
+
+    List<QueryDocumentSnapshot> allChats = [
+      ...chatSnapshot.docs,
+      ...providerChats.docs,
+    ];
+
+    List<Map<String, dynamic>> fetchedChats = [];
+    for (var doc in allChats) {
+      String chatId = doc.id;
+      // Check if there are messages in the subcollection
+      QuerySnapshot messagesSnapshot = await FirebaseFirestore.instance
+          .collection('chats')
+          .doc(chatId)
+          .collection('messages')
+          .orderBy('timestamp', descending: true)
+          .limit(1)
+          .get();
+
+      if (messagesSnapshot.docs.isNotEmpty) {
+        var lastMessageDoc = messagesSnapshot.docs.first;
+        String businessName = doc['businessName'] ?? 'Unknown';
+        String otherId = doc['employerId'] == user.uid
+            ? doc['providerId']
+            : doc['employerId'];
+        fetchedChats.add({
+          'chatId': chatId,
+          'otherId': otherId,
+          'businessName': businessName,
+          'lastMessage': lastMessageDoc['message'] ?? '',
+          'timestamp': lastMessageDoc['timestamp'],
+        });
+      }
+    }
+
+    setState(() {
+      chats = fetchedChats;
+      hasMessages = chats.isNotEmpty;
+    });
+  }
+
   void _onItemTapped(int index) {
     // Add navigation logic here based on the tapped index
     print('Bottom nav item tapped: $index');
+  }
+
+  String _formatTime(Timestamp? timestamp) {
+    if (timestamp == null) return '';
+    final dateTime = timestamp.toDate();
+    int hour = dateTime.hour;
+    String minute = dateTime.minute.toString().padLeft(2, '0');
+    String period = hour < 12 ? 'AM' : 'PM';
+    int displayHour = hour == 0 ? 12 : (hour > 12 ? hour - 12 : hour);
+    return '$displayHour:$minute $period';
   }
 
   void _onScroll() {
@@ -216,9 +284,8 @@ class _ChatListScreenState extends State<ChatListScreen> {
                     if (hasMessages) SizedBox(height: 20),
                     hasMessages
                         ? Column(
-                            children: List.generate(
-                              20,
-                              (index) => Padding(
+                            children: chats.map((chat) {
+                              return Padding(
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 8.0,
                                 ),
@@ -226,7 +293,14 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                   onTap: () => Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) => ChatScreen(businessName: '', providerId: '', employerId: '',),
+                                      builder: (context) => ChatScreen(
+                                        businessName: chat['businessName'],
+                                        providerId: chat['otherId'],
+                                        employerId: FirebaseAuth
+                                            .instance
+                                            .currentUser!
+                                            .uid,
+                                      ),
                                     ),
                                   ),
                                   child: Row(
@@ -261,7 +335,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                             CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                            'Names',
+                                            chat['businessName'],
                                             style: TextStyle(
                                               color: Colors.white,
                                               fontSize: 16,
@@ -269,7 +343,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                             ),
                                           ),
                                           Text(
-                                            'Hey there',
+                                            chat['lastMessage'],
                                             style: TextStyle(
                                               color: Colors.white,
                                               fontSize: 14,
@@ -279,7 +353,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                       ),
                                       const Spacer(),
                                       Text(
-                                        'dd/mm/yyyy',
+                                        _formatTime(chat['timestamp']),
                                         style: TextStyle(
                                           color: Colors.white,
                                           fontSize: 12,
@@ -288,8 +362,8 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                     ],
                                   ),
                                 ),
-                              ),
-                            ),
+                              );
+                            }).toList(),
                           )
                         : SizedBox(
                             height: screenHeight * 0.8,
@@ -324,7 +398,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
       ),
       bottomNavigationBar: BottomNavBar(
         onItemTapped: _onItemTapped,
-        currentIndex: 2,
+        currentIndex: 3,
       ),
     );
   }
