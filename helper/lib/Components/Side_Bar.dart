@@ -6,6 +6,8 @@ import 'package:helper/Components/Worker_Profession.dart';
 import 'package:helper/Components/User_Avatar_Circle.dart'; // Add this import
 import '../Document Upload/Profile/Profile_Screen.dart'; // Add this import
 import '../Auth/Sign_In_Screen.dart'; // Add this import
+import '../Employer Dashboard/Employer_Dashboard_Screen.dart';
+import '../Worker Dashboard/Workers_Dashboard_Screen.dart';
 
 class SideBar extends StatefulWidget {
   const SideBar({super.key});
@@ -221,7 +223,46 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                           ),
                           const SizedBox(height: 20),
                           GestureDetector(
-                            onTap: () => setState(() => _selectedIndex = 0),
+                            onTap: () async {
+                              try {
+                                User? user = FirebaseAuth.instance.currentUser;
+                                if (user != null) {
+                                  DocumentSnapshot doc = await FirebaseFirestore.instance
+                                      .collection('Sign Up')
+                                      .doc(user.uid)
+                                      .get();
+                                  if (doc.exists && doc.data() != null) {
+                                    final data = doc.data() as Map<String, dynamic>;
+                                    String role = data['role'] ?? '';
+                                    toggleDrawer();
+                                    if (role == 'employer') {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => EmployerDashboardScreen(),
+                                        ),
+                                      );
+                                    } else if (role == 'worker') {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => WorkersDashboardScreen(),
+                                        ),
+                                      );
+                                    } else {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(content: Text('Role not found')),
+                                      );
+                                    }
+                                  }
+                                }
+                              } catch (e) {
+                                print('Error fetching role: $e');
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('Error loading dashboard')),
+                                );
+                              }
+                            },
                             child: Padding(
                               padding: EdgeInsets.only(left: 8, right: 8),
                               child: Row(

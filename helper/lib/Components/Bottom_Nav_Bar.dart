@@ -195,6 +195,45 @@ class _BottomNavBarState extends State<BottomNavBar> {
                   context,
                   MaterialPageRoute(builder: (context) => ProfileScreen()),
                 );
+              } else if (index == 0) {
+                try {
+                  User? user = FirebaseAuth.instance.currentUser;
+                  if (user != null) {
+                    DocumentSnapshot doc = await FirebaseFirestore.instance
+                        .collection('Sign Up')
+                        .doc(user.uid)
+                        .get();
+                    if (doc.exists && doc.data() != null) {
+                      final data = doc.data() as Map<String, dynamic>;
+                      String role = data['role'] ?? '';
+                      if (role == 'employer') {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => EmployerDashboardScreen(),
+                          ),
+                        );
+                      } else if (role == 'worker') {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => WorkersDashboardScreen(),
+                          ),
+                        );
+                      } else {
+                        // Default or error
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Role not found')),
+                        );
+                      }
+                    }
+                  }
+                } catch (e) {
+                  print('Error fetching role: $e');
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error loading dashboard')),
+                  );
+                }
               } else {
                 setState(() {
                   _selectedIndex = index;
