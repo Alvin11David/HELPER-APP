@@ -41,7 +41,6 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
   Timer? _debounce;
   bool _searching = false;
 
-  List<QueryDocumentSnapshot<Map<String, dynamic>>> _suggestionDocs = [];
   List<QueryDocumentSnapshot<Map<String, dynamic>>> _searchResults = [];
 
   Position? _currentPos;
@@ -133,74 +132,45 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
     return meters / 1000.0;
   }
 
-  Future<void> _runSearch(String input, {bool fetchResults = false}) async {
+  Future<void> _runSearch(String input) async {
     final q = input.trim().toLowerCase();
     if (q.length < 2) {
-      setState(() {
-        _suggestionDocs = [];
-        if (fetchResults) _searchResults = [];
-      });
+      setState(() => _searchResults = []);
       return;
     }
 
-    setState(() {
-      _searching = true;
-      if (!fetchResults) {
-        _suggestionDocs = [];
-      } else {
-        _searchResults = [];
-      }
-    });
+    setState(() => _searching = true);
 
     try {
-      final query = FirebaseFirestore.instance
+      final snap = await FirebaseFirestore.instance
           .collection('serviceProviders')
           .where('isActive', isEqualTo: true)
           .where('onboardingStep', isEqualTo: 'skills_job_details_done')
-          .orderBy('searchableText')
-          .startAt([q])
-          .endAt(['$q\uf8ff'])
-          .limit(fetchResults ? 30 : 10);
+          .limit(200)
+          .get();
 
-      final snap = await query.get();
+      final filtered = snap.docs.where((d) {
+        final data = d.data();
+        final businessName = (data['businessName'] ?? '')
+            .toString()
+            .toLowerCase();
+        final jobCategoryId = (data['jobCategoryId'] ?? '')
+            .toString()
+            .toLowerCase();
+        final jobCategoryName = (data['jobCategoryName'] ?? '')
+            .toString()
+            .toLowerCase();
+        final workplaceLocationText = (data['workplaceLocationText'] ?? '')
+            .toString()
+            .toLowerCase();
+        return businessName.contains(q) ||
+            jobCategoryId.contains(q) ||
+            jobCategoryName.contains(q) ||
+            workplaceLocationText.contains(q);
+      }).toList();
 
-      setState(() {
-        if (fetchResults) {
-          _searchResults = snap.docs;
-        } else {
-          _suggestionDocs = snap.docs;
-        }
-      });
+      setState(() => _searchResults = filtered.take(30).toList());
     } catch (e) {
-      // ✅ TEMP fallback: fetch recent providers then filter locally
-      try {
-        final snap = await FirebaseFirestore.instance
-            .collection('serviceProviders')
-            .where('isActive', isEqualTo: true)
-            .where('onboardingStep', isEqualTo: 'skills_job_details_done')
-            .orderBy('updatedAt', descending: true)
-            .limit(60)
-            .get();
-
-        final filtered = snap.docs.where((d) {
-          final searchText = (d.data()['searchableText'] ?? '')
-              .toString()
-              .toLowerCase();
-          return searchText.contains(q);
-        }).toList();
-
-        setState(() {
-          if (fetchResults) {
-            _searchResults = filtered.take(30).toList();
-          } else {
-            _suggestionDocs = filtered.take(10).toList();
-          }
-        });
-      } catch (e2) {
-        // ignore: avoid_print
-        print("Search error fallback: $e2");
-      }
-
       // ignore: avoid_print
       print("Search error: $e");
     } finally {
@@ -407,20 +377,12 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                                   focusNode: _focusNode,
                                   onChanged: (v) {
                                     final trimmed = v.trim();
-                                    if (trimmed.length >= 2 && !_searching) {
-                                      _runSearch(trimmed, fetchResults: false);
-                                    } else if (trimmed.length < 2) {
-                                      setState(() => _suggestionDocs = []);
-                                    }
                                     _debounce?.cancel();
                                     _debounce = Timer(
                                       const Duration(milliseconds: 300),
                                       () {
                                         if (trimmed.length >= 2) {
-                                          _runSearch(
-                                            trimmed,
-                                            fetchResults: true,
-                                          );
+                                          _runSearch(trimmed);
                                         } else {
                                           setState(() => _searchResults = []);
                                         }
@@ -818,221 +780,61 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                     right: 0,
                     child: SizedBox(
                       height: w * 0.8,
-                      child: _hasQuery
-                          ? (_searching
-                                ? const Center(
-                                    child: CircularProgressIndicator(),
-                                  )
-                                : (_searchResults.isEmpty
-                                      ? const Center(child: Text("No matches"))
-                                      : ListView.separated(
-                                          scrollDirection: Axis.horizontal,
-                                          padding: EdgeInsets.only(
-                                            right: w * 0.04,
-                                          ),
-                                          itemCount: _searchResults.length,
-                                          separatorBuilder: (_, __) =>
-                                              SizedBox(width: w * 0.05),
-                                          itemBuilder: (_, i) =>
-                                              _providerCard(w, {
-                                                ..._searchResults[i].data(),
-                                                '_docId': _searchResults[i].id,
-                                              }),
-                                        )))
-                          : Builder(
-                              builder: (context) {
-                                _forYouFuture ??= FirebaseFirestore.instance
-                                    .collection('serviceProviders')
-                                    .where('isActive', isEqualTo: true)
-                                    .where(
-                                      'onboardingStep',
-                                      isEqualTo: 'skills_job_details_done',
-                                    )
-                                    .orderBy('updatedAt', descending: true)
-                                    .limit(10)
-                                    .get();
-                                return FutureBuilder<
-                                  QuerySnapshot<Map<String, dynamic>>
-                                >(
-                                  future: _forYouFuture,
-                                  builder: (context, snap) {
-                                    if (snap.hasError) {
-                                      return Center(
-                                        child: Text(
-                                          "Firestore error: ${snap.error}",
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                          ),
-                                        ),
-                                      );
-                                    }
-                                    if (snap.connectionState ==
-                                        ConnectionState.waiting) {
-                                      return const Center(
-                                        child: CircularProgressIndicator(),
-                                      );
-                                    }
-                                    if (!snap.hasData ||
-                                        snap.data!.docs.isEmpty) {
-                                      return const Center(
-                                        child: Text("No providers yet"),
-                                      );
-                                    }
-
-                                    final docs = snap.data!.docs;
-                                    return ListView.separated(
-                                      scrollDirection: Axis.horizontal,
-                                      padding: EdgeInsets.only(right: w * 0.04),
-                                      itemCount: docs.length,
-                                      separatorBuilder: (_, __) =>
-                                          SizedBox(width: w * 0.05),
-                                      itemBuilder: (_, i) => _providerCard(w, {
-                                        ...docs[i].data(),
-                                        '_docId': docs[i].id,
-                                      }),
-                                    );
-                                  },
+                      child: Builder(
+                        builder: (context) {
+                          _forYouFuture ??= FirebaseFirestore.instance
+                              .collection('serviceProviders')
+                              .where('isActive', isEqualTo: true)
+                              .where(
+                                'onboardingStep',
+                                isEqualTo: 'skills_job_details_done',
+                              )
+                              .orderBy('updatedAt', descending: true)
+                              .limit(10)
+                              .get();
+                          return FutureBuilder<
+                            QuerySnapshot<Map<String, dynamic>>
+                          >(
+                            future: _forYouFuture,
+                            builder: (context, snap) {
+                              if (snap.hasError) {
+                                return Center(
+                                  child: Text(
+                                    "Firestore error: ${snap.error}",
+                                    style: const TextStyle(color: Colors.white),
+                                  ),
                                 );
-                              },
-                            ),
-                    ),
-                  ),
-                  if (_focusNode.hasFocus &&
-                      (_suggestionDocs.isNotEmpty || _searching))
-                    Positioned(
-                      top: 115,
-                      left: w * 0.04,
-                      right: w * 0.04,
-                      child: Container(
-                        height: 300,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Column(
-                          children: [
-                            Padding(
-                              padding: EdgeInsets.symmetric(vertical: 10),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceEvenly,
-                                children: [
-                                  Container(
-                                    width: 80,
-                                    height: 30,
-                                    decoration: BoxDecoration(
-                                      border: Border.all(
-                                        color: const Color(0xFFF79F1A),
-                                        width: 1,
-                                      ),
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    child: Center(
-                                      child: Text(
-                                        'Location',
-                                        style: TextStyle(
-                                          fontSize: 9,
-                                          color: Colors.black,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  Container(
-                                    width: 80,
-                                    height: 30,
-                                    decoration: BoxDecoration(
-                                      border: Border.all(
-                                        color: const Color(0xFFF79F1A),
-                                        width: 1,
-                                      ),
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    child: Center(
-                                      child: Text(
-                                        'Search Jobs',
-                                        style: TextStyle(
-                                          fontSize: 8,
-                                          color: Colors.black,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  Container(
-                                    width: 80,
-                                    height: 30,
-                                    decoration: BoxDecoration(
-                                      border: Border.all(
-                                        color: const Color(0xFFF79F1A),
-                                        width: 1,
-                                      ),
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Expanded(
-                              child: _searching
-                                  ? const Center(
-                                      child: CircularProgressIndicator(),
-                                    )
-                                  : ListView.builder(
-                                      itemCount: _suggestionDocs.length,
-                                      itemBuilder: (context, index) {
-                                        final d = _suggestionDocs[index].data();
+                              }
+                              if (snap.connectionState ==
+                                  ConnectionState.waiting) {
+                                return const Center(
+                                  child: CircularProgressIndicator(),
+                                );
+                              }
+                              if (!snap.hasData || snap.data!.docs.isEmpty) {
+                                return const Center(
+                                  child: Text("No providers yet"),
+                                );
+                              }
 
-                                        final businessName =
-                                            (d['businessName'] ?? '')
-                                                .toString();
-                                        final jobCategoryName =
-                                            (d['jobCategoryName'] ?? '')
-                                                .toString();
-                                        final location =
-                                            (d['workplaceLocationText'] ?? '')
-                                                .toString();
-                                        final searchable =
-                                            (d['searchableText'] ?? '')
-                                                .toString();
-
-                                        final displayLabel =
-                                            businessName.isNotEmpty
-                                            ? businessName
-                                            : jobCategoryName.isNotEmpty
-                                            ? jobCategoryName
-                                            : location;
-
-                                        return ListTile(
-                                          leading: const Icon(
-                                            Icons.search,
-                                            color: Colors.black,
-                                          ),
-                                          title: Text(displayLabel),
-                                          subtitle: Text(
-                                            '${jobCategoryName.isNotEmpty ? jobCategoryName : ''}${location.isNotEmpty ? " • $location" : ""}',
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                          onTap: () async {
-                                            _controller.text = searchable;
-                                            _focusNode.unfocus();
-
-                                            await _runSearch(
-                                              searchable,
-                                              fetchResults: true,
-                                            );
-
-                                            setState(() {
-                                              _suggestionDocs = [];
-                                            });
-                                          },
-                                        );
-                                      },
-                                    ),
-                            ),
-                          ],
-                        ),
+                              final docs = snap.data!.docs;
+                              return ListView.separated(
+                                scrollDirection: Axis.horizontal,
+                                padding: EdgeInsets.only(right: w * 0.04),
+                                itemCount: docs.length,
+                                separatorBuilder: (_, __) =>
+                                    SizedBox(width: w * 0.05),
+                                itemBuilder: (_, i) => _providerCard(w, {
+                                  ...docs[i].data(),
+                                  '_docId': docs[i].id,
+                                }),
+                              );
+                            },
+                          );
+                        },
                       ),
                     ),
+                  ),
                   Positioned(
                     top: 20,
                     left: w * 0.04,

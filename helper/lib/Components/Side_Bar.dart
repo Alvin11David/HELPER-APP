@@ -329,8 +329,7 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                                 ),
                               ),
                             ),
-                          if (_userRole == 'worker')
-                            const SizedBox(height: 20),
+                          if (_userRole == 'worker') const SizedBox(height: 20),
                           if (_userRole == 'worker')
                             GestureDetector(
                               onTap: () => setState(() => _selectedIndex = 2),
@@ -359,8 +358,7 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                                 ),
                               ),
                             ),
-                          if (_userRole == 'worker')
-                            const SizedBox(height: 20),
+                          if (_userRole == 'worker') const SizedBox(height: 20),
                           if (_userRole == 'worker')
                             GestureDetector(
                               onTap: () => setState(() => _selectedIndex = 3),
@@ -389,8 +387,7 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                                 ),
                               ),
                             ),
-                          if (_userRole == 'worker')
-                            const SizedBox(height: 20),
+                          if (_userRole == 'worker') const SizedBox(height: 20),
                           GestureDetector(
                             onTap: () => setState(() => _selectedIndex = 4),
                             child: Padding(
