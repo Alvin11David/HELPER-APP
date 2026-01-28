@@ -185,17 +185,47 @@ class _ChatScreenState extends State<ChatScreen> {
                           SizedBox(width: screenWidth * 0.025),
                           Stack(
                             children: [
-                              Container(
-                                width: screenWidth * 0.12,
-                                height: screenWidth * 0.12,
-                                decoration: const BoxDecoration(
-                                  color: Colors.white,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  Icons.person,
-                                  color: Colors.black,
-                                ),
+                              StreamBuilder<DocumentSnapshot>(
+                                stream: FirebaseFirestore.instance
+                                    .collection('serviceProviders')
+                                    .doc(widget.providerId)
+                                    .snapshots(),
+                                builder: (context, snapshot) {
+                                  String? imageUrl;
+                                  if (snapshot.hasData &&
+                                      snapshot.data!.exists) {
+                                    final data =
+                                        snapshot.data!.data()
+                                            as Map<String, dynamic>?;
+                                    final portfolioFiles =
+                                        data?['portfolioFiles']
+                                            as List<dynamic>?;
+                                    if (portfolioFiles != null &&
+                                        portfolioFiles.isNotEmpty) {
+                                      imageUrl =
+                                          portfolioFiles.first as String?;
+                                    }
+                                  }
+                                  return Container(
+                                    width: screenWidth * 0.12,
+                                    height: screenWidth * 0.12,
+                                    decoration: const BoxDecoration(
+                                      color: Colors.white,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: imageUrl != null
+                                        ? ClipOval(
+                                            child: Image.network(
+                                              imageUrl,
+                                              fit: BoxFit.cover,
+                                            ),
+                                          )
+                                        : const Icon(
+                                            Icons.person,
+                                            color: Colors.black,
+                                          ),
+                                  );
+                                },
                               ),
                             ],
                           ),
@@ -228,7 +258,9 @@ class _ChatScreenState extends State<ChatScreen> {
                                   child: msg['type'] == 'text'
                                       ? Text(
                                           msg['text'],
-                                          style: const TextStyle(color: Colors.black),
+                                          style: const TextStyle(
+                                            color: Colors.black,
+                                          ),
                                         )
                                       : Image.network(
                                           msg['imageUrl'],
@@ -330,19 +362,30 @@ class _ChatScreenState extends State<ChatScreen> {
                                 child: GestureDetector(
                                   onTap: () async {
                                     final ImagePicker picker = ImagePicker();
-                                    final List<XFile> images = await picker.pickMultiImage();
+                                    final List<XFile> images = await picker
+                                        .pickMultiImage();
                                     for (var image in images) {
                                       final file = File(image.path);
-                                      final fileName = '${DateTime.now().millisecondsSinceEpoch}_${image.name}';
-                                      final storageRef = FirebaseStorage.instance.ref().child('Chat Images').child(fileName);
-                                      final uploadTask = storageRef.putFile(file);
-                                      final snapshot = await uploadTask.whenComplete(() {});
-                                      final downloadUrl = await snapshot.ref.getDownloadURL();
+                                      final fileName =
+                                          '${DateTime.now().millisecondsSinceEpoch}_${image.name}';
+                                      final storageRef = FirebaseStorage
+                                          .instance
+                                          .ref()
+                                          .child('Chat Images')
+                                          .child(fileName);
+                                      final uploadTask = storageRef.putFile(
+                                        file,
+                                      );
+                                      final snapshot = await uploadTask
+                                          .whenComplete(() {});
+                                      final downloadUrl = await snapshot.ref
+                                          .getDownloadURL();
                                       final message = {
                                         'imageUrl': downloadUrl,
                                         'senderId': widget.employerId,
                                         'receiverId': widget.providerId,
-                                        'timestamp': FieldValue.serverTimestamp(),
+                                        'timestamp':
+                                            FieldValue.serverTimestamp(),
                                         'type': 'image',
                                       };
                                       await FirebaseFirestore.instance
