@@ -76,14 +76,18 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
       User? user = FirebaseAuth.instance.currentUser;
       if (user == null) return null;
       DocumentSnapshot doc = await FirebaseFirestore.instance
-          .collection('users')
+          .collection('Sign Up')
           .doc(user.uid)
           .get();
       if (doc.exists && doc.data() != null) {
-        return (doc.data() as Map<String, dynamic>)['role'] as String?;
+        String? role = (doc.data() as Map<String, dynamic>)['role'] as String?;
+        print('Fetched user role: $role'); // Debug print
+        return role;
       }
+      print('User document does not exist or has no data'); // Debug print
       return null;
     } catch (e) {
+      print('Error fetching user role: $e'); // Debug print
       return null;
     }
   }

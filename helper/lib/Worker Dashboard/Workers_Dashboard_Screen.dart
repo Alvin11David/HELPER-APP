@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:helper/Components/User_Name.dart';
 import '../Components/Side_Bar.dart';
 import 'package:helper/Components/user_avatar_circle.dart';
+import 'package:helper/Components/Bottom_Nav_Bar.dart';
 
 class WorkersDashboardScreen extends StatefulWidget {
   const WorkersDashboardScreen({super.key});
@@ -771,6 +772,7 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
               ),
             ),
           ),
+          bottomNavigationBar: BottomNavBar(currentIndex: 0),
         ),
         SideBar(key: _sidebarKey),
       ],
