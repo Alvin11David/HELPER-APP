@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:helper/Components/User_Name.dart';
 import 'package:helper/Components/UnreadMessagesBadge.dart';
+import 'package:helper/Components/IncomingCallDialog.dart';
 import '../Components/Side_Bar.dart';
 import 'package:helper/Components/user_avatar_circle.dart';
 import 'package:helper/Components/Bottom_Nav_Bar.dart';
@@ -20,6 +22,82 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
   final GlobalKey<SideBarState> _sidebarKey = GlobalKey();
 
   String status = 'Available'; // Can be 'Available', 'On Job', 'Not Available'
+
+  @override
+  void initState() {
+    super.initState();
+    // Request notification permissions
+    FirebaseMessaging.instance.requestPermission();
+    // Set online status
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null) {
+      FirebaseFirestore.instance.collection('users').doc(uid).update({
+        'isOnline': true,
+        'lastSeen': FieldValue.serverTimestamp(),
+      });
+      // Save FCM token
+      FirebaseMessaging.instance.getToken().then((token) {
+        if (token != null) {
+          FirebaseFirestore.instance.collection('users').doc(uid).update({
+            'fcmToken': token,
+          });
+        }
+      });
+    }
+    // Set up FCM listener for incoming calls
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      if (message.data['type'] == 'call') {
+        showDialog(
+          context: context,
+          builder: (context) => IncomingCallDialog(
+            callId: message.data['callId']!,
+            callerName: message.data['callerName']!,
+          ),
+        );
+      }
+    });
+
+    // Handle when app is opened from notification
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      if (message.data['type'] == 'call') {
+        showDialog(
+          context: context,
+          builder: (context) => IncomingCallDialog(
+            callId: message.data['callId']!,
+            callerName: message.data['callerName']!,
+          ),
+        );
+      }
+    });
+
+    // Handle initial message if app was launched from notification
+    FirebaseMessaging.instance.getInitialMessage().then((
+      RemoteMessage? message,
+    ) {
+      if (message != null && message.data['type'] == 'call') {
+        showDialog(
+          context: context,
+          builder: (context) => IncomingCallDialog(
+            callId: message.data['callId']!,
+            callerName: message.data['callerName']!,
+          ),
+        );
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    // Set offline status
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null) {
+      FirebaseFirestore.instance.collection('users').doc(uid).update({
+        'isOnline': false,
+        'lastSeen': FieldValue.serverTimestamp(),
+      });
+    }
+    super.dispose();
+  }
 
   Color getStatusColor() {
     if (status == 'Available') return const Color(0xFF00E539);

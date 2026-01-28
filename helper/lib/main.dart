@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:helper/Auth/Sign_In_Screen.dart';
 import 'package:helper/Chats/Chat_List_Screen.dart';
 import 'package:helper/Chats/Chat_Screen.dart';
@@ -30,9 +31,22 @@ import 'firebase_options.dart';
 
 final GlobalKey<NavigatorState> appNavKey = GlobalKey<NavigatorState>();
 
+// Background message handler
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  print("Handling a background message: ${message.messageId}");
+  // For call messages, we can show a notification or handle accordingly
+  if (message.data['type'] == 'call') {
+    // Since we can't show dialog in background, rely on notification
+    // The notification will be shown by FCM, and tapping it can open the app
+  }
+}
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  // Set up background message handler
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   runApp(const MyApp());
 }
 
@@ -52,7 +66,6 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});

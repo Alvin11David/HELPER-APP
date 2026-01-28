@@ -78,6 +78,13 @@ dependencies:
   #for map location
   dio: ^5.5.0
 
+  # For audio playback
+  audioplayers: ^6.0.0
+  # Firebase messaging
+  firebase_messaging: ^15.0.0
+  # VoIP for voice calls
+  agora_rtc_engine: ^6.3.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

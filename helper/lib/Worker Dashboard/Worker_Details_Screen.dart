@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:helper/Components/User_Name.dart';
+import 'package:helper/Components/CallNowButton.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:helper/Employer%20Dashboard/job_detail_booking_screen.dart';
@@ -371,33 +372,10 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                       left: w * 0.04,
                       child: Row(
                         children: [
-                          Container(
-                            width: 148,
-                            height: 30,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFFFFA10D),
-                              borderRadius: BorderRadius.all(
-                                Radius.circular(20),
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.phone,
-                                  color: Colors.white,
-                                  size: 16,
-                                ),
-                                const SizedBox(width: 4),
-                                const Text(
-                                  'Call Now',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ],
-                            ),
+                          CallNowButton(
+                            providerId:
+                                widget.data?['uid'] ?? widget.providerId,
+                            businessName: _businessName ?? 'Provider',
                           ),
                           const SizedBox(width: 10),
                           GestureDetector(
