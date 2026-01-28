@@ -48,6 +48,9 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
   bool _locLoading = false;
   String? _locError;
 
+  Future<QuerySnapshot<Map<String, dynamic>>>? _forYouFuture;
+  Future<QuerySnapshot<Map<String, dynamic>>>? _nearYouFuture;
+
   bool get _hasQuery => _controller.text.trim().length >= 2;
 
   @override
@@ -283,7 +286,7 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(color: Colors.black, fontSize: 13),
                     ),
-                    const Spacer(),
+                    SizedBox(height: 8),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -292,6 +295,7 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                           style: const TextStyle(
                             color: Colors.black,
                             fontSize: 13,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                         if (distText.isNotEmpty)
@@ -814,51 +818,59 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                                                 '_docId': _searchResults[i].id,
                                               }),
                                         )))
-                          : StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                              stream: FirebaseFirestore.instance
-                                  .collection('serviceProviders')
-                                  .where('isActive', isEqualTo: true)
-                                  .where(
-                                    'onboardingStep',
-                                    isEqualTo: 'skills_job_details_done',
-                                  )
-                                  .orderBy('updatedAt', descending: true)
-                                  .limit(10)
-                                  .snapshots(),
-                              builder: (context, snap) {
-                                if (snap.hasError) {
-                                  return Center(
-                                    child: Text(
-                                      "Firestore error: ${snap.error}",
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                  );
-                                }
-                                if (snap.connectionState ==
-                                    ConnectionState.waiting) {
-                                  return const Center(
-                                    child: CircularProgressIndicator(),
-                                  );
-                                }
-                                if (!snap.hasData || snap.data!.docs.isEmpty) {
-                                  return const Center(
-                                    child: Text("No providers yet"),
-                                  );
-                                }
+                          : Builder(
+                              builder: (context) {
+                                _forYouFuture ??= FirebaseFirestore.instance
+                                    .collection('serviceProviders')
+                                    .where('isActive', isEqualTo: true)
+                                    .where(
+                                      'onboardingStep',
+                                      isEqualTo: 'skills_job_details_done',
+                                    )
+                                    .orderBy('updatedAt', descending: true)
+                                    .limit(10)
+                                    .get();
+                                return FutureBuilder<
+                                  QuerySnapshot<Map<String, dynamic>>
+                                >(
+                                  future: _forYouFuture,
+                                  builder: (context, snap) {
+                                    if (snap.hasError) {
+                                      return Center(
+                                        child: Text(
+                                          "Firestore error: ${snap.error}",
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                    if (snap.connectionState ==
+                                        ConnectionState.waiting) {
+                                      return const Center(
+                                        child: CircularProgressIndicator(),
+                                      );
+                                    }
+                                    if (!snap.hasData ||
+                                        snap.data!.docs.isEmpty) {
+                                      return const Center(
+                                        child: Text("No providers yet"),
+                                      );
+                                    }
 
-                                final docs = snap.data!.docs;
-                                return ListView.separated(
-                                  scrollDirection: Axis.horizontal,
-                                  padding: EdgeInsets.only(right: w * 0.04),
-                                  itemCount: docs.length,
-                                  separatorBuilder: (_, __) =>
-                                      SizedBox(width: w * 0.05),
-                                  itemBuilder: (_, i) => _providerCard(w, {
-                                    ...docs[i].data(),
-                                    '_docId': docs[i].id,
-                                  }),
+                                    final docs = snap.data!.docs;
+                                    return ListView.separated(
+                                      scrollDirection: Axis.horizontal,
+                                      padding: EdgeInsets.only(right: w * 0.04),
+                                      itemCount: docs.length,
+                                      separatorBuilder: (_, __) =>
+                                          SizedBox(width: w * 0.05),
+                                      itemBuilder: (_, i) => _providerCard(w, {
+                                        ...docs[i].data(),
+                                        '_docId': docs[i].id,
+                                      }),
+                                    );
+                                  },
                                 );
                               },
                             ),
