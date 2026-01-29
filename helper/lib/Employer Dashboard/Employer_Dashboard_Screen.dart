@@ -7,6 +7,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:helper/Components/User_Name.dart';
 import 'package:helper/Components/Side_Bar.dart';
 import 'package:helper/Components/UnreadMessagesBadge.dart';
+import 'package:helper/Employer%20Dashboard/Category_Providers_Screen.dart';
 import 'package:helper/Worker%20Dashboard/Worker_Details_Screen.dart';
 import '../Components/Bottom_Nav_Bar.dart';
 import 'All_Categories_Screen.dart';
@@ -548,101 +549,141 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
-                        Column(
-                          children: [
-                            Container(
-                              width: 50,
-                              height: 50,
-                              decoration: const BoxDecoration(
-                                color: Colors.white,
-                                shape: BoxShape.circle,
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => CategoryProvidersScreen(categoryName: 'House'),
                               ),
-                              child: const Icon(
-                                Icons.home,
-                                color: Colors.black,
+                            );
+                          },
+                          child: Column(
+                            children: [
+                              Container(
+                                width: 50,
+                                height: 50,
+                                decoration: const BoxDecoration(
+                                  color: Colors.white,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.home,
+                                  color: Colors.black,
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 5),
-                            const Text(
-                              'House',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
+                              const SizedBox(height: 5),
+                              const Text(
+                                'House',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                        Column(
-                          children: [
-                            Container(
-                              width: 50,
-                              height: 50,
-                              decoration: const BoxDecoration(
-                                color: Colors.white,
-                                shape: BoxShape.circle,
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => CategoryProvidersScreen(categoryName: 'Electricity'),
                               ),
-                              child: const Icon(
-                                Icons.lightbulb,
-                                color: Colors.black,
+                            );
+                          },
+                          child: Column(
+                            children: [
+                              Container(
+                                width: 50,
+                                height: 50,
+                                decoration: const BoxDecoration(
+                                  color: Colors.white,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.lightbulb,
+                                  color: Colors.black,
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 5),
-                            const Text(
-                              'Electricity',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
+                              const SizedBox(height: 5),
+                              const Text(
+                                'Electricity',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                        Column(
-                          children: [
-                            Container(
-                              width: 50,
-                              height: 50,
-                              decoration: const BoxDecoration(
-                                color: Colors.white,
-                                shape: BoxShape.circle,
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => CategoryProvidersScreen(categoryName: 'Driver'),
                               ),
-                              child: const Icon(
-                                Icons.directions_car,
-                                color: Colors.black,
+                            );
+                          },
+                          child: Column(
+                            children: [
+                              Container(
+                                width: 50,
+                                height: 50,
+                                decoration: const BoxDecoration(
+                                  color: Colors.white,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.directions_car,
+                                  color: Colors.black,
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 5),
-                            const Text(
-                              'Driver',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
+                              const SizedBox(height: 5),
+                              const Text(
+                                'Driver',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                        Column(
-                          children: [
-                            Container(
-                              width: 50,
-                              height: 50,
-                              decoration: const BoxDecoration(
-                                color: Colors.white,
-                                shape: BoxShape.circle,
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => CategoryProvidersScreen(categoryName: 'Plumber'),
                               ),
-                              child: const Icon(
-                                Icons.plumbing,
-                                color: Colors.black,
+                            );
+                          },
+                          child: Column(
+                            children: [
+                              Container(
+                                width: 50,
+                                height: 50,
+                                decoration: const BoxDecoration(
+                                  color: Colors.white,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.plumbing,
+                                  color: Colors.black,
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 5),
-                            const Text(
-                              'Plumber',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
+                              const SizedBox(height: 5),
+                              const Text(
+                                'Plumber',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                         GestureDetector(
                           onTap: () => Navigator.push(
