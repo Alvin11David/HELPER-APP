@@ -687,154 +687,164 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                                           height: 110,
                                         );
                                       }
-                                      return Container(
-                                        width: 183,
-                                        height: 100,
-                                        margin: const EdgeInsets.only(
-                                          bottom: 10,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: Colors.white,
-                                          borderRadius: BorderRadius.circular(
-                                            20,
+                                      return GestureDetector(
+                                        onTap: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) => CategoryProvidersScreen(
+                                                categoryName: filteredProfessions[profIndex],
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                        child: Container(
+                                          width: 183,
+                                          height: 100,
+                                          margin: const EdgeInsets.only(
+                                            bottom: 10,
                                           ),
-                                        ),
-                                        child: Stack(
-                                          children: [
-                                            Align(
-                                              alignment: Alignment.bottomLeft,
-                                              child: Container(
-                                                width: double.infinity,
-                                                padding: const EdgeInsets.all(
-                                                  10,
-                                                ),
-                                                decoration: BoxDecoration(
-                                                  color: Colors.white,
-                                                  borderRadius:
-                                                      const BorderRadius.only(
-                                                        bottomLeft:
-                                                            Radius.circular(30),
-                                                        bottomRight:
-                                                            Radius.circular(30),
-                                                      ),
-                                                ),
-                                                child: Column(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  mainAxisSize:
-                                                      MainAxisSize.min,
-                                                  children: [
-                                                    Text(
-                                                      filteredProfessions[profIndex],
-                                                      style: const TextStyle(
-                                                        color: Colors.black,
-                                                        fontSize: 14,
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                      ),
-                                                    ),
-                                                    Text(
-                                                      '${providerCounts[filteredProfessions[profIndex]] ?? 0} Providers',
-                                                      style: const TextStyle(
-                                                        color: Colors.black,
-                                                        fontSize: 12,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
+                                          decoration: BoxDecoration(
+                                            color: Colors.white,
+                                            borderRadius: BorderRadius.circular(
+                                              20,
                                             ),
-                                            Align(
-                                              alignment: Alignment.topRight,
-                                              child: Padding(
-                                                padding: const EdgeInsets.all(
-                                                  10,
-                                                ),
-                                                child: AnimatedScale(
-                                                  scale:
-                                                      filteredLiked[profIndex]
-                                                      ? 1.2
-                                                      : 1.0,
-                                                  duration: const Duration(
-                                                    milliseconds: 200,
-                                                  ),
-                                                  child: GestureDetector(
-                                                    onTap: () => setState(
-                                                      () => filteredLiked[profIndex] =
-                                                          !filteredLiked[profIndex],
-                                                    ),
-                                                    child: Container(
-                                                      width: 30,
-                                                      height: 30,
-                                                      decoration: BoxDecoration(
-                                                        shape: BoxShape.circle,
-                                                        color: Colors.white,
-                                                        border: Border.all(
-                                                          color: Colors.black,
-                                                        ),
-                                                      ),
-                                                      child: Icon(
-                                                        filteredLiked[profIndex]
-                                                            ? Icons.favorite
-                                                            : Icons
-                                                                  .favorite_border,
-                                                        color:
-                                                            filteredLiked[profIndex]
-                                                            ? Colors.red
-                                                            : Colors.black,
-                                                        size: 16,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                            Align(
-                                              alignment: Alignment.topLeft,
-                                              child: Padding(
-                                                padding: const EdgeInsets.all(
-                                                  10,
-                                                ),
+                                          ),
+                                          child: Stack(
+                                            children: [
+                                              Align(
+                                                alignment: Alignment.bottomLeft,
                                                 child: Container(
-                                                  padding:
-                                                      const EdgeInsets.symmetric(
-                                                        horizontal: 6,
-                                                        vertical: 4,
-                                                      ),
-                                                  decoration: BoxDecoration(
-                                                    color: Colors.grey[100],
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          10,
-                                                        ),
-                                                    border: Border.all(
-                                                      color: Colors.black,
-                                                    ),
+                                                  width: double.infinity,
+                                                  padding: const EdgeInsets.all(
+                                                    10,
                                                   ),
-                                                  child: Row(
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.white,
+                                                    borderRadius:
+                                                        const BorderRadius.only(
+                                                          bottomLeft:
+                                                              Radius.circular(30),
+                                                          bottomRight:
+                                                              Radius.circular(30),
+                                                        ),
+                                                  ),
+                                                  child: Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment.start,
                                                     mainAxisSize:
                                                         MainAxisSize.min,
                                                     children: [
-                                                      Icon(
-                                                        Icons.star,
-                                                        color: Colors.orange,
-                                                        size: 12,
-                                                      ),
-                                                      const SizedBox(width: 4),
                                                       Text(
-                                                        filteredRatings[profIndex]
-                                                            .toString(),
+                                                        filteredProfessions[profIndex],
                                                         style: const TextStyle(
                                                           color: Colors.black,
-                                                          fontSize: 10,
+                                                          fontSize: 14,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                        ),
+                                                      ),
+                                                      Text(
+                                                        '${providerCounts[filteredProfessions[profIndex]] ?? 0} Providers',
+                                                        style: const TextStyle(
+                                                          color: Colors.black,
+                                                          fontSize: 12,
                                                         ),
                                                       ),
                                                     ],
                                                   ),
                                                 ),
                                               ),
-                                            ),
-                                          ],
+                                              Align(
+                                                alignment: Alignment.topRight,
+                                                child: Padding(
+                                                  padding: const EdgeInsets.all(
+                                                    10,
+                                                  ),
+                                                  child: AnimatedScale(
+                                                    scale: filteredLiked[profIndex]
+                                                        ? 1.2
+                                                        : 1.0,
+                                                    duration: const Duration(
+                                                      milliseconds: 200,
+                                                    ),
+                                                    child: GestureDetector(
+                                                      onTap: () => setState(
+                                                        () => filteredLiked[profIndex] =
+                                                            !filteredLiked[profIndex],
+                                                      ),
+                                                      child: Container(
+                                                        width: 30,
+                                                        height: 30,
+                                                        decoration: BoxDecoration(
+                                                          shape: BoxShape.circle,
+                                                          color: Colors.white,
+                                                          border: Border.all(
+                                                            color: Colors.black,
+                                                          ),
+                                                        ),
+                                                        child: Icon(
+                                                          filteredLiked[profIndex]
+                                                              ? Icons.favorite
+                                                              : Icons
+                                                                .favorite_border,
+                                                          color: filteredLiked[profIndex]
+                                                              ? Colors.red
+                                                              : Colors.black,
+                                                          size: 16,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                              Align(
+                                                alignment: Alignment.topLeft,
+                                                child: Padding(
+                                                  padding: const EdgeInsets.all(
+                                                    10,
+                                                  ),
+                                                  child: Container(
+                                                    padding:
+                                                        const EdgeInsets.symmetric(
+                                                          horizontal: 6,
+                                                          vertical: 4,
+                                                        ),
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.grey[100],
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            10,
+                                                          ),
+                                                      border: Border.all(
+                                                        color: Colors.black,
+                                                      ),
+                                                    ),
+                                                    child: Row(
+                                                      mainAxisSize:
+                                                          MainAxisSize.min,
+                                                      children: [
+                                                        Icon(
+                                                          Icons.star,
+                                                          color: Colors.orange,
+                                                          size: 12,
+                                                        ),
+                                                        const SizedBox(width: 4),
+                                                        Text(
+                                                          filteredRatings[profIndex]
+                                                              .toString(),
+                                                          style: const TextStyle(
+                                                            color: Colors.black,
+                                                            fontSize: 10,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
                                         ),
                                       );
                                     }),
@@ -854,155 +864,164 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                                           height: 110,
                                         );
                                       }
-                                      return Container(
-                                        width: 183,
-                                        height: 100,
-                                        margin: const EdgeInsets.only(
-                                          bottom: 10,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: Colors.white,
-                                          borderRadius: BorderRadius.circular(
-                                            20,
+                                      return GestureDetector(
+                                        onTap: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) => CategoryProvidersScreen(
+                                                categoryName: filteredProfessions[profIndex],
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                        child: Container(
+                                          width: 183,
+                                          height: 100,
+                                          margin: const EdgeInsets.only(
+                                            bottom: 10,
                                           ),
-                                        ),
-                                        child: Stack(
-                                          children: [
-                                            Align(
-                                              alignment: Alignment.bottomLeft,
-                                              child: Container(
-                                                width: double.infinity,
-                                                padding: const EdgeInsets.all(
-                                                  10,
-                                                ),
-                                                decoration: BoxDecoration(
-                                                  color: Colors.white,
-                                                  borderRadius:
-                                                      const BorderRadius.only(
-                                                        bottomLeft:
-                                                            Radius.circular(30),
-                                                        bottomRight:
-                                                            Radius.circular(30),
-                                                      ),
-                                                ),
-                                                child: Column(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  mainAxisSize:
-                                                      MainAxisSize.min,
-                                                  children: [
-                                                    Text(
-                                                      filteredProfessions[profIndex],
-                                                      style: const TextStyle(
-                                                        color: Colors.black,
-                                                        fontSize: 14,
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                      ),
-                                                    ),
-                                                    Text(
-                                                      '${providerCounts[filteredProfessions[profIndex]] ?? 0} Providers',
-                                                      style: const TextStyle(
-                                                        color: Colors.black,
-                                                        fontWeight: FontWeight.bold,
-                                                        fontSize: 14,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
+                                          decoration: BoxDecoration(
+                                            color: Colors.white,
+                                            borderRadius: BorderRadius.circular(
+                                              20,
                                             ),
-                                            Align(
-                                              alignment: Alignment.topRight,
-                                              child: Padding(
-                                                padding: const EdgeInsets.all(
-                                                  10,
-                                                ),
-                                                child: AnimatedScale(
-                                                  scale:
-                                                      filteredLiked[profIndex]
-                                                      ? 1.2
-                                                      : 1.0,
-                                                  duration: const Duration(
-                                                    milliseconds: 200,
-                                                  ),
-                                                  child: GestureDetector(
-                                                    onTap: () => setState(
-                                                      () => filteredLiked[profIndex] =
-                                                          !filteredLiked[profIndex],
-                                                    ),
-                                                    child: Container(
-                                                      width: 30,
-                                                      height: 30,
-                                                      decoration: BoxDecoration(
-                                                        shape: BoxShape.circle,
-                                                        color: Colors.white,
-                                                        border: Border.all(
-                                                          color: Colors.black,
-                                                        ),
-                                                      ),
-                                                      child: Icon(
-                                                        filteredLiked[profIndex]
-                                                            ? Icons.favorite
-                                                            : Icons
-                                                                  .favorite_border,
-                                                        color:
-                                                            filteredLiked[profIndex]
-                                                            ? Colors.red
-                                                            : Colors.black,
-                                                        size: 16,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                            Align(
-                                              alignment: Alignment.topLeft,
-                                              child: Padding(
-                                                padding: const EdgeInsets.all(
-                                                  10,
-                                                ),
+                                          ),
+                                          child: Stack(
+                                            children: [
+                                              Align(
+                                                alignment: Alignment.bottomLeft,
                                                 child: Container(
-                                                  padding:
-                                                      const EdgeInsets.symmetric(
-                                                        horizontal: 6,
-                                                        vertical: 4,
-                                                      ),
-                                                  decoration: BoxDecoration(
-                                                    color: Colors.grey[100],
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          10,
-                                                        ),
-                                                    border: Border.all(
-                                                      color: Colors.black,
-                                                    ),
+                                                  width: double.infinity,
+                                                  padding: const EdgeInsets.all(
+                                                    10,
                                                   ),
-                                                  child: Row(
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.white,
+                                                    borderRadius:
+                                                        const BorderRadius.only(
+                                                          bottomLeft:
+                                                              Radius.circular(30),
+                                                          bottomRight:
+                                                              Radius.circular(30),
+                                                        ),
+                                                  ),
+                                                  child: Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment.start,
                                                     mainAxisSize:
                                                         MainAxisSize.min,
                                                     children: [
-                                                      Icon(
-                                                        Icons.star,
-                                                        color: Colors.orange,
-                                                        size: 12,
-                                                      ),
-                                                      const SizedBox(width: 4),
                                                       Text(
-                                                        filteredRatings[profIndex]
-                                                            .toString(),
+                                                        filteredProfessions[profIndex],
                                                         style: const TextStyle(
                                                           color: Colors.black,
-                                                          fontSize: 10,
+                                                          fontSize: 14,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                        ),
+                                                      ),
+                                                      Text(
+                                                        '${providerCounts[filteredProfessions[profIndex]] ?? 0} Providers',
+                                                        style: const TextStyle(
+                                                          color: Colors.black,
+                                                          fontSize: 12,
                                                         ),
                                                       ),
                                                     ],
                                                   ),
                                                 ),
                                               ),
-                                            ),
-                                          ],
+                                              Align(
+                                                alignment: Alignment.topRight,
+                                                child: Padding(
+                                                  padding: const EdgeInsets.all(
+                                                    10,
+                                                  ),
+                                                  child: AnimatedScale(
+                                                    scale: filteredLiked[profIndex]
+                                                        ? 1.2
+                                                        : 1.0,
+                                                    duration: const Duration(
+                                                      milliseconds: 200,
+                                                    ),
+                                                    child: GestureDetector(
+                                                      onTap: () => setState(
+                                                        () => filteredLiked[profIndex] =
+                                                            !filteredLiked[profIndex],
+                                                      ),
+                                                      child: Container(
+                                                        width: 30,
+                                                        height: 30,
+                                                        decoration: BoxDecoration(
+                                                          shape: BoxShape.circle,
+                                                          color: Colors.white,
+                                                          border: Border.all(
+                                                            color: Colors.black,
+                                                          ),
+                                                        ),
+                                                        child: Icon(
+                                                          filteredLiked[profIndex]
+                                                              ? Icons.favorite
+                                                              : Icons
+                                                                .favorite_border,
+                                                          color: filteredLiked[profIndex]
+                                                              ? Colors.red
+                                                              : Colors.black,
+                                                          size: 16,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                              Align(
+                                                alignment: Alignment.topLeft,
+                                                child: Padding(
+                                                  padding: const EdgeInsets.all(
+                                                    10,
+                                                  ),
+                                                  child: Container(
+                                                    padding:
+                                                        const EdgeInsets.symmetric(
+                                                          horizontal: 6,
+                                                          vertical: 4,
+                                                        ),
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.grey[100],
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            10,
+                                                          ),
+                                                      border: Border.all(
+                                                        color: Colors.black,
+                                                      ),
+                                                    ),
+                                                    child: Row(
+                                                      mainAxisSize:
+                                                          MainAxisSize.min,
+                                                      children: [
+                                                        Icon(
+                                                          Icons.star,
+                                                          color: Colors.orange,
+                                                          size: 12,
+                                                        ),
+                                                        const SizedBox(width: 4),
+                                                        Text(
+                                                          filteredRatings[profIndex]
+                                                              .toString(),
+                                                          style: const TextStyle(
+                                                            color: Colors.black,
+                                                            fontSize: 10,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
                                         ),
                                       );
                                     }),
