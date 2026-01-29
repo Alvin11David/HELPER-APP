@@ -34,11 +34,20 @@ final GlobalKey<NavigatorState> appNavKey = GlobalKey<NavigatorState>();
 // Background message handler
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  print("Handling a background message: ${message.messageId}");
+  print("=== BACKGROUND MESSAGE HANDLER ===");
+  print("Message ID: ${message.messageId}");
+  print("Message data: ${message.data}");
+  print(
+    "Message notification: ${message.notification?.title} - ${message.notification?.body}",
+  );
+
   // For call messages, we can show a notification or handle accordingly
   if (message.data['type'] == 'call') {
+    print("Received call notification in background");
     // Since we can't show dialog in background, rely on notification
     // The notification will be shown by FCM, and tapping it can open the app
+  } else {
+    print("Received non-call notification in background");
   }
 }
 

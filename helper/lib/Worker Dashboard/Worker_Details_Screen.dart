@@ -982,6 +982,8 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                                 serviceProviderId: widget.providerId,
                                 businessName: _businessName ?? 'Provider',
                                 profession: _jobCategoryName ?? 'Service',
+                                amount: _amount,
+                                pricingType: _pricingType,
                               ),
                             ),
                           );

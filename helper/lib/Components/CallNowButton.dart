@@ -16,9 +16,14 @@ class CallNowButton extends StatelessWidget {
   }) : super(key: key);
 
   Future<void> _handleCall(BuildContext context) async {
-    print(
-      'CallNowButton tapped for provider: $providerId, business: $businessName',
-    );
+    // Show initial debug info
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('🔍 Call Now Button Tapped')));
+
+    print('=== CALL NOW BUTTON TAPPED ===');
+    print('Provider ID: $providerId');
+    print('Business Name: $businessName');
 
     // Check if worker is online
     final doc = await FirebaseFirestore.instance
@@ -29,25 +34,23 @@ class CallNowButton extends StatelessWidget {
     final isOnline = doc.data()?['isOnline'] ?? false;
     print('Provider online status: $isOnline');
 
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('📱 Provider online: $isOnline')));
+
     if (!isOnline) {
-      // TEMPORARILY BYPASS OFFLINE CHECK FOR TESTING
       print('Provider is offline, but bypassing check for testing');
-      // Play offline message
-      // final player = AudioPlayer();
-      // await player.play(
-      //   AssetSource('audio/offline_message.mp3'),
-      // ); // Assume you have this file
-      // ScaffoldMessenger.of(context).showSnackBar(
-      //   const SnackBar(
-      //     content: Text('Provider is not available. Please try again later.'),
-      //   ),
-      // );
-      // return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('⚠️ Provider offline - bypassing for testing'),
+        ),
+      );
     }
 
     // Fetch portfolio image from serviceProviders collection
     String? portfolioImageUrl;
     try {
+      print('Fetching portfolio image for provider: $providerId');
       final serviceProviderDoc = await FirebaseFirestore.instance
           .collection('serviceProviders')
           .doc(providerId)
@@ -58,37 +61,88 @@ class CallNowButton extends StatelessWidget {
         final portfolioFiles = data['portfolioFiles'] as List<dynamic>?;
         if (portfolioFiles != null && portfolioFiles.isNotEmpty) {
           portfolioImageUrl = portfolioFiles[0] as String?;
-          print('Fetched portfolio image: $portfolioImageUrl');
+          print('Portfolio image found: $portfolioImageUrl');
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('🖼️ Portfolio image found')),
+          );
+        } else {
+          print('No portfolio files found in serviceProviders document');
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('❌ No portfolio files found')),
+          );
         }
+      } else {
+        print(
+          'serviceProviders document does not exist for provider: $providerId',
+        );
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('❌ serviceProviders document not found'),
+          ),
+        );
       }
     } catch (e) {
       print('Error fetching portfolio image: $e');
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('❌ Error fetching portfolio: $e')));
     }
 
     // Worker is online, send call request
     final callerId = FirebaseAuth.instance.currentUser!.uid;
     final callId = DateTime.now().millisecondsSinceEpoch.toString();
 
-    print('Initiating call: $callId from $callerId to $providerId');
+    print('=== CREATING CALL DOCUMENT ===');
+    print('Call ID: $callId');
+    print('Caller ID: $callerId');
+    print('Receiver ID: $providerId');
+    print('Caller Name: $businessName');
 
-    // Send notification to worker
-    await FirebaseFirestore.instance.collection('calls').doc(callId).set({
-      'callerId': callerId,
-      'receiverId': providerId,
-      'callerName': businessName, // Add caller name for the Cloud Function
-      'status': 'ringing',
-      'timestamp': FieldValue.serverTimestamp(),
-    });
-
-    print(
-      'Call document created in Firestore, Cloud Function should send FCM notification',
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('📞 Creating call document: $callId')),
     );
+
+    try {
+      // Send notification to worker
+      await FirebaseFirestore.instance.collection('calls').doc(callId).set({
+        'callerId': callerId,
+        'receiverId': providerId,
+        'callerName': businessName, // Add caller name for the Cloud Function
+        'status': 'ringing',
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+      print('Call document created successfully in Firestore');
+      print('Cloud Function should now trigger and send FCM notification');
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('✅ Call document created - waiting for Cloud Function'),
+        ),
+      );
+    } catch (e) {
+      print('ERROR creating call document: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('❌ Error creating call document: $e')),
+      );
+      return;
+    }
 
     // Check if FCM token exists
     final fcmToken = doc.data()?['fcmToken'];
-    print('FCM token for receiver: ${fcmToken != null ? "exists" : "null"}');
+    print('FCM token exists for receiver: ${fcmToken != null ? "YES" : "NO"}');
+    if (fcmToken != null) {
+      print('FCM token preview: ${fcmToken.substring(0, 50)}...');
+    }
 
-    print('Navigating to VoiceCallScreen');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          '🔑 FCM token exists: ${fcmToken != null ? "YES" : "NO"}',
+        ),
+      ),
+    );
+
+    print('=== NAVIGATING TO VOICE CALL SCREEN ===');
 
     try {
       // Show ringing UI or navigate to call screen
@@ -104,12 +158,16 @@ class CallNowButton extends StatelessWidget {
           ),
         ),
       );
-      print('Navigation successful');
+      print('Navigation to VoiceCallScreen successful');
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('📱 Navigating to Voice Call Screen')),
+      );
     } catch (e) {
       print('Navigation failed: $e');
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Navigation failed: $e')));
+      ).showSnackBar(SnackBar(content: Text('❌ Navigation failed: $e')));
     }
   }
 

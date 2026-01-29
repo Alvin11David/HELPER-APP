@@ -85,7 +85,11 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
                             width: 280,
                             height: 280,
                             errorBuilder: (context, error, stackTrace) {
-                              return Icon(Icons.person, color: Colors.black, size: 150);
+                              return Icon(
+                                Icons.person,
+                                color: Colors.black,
+                                size: 150,
+                              );
                             },
                           ),
                         )
