@@ -47,6 +47,11 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
   String? _jobLocationText;
   GeoPoint? _jobLatLng;
 
+  // Search location
+  final TextEditingController _locationSearchCtrl = TextEditingController();
+  List<Map<String, String>> _suggestions = [];
+  bool _fetchingSuggestions = false;
+
   // Google Map
   GoogleMapController? _mapCtrl;
   LatLng? _myLatLng;
@@ -92,19 +97,23 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
     super.initState();
     _initLocation();
     _refreshMonthBookings(); // initial calendar availability
+    _locationSearchCtrl.addListener(_onSearchChanged);
   }
 
   @override
   void dispose() {
     _descCtrl.dispose();
     _amountCtrl.dispose();
+    _locationSearchCtrl.removeListener(_onSearchChanged);
+    _locationSearchCtrl.dispose();
     super.dispose();
   }
 
   // ===================== VALIDATION =====================
   bool get _phase1Complete {
     final okDesc = _descCtrl.text.trim().isNotEmpty;
-    final okLocation = _jobLocationText != null &&
+    final okLocation =
+        _jobLocationText != null &&
         _jobLocationText!.trim().isNotEmpty &&
         _jobLatLng != null;
     return okDesc && okLocation;
@@ -152,7 +161,9 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
 
     if (_step == 0) {
       if (!_phase1Complete) {
-        _toast("Please add a job description and select job location on the map.");
+        _toast(
+          "Please add a job description and select job location on the map.",
+        );
         return;
       }
       setState(() => _step = 1);
@@ -264,7 +275,9 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
         throw Exception("Location permission denied.");
       }
       if (perm == LocationPermission.deniedForever) {
-        throw Exception("Location permission denied forever. Enable it in settings.");
+        throw Exception(
+          "Location permission denied forever. Enable it in settings.",
+        );
       }
 
       final pos = await Geolocator.getCurrentPosition(
@@ -310,6 +323,84 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
     }
   }
 
+  void _onSearchChanged() {
+    final query = _locationSearchCtrl.text.trim();
+    if (query.length < 3) {
+      setState(() => _suggestions = []);
+      return;
+    }
+    _fetchSuggestions(query);
+  }
+
+  Future<void> _fetchSuggestions(String query) async {
+    setState(() => _fetchingSuggestions = true);
+    try {
+      print("Fetching suggestions for: $query");
+      final res = await _dio.get(
+        "https://maps.googleapis.com/maps/api/place/autocomplete/json",
+        queryParameters: {
+          "input": query,
+          "key": _googleKey,
+          // Removed types to allow broader search
+        },
+      );
+      print("API Response: ${res.data}");
+      final predictions = (res.data["predictions"] as List? ?? [])
+          .take(5)
+          .map(
+            (p) => {
+              "description": p["description"] as String,
+              "placeId": p["place_id"] as String,
+            },
+          )
+          .toList();
+      print("Parsed suggestions: $predictions");
+      setState(() => _suggestions = predictions);
+    } catch (e) {
+      print("Error fetching suggestions: $e");
+      setState(() => _suggestions = []);
+    } finally {
+      setState(() => _fetchingSuggestions = false);
+    }
+  }
+
+  Future<void> _selectSuggestion(String description, String placeId) async {
+    try {
+      final res = await _dio.get(
+        "https://maps.googleapis.com/maps/api/place/details/json",
+        queryParameters: {
+          "place_id": placeId,
+          "key": _googleKey,
+          "fields": "geometry",
+        },
+      );
+      final location = res.data["result"]["geometry"]["location"];
+      final lat = location["lat"];
+      final lng = location["lng"];
+      setState(() {
+        _jobLocationText = description;
+        _jobLatLng = GeoPoint(lat, lng);
+        _pickedLatLng = LatLng(lat, lng);
+        _pickedMarker = Marker(
+          markerId: const MarkerId("job_location"),
+          position: _pickedLatLng!,
+        );
+      });
+      if (_mapCtrl != null) {
+        _mapCtrl!.animateCamera(CameraUpdate.newLatLngZoom(_pickedLatLng!, 14));
+      }
+      _locationSearchCtrl.clear();
+      _suggestions = [];
+    } catch (e) {
+      // Fallback: just set the text
+      setState(() {
+        _jobLocationText = description;
+        _locationSearchCtrl.clear();
+        _suggestions = [];
+      });
+    }
+  }
+
   void _onMapTap(LatLng latLng) async {
     setState(() {
       _pickedLatLng = latLng;
@@ -319,7 +410,8 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
       );
       _jobLatLng = GeoPoint(latLng.latitude, latLng.longitude);
       _jobLocationText =
-          _jobLocationText ?? "${latLng.latitude.toStringAsFixed(5)}, ${latLng.longitude.toStringAsFixed(5)}";
+          _jobLocationText ??
+          "${latLng.latitude.toStringAsFixed(5)}, ${latLng.longitude.toStringAsFixed(5)}";
     });
 
     await _reverseGeocode(latLng);
@@ -531,8 +623,14 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
     if (dateOnly || _timeFrom == null || _timeTo == null) {
       // Date-only: treat as whole-day interval to prevent overlaps across ranges
       newStart = DateTime(sDay.year, sDay.month, sDay.day, 0, 0, 0);
-      newEnd = DateTime(eDay.year, eDay.month, eDay.day, 23, 59, 59)
-          .add(const Duration(seconds: 1));
+      newEnd = DateTime(
+        eDay.year,
+        eDay.month,
+        eDay.day,
+        23,
+        59,
+        59,
+      ).add(const Duration(seconds: 1));
     } else {
       // Date+time:
       // - If range is multiple days, we apply the same time window across all days for safety.
@@ -540,7 +638,13 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
       final from = _timeFrom!;
       final to = _timeTo!;
 
-      newStart = DateTime(sDay.year, sDay.month, sDay.day, from.hour, from.minute);
+      newStart = DateTime(
+        sDay.year,
+        sDay.month,
+        sDay.day,
+        from.hour,
+        from.minute,
+      );
 
       // end uses end day + to-time
       newEnd = DateTime(eDay.year, eDay.month, eDay.day, to.hour, to.minute);
@@ -577,7 +681,11 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
   bool _inRange(DateTime d) {
     if (_startDate == null) return false;
     final day = DateTime(d.year, d.month, d.day);
-    final start = DateTime(_startDate!.year, _startDate!.month, _startDate!.day);
+    final start = DateTime(
+      _startDate!.year,
+      _startDate!.month,
+      _startDate!.day,
+    );
     if (_endDate == null) return day == start;
 
     final end = DateTime(_endDate!.year, _endDate!.month, _endDate!.day);
@@ -621,7 +729,11 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
                       child: _StepIndicator(
                         width: w,
                         activeIndex: _step < 3 ? _step : 2,
-                        labels: const ['Job Details', 'Choose Date', 'Payment Details'],
+                        labels: const [
+                          'Job Details',
+                          'Choose Date',
+                          'Payment Details',
+                        ],
                         accent: _brandOrange,
                       ),
                     ),
@@ -635,7 +747,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
                           color: Colors.white,
                           fontFamily: 'Inter',
                           fontWeight: FontWeight.w800,
-                          fontSize: w * 0.040,
+                          fontSize: w * 0.045,
                         ),
                       ),
                     ),
@@ -647,10 +759,16 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
                       switchInCurve: Curves.easeOut,
                       switchOutCurve: Curves.easeIn,
                       transitionBuilder: (child, anim) {
-                        final slide = Tween<Offset>(
-                          begin: const Offset(0.04, 0),
-                          end: Offset.zero,
-                        ).animate(CurvedAnimation(parent: anim, curve: Curves.easeOut));
+                        final slide =
+                            Tween<Offset>(
+                              begin: const Offset(0.04, 0),
+                              end: Offset.zero,
+                            ).animate(
+                              CurvedAnimation(
+                                parent: anim,
+                                curve: Curves.easeOut,
+                              ),
+                            );
                         return FadeTransition(
                           opacity: anim,
                           child: SlideTransition(position: slide, child: child),
@@ -659,10 +777,10 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
                       child: _step == 0
                           ? _phase1(w, h)
                           : _step == 1
-                              ? _phase2(w, h)
-                              : _step == 2
-                                  ? _phase3(w, h)
-                                  : _phase4(w, h),
+                          ? _phase2(w, h)
+                          : _step == 2
+                          ? _phase3(w, h)
+                          : _phase4(w, h),
                     ),
 
                     SizedBox(height: h * 0.05),
@@ -769,7 +887,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
             _label("Job Location", w),
             const Spacer(),
             Text(
-              "Tap the map to select",
+              "Search for your Job Location",
               style: TextStyle(
                 color: Colors.white.withOpacity(0.75),
                 fontFamily: 'Inter',
@@ -781,16 +899,93 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
         ),
         SizedBox(height: h * 0.010),
 
-        // Location pill
-        _pillDisplay(
-          w: w,
-          h: h,
-          leading: Icons.location_on_rounded,
-          text: _jobLocationText == null ? "No location selected" : _jobLocationText!,
+        // Add text field for searching location
+        Container(
+          width: double.infinity,
+          height: h * 0.06,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(30),
+          ),
+          child: TextField(
+            controller: _locationSearchCtrl,
+            decoration: InputDecoration(
+              prefixIcon: Icon(Icons.search, color: Colors.black),
+              hintText: "Search for job location...",
+              hintStyle: TextStyle(
+                color: Colors.black.withOpacity(0.5),
+                fontFamily: 'Inter',
+                fontSize: w * 0.035,
+              ),
+              border: InputBorder.none,
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: w * 0.04,
+                vertical: h * 0.015,
+              ),
+            ),
+            style: TextStyle(
+              color: Colors.black,
+              fontFamily: 'Inter',
+              fontSize: w * 0.035,
+            ),
+          ),
         ),
+        if (_fetchingSuggestions)
+          Padding(
+            padding: EdgeInsets.only(top: h * 0.010),
+            child: const Center(child: CircularProgressIndicator()),
+          )
+        else if (_suggestions.isNotEmpty)
+          Container(
+            margin: EdgeInsets.only(top: h * 0.010),
+            constraints: BoxConstraints(maxHeight: h * 0.2),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: _suggestions.length,
+              itemBuilder: (context, index) {
+                final item = _suggestions[index];
+                return InkWell(
+                  onTap: () =>
+                      _selectSuggestion(item["description"]!, item["placeId"]!),
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: w * 0.04,
+                      vertical: h * 0.01,
+                    ),
+                    child: Text(
+                      item["description"]!,
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontFamily: 'Inter',
+                        fontSize: w * 0.035,
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        SizedBox(height: h * 0.010),
+
         SizedBox(height: h * 0.010),
 
         _liveJobMap(w, h),
+
+        SizedBox(height: h * 0.010),
+
+        // Location pill (small)
+        _pillDisplay(
+          w: w,
+          h: h * 0.6, // Make it smaller
+          leading: Icons.location_on_rounded,
+          text: _jobLocationText == null
+              ? "Search For The Job Location"
+              : _jobLocationText!,
+        ),
 
         if (_locLoading) ...[
           SizedBox(height: h * 0.010),
@@ -806,7 +1001,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
               fontWeight: FontWeight.w700,
               fontSize: w * 0.030,
             ),
-          )
+          ),
         ],
       ],
     );
@@ -815,7 +1010,8 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
   Widget _liveJobMap(double w, double h) {
     final mapH = h * 0.26;
 
-    final initial = _myLatLng ?? const LatLng(0.3476, 32.5825); // Kampala fallback
+    final initial =
+        _myLatLng ?? const LatLng(0.3476, 32.5825); // Kampala fallback
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(18),
@@ -1024,7 +1220,10 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
                   icon: Icons.chevron_left,
                   onTap: () async {
                     setState(() {
-                      _calendarMonth = DateTime(_calendarMonth.year, _calendarMonth.month - 1);
+                      _calendarMonth = DateTime(
+                        _calendarMonth.year,
+                        _calendarMonth.month - 1,
+                      );
                     });
                     await _refreshMonthBookings();
                   },
@@ -1045,7 +1244,10 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
                   icon: Icons.chevron_right,
                   onTap: () async {
                     setState(() {
-                      _calendarMonth = DateTime(_calendarMonth.year, _calendarMonth.month + 1);
+                      _calendarMonth = DateTime(
+                        _calendarMonth.year,
+                        _calendarMonth.month + 1,
+                      );
                     });
                     await _refreshMonthBookings();
                   },
@@ -1076,10 +1278,22 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _legendDot(color: Colors.green.shade400, label: "Available", w: w),
-                _legendDot(color: Colors.orange.shade400, label: "Partial", w: w),
+                _legendDot(
+                  color: Colors.green.shade400,
+                  label: "Available",
+                  w: w,
+                ),
+                _legendDot(
+                  color: Colors.orange.shade400,
+                  label: "Partial",
+                  w: w,
+                ),
                 _legendDot(color: Colors.red.shade400, label: "Booked", w: w),
-                _legendDot(color: Colors.purple.shade400, label: "Selected", w: w),
+                _legendDot(
+                  color: Colors.purple.shade400,
+                  label: "Selected",
+                  w: w,
+                ),
               ],
             ),
 
@@ -1244,9 +1458,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
     return Column(
       key: const ValueKey('phase4'),
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _summaryCard(w, h),
-      ],
+      children: [_summaryCard(w, h)],
     );
   }
 
@@ -1462,8 +1674,11 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
               ),
             ),
             SizedBox(width: w * 0.02),
-            Icon(Icons.keyboard_arrow_down_rounded,
-                color: Colors.black, size: w * 0.07),
+            Icon(
+              Icons.keyboard_arrow_down_rounded,
+              color: Colors.black,
+              size: w * 0.07,
+            ),
           ],
         ),
       ),
@@ -1495,16 +1710,36 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
   // ===================== FORMATTERS =====================
   String _fmtDate(DateTime d) {
     const months = [
-      "Jan","Feb","Mar","Apr","May","Jun",
-      "Jul","Aug","Sep","Oct","Nov","Dec"
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
     ];
     return "${d.day} ${months[d.month - 1]} ${d.year}";
   }
 
   String _monthName(int m) {
     const months = [
-      "January","February","March","April","May","June",
-      "July","August","September","October","November","December"
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
     ];
     return months[m - 1];
   }
@@ -1552,7 +1787,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
                 color: Colors.black,
                 fontFamily: 'Inter',
                 fontWeight: FontWeight.w900,
-                fontSize: w * 0.035,
+                fontSize: w * 0.03,
               ),
             ),
           ),
@@ -1717,10 +1952,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
         decoration: BoxDecoration(
           color: Colors.black.withOpacity(0.35),
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: Colors.white.withOpacity(0.7),
-            width: 1.4,
-          ),
+          border: Border.all(color: Colors.white.withOpacity(0.7), width: 1.4),
         ),
         child: Center(
           child: loading
@@ -1728,8 +1960,11 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
               : Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.cloud_upload_rounded,
-                        color: Colors.white, size: w * 0.14),
+                    Icon(
+                      Icons.cloud_upload_rounded,
+                      color: Colors.white,
+                      size: w * 0.14,
+                    ),
                     SizedBox(height: h * 0.01),
                     Text(
                       "Upload File",
@@ -1811,8 +2046,11 @@ class _TopBar extends StatelessWidget {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(15),
               ),
-              child: Icon(Icons.chevron_left,
-                  color: Colors.black, size: w * 0.10),
+              child: Icon(
+                Icons.chevron_left,
+                color: Colors.black,
+                size: w * 0.10,
+              ),
             ),
           ),
           SizedBox(width: w * 0.05),

@@ -3,7 +3,16 @@ import 'package:helper/Chats/overlays/incoming_call_overlay_service.dart';
 import 'package:helper/main.dart';
 
 class VoiceCallScreen extends StatefulWidget {
-  const VoiceCallScreen({super.key});
+  final String businessName;
+  final String providerId;
+  final String callerId;
+
+  const VoiceCallScreen({
+    super.key,
+    required this.businessName,
+    required this.providerId,
+    required this.callerId,
+  });
 
   @override
   _VoiceCallScreenState createState() => _VoiceCallScreenState();
@@ -12,6 +21,12 @@ class VoiceCallScreen extends StatefulWidget {
 class _VoiceCallScreenState extends State<VoiceCallScreen> {
   bool _volumeClicked = false;
   bool _micClicked = false;
+
+  void _endCall() {
+    // TODO: Add logic to end the actual call (VoIP, update call status, etc.)
+    // For now, just navigate back
+    Navigator.of(context).pop();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +51,7 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        'Business Name',
+                        widget.businessName,
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 24,
@@ -77,12 +92,15 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       GestureDetector(
-                        onTap: () => setState(() => _volumeClicked = !_volumeClicked),
+                        onTap: () =>
+                            setState(() => _volumeClicked = !_volumeClicked),
                         child: Container(
                           width: 40,
                           height: 40,
                           decoration: BoxDecoration(
-                            color: _volumeClicked ? Color(0xFFFFA10D) : Colors.white,
+                            color: _volumeClicked
+                                ? Color(0xFFFFA10D)
+                                : Colors.white,
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
@@ -97,23 +115,28 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
                           width: 40,
                           height: 40,
                           decoration: BoxDecoration(
-                            color: _micClicked ? Color(0xFFFFA10D) : Colors.white,
+                            color: _micClicked
+                                ? Color(0xFFFFA10D)
+                                : Colors.white,
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
-                            Icons.mic_off,
+                            _micClicked ? Icons.mic : Icons.mic_off,
                             color: _micClicked ? Colors.white : Colors.black,
                           ),
                         ),
                       ),
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: Colors.red,
-                          shape: BoxShape.circle,
+                      GestureDetector(
+                        onTap: _endCall,
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(Icons.call_end, color: Colors.white),
                         ),
-                        child: Icon(Icons.call_end, color: Colors.white),
                       ),
                     ],
                   ),
@@ -142,5 +165,3 @@ void _showIncomingCallOverlay() {
     );
   }
 }
-
-

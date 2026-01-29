@@ -9,6 +9,7 @@
 
 import { setGlobalOptions } from "firebase-functions";
 import { onCall, onRequest } from "firebase-functions/v2/https";
+import { onDocumentCreated } from "firebase-functions/v2/firestore";
 import * as logger from "firebase-functions/logger";
 import * as nodemailer from "nodemailer";
 import * as admin from "firebase-admin";
@@ -474,3 +475,63 @@ export const resetPasswordAfterOTP = onCall(async (request) => {
     throw new Error(`Failed to reset password: ${errorMessage}`);
   }
 });
+
+// Function to send call notification
+export const sendCallNotification = onDocumentCreated(
+  "calls/{callId}",
+  async (event) => {
+    const call = event.data?.data();
+    if (!call) return;
+
+    const receiverId = call.receiverId;
+    if (!receiverId) return;
+
+    try {
+      const receiverDoc = await admin
+        .firestore()
+        .collection("users")
+        .doc(receiverId)
+        .get();
+      const fcmToken = receiverDoc.data()?.fcmToken;
+      if (!fcmToken) {
+        logger.warn(`No FCM token found for user ${receiverId}`);
+        return;
+      }
+
+      const callerName = call.callerName || "Unknown Caller";
+
+      await admin.messaging().send({
+        token: fcmToken,
+        data: {
+          type: "call",
+          callId: event.params.callId,
+          callerName: callerName,
+        },
+        notification: {
+          title: "Incoming Call",
+          body: `${callerName} is calling you`,
+        },
+        android: {
+          priority: "high",
+          notification: {
+            channelId: "calls",
+            priority: "high",
+            sound: "default",
+          },
+        },
+        apns: {
+          payload: {
+            aps: {
+              sound: "default",
+              badge: 1,
+            },
+          },
+        },
+      });
+
+      logger.info(`Call notification sent to ${receiverId}`);
+    } catch (error) {
+      logger.error("Error sending call notification:", error);
+    }
+  },
+);
