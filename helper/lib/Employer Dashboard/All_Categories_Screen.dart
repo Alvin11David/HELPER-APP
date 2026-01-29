@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:helper/Components/User_Name.dart';
 import 'package:helper/Components/Side_Bar.dart';
+import 'package:helper/Employer%20Dashboard/Category_Providers_Screen.dart';
 import '../Components/Bottom_Nav_Bar.dart';
 
 class AllCategoriesScreen extends StatefulWidget {
@@ -692,9 +693,11 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                                           Navigator.push(
                                             context,
                                             MaterialPageRoute(
-                                              builder: (context) => CategoryProvidersScreen(
-                                                categoryName: filteredProfessions[profIndex],
-                                              ),
+                                              builder: (context) =>
+                                                  CategoryProvidersScreen(
+                                                    categoryName:
+                                                        filteredProfessions[profIndex],
+                                                  ),
                                             ),
                                           );
                                         },
@@ -724,14 +727,19 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                                                     borderRadius:
                                                         const BorderRadius.only(
                                                           bottomLeft:
-                                                              Radius.circular(30),
+                                                              Radius.circular(
+                                                                30,
+                                                              ),
                                                           bottomRight:
-                                                              Radius.circular(30),
+                                                              Radius.circular(
+                                                                30,
+                                                              ),
                                                         ),
                                                   ),
                                                   child: Column(
                                                     crossAxisAlignment:
-                                                        CrossAxisAlignment.start,
+                                                        CrossAxisAlignment
+                                                            .start,
                                                     mainAxisSize:
                                                         MainAxisSize.min,
                                                     children: [
@@ -762,7 +770,8 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                                                     10,
                                                   ),
                                                   child: AnimatedScale(
-                                                    scale: filteredLiked[profIndex]
+                                                    scale:
+                                                        filteredLiked[profIndex]
                                                         ? 1.2
                                                         : 1.0,
                                                     duration: const Duration(
@@ -776,19 +785,24 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                                                       child: Container(
                                                         width: 30,
                                                         height: 30,
-                                                        decoration: BoxDecoration(
-                                                          shape: BoxShape.circle,
-                                                          color: Colors.white,
-                                                          border: Border.all(
-                                                            color: Colors.black,
-                                                          ),
-                                                        ),
+                                                        decoration:
+                                                            BoxDecoration(
+                                                              shape: BoxShape
+                                                                  .circle,
+                                                              color:
+                                                                  Colors.white,
+                                                              border: Border.all(
+                                                                color: Colors
+                                                                    .black,
+                                                              ),
+                                                            ),
                                                         child: Icon(
                                                           filteredLiked[profIndex]
                                                               ? Icons.favorite
                                                               : Icons
-                                                                .favorite_border,
-                                                          color: filteredLiked[profIndex]
+                                                                    .favorite_border,
+                                                          color:
+                                                              filteredLiked[profIndex]
                                                               ? Colors.red
                                                               : Colors.black,
                                                           size: 16,
@@ -829,14 +843,18 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                                                           color: Colors.orange,
                                                           size: 12,
                                                         ),
-                                                        const SizedBox(width: 4),
+                                                        const SizedBox(
+                                                          width: 4,
+                                                        ),
                                                         Text(
                                                           filteredRatings[profIndex]
                                                               .toString(),
-                                                          style: const TextStyle(
-                                                            color: Colors.black,
-                                                            fontSize: 10,
-                                                          ),
+                                                          style:
+                                                              const TextStyle(
+                                                                color: Colors
+                                                                    .black,
+                                                                fontSize: 10,
+                                                              ),
                                                         ),
                                                       ],
                                                     ),
@@ -869,9 +887,11 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                                           Navigator.push(
                                             context,
                                             MaterialPageRoute(
-                                              builder: (context) => CategoryProvidersScreen(
-                                                categoryName: filteredProfessions[profIndex],
-                                              ),
+                                              builder: (context) =>
+                                                  CategoryProvidersScreen(
+                                                    categoryName:
+                                                        filteredProfessions[profIndex],
+                                                  ),
                                             ),
                                           );
                                         },
@@ -901,14 +921,19 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                                                     borderRadius:
                                                         const BorderRadius.only(
                                                           bottomLeft:
-                                                              Radius.circular(30),
+                                                              Radius.circular(
+                                                                30,
+                                                              ),
                                                           bottomRight:
-                                                              Radius.circular(30),
+                                                              Radius.circular(
+                                                                30,
+                                                              ),
                                                         ),
                                                   ),
                                                   child: Column(
                                                     crossAxisAlignment:
-                                                        CrossAxisAlignment.start,
+                                                        CrossAxisAlignment
+                                                            .start,
                                                     mainAxisSize:
                                                         MainAxisSize.min,
                                                     children: [
@@ -939,7 +964,8 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                                                     10,
                                                   ),
                                                   child: AnimatedScale(
-                                                    scale: filteredLiked[profIndex]
+                                                    scale:
+                                                        filteredLiked[profIndex]
                                                         ? 1.2
                                                         : 1.0,
                                                     duration: const Duration(
@@ -953,19 +979,24 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                                                       child: Container(
                                                         width: 30,
                                                         height: 30,
-                                                        decoration: BoxDecoration(
-                                                          shape: BoxShape.circle,
-                                                          color: Colors.white,
-                                                          border: Border.all(
-                                                            color: Colors.black,
-                                                          ),
-                                                        ),
+                                                        decoration:
+                                                            BoxDecoration(
+                                                              shape: BoxShape
+                                                                  .circle,
+                                                              color:
+                                                                  Colors.white,
+                                                              border: Border.all(
+                                                                color: Colors
+                                                                    .black,
+                                                              ),
+                                                            ),
                                                         child: Icon(
                                                           filteredLiked[profIndex]
                                                               ? Icons.favorite
                                                               : Icons
-                                                                .favorite_border,
-                                                          color: filteredLiked[profIndex]
+                                                                    .favorite_border,
+                                                          color:
+                                                              filteredLiked[profIndex]
                                                               ? Colors.red
                                                               : Colors.black,
                                                           size: 16,
@@ -1006,14 +1037,18 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                                                           color: Colors.orange,
                                                           size: 12,
                                                         ),
-                                                        const SizedBox(width: 4),
+                                                        const SizedBox(
+                                                          width: 4,
+                                                        ),
                                                         Text(
                                                           filteredRatings[profIndex]
                                                               .toString(),
-                                                          style: const TextStyle(
-                                                            color: Colors.black,
-                                                            fontSize: 10,
-                                                          ),
+                                                          style:
+                                                              const TextStyle(
+                                                                color: Colors
+                                                                    .black,
+                                                                fontSize: 10,
+                                                              ),
                                                         ),
                                                       ],
                                                     ),
