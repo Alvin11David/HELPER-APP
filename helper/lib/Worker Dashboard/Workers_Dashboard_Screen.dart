@@ -37,16 +37,20 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
       });
       // Save FCM token
       FirebaseMessaging.instance.getToken().then((token) {
+        print('FCM token obtained: ${token != null ? "success" : "null"}');
         if (token != null) {
           FirebaseFirestore.instance.collection('users').doc(uid).update({
             'fcmToken': token,
           });
+          print('FCM token saved to Firestore');
         }
       });
     }
     // Set up FCM listener for incoming calls
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      print('FCM onMessage received: ${message.data}');
       if (message.data['type'] == 'call') {
+        print('Showing IncomingCallDialog for call: ${message.data['callId']}');
         showDialog(
           context: context,
           builder: (context) => IncomingCallDialog(

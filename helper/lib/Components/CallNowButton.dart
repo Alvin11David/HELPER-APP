@@ -64,6 +64,10 @@ class CallNowButton extends StatelessWidget {
       'Call document created in Firestore, Cloud Function should send FCM notification',
     );
 
+    // Check if FCM token exists
+    final fcmToken = doc.data()?['fcmToken'];
+    print('FCM token for receiver: ${fcmToken != null ? "exists" : "null"}');
+
     print('Navigating to VoiceCallScreen');
 
     try {
