@@ -341,16 +341,18 @@ class _CategoryProvidersScreenState extends State<CategoryProvidersScreen> {
             ),
             // Main content: Providers list
             Positioned.fill(
-              top: 220,
+              top: 215,
               child: Container(
                 // Optional: add a background color or blur here if needed
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Padding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: w * 0.04,
-                        vertical: 8,
+                      padding: EdgeInsets.only(
+                        left: w * 0.04,
+                        right: w * 0.04,
+                        top: 0,
+                        bottom: 4,
                       ),
                       child: Text(
                         widget.categoryName,
@@ -393,7 +395,7 @@ class _CategoryProvidersScreenState extends State<CategoryProvidersScreen> {
                           return GridView.builder(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 16,
-                              vertical: 8,
+                              vertical: 0,
                             ),
                             gridDelegate:
                                 const SliverGridDelegateWithFixedCrossAxisCount(
