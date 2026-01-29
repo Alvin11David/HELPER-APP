@@ -45,6 +45,26 @@ class CallNowButton extends StatelessWidget {
       // return;
     }
 
+    // Fetch portfolio image from serviceProviders collection
+    String? portfolioImageUrl;
+    try {
+      final serviceProviderDoc = await FirebaseFirestore.instance
+          .collection('serviceProviders')
+          .doc(providerId)
+          .get();
+
+      if (serviceProviderDoc.exists && serviceProviderDoc.data() != null) {
+        final data = serviceProviderDoc.data()!;
+        final portfolioFiles = data['portfolioFiles'] as List<dynamic>?;
+        if (portfolioFiles != null && portfolioFiles.isNotEmpty) {
+          portfolioImageUrl = portfolioFiles[0] as String?;
+          print('Fetched portfolio image: $portfolioImageUrl');
+        }
+      }
+    } catch (e) {
+      print('Error fetching portfolio image: $e');
+    }
+
     // Worker is online, send call request
     final callerId = FirebaseAuth.instance.currentUser!.uid;
     final callId = DateTime.now().millisecondsSinceEpoch.toString();
@@ -80,6 +100,7 @@ class CallNowButton extends StatelessWidget {
             businessName: businessName,
             providerId: providerId,
             callerId: callerId,
+            portfolioImageUrl: portfolioImageUrl,
           ),
         ),
       );

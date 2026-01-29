@@ -6,12 +6,14 @@ class VoiceCallScreen extends StatefulWidget {
   final String businessName;
   final String providerId;
   final String callerId;
+  final String? portfolioImageUrl;
 
   const VoiceCallScreen({
     super.key,
     required this.businessName,
     required this.providerId,
     required this.callerId,
+    this.portfolioImageUrl,
   });
 
   @override
@@ -75,7 +77,19 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
                     color: Colors.white,
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(Icons.person, color: Colors.black, size: 150),
+                  child: widget.portfolioImageUrl != null
+                      ? ClipOval(
+                          child: Image.network(
+                            widget.portfolioImageUrl!,
+                            fit: BoxFit.cover,
+                            width: 280,
+                            height: 280,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Icon(Icons.person, color: Colors.black, size: 150);
+                            },
+                          ),
+                        )
+                      : Icon(Icons.person, color: Colors.black, size: 150),
                 ),
               ),
               Positioned(
