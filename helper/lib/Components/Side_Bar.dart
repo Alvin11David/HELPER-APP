@@ -8,6 +8,7 @@ import '../Document Upload/Profile/Profile_Screen.dart'; // Add this import
 import '../Auth/Sign_In_Screen.dart'; // Add this import
 import '../Employer Dashboard/Employer_Dashboard_Screen.dart';
 import '../Worker Dashboard/Workers_Dashboard_Screen.dart';
+import '../Worker Dashboard/Worker_Ratings_Reviews_Screen.dart';
 
 class SideBar extends StatefulWidget {
   const SideBar({super.key});
@@ -365,7 +366,14 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                           if (_userRole == 'worker') const SizedBox(height: 20),
                           if (_userRole == 'worker')
                             GestureDetector(
-                              onTap: () => setState(() => _selectedIndex = 3),
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const WorkerRatingsReviewsScreen(),
+                                  ),
+                                );
+                              },
                               child: Padding(
                                 padding: EdgeInsets.only(left: 8, right: 8),
                                 child: Row(
