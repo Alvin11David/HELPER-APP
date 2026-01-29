@@ -475,7 +475,14 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                           ),
                           const SizedBox(height: 20),
                           GestureDetector(
-                            onTap: () => setState(() => _selectedIndex = 6),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const ProfileScreen(),
+                                ),
+                              );
+                            },
                             child: Padding(
                               padding: EdgeInsets.only(left: 8, right: 8),
                               child: Row(
