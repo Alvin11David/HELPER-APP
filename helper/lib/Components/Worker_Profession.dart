@@ -9,17 +9,45 @@ class WorkerProfession extends StatelessWidget {
     try {
       User? user = FirebaseAuth.instance.currentUser;
       if (user == null) return null;
-      DocumentSnapshot doc = await FirebaseFirestore.instance
+
+      // First, get the workerType from the user's document
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
           .collection('users')
           .doc(user.uid)
-          .collection('documents')
-          .doc('Professional Workers')
           .get();
-      if (doc.exists && doc.data() != null) {
-        Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
-        if (data.containsKey('Academic Certificate')) {
-          Map<String, dynamic> academicCert = data['Academic Certificate'] as Map<String, dynamic>;
-          return academicCert['profession'] as String?;
+
+      if (userDoc.exists && userDoc.data() != null) {
+        Map<String, dynamic> userData = userDoc.data() as Map<String, dynamic>;
+        String? workerType = userData['workerType'] as String?;
+
+        if (workerType == 'Non-Professional Worker') {
+          // Fetch profession from serviceProviders collection as jobCategoryName
+          DocumentSnapshot serviceProviderDoc = await FirebaseFirestore.instance
+              .collection('serviceProviders')
+              .doc(user.uid)
+              .get();
+
+          if (serviceProviderDoc.exists && serviceProviderDoc.data() != null) {
+            Map<String, dynamic> providerData =
+                serviceProviderDoc.data() as Map<String, dynamic>;
+            return providerData['jobCategoryName'] as String?;
+          }
+        } else {
+          // For Professional Workers, use the existing logic
+          DocumentSnapshot doc = await FirebaseFirestore.instance
+              .collection('users')
+              .doc(user.uid)
+              .collection('documents')
+              .doc('Professional Workers')
+              .get();
+          if (doc.exists && doc.data() != null) {
+            Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+            if (data.containsKey('Academic Certificate')) {
+              Map<String, dynamic> academicCert =
+                  data['Academic Certificate'] as Map<String, dynamic>;
+              return academicCert['profession'] as String?;
+            }
+          }
         }
       }
       return null;
@@ -46,7 +74,7 @@ class WorkerProfession extends StatelessWidget {
           );
         }
         return Text(
-          snapshot.data!,
+          snapshot.data ?? 'Unknown',
           style: TextStyle(color: Colors.black),
         );
       },

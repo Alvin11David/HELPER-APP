@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 
 class JobDetailBookingScreen extends StatefulWidget {
@@ -18,12 +19,16 @@ class JobDetailBookingScreen extends StatefulWidget {
   /// Optional (use whatever you have from WorkerDetailsScreen)
   final String businessName;
   final String profession;
+  final dynamic amount;
+  final String? pricingType;
 
   const JobDetailBookingScreen({
     super.key,
     required this.serviceProviderId,
     this.businessName = "Business Name",
     this.profession = "Profession",
+    this.amount,
+    this.pricingType,
   });
 
   @override
@@ -91,10 +96,21 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
   // ===================== PHASE 4 (Summary) =====================
   String get _businessName => widget.businessName;
   String get _profession => widget.profession;
+  String? _pricingType;
+  String? _amount;
 
   @override
   void initState() {
     super.initState();
+    if (widget.pricingType != null) {
+      _pricingType = widget.pricingType;
+    }
+    if (widget.amount != null) {
+      _amount = widget.amount.toString();
+    }
+    if (widget.pricingType == null || widget.amount == null) {
+      _fetchServiceProviderData();
+    }
     _initLocation();
     _refreshMonthBookings(); // initial calendar availability
     _locationSearchCtrl.addListener(_onSearchChanged);
@@ -107,6 +123,30 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
     _locationSearchCtrl.removeListener(_onSearchChanged);
     _locationSearchCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _fetchServiceProviderData() async {
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('serviceProviders')
+          .doc(widget.serviceProviderId)
+          .get();
+      if (doc.exists) {
+        final data = doc.data()!;
+        setState(() {
+          _pricingType = data['pricingType'] as String?;
+          _amount = data['amount']?.toString();
+        });
+        if (_workersCount != null && _amount != null) {
+          int workers = int.tryParse(_workersCount!) ?? 1;
+          int base = int.tryParse(_amount!) ?? 0;
+          NumberFormat formatter = NumberFormat('#,##0');
+          _amountCtrl.text = formatter.format(workers * base);
+        }
+      }
+    } catch (e) {
+      _toast("Failed to load pricing info: $e");
+    }
   }
 
   // ===================== VALIDATION =====================
@@ -1050,7 +1090,17 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
           hint: "Select the number of workers",
           value: _workersCount,
           items: List.generate(10, (i) => "${i + 1}"),
-          onChanged: (v) => setState(() => _workersCount = v),
+          onChanged: (v) {
+            setState(() {
+              _workersCount = v;
+              if (v != null && _amount != null) {
+                int workers = int.tryParse(v) ?? 1;
+                int base = int.tryParse(_amount!) ?? 0;
+                NumberFormat formatter = NumberFormat('#,##0');
+                _amountCtrl.text = formatter.format(workers * base);
+              }
+            });
+          },
         ),
 
         SizedBox(height: h * 0.016),
@@ -1070,14 +1120,24 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
 
         _label("Amount", w),
         SizedBox(height: h * 0.006),
-        Text(
-          "$_businessName's Hourly/Fixed Price is (Amount)",
-          style: TextStyle(
-            color: Colors.white.withOpacity(0.75),
-            fontFamily: 'Inter',
-            fontWeight: FontWeight.w600,
-            fontSize: w * 0.030,
-          ),
+        Builder(
+          builder: (context) {
+            int workers = int.tryParse(_workersCount ?? '1') ?? 1;
+            String baseAmount = _amount ?? 'Amount';
+            NumberFormat formatter = NumberFormat('#,##0');
+            String displayAmount = baseAmount != 'Amount'
+                ? formatter.format(int.tryParse(baseAmount)! * workers)
+                : 'Amount';
+            return Text(
+              "$_businessName's ${_pricingType ?? 'Hourly/Fixed'} Price is ($displayAmount)",
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.75),
+                fontFamily: 'Inter',
+                fontWeight: FontWeight.w600,
+                fontSize: w * 0.030,
+              ),
+            );
+          },
         ),
         SizedBox(height: h * 0.010),
         _pillTextField(

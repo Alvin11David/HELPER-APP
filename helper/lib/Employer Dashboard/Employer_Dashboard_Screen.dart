@@ -772,7 +772,9 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                                   ),
                                 );
                               }
-                              if (!snap.hasData || snap.data!.docs.isEmpty) {
+                              if (!snap.hasData ||
+                                  snap.data == null ||
+                                  snap.data!.docs.isEmpty) {
                                 return const Center(
                                   child: Text(
                                     "No nearby providers found",
@@ -794,6 +796,8 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                                 final d = doc.data();
                                 final gp = d['workplaceLatLng'];
                                 if (gp is! GeoPoint) continue;
+
+                                if (_currentPos == null) continue;
 
                                 final km = _kmFromCurrent(gp);
 
@@ -908,7 +912,9 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                                   child: CircularProgressIndicator(),
                                 );
                               }
-                              if (!snap.hasData || snap.data!.docs.isEmpty) {
+                              if (!snap.hasData ||
+                                  snap.data == null ||
+                                  snap.data!.docs.isEmpty) {
                                 return const Center(
                                   child: Text("No providers yet"),
                                 );
