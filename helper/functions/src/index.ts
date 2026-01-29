@@ -480,25 +480,51 @@ export const resetPasswordAfterOTP = onCall(async (request) => {
 export const sendCallNotification = onDocumentCreated(
   "calls/{callId}",
   async (event) => {
+    console.log("=== CLOUD FUNCTION sendCallNotification TRIGGERED ===");
+    console.log("Call ID:", event.params.callId);
+
     const call = event.data?.data();
-    if (!call) return;
+    if (!call) {
+      console.log("ERROR: Call data is null");
+      return;
+    }
+
+    console.log("Call data:", call);
 
     const receiverId = call.receiverId;
-    if (!receiverId) return;
+    if (!receiverId) {
+      console.log("ERROR: Receiver ID is null");
+      return;
+    }
+
+    console.log("Receiver ID:", receiverId);
 
     try {
+      console.log("Fetching receiver document from Firestore...");
       const receiverDoc = await admin
         .firestore()
         .collection("users")
         .doc(receiverId)
         .get();
-      const fcmToken = receiverDoc.data()?.fcmToken;
-      if (!fcmToken) {
-        logger.warn(`No FCM token found for user ${receiverId}`);
+
+      if (!receiverDoc.exists) {
+        console.log("ERROR: Receiver document does not exist");
         return;
       }
 
+      const fcmToken = receiverDoc.data()?.fcmToken;
+      if (!fcmToken) {
+        console.log("ERROR: No FCM token found for user", receiverId);
+        return;
+      }
+
+      console.log("FCM token found for receiver:", receiverId);
+      console.log("FCM token preview:", fcmToken.substring(0, 50) + "...");
+
       const callerName = call.callerName || "Unknown Caller";
+      console.log("Caller name:", callerName);
+
+      console.log("Sending FCM notification...");
 
       await admin.messaging().send({
         token: fcmToken,
@@ -529,9 +555,115 @@ export const sendCallNotification = onDocumentCreated(
         },
       });
 
-      logger.info(`Call notification sent to ${receiverId}`);
+      console.log("SUCCESS: Call notification sent to", receiverId);
     } catch (error) {
-      logger.error("Error sending call notification:", error);
+      console.log("ERROR sending call notification:", error);
     }
   },
 );
+
+// Function to send review notification
+export const sendReviewNotification = onDocumentCreated(
+  "Reviews/{reviewId}",
+  async (event) => {
+    console.log("=== CLOUD FUNCTION sendReviewNotification TRIGGERED ===");
+    console.log("Review ID:", event.params.reviewId);
+
+    const review = event.data?.data();
+    if (!review) {
+      console.log("ERROR: Review data is null");
+      return;
+    }
+
+    console.log("Review data:", review);
+
+    const providerId = review.providerId;
+    if (!providerId) {
+      console.log("ERROR: Provider ID is null");
+      return;
+    }
+
+    console.log("Provider ID:", providerId);
+
+    try {
+      console.log("Fetching provider document from Firestore...");
+      const providerDoc = await admin
+        .firestore()
+        .collection("users")
+        .doc(providerId)
+        .get();
+
+      if (!providerDoc.exists) {
+        console.log("ERROR: Provider document does not exist");
+        return;
+      }
+
+      const fcmToken = providerDoc.data()?.fcmToken;
+      if (!fcmToken) {
+        console.log("ERROR: No FCM token found for user", providerId);
+        return;
+      }
+
+      console.log("FCM token found for provider:", providerId);
+      console.log("FCM token preview:", fcmToken.substring(0, 50) + "...");
+
+      const reviewerName = review.reviewerName || "A customer";
+      const rating = review.rating || 0;
+      const reviewText = review.reviewText || "";
+
+      console.log("Reviewer name:", reviewerName);
+      console.log("Rating:", rating);
+      console.log("Review text:", reviewText);
+
+      console.log("Sending FCM notification...");
+
+      await admin.messaging().send({
+        token: fcmToken,
+        data: {
+          type: "review",
+          reviewId: event.params.reviewId,
+          reviewerName: reviewerName,
+          rating: rating.toString(),
+          reviewText: reviewText,
+        },
+        notification: {
+          title: "New Review Received",
+          body: `${reviewerName} gave you ${rating} stars: "${reviewText.length > 50 ? reviewText.substring(0, 50) + "..." : reviewText}"`,
+        },
+        android: {
+          priority: "high",
+          notification: {
+            channelId: "reviews",
+            priority: "high",
+            sound: "default",
+          },
+        },
+        apns: {
+          payload: {
+            aps: {
+              sound: "default",
+              badge: 1,
+            },
+          },
+        },
+      });
+
+      console.log("SUCCESS: Review notification sent to", providerId);
+    } catch (error) {
+      console.log("ERROR sending review notification:", error);
+    }
+  },
+);
+
+// Test function to verify Cloud Functions are working
+export const testCallNotification = onRequest(async (req, res) => {
+  console.log("=== TEST CALL NOTIFICATION ENDPOINT CALLED ===");
+  console.log("Request method:", req.method);
+  console.log("Request body:", req.body);
+
+  res.status(200).json({
+    success: true,
+    message: "Cloud Function is working! Check Firebase Functions logs.",
+    timestamp: new Date().toISOString(),
+  });
+});
