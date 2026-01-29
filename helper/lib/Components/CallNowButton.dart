@@ -60,7 +60,9 @@ class CallNowButton extends StatelessWidget {
       'timestamp': FieldValue.serverTimestamp(),
     });
 
-    print('Call document created in Firestore, Cloud Function should send FCM notification');
+    print(
+      'Call document created in Firestore, Cloud Function should send FCM notification',
+    );
 
     print('Navigating to VoiceCallScreen');
 
@@ -80,9 +82,9 @@ class CallNowButton extends StatelessWidget {
       print('Navigation successful');
     } catch (e) {
       print('Navigation failed: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Navigation failed: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Navigation failed: $e')));
     }
   }
 

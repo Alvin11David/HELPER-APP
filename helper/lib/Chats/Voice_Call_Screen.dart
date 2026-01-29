@@ -22,6 +22,12 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
   bool _volumeClicked = false;
   bool _micClicked = false;
 
+  void _endCall() {
+    // TODO: Add logic to end the actual call (VoIP, update call status, etc.)
+    // For now, just navigate back
+    Navigator.of(context).pop();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -115,19 +121,22 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
-                            Icons.mic_off,
+                            _micClicked ? Icons.mic : Icons.mic_off,
                             color: _micClicked ? Colors.white : Colors.black,
                           ),
                         ),
                       ),
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: Colors.red,
-                          shape: BoxShape.circle,
+                      GestureDetector(
+                        onTap: _endCall,
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(Icons.call_end, color: Colors.white),
                         ),
-                        child: Icon(Icons.call_end, color: Colors.white),
                       ),
                     ],
                   ),
