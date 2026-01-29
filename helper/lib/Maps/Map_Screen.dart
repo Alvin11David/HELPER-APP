@@ -10,6 +10,7 @@ import 'dart:async';
 import '../Components/Bottom_Nav_Bar.dart';
 import '../Components/User_Name.dart'; // Add this import
 import '../Components/Side_Bar.dart'; // Add this import
+import '../Components/UnreadMessagesBadge.dart'; // Add this import
 import '../Employer Dashboard/job_detail_booking_screen.dart';
 
 class MapScreen extends StatefulWidget {
@@ -872,21 +873,33 @@ class _MapScreenState extends State<MapScreen> {
                     child: const Icon(Icons.person, color: Colors.black),
                   ),
                   const SizedBox(width: 10),
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.2),
-                          blurRadius: 10,
-                          offset: Offset(0, 5),
+                  Stack(
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.2),
+                              blurRadius: 10,
+                              offset: Offset(0, 5),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                    child: const Icon(Icons.notifications, color: Colors.black),
+                        child: const Icon(
+                          Icons.notifications,
+                          color: Colors.black,
+                        ),
+                      ),
+                      Positioned(
+                        top: 0,
+                        right: 0,
+                        child: UnreadMessagesBadge(),
+                      ),
+                    ],
                   ),
                 ],
               ),

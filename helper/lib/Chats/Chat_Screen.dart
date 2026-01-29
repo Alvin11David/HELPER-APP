@@ -186,7 +186,11 @@ class _ChatScreenState extends State<ChatScreen> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => VoiceCallScreen(),
+                                builder: (context) => VoiceCallScreen(
+                                  businessName: widget.chatPartnerName,
+                                  providerId: widget.providerId,
+                                  callerId: widget.employerId,
+                                ),
                               ),
                             );
                           },
