@@ -91,6 +91,57 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
     );
   }
 
+  Future<void> _getTopRatedCategories() async {
+    try {
+      // Get all reviews from subcollections
+      QuerySnapshot reviewsSnapshot = await FirebaseFirestore.instance
+          .collectionGroup('reviews')
+          .get();
+
+      // Group ratings by providerId
+      Map<String, List<double>> ratingsByProvider = {};
+      for (var doc in reviewsSnapshot.docs) {
+        String providerId = doc.reference.parent.parent!.id;
+        double rating = (doc['rating'] ?? 0).toDouble();
+        if (providerId.isNotEmpty) {
+          ratingsByProvider.putIfAbsent(providerId, () => []).add(rating);
+        }
+      }
+
+      // Calculate average ratings
+      Map<String, double> avgRatings = {};
+      ratingsByProvider.forEach((providerId, ratings) {
+        double avg = ratings.reduce((a, b) => a + b) / ratings.length;
+        avgRatings[providerId] = avg;
+      });
+
+      // Get providers with avg rating >= 4.0
+      Set<String> topRatedProviderIds = avgRatings.entries
+          .where((entry) => entry.value >= 4.0)
+          .map((entry) => entry.key)
+          .toSet();
+
+      // Get their categories
+      Set<String> categories = {};
+      for (var providerId in topRatedProviderIds) {
+        DocumentSnapshot providerDoc = await FirebaseFirestore.instance
+            .collection('serviceProviders')
+            .doc(providerId)
+            .get();
+        String category = providerDoc['jobCategoryName'] ?? '';
+        if (category.isNotEmpty) {
+          categories.add(category);
+        }
+      }
+
+      setState(() {
+        topRatedCategories = categories.toList();
+      });
+    } catch (e) {
+      print('Error getting top rated categories: $e');
+    }
+  }
+
   List<String> professions = [
     'Accountant',
     'Actor',
@@ -370,6 +421,7 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
   bool _showFilters = false;
   String? selectedFilter;
   Position? userPosition;
+  List<String> topRatedCategories = [];
 
   @override
   void initState() {
@@ -378,6 +430,7 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
     _focusNode = FocusNode();
     _controller = TextEditingController();
     _getUserPosition();
+    _getTopRatedCategories();
     filteredProfessions = List.from(professions);
     filteredImages = List.from(professionImages);
     filteredRatings = List.from(ratings);
@@ -789,6 +842,10 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                         allProfessions = allProfessions
                             .where((cat) => nearbyCategories.contains(cat))
                             .toList();
+                      } else if (selectedFilter == 'Top Rated') {
+                        allProfessions = allProfessions
+                            .where((cat) => topRatedCategories.contains(cat))
+                            .toList();
                       }
                       List<String> dynamicCategoriesList = dynamicCategories
                           .toList();
@@ -838,7 +895,15 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                         currentProfessions = currentProfessions
                             .where((cat) => nearbyCategories.contains(cat))
                             .toList();
+                      } else if (selectedFilter == 'Top Rated') {
+                        currentProfessions = currentProfessions
+                            .where((cat) => topRatedCategories.contains(cat))
+                            .toList();
                       }
+                      // Ensure only categories with providers are shown
+                      currentProfessions = currentProfessions
+                          .where((cat) => (providerCounts[cat] ?? 0) > 0)
+                          .toList();
                       String query = _controller.text.toLowerCase();
                       if (query.isNotEmpty) {
                         currentProfessions = currentProfessions
