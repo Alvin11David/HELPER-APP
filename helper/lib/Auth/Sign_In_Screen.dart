@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:helper/Auth/Forgot_Password_Screen.dart';
 import 'package:helper/Document%20Upload/Select_Worker_Type_Screen.dart';
 import 'package:helper/Employer%20Dashboard/Employer_Dashboard_Screen.dart';
@@ -189,6 +190,16 @@ class _SignInScreenState extends State<SignInScreen> {
     final snap = await docRef.get();
     if (snap.exists) return;
 
+    // Get FCM token
+    String? fcmToken;
+    try {
+      final FirebaseMessaging messaging = FirebaseMessaging.instance;
+      fcmToken = await messaging.getToken();
+    } catch (e) {
+      // Handle error if needed, but continue without FCM token
+      fcmToken = null;
+    }
+
     // Best-effort: recover from older .add() docs
     String fullName = user.displayName ?? '';
     String email = user.email ?? '';
@@ -225,7 +236,7 @@ class _SignInScreenState extends State<SignInScreen> {
       }
     } catch (_) {}
 
-    await docRef.set({
+    final payload = {
       'uid': user.uid,
       'provider': provider,
       'fullName': fullName,
@@ -235,7 +246,13 @@ class _SignInScreenState extends State<SignInScreen> {
       'verified': true,
       'createdAt': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+    };
+
+    if (fcmToken != null) {
+      payload['fcmToken'] = fcmToken;
+    }
+
+    await docRef.set(payload, SetOptions(merge: true));
   }
 
   Future<void> _goToDashboard() async {
@@ -455,6 +472,16 @@ class _SignInScreenState extends State<SignInScreen> {
     final docRef = signUpCol.doc(user.uid);
     final snap = await docRef.get();
 
+    // Get FCM token
+    String? fcmToken;
+    try {
+      final FirebaseMessaging messaging = FirebaseMessaging.instance;
+      fcmToken = await messaging.getToken();
+    } catch (e) {
+      // Handle error if needed, but continue without FCM token
+      fcmToken = null;
+    }
+
     final payload = <String, dynamic>{
       'uid': user.uid,
       'provider': 'google',
@@ -467,12 +494,16 @@ class _SignInScreenState extends State<SignInScreen> {
       'updatedAt': FieldValue.serverTimestamp(),
     };
 
+    if (fcmToken != null) {
+      payload['fcmToken'] = fcmToken;
+    }
+
     if (!snap.exists) {
       // New user - set default empty role
       payload['role'] = '';
       await docRef.set({...payload, 'createdAt': FieldValue.serverTimestamp()});
     } else {
-      // Existing user - don't overwrite role if it exists
+      // Existing user - don't overwrite role if it exists, but update FCM token
       final existingData = snap.data();
       if (existingData != null &&
           existingData['role'] != null &&
