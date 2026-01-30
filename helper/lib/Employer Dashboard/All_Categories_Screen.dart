@@ -713,11 +713,13 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                 curve: Curves.easeInOut,
                 top: 175,
                 left: _showFilters ? w * 0.04 : -500,
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: List.generate(
-                      4,
+                child: SizedBox(
+                  width: w - 2 * w * 0.04,
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: List.generate(
+                        4,
                       (index) => GestureDetector(
                         onTap: () async {
                           setState(() {
@@ -828,6 +830,7 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                   ),
                 ),
               ),
+            ),
               AnimatedPositioned(
                 duration: const Duration(milliseconds: 300),
                 curve: Curves.easeInOut,
