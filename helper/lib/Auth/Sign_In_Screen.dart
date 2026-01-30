@@ -4,10 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:helper/Document%20Upload/Select_Worker_Type_Screen.dart';
-import 'package:helper/Employer%20Dashboard/Employer_Dashboard_Screen.dart';
-import 'package:helper/Intro/Role_Selection_Screen.dart';
-import 'package:helper/Worker%20Dashboard/Workers_skills_and_Job_details.dart';
+import 'package:helper/Worker%20Dashboard/Worker_Jobs_Hub_Screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/foundation.dart';
@@ -240,7 +237,7 @@ class _SignInScreenState extends State<SignInScreen> {
     if (!mounted) return;
     Navigator.pushAndRemoveUntil(
       context,
-      MaterialPageRoute(builder: (_) => const EmployerDashboardScreen()),
+      MaterialPageRoute(builder: (_) => const WorkerJobsHubScreen()),
       (_) => false,
     );
   }
@@ -912,12 +909,14 @@ class _PhoneBlock extends StatelessWidget {
           validator: (v) {
             final t = (v ?? '').trim();
             if (t.isEmpty) return 'Phone number is required';
-            if (!t.startsWith('+256 '))
+            if (!t.startsWith('+256 ')) {
               return 'Phone number must start with +256';
+            }
             final digits = t.substring(5);
             if (digits.length != 9) return 'Enter exactly 9 digits after +256';
-            if (!RegExp(r'^[0-9]{9}$').hasMatch(digits))
+            if (!RegExp(r'^[0-9]{9}$').hasMatch(digits)) {
               return 'Enter valid 9-digit number';
+            }
             return null;
           },
         ),
