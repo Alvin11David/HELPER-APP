@@ -13,8 +13,6 @@ import 'package:helper/Intro/Role_Selection_Screen.dart';
 
 import 'OTP_Verification_Screen.dart';
 import 'Sign_In_Screen.dart';
-
-// ✅ CHANGE THIS import to your real dashboard file path
 import 'package:helper/Worker Dashboard/workers_dashboard_screen.dart';
 
 class _UgandaPhoneFormatter extends TextInputFormatter {
@@ -209,8 +207,6 @@ class _PhoneNumberEmailAddressScreenState
                   emailOrPhone: phoneNumber,
                   // ✅ NEW: OTP screen must use THIS, and must NOT start verifyPhoneNumber again.
                   verificationId: verificationId,
-
-                  // ✅ Send needed data so OTP can save Sign Up/{uid}
                   fullName: fullName,
                   password: '',
                   referralCode: '', // phone flow no password

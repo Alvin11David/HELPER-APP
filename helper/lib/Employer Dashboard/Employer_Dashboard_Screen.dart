@@ -554,7 +554,9 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => CategoryProvidersScreen(categoryName: 'House'),
+                                builder: (context) => CategoryProvidersScreen(
+                                  categoryName: 'House',
+                                ),
                               ),
                             );
                           },
@@ -588,7 +590,9 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => CategoryProvidersScreen(categoryName: 'Electricity'),
+                                builder: (context) => CategoryProvidersScreen(
+                                  categoryName: 'Electricity',
+                                ),
                               ),
                             );
                           },
@@ -622,7 +626,9 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => CategoryProvidersScreen(categoryName: 'Driver'),
+                                builder: (context) => CategoryProvidersScreen(
+                                  categoryName: 'Driver',
+                                ),
                               ),
                             );
                           },
@@ -656,7 +662,9 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => CategoryProvidersScreen(categoryName: 'Plumber'),
+                                builder: (context) => CategoryProvidersScreen(
+                                  categoryName: 'Plumber',
+                                ),
                               ),
                             );
                           },
