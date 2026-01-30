@@ -716,28 +716,30 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                       List<double> allRatings = [...ratings];
                       List<bool> allLiked = [...liked];
 
-                      // Add default values for dynamic categories
-                      for (int i = 0; i < dynamicCategoriesList.length; i++) {
-                        allImages.add('assets/images/professional.png');
-                        allRatings.add(3.0); // Default rating
-                        allLiked.add(false);
-                      }
-
-                      // Update filtered lists if needed
-                      if (filteredProfessions.length != allProfessions.length) {
-                        filteredProfessions = List.from(allProfessions);
-                        filteredImages = List.from(allImages);
-                        filteredRatings = List.from(allRatings);
-                        filteredLiked = List.from(allLiked);
+                      // Update class-level lists if dynamic categories were added
+                      if (dynamicCategoriesList.isNotEmpty && professions.length != allProfessions.length) {
+                        setState(() {
+                          professions.addAll(dynamicCategoriesList);
+                          professionImages.addAll(List.generate(dynamicCategoriesList.length, (index) => 'assets/images/professional.png'));
+                          ratings.addAll(List.generate(dynamicCategoriesList.length, (index) => 3.0));
+                          liked.addAll(List.generate(dynamicCategoriesList.length, (index) => false));
+                          filteredProfessions = List.from(professions);
+                          filteredImages = List.from(professionImages);
+                          filteredRatings = List.from(ratings);
+                          filteredLiked = List.from(liked);
+                        });
                       }
 
                       // Update suggestions list with dynamic categories
-                      List<String> allSuggestions = [...suggestions, ...dynamicCategoriesList];
-                      // Note: We don't update the static suggestions list, but use allSuggestions for display
+                      if (dynamicCategoriesList.isNotEmpty && !suggestions.contains(dynamicCategoriesList.first)) {
+                        setState(() {
+                          suggestions.addAll(dynamicCategoriesList);
+                        });
+                      }
 
                       return Builder(
                         builder: (context) {
-                          int half = (filteredProfessions.length / 2).ceil();
+                          int half = (allProfessions.length / 2).ceil();
                           return SingleChildScrollView(
                             child: Row(
                               children: [
@@ -745,10 +747,7 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                                   child: Column(
                                     children: List.generate(half, (index) {
                                       int profIndex = 2 * index;
-                                      if (profIndex >=
-                                              filteredProfessions.length ||
-                                          profIndex >= filteredLiked.length ||
-                                          profIndex >= filteredRatings.length) {
+                                      if (profIndex >= allProfessions.length) {
                                         return const SizedBox(
                                           width: 183,
                                           height: 110,
