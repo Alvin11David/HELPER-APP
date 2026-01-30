@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:helper/Components/User_Name.dart';
 import 'package:helper/Components/Side_Bar.dart';
 import 'package:helper/Employer%20Dashboard/Category_Providers_Screen.dart';
@@ -62,6 +63,32 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
   Future<List<String>> _getAllCategories() async {
     final dynamicCategories = await _getDynamicCategories();
     return [...suggestions, ...dynamicCategories];
+  }
+
+  Future<void> _getUserPosition() async {
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      // Handle if location services are disabled
+      return;
+    }
+
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        // Handle denied permission
+        return;
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      // Handle permanently denied
+      return;
+    }
+
+    userPosition = await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high,
+    );
   }
 
   List<String> professions = [
@@ -341,6 +368,8 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
   List<double> filteredRatings = [];
   List<bool> filteredLiked = [];
   bool _showFilters = false;
+  String? selectedFilter;
+  Position? userPosition;
 
   @override
   void initState() {
@@ -348,26 +377,13 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
     _greeting = _getGreeting();
     _focusNode = FocusNode();
     _controller = TextEditingController();
+    _getUserPosition();
     filteredProfessions = List.from(professions);
     filteredImages = List.from(professionImages);
     filteredRatings = List.from(ratings);
     filteredLiked = List.from(liked);
     _controller.addListener(() {
-      String query = _controller.text.toLowerCase();
-      setState(() {
-        filteredProfessions.clear();
-        filteredImages.clear();
-        filteredRatings.clear();
-        filteredLiked.clear();
-        for (int i = 0; i < professions.length; i++) {
-          if (professions[i].toLowerCase().contains(query)) {
-            filteredProfessions.add(professions[i]);
-            filteredImages.add(professionImages[i]);
-            filteredRatings.add(ratings[i]);
-            filteredLiked.add(liked[i]);
-          }
-        }
-      });
+      setState(() {});
     });
   }
 
@@ -591,93 +607,108 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                   child: Row(
                     children: List.generate(
                       4,
-                      (index) => Container(
-                        width: 100,
-                        height: 40,
-                        margin: const EdgeInsets.only(right: 10),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(20),
+                      (index) => GestureDetector(
+                        onTap: () => setState(() {
+                          selectedFilter = index == 0
+                              ? 'Nearest'
+                              : index == 1
+                                  ? 'Top Rated'
+                                  : index == 2
+                                      ? 'Available'
+                                      : null;
+                        }),
+                        child: Container(
+                          width: 100,
+                          height: 40,
+                          margin: const EdgeInsets.only(right: 10),
+                          decoration: BoxDecoration(
+                            color: (index == 0 && selectedFilter == 'Nearest') ||
+                                    (index == 1 && selectedFilter == 'Top Rated') ||
+                                    (index == 2 && selectedFilter == 'Available')
+                                ? Colors.blue[100]
+                                : Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: index == 0
+                              ? Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.location_on,
+                                        color: Colors.black,
+                                        size: 16,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      const Text(
+                                        'Nearest',
+                                        style: TextStyle(
+                                          color: Colors.black,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                )
+                              : index == 1
+                              ? Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.star,
+                                        color: Colors.orange,
+                                        size: 16,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      const Text(
+                                        'Top Rated',
+                                        style: TextStyle(
+                                          color: Colors.black,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                )
+                              : index == 2
+                              ? Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.calendar_today,
+                                        color: Colors.black,
+                                        size: 16,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      const Text(
+                                        'Available',
+                                        style: TextStyle(
+                                          color: Colors.black,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                )
+                              : null,
                         ),
-                        child: index == 0
-                            ? Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      Icons.location_on,
-                                      color: Colors.black,
-                                      size: 16,
-                                    ),
-                                    const SizedBox(width: 4),
-                                    const Text(
-                                      'Nearest',
-                                      style: TextStyle(
-                                        color: Colors.black,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              )
-                            : index == 1
-                            ? Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      Icons.star,
-                                      color: Colors.orange,
-                                      size: 16,
-                                    ),
-                                    const SizedBox(width: 4),
-                                    const Text(
-                                      'Top Rated',
-                                      style: TextStyle(
-                                        color: Colors.black,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              )
-                            : index == 2
-                            ? Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      Icons.calendar_today,
-                                      color: Colors.black,
-                                      size: 16,
-                                    ),
-                                    const SizedBox(width: 4),
-                                    const Text(
-                                      'Available',
-                                      style: TextStyle(
-                                        color: Colors.black,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              )
-                            : null,
                       ),
                     ),
                   ),
                 ),
               ),
-              AnimatedPositioned(
+            AnimatedPositioned(
                 duration: const Duration(milliseconds: 300),
                 curve: Curves.easeInOut,
                 top: (_showFilters ? 225 : 175) + 30,
@@ -694,23 +725,47 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                     builder: (context, snapshot) {
                       Map<String, int> providerCounts = {};
                       Set<String> dynamicCategories = {};
+                      Set<String> nearbyCategories = {};
 
                       if (snapshot.hasData) {
                         for (var doc in snapshot.data!.docs) {
                           String category = doc['jobCategoryName'] ?? '';
                           if (category.isNotEmpty) {
-                            providerCounts[category] =
-                                (providerCounts[category] ?? 0) + 1;
-                            // Collect unique categories not in suggestions
-                            if (!suggestions.contains(category)) {
-                              dynamicCategories.add(category);
+                            bool isNearby = true;
+                            if (selectedFilter == 'Nearest' && userPosition != null) {
+                              double? lat = doc['latitude'];
+                              double? lng = doc['longitude'];
+                              if (lat != null && lng != null) {
+                                double distance = Geolocator.distanceBetween(
+                                  userPosition!.latitude,
+                                  userPosition!.longitude,
+                                  lat,
+                                  lng,
+                                );
+                                // Assuming 10km radius
+                                isNearby = distance <= 10000;
+                              } else {
+                                isNearby = false;
+                              }
+                            }
+                            if (isNearby) {
+                              providerCounts[category] =
+                                  (providerCounts[category] ?? 0) + 1;
+                              // Collect unique categories not in suggestions
+                              if (!suggestions.contains(category)) {
+                                dynamicCategories.add(category);
+                              }
+                              nearbyCategories.add(category);
                             }
                           }
                         }
                       }
 
-                      // Update professions list with dynamic categories
+                      // If Nearest is selected, only show nearby categories
                       List<String> allProfessions = [...professions];
+                      if (selectedFilter == 'Nearest') {
+                        allProfessions = allProfessions.where((cat) => nearbyCategories.contains(cat)).toList();
+                      }
                       List<String> dynamicCategoriesList = dynamicCategories
                           .toList();
                       allProfessions.addAll(dynamicCategoriesList);
@@ -750,6 +805,40 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                           });
                         });
                       }
+
+                      // Apply filters
+                      List<String> currentProfessions = List.from(allProfessions);
+                      if (selectedFilter == 'Nearest') {
+                        currentProfessions = currentProfessions.where((cat) => nearbyCategories.contains(cat)).toList();
+                      }
+                      String query = _controller.text.toLowerCase();
+                      if (query.isNotEmpty) {
+                        currentProfessions = currentProfessions.where((prof) => prof.toLowerCase().contains(query)).toList();
+                      }
+
+                      // Build corresponding lists
+                      List<String> currentImages = [];
+                      List<double> currentRatings = [];
+                      List<bool> currentLiked = [];
+                      for (String prof in currentProfessions) {
+                        int index = allProfessions.indexOf(prof);
+                        if (index >= 0 && index < professionImages.length) {
+                          currentImages.add(professionImages[index]);
+                          currentRatings.add(ratings[index]);
+                          currentLiked.add(liked[index]);
+                        } else {
+                          // Dynamic category
+                          currentImages.add('assets/images/professional.png');
+                          currentRatings.add(3.0);
+                          currentLiked.add(false);
+                        }
+                      }
+
+                      // Update filtered lists
+                      filteredProfessions = currentProfessions;
+                      filteredImages = currentImages;
+                      filteredRatings = currentRatings;
+                      filteredLiked = currentLiked;
 
                       return Builder(
                         builder: (context) {
