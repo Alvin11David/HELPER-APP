@@ -749,11 +749,12 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                               Map<String, dynamic>? data =
                                   doc.data() as Map<String, dynamic>?;
                               if (data != null &&
-                                  data.containsKey('latitude') &&
-                                  data.containsKey('longitude')) {
-                                double? lat = data['latitude'];
-                                double? lng = data['longitude'];
-                                if (lat != null && lng != null) {
+                                  data.containsKey('workplaceLatLng')) {
+                                GeoPoint? geoPoint =
+                                    data['workplaceLatLng'] as GeoPoint?;
+                                if (geoPoint != null) {
+                                  double lat = geoPoint.latitude;
+                                  double lng = geoPoint.longitude;
                                   double distance = Geolocator.distanceBetween(
                                     userPosition!.latitude,
                                     userPosition!.longitude,
