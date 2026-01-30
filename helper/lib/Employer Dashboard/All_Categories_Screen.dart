@@ -34,6 +34,34 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
     'Cleaning',
     'Gardening',
   ];
+
+  Future<List<String>> _getDynamicCategories() async {
+    try {
+      final QuerySnapshot snapshot = await FirebaseFirestore.instance
+          .collection('serviceProviders')
+          .get();
+
+      final Set<String> uniqueCategories = {};
+      for (var doc in snapshot.docs) {
+        final category = doc['jobCategoryName'] as String?;
+        if (category != null && category.isNotEmpty) {
+          uniqueCategories.add(category);
+        }
+      }
+
+      // Return categories that are not already in suggestions
+      return uniqueCategories.where((category) => !suggestions.contains(category)).toList();
+    } catch (e) {
+      print('Error fetching dynamic categories: $e');
+      return [];
+    }
+  }
+
+  Future<List<String>> _getAllCategories() async {
+    final dynamicCategories = await _getDynamicCategories();
+    return [...suggestions, ...dynamicCategories];
+  }
+
   List<String> professions = [
     'Accountant',
     'Actor',
@@ -662,13 +690,51 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                         .snapshots(),
                     builder: (context, snapshot) {
                       Map<String, int> providerCounts = {};
+                      Set<String> dynamicCategories = {};
+
                       if (snapshot.hasData) {
                         for (var doc in snapshot.data!.docs) {
                           String category = doc['jobCategoryName'] ?? '';
-                          providerCounts[category] =
-                              (providerCounts[category] ?? 0) + 1;
+                          if (category.isNotEmpty) {
+                            providerCounts[category] =
+                                (providerCounts[category] ?? 0) + 1;
+                            // Collect unique categories not in suggestions
+                            if (!suggestions.contains(category)) {
+                              dynamicCategories.add(category);
+                            }
+                          }
                         }
                       }
+
+                      // Update professions list with dynamic categories
+                      List<String> allProfessions = [...professions];
+                      List<String> dynamicCategoriesList = dynamicCategories.toList();
+                      allProfessions.addAll(dynamicCategoriesList);
+
+                      // Update corresponding lists for dynamic categories
+                      List<String> allImages = [...professionImages];
+                      List<double> allRatings = [...ratings];
+                      List<bool> allLiked = [...liked];
+
+                      // Add default values for dynamic categories
+                      for (int i = 0; i < dynamicCategoriesList.length; i++) {
+                        allImages.add('assets/images/professional.png');
+                        allRatings.add(3.0); // Default rating
+                        allLiked.add(false);
+                      }
+
+                      // Update filtered lists if needed
+                      if (filteredProfessions.length != allProfessions.length) {
+                        filteredProfessions = List.from(allProfessions);
+                        filteredImages = List.from(allImages);
+                        filteredRatings = List.from(allRatings);
+                        filteredLiked = List.from(allLiked);
+                      }
+
+                      // Update suggestions list with dynamic categories
+                      List<String> allSuggestions = [...suggestions, ...dynamicCategoriesList];
+                      // Note: We don't update the static suggestions list, but use allSuggestions for display
+
                       return Builder(
                         builder: (context) {
                           int half = (filteredProfessions.length / 2).ceil();

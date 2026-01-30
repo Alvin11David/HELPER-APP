@@ -52,7 +52,8 @@ class OTPVerificationScreen extends StatefulWidget {
     required this.verificationId,
     required this.fullName,
     required this.password,
-    required this.referralCode, String? fcmToken, // <-- Added
+    required this.referralCode,
+    String? fcmToken, // <-- Added
   });
 
   @override
