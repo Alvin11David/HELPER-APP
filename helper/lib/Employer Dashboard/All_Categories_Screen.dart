@@ -721,7 +721,8 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                       List<bool> allLiked = [...liked];
 
                       // Update class-level lists if dynamic categories were added
-                      if (!_dynamicAdded && dynamicCategoriesList.isNotEmpty &&
+                      if (!_dynamicAdded &&
+                          dynamicCategoriesList.isNotEmpty &&
                           professions.length != allProfessions.length) {
                         _dynamicAdded = true;
                         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -749,8 +750,6 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                           });
                         });
                       }
-
-
 
                       return Builder(
                         builder: (context) {
