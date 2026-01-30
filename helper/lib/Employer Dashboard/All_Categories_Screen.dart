@@ -95,13 +95,13 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
     try {
       // Get all reviews from subcollections
       QuerySnapshot reviewsSnapshot = await FirebaseFirestore.instance
-          .collectionGroup('reviews')
+          .collectionGroup('Reviews')
           .get();
 
       // Group ratings by providerId
       Map<String, List<double>> ratingsByProvider = {};
       for (var doc in reviewsSnapshot.docs) {
-        String providerId = doc.reference.parent.parent!.id;
+        String providerId = doc['providerId'] ?? '';
         double rating = (doc['rating'] ?? 0).toDouble();
         if (providerId.isNotEmpty) {
           ratingsByProvider.putIfAbsent(providerId, () => []).add(rating);
@@ -139,6 +139,59 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
       });
     } catch (e) {
       print('Error getting top rated categories: $e');
+    }
+  }
+
+  Future<Map<String, double>> _getCategoryRatings() async {
+    try {
+      // Get all reviews from subcollections
+      QuerySnapshot reviewsSnapshot = await FirebaseFirestore.instance
+          .collectionGroup('Reviews')
+          .get();
+
+      // Group ratings by providerId
+      Map<String, List<double>> ratingsByProvider = {};
+      for (var doc in reviewsSnapshot.docs) {
+        String providerId = doc['providerId'] ?? '';
+        double rating = (doc['rating'] ?? 0).toDouble();
+        if (providerId.isNotEmpty) {
+          ratingsByProvider.putIfAbsent(providerId, () => []).add(rating);
+        }
+      }
+
+      // Calculate average ratings per provider
+      Map<String, double> providerAvgs = {};
+      ratingsByProvider.forEach((providerId, ratings) {
+        double avg = ratings.reduce((a, b) => a + b) / ratings.length;
+        providerAvgs[providerId] = avg;
+      });
+
+      // Group by category
+      Map<String, List<double>> categoryRatingsMap = {};
+      for (var providerId in providerAvgs.keys) {
+        DocumentSnapshot providerDoc = await FirebaseFirestore.instance
+            .collection('serviceProviders')
+            .doc(providerId)
+            .get();
+        String category = providerDoc['jobCategoryName'] ?? '';
+        if (category.isNotEmpty) {
+          categoryRatingsMap
+              .putIfAbsent(category, () => [])
+              .add(providerAvgs[providerId]!);
+        }
+      }
+
+      // Calculate average per category
+      Map<String, double> result = {};
+      categoryRatingsMap.forEach((category, ratings) {
+        double avg = ratings.reduce((a, b) => a + b) / ratings.length;
+        result[category] = avg;
+      });
+
+      return result;
+    } catch (e) {
+      print('Error getting category ratings: $e');
+      return {};
     }
   }
 
@@ -422,6 +475,7 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
   String? selectedFilter;
   Position? userPosition;
   List<String> topRatedCategories = [];
+  Map<String, double> categoryRatings = {};
 
   @override
   void initState() {
@@ -431,6 +485,7 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
     _controller = TextEditingController();
     _getUserPosition();
     _getTopRatedCategories();
+    _getCategoryRatings().then((map) => setState(() => categoryRatings = map));
     filteredProfessions = List.from(professions);
     filteredImages = List.from(professionImages);
     filteredRatings = List.from(ratings);
@@ -871,10 +926,9 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                               ),
                             );
                             ratings.addAll(
-                              List.generate(
-                                dynamicCategoriesList.length,
-                                (index) => 3.0,
-                              ),
+                              dynamicCategoriesList
+                                  .map((cat) => categoryRatings[cat] ?? 3.0)
+                                  .toList(),
                             );
                             liked.addAll(
                               List.generate(
@@ -1113,8 +1167,11 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                                                           width: 4,
                                                         ),
                                                         Text(
-                                                          filteredRatings[profIndex]
-                                                              .toString(),
+                                                          (categoryRatings[filteredProfessions[profIndex]] ??
+                                                                  filteredRatings[profIndex])
+                                                              .toStringAsFixed(
+                                                                1,
+                                                              ),
                                                           style:
                                                               const TextStyle(
                                                                 color: Colors
@@ -1307,8 +1364,11 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                                                           width: 4,
                                                         ),
                                                         Text(
-                                                          filteredRatings[profIndex]
-                                                              .toString(),
+                                                          (categoryRatings[filteredProfessions[profIndex]] ??
+                                                                  filteredRatings[profIndex])
+                                                              .toStringAsFixed(
+                                                                1,
+                                                              ),
                                                           style:
                                                               const TextStyle(
                                                                 color: Colors
