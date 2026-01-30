@@ -461,14 +461,17 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
               Positioned(
                 top: 125,
                 left: w * 0.04,
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(15),
+                child: GestureDetector(
+                  onTap: () => Navigator.of(context).pop(),
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    child: const Icon(Icons.chevron_left, color: Colors.black),
                   ),
-                  child: const Icon(Icons.chevron_left, color: Colors.black),
                 ),
               ),
               Positioned(
@@ -608,23 +611,32 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                     children: List.generate(
                       4,
                       (index) => GestureDetector(
-                        onTap: () => setState(() {
-                          selectedFilter = index == 0
-                              ? 'Nearest'
-                              : index == 1
-                                  ? 'Top Rated'
-                                  : index == 2
-                                      ? 'Available'
-                                      : null;
-                        }),
+                        onTap: () async {
+                          setState(() {
+                            selectedFilter = index == 0
+                                ? 'Nearest'
+                                : index == 1
+                                ? 'Top Rated'
+                                : index == 2
+                                ? 'Available'
+                                : null;
+                          });
+                          if (index == 0 && userPosition == null) {
+                            await _getUserPosition();
+                            setState(() {});
+                          }
+                        },
                         child: Container(
                           width: 100,
                           height: 40,
                           margin: const EdgeInsets.only(right: 10),
                           decoration: BoxDecoration(
-                            color: (index == 0 && selectedFilter == 'Nearest') ||
-                                    (index == 1 && selectedFilter == 'Top Rated') ||
-                                    (index == 2 && selectedFilter == 'Available')
+                            color:
+                                (index == 0 && selectedFilter == 'Nearest') ||
+                                    (index == 1 &&
+                                        selectedFilter == 'Top Rated') ||
+                                    (index == 2 &&
+                                        selectedFilter == 'Available')
                                 ? Colors.blue[100]
                                 : Colors.white,
                             borderRadius: BorderRadius.circular(20),
@@ -708,7 +720,7 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                   ),
                 ),
               ),
-            AnimatedPositioned(
+              AnimatedPositioned(
                 duration: const Duration(milliseconds: 300),
                 curve: Curves.easeInOut,
                 top: (_showFilters ? 225 : 175) + 30,
@@ -732,18 +744,27 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                           String category = doc['jobCategoryName'] ?? '';
                           if (category.isNotEmpty) {
                             bool isNearby = true;
-                            if (selectedFilter == 'Nearest' && userPosition != null) {
-                              double? lat = doc['latitude'];
-                              double? lng = doc['longitude'];
-                              if (lat != null && lng != null) {
-                                double distance = Geolocator.distanceBetween(
-                                  userPosition!.latitude,
-                                  userPosition!.longitude,
-                                  lat,
-                                  lng,
-                                );
-                                // Assuming 10km radius
-                                isNearby = distance <= 10000;
+                            if (selectedFilter == 'Nearest' &&
+                                userPosition != null) {
+                              Map<String, dynamic>? data =
+                                  doc.data() as Map<String, dynamic>?;
+                              if (data != null &&
+                                  data.containsKey('latitude') &&
+                                  data.containsKey('longitude')) {
+                                double? lat = data['latitude'];
+                                double? lng = data['longitude'];
+                                if (lat != null && lng != null) {
+                                  double distance = Geolocator.distanceBetween(
+                                    userPosition!.latitude,
+                                    userPosition!.longitude,
+                                    lat,
+                                    lng,
+                                  );
+                                  // Assuming 10km radius
+                                  isNearby = distance <= 10000;
+                                } else {
+                                  isNearby = false;
+                                }
                               } else {
                                 isNearby = false;
                               }
@@ -764,7 +785,9 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                       // If Nearest is selected, only show nearby categories
                       List<String> allProfessions = [...professions];
                       if (selectedFilter == 'Nearest') {
-                        allProfessions = allProfessions.where((cat) => nearbyCategories.contains(cat)).toList();
+                        allProfessions = allProfessions
+                            .where((cat) => nearbyCategories.contains(cat))
+                            .toList();
                       }
                       List<String> dynamicCategoriesList = dynamicCategories
                           .toList();
@@ -807,13 +830,19 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                       }
 
                       // Apply filters
-                      List<String> currentProfessions = List.from(allProfessions);
+                      List<String> currentProfessions = List.from(
+                        allProfessions,
+                      );
                       if (selectedFilter == 'Nearest') {
-                        currentProfessions = currentProfessions.where((cat) => nearbyCategories.contains(cat)).toList();
+                        currentProfessions = currentProfessions
+                            .where((cat) => nearbyCategories.contains(cat))
+                            .toList();
                       }
                       String query = _controller.text.toLowerCase();
                       if (query.isNotEmpty) {
-                        currentProfessions = currentProfessions.where((prof) => prof.toLowerCase().contains(query)).toList();
+                        currentProfessions = currentProfessions
+                            .where((prof) => prof.toLowerCase().contains(query))
+                            .toList();
                       }
 
                       // Build corresponding lists
