@@ -760,8 +760,8 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                                     lat,
                                     lng,
                                   );
-                                  // Assuming 10km radius
-                                  isNearby = distance <= 10000;
+                                  // Assuming 50km radius
+                                  isNearby = distance <= 50000;
                                 } else {
                                   isNearby = false;
                                 }
