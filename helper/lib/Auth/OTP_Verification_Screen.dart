@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/gestures.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:helper/Payments/Registration_Payment_Screen.dart';
 import 'Sign_In_Screen.dart';
 
@@ -237,6 +238,15 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
     final doc = FirebaseFirestore.instance.collection('Sign Up').doc(user.uid);
     final snap = await doc.get();
 
+    // Get FCM token
+    String? fcmToken;
+    try {
+      fcmToken = await FirebaseMessaging.instance.getToken();
+    } catch (e) {
+      // Handle error if needed, but continue without FCM token
+      fcmToken = null;
+    }
+
     final payload = <String, dynamic>{
       'uid': user.uid,
       'provider': provider,
@@ -250,6 +260,10 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
       'verified': true,
       'updatedAt': FieldValue.serverTimestamp(),
     };
+
+    if (fcmToken != null) {
+      payload['fcmToken'] = fcmToken;
+    }
 
     if (!snap.exists) {
       payload['createdAt'] = FieldValue.serverTimestamp();

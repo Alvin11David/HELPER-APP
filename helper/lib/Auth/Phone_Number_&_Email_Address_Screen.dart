@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:helper/Intro/Role_Selection_Screen.dart';
 
@@ -366,6 +367,15 @@ class _PhoneNumberEmailAddressScreenState
     final docRef = col.doc(user.uid);
     final snap = await docRef.get();
 
+    // Get FCM token
+    String? fcmToken;
+    try {
+      fcmToken = await FirebaseMessaging.instance.getToken();
+    } catch (e) {
+      // Handle error if needed, but continue without FCM token
+      fcmToken = null;
+    }
+
     final payload = <String, dynamic>{
       'uid': user.uid,
       'provider': 'google',
@@ -378,6 +388,10 @@ class _PhoneNumberEmailAddressScreenState
       'verified': true,
       'updatedAt': FieldValue.serverTimestamp(),
     };
+
+    if (fcmToken != null) {
+      payload['fcmToken'] = fcmToken;
+    }
 
     if (!snap.exists) {
       await docRef.set({...payload, 'createdAt': FieldValue.serverTimestamp()});
