@@ -50,7 +50,9 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
       }
 
       // Return categories that are not already in suggestions
-      return uniqueCategories.where((category) => !suggestions.contains(category)).toList();
+      return uniqueCategories
+          .where((category) => !suggestions.contains(category))
+          .toList();
     } catch (e) {
       print('Error fetching dynamic categories: $e');
       return [];
@@ -333,6 +335,7 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
   );
   List<double> ratings = List.generate(243, (index) => 2.5 + (index % 6) * 0.5);
   List<bool> liked = List.generate(243, (index) => false);
+  bool _dynamicAdded = false;
   List<String> filteredProfessions = [];
   List<String> filteredImages = [];
   List<double> filteredRatings = [];
@@ -708,7 +711,8 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
 
                       // Update professions list with dynamic categories
                       List<String> allProfessions = [...professions];
-                      List<String> dynamicCategoriesList = dynamicCategories.toList();
+                      List<String> dynamicCategoriesList = dynamicCategories
+                          .toList();
                       allProfessions.addAll(dynamicCategoriesList);
 
                       // Update corresponding lists for dynamic categories
@@ -717,29 +721,40 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                       List<bool> allLiked = [...liked];
 
                       // Update class-level lists if dynamic categories were added
-                      if (dynamicCategoriesList.isNotEmpty && professions.length != allProfessions.length) {
-                        setState(() {
-                          professions.addAll(dynamicCategoriesList);
-                          professionImages.addAll(List.generate(dynamicCategoriesList.length, (index) => 'assets/images/professional.png'));
-                          ratings.addAll(List.generate(dynamicCategoriesList.length, (index) => 3.0));
-                          liked.addAll(List.generate(dynamicCategoriesList.length, (index) => false));
-                          filteredProfessions = List.from(professions);
-                          filteredImages = List.from(professionImages);
-                          filteredRatings = List.from(ratings);
-                          filteredLiked = List.from(liked);
+                      if (!_dynamicAdded && dynamicCategoriesList.isNotEmpty &&
+                          professions.length != allProfessions.length) {
+                        _dynamicAdded = true;
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          setState(() {
+                            professions.addAll(dynamicCategoriesList);
+                            professionImages.addAll(
+                              List.generate(
+                                dynamicCategoriesList.length,
+                                (index) => 'assets/images/professional.png',
+                              ),
+                            );
+                            ratings.addAll(
+                              List.generate(
+                                dynamicCategoriesList.length,
+                                (index) => 3.0,
+                              ),
+                            );
+                            liked.addAll(
+                              List.generate(
+                                dynamicCategoriesList.length,
+                                (index) => false,
+                              ),
+                            );
+                            suggestions.addAll(dynamicCategoriesList);
+                          });
                         });
                       }
 
-                      // Update suggestions list with dynamic categories
-                      if (dynamicCategoriesList.isNotEmpty && !suggestions.contains(dynamicCategoriesList.first)) {
-                        setState(() {
-                          suggestions.addAll(dynamicCategoriesList);
-                        });
-                      }
+
 
                       return Builder(
                         builder: (context) {
-                          int half = (allProfessions.length / 2).ceil();
+                          int half = (filteredProfessions.length / 2).ceil();
                           return SingleChildScrollView(
                             child: Row(
                               children: [
@@ -747,7 +762,10 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                                   child: Column(
                                     children: List.generate(half, (index) {
                                       int profIndex = 2 * index;
-                                      if (profIndex >= allProfessions.length) {
+                                      if (profIndex >=
+                                              filteredProfessions.length ||
+                                          profIndex >= filteredLiked.length ||
+                                          profIndex >= filteredRatings.length) {
                                         return const SizedBox(
                                           width: 183,
                                           height: 110,
