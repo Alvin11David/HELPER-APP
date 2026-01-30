@@ -720,117 +720,117 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                     child: Row(
                       children: List.generate(
                         4,
-                      (index) => GestureDetector(
-                        onTap: () async {
-                          setState(() {
-                            selectedFilter = index == 0
-                                ? 'Nearest'
+                        (index) => GestureDetector(
+                          onTap: () async {
+                            setState(() {
+                              selectedFilter = index == 0
+                                  ? 'Nearest'
+                                  : index == 1
+                                  ? 'Top Rated'
+                                  : index == 2
+                                  ? 'Available'
+                                  : null;
+                            });
+                            if (index == 0 && userPosition == null) {
+                              await _getUserPosition();
+                              setState(() {});
+                            }
+                          },
+                          child: Container(
+                            width: 100,
+                            height: 40,
+                            margin: const EdgeInsets.only(right: 10),
+                            decoration: BoxDecoration(
+                              color:
+                                  (index == 0 && selectedFilter == 'Nearest') ||
+                                      (index == 1 &&
+                                          selectedFilter == 'Top Rated') ||
+                                      (index == 2 &&
+                                          selectedFilter == 'Available')
+                                  ? Colors.blue[100]
+                                  : Colors.white,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: index == 0
+                                ? Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons.location_on,
+                                          color: Colors.black,
+                                          size: 16,
+                                        ),
+                                        const SizedBox(width: 4),
+                                        const Text(
+                                          'Nearest',
+                                          style: TextStyle(
+                                            color: Colors.black,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  )
                                 : index == 1
-                                ? 'Top Rated'
+                                ? Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons.star,
+                                          color: Colors.orange,
+                                          size: 16,
+                                        ),
+                                        const SizedBox(width: 4),
+                                        const Text(
+                                          'Top Rated',
+                                          style: TextStyle(
+                                            color: Colors.black,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  )
                                 : index == 2
-                                ? 'Available'
-                                : null;
-                          });
-                          if (index == 0 && userPosition == null) {
-                            await _getUserPosition();
-                            setState(() {});
-                          }
-                        },
-                        child: Container(
-                          width: 100,
-                          height: 40,
-                          margin: const EdgeInsets.only(right: 10),
-                          decoration: BoxDecoration(
-                            color:
-                                (index == 0 && selectedFilter == 'Nearest') ||
-                                    (index == 1 &&
-                                        selectedFilter == 'Top Rated') ||
-                                    (index == 2 &&
-                                        selectedFilter == 'Available')
-                                ? Colors.blue[100]
-                                : Colors.white,
-                            borderRadius: BorderRadius.circular(20),
+                                ? Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons.calendar_today,
+                                          color: Colors.black,
+                                          size: 16,
+                                        ),
+                                        const SizedBox(width: 4),
+                                        const Text(
+                                          'Available',
+                                          style: TextStyle(
+                                            color: Colors.black,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  )
+                                : null,
                           ),
-                          child: index == 0
-                              ? Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        Icons.location_on,
-                                        color: Colors.black,
-                                        size: 16,
-                                      ),
-                                      const SizedBox(width: 4),
-                                      const Text(
-                                        'Nearest',
-                                        style: TextStyle(
-                                          color: Colors.black,
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                )
-                              : index == 1
-                              ? Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        Icons.star,
-                                        color: Colors.orange,
-                                        size: 16,
-                                      ),
-                                      const SizedBox(width: 4),
-                                      const Text(
-                                        'Top Rated',
-                                        style: TextStyle(
-                                          color: Colors.black,
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                )
-                              : index == 2
-                              ? Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        Icons.calendar_today,
-                                        color: Colors.black,
-                                        size: 16,
-                                      ),
-                                      const SizedBox(width: 4),
-                                      const Text(
-                                        'Available',
-                                        style: TextStyle(
-                                          color: Colors.black,
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                )
-                              : null,
                         ),
                       ),
                     ),
                   ),
                 ),
               ),
-            ),
               AnimatedPositioned(
                 duration: const Duration(milliseconds: 300),
                 curve: Curves.easeInOut,

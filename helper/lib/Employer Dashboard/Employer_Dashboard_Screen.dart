@@ -53,6 +53,12 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
   Future<QuerySnapshot<Map<String, dynamic>>>? _forYouFuture;
   Future<QuerySnapshot<Map<String, dynamic>>>? _nearYouFuture;
 
+  bool _showFilters = false;
+  String? selectedFilter;
+  Position? userPosition;
+  List<String> topRatedCategories = [];
+  Map<String, double> categoryRatings = {};
+
   bool get _hasQuery => _controller.text.trim().length >= 2;
 
   @override
@@ -67,6 +73,9 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
     });
 
     _initLocation(); // ✅ start GPS
+    _getUserPosition();
+    _getTopRatedCategories();
+    _getCategoryRatings().then((map) => setState(() => categoryRatings = map));
   }
 
   @override
@@ -391,6 +400,136 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
     );
   }
 
+  Future<void> _getUserPosition() async {
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      // Handle if location services are disabled
+      return;
+    }
+
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        // Handle denied permission
+        return;
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      // Handle permanently denied
+      return;
+    }
+
+    userPosition = await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high,
+    );
+  }
+
+  Future<void> _getTopRatedCategories() async {
+    try {
+      // Get all reviews from subcollections
+      QuerySnapshot reviewsSnapshot = await FirebaseFirestore.instance
+          .collectionGroup('Reviews')
+          .get();
+
+      // Group ratings by providerId
+      Map<String, List<double>> ratingsByProvider = {};
+      for (var doc in reviewsSnapshot.docs) {
+        String providerId = doc['providerId'] ?? '';
+        double rating = (doc['rating'] ?? 0).toDouble();
+        if (providerId.isNotEmpty) {
+          ratingsByProvider.putIfAbsent(providerId, () => []).add(rating);
+        }
+      }
+
+      // Calculate average ratings
+      Map<String, double> avgRatings = {};
+      ratingsByProvider.forEach((providerId, ratings) {
+        double avg = ratings.reduce((a, b) => a + b) / ratings.length;
+        avgRatings[providerId] = avg;
+      });
+
+      // Get providers with avg rating >= 4.0
+      Set<String> topRatedProviderIds = avgRatings.entries
+          .where((entry) => entry.value >= 4.0)
+          .map((entry) => entry.key)
+          .toSet();
+
+      // Get their categories
+      Set<String> categories = {};
+      for (var providerId in topRatedProviderIds) {
+        DocumentSnapshot providerDoc = await FirebaseFirestore.instance
+            .collection('serviceProviders')
+            .doc(providerId)
+            .get();
+        String category = providerDoc['jobCategoryName'] ?? '';
+        if (category.isNotEmpty) {
+          categories.add(category);
+        }
+      }
+
+      setState(() {
+        topRatedCategories = categories.toList();
+      });
+    } catch (e) {
+      print('Error getting top rated categories: $e');
+    }
+  }
+
+  Future<Map<String, double>> _getCategoryRatings() async {
+    try {
+      // Get all reviews from subcollections
+      QuerySnapshot reviewsSnapshot = await FirebaseFirestore.instance
+          .collectionGroup('Reviews')
+          .get();
+
+      // Group ratings by providerId
+      Map<String, List<double>> ratingsByProvider = {};
+      for (var doc in reviewsSnapshot.docs) {
+        String providerId = doc['providerId'] ?? '';
+        double rating = (doc['rating'] ?? 0).toDouble();
+        if (providerId.isNotEmpty) {
+          ratingsByProvider.putIfAbsent(providerId, () => []).add(rating);
+        }
+      }
+
+      // Calculate average ratings per provider
+      Map<String, double> providerAvgs = {};
+      ratingsByProvider.forEach((providerId, ratings) {
+        double avg = ratings.reduce((a, b) => a + b) / ratings.length;
+        providerAvgs[providerId] = avg;
+      });
+
+      // Group by category
+      Map<String, List<double>> categoryRatingsMap = {};
+      for (var providerId in providerAvgs.keys) {
+        DocumentSnapshot providerDoc = await FirebaseFirestore.instance
+            .collection('serviceProviders')
+            .doc(providerId)
+            .get();
+        String category = providerDoc['jobCategoryName'] ?? '';
+        if (category.isNotEmpty) {
+          categoryRatingsMap
+              .putIfAbsent(category, () => [])
+              .add(providerAvgs[providerId]!);
+        }
+      }
+
+      // Calculate average per category
+      Map<String, double> result = {};
+      categoryRatingsMap.forEach((category, ratings) {
+        double avg = ratings.reduce((a, b) => a + b) / ratings.length;
+        result[category] = avg;
+      });
+
+      return result;
+    } catch (e) {
+      print('Error getting category ratings: $e');
+      return {};
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final w = MediaQuery.of(context).size.width;
@@ -498,20 +637,150 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                           ),
                         ),
                         SizedBox(width: 10),
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: const BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
+                        GestureDetector(
+                          onTap: () =>
+                              setState(() => _showFilters = !_showFilters),
+                          child: Container(
+                            width: 40,
+                            height: 40,
+                            decoration: const BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.tune, color: Colors.black),
                           ),
-                          child: const Icon(Icons.tune, color: Colors.black),
                         ),
                       ],
                     ),
                   ),
-                  Positioned(
-                    top: 125,
+                  AnimatedPositioned(
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                    top: _showFilters ? 130 : 175,
+                    left: _showFilters ? w * 0.04 : -500,
+                    child: SizedBox(
+                      width: w - 2 * w * 0.04,
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: List.generate(
+                            4,
+                            (index) => GestureDetector(
+                              onTap: () async {
+                                setState(() {
+                                  selectedFilter = index == 0
+                                      ? 'Nearest'
+                                      : index == 1
+                                      ? 'Top Rated'
+                                      : index == 2
+                                      ? 'Available'
+                                      : null;
+                                });
+                                if (index == 0 && userPosition == null) {
+                                  await _getUserPosition();
+                                  setState(() {});
+                                }
+                              },
+                              child: Container(
+                                width: 100,
+                                height: 40,
+                                margin: const EdgeInsets.only(right: 10),
+                                decoration: BoxDecoration(
+                                  color:
+                                      (index == 0 &&
+                                              selectedFilter == 'Nearest') ||
+                                          (index == 1 &&
+                                              selectedFilter == 'Top Rated') ||
+                                          (index == 2 &&
+                                              selectedFilter == 'Available')
+                                      ? Colors.blue[100]
+                                      : Colors.white,
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: index == 0
+                                    ? Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(
+                                              Icons.location_on,
+                                              color: Colors.black,
+                                              size: 16,
+                                            ),
+                                            const SizedBox(width: 4),
+                                            const Text(
+                                              'Nearest',
+                                              style: TextStyle(
+                                                color: Colors.black,
+                                                fontSize: 12,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      )
+                                    : index == 1
+                                    ? Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(
+                                              Icons.star,
+                                              color: Colors.orange,
+                                              size: 16,
+                                            ),
+                                            const SizedBox(width: 4),
+                                            const Text(
+                                              'Top Rated',
+                                              style: TextStyle(
+                                                color: Colors.black,
+                                                fontSize: 12,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      )
+                                    : index == 2
+                                    ? Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(
+                                              Icons.calendar_today,
+                                              color: Colors.black,
+                                              size: 16,
+                                            ),
+                                            const SizedBox(width: 4),
+                                            const Text(
+                                              'Available',
+                                              style: TextStyle(
+                                                color: Colors.black,
+                                                fontSize: 12,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      )
+                                    : null,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  AnimatedPositioned(
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                    top: _showFilters ? 175 : 125,
                     left: w * 0.04,
                     right: w * 0.04,
                     child: Row(
@@ -542,8 +811,10 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                       ],
                     ),
                   ),
-                  Positioned(
-                    top: 160,
+                  AnimatedPositioned(
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                    top: _showFilters ? 210 : 160,
                     left: w * 0.04,
                     right: w * 0.04,
                     child: Row(
@@ -728,8 +999,10 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                       ],
                     ),
                   ),
-                  Positioned(
-                    top: 240,
+                  AnimatedPositioned(
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                    top: _showFilters ? 290 : 240,
                     left: w * 0.04,
                     right: w * 0.04,
                     child: Row(
@@ -760,8 +1033,10 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                       ],
                     ),
                   ),
-                  Positioned(
-                    top: 280,
+                  AnimatedPositioned(
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                    top: _showFilters ? 330 : 280,
                     left: w * 0.04,
                     right: 0,
                     child: SizedBox(
@@ -892,8 +1167,10 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                       ),
                     ),
                   ),
-                  Positioned(
-                    top: 280 + w * 0.8 + 20,
+                  AnimatedPositioned(
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                    top: _showFilters ? 330 + w * 0.8 + 20 : 280 + w * 0.8 + 20,
                     left: w * 0.04,
                     right: w * 0.04,
                     child: Row(
@@ -924,8 +1201,10 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                       ],
                     ),
                   ),
-                  Positioned(
-                    top: 280 + w * 0.8 + 60,
+                  AnimatedPositioned(
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                    top: _showFilters ? 330 + w * 0.8 + 60 : 280 + w * 0.8 + 60,
                     left: w * 0.04,
                     right: 0,
                     child: SizedBox(
@@ -1025,8 +1304,10 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                   ),
                   SideBar(key: _sidebarKey),
                   if (_searchResults.isNotEmpty)
-                    Positioned(
-                      top: 120,
+                    AnimatedPositioned(
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeInOut,
+                      top: _showFilters ? 170 : 120,
                       left: w * 0.04,
                       right: w * 0.04,
                       height: 200,
