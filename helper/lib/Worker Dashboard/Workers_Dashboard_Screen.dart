@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:helper/Components/User_Name.dart';
+import 'package:helper/Components/UnreadMessagesBadge.dart';
+import 'package:helper/Components/IncomingCallDialog.dart';
 import '../Components/Side_Bar.dart';
 import 'package:helper/Components/user_avatar_circle.dart';
+import 'package:helper/Components/Bottom_Nav_Bar.dart';
 
 class WorkersDashboardScreen extends StatefulWidget {
   const WorkersDashboardScreen({super.key});
@@ -17,6 +23,237 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
 
   String status = 'Available'; // Can be 'Available', 'On Job', 'Not Available'
 
+  @override
+  void initState() {
+    super.initState();
+    print('=== WORKER DASHBOARD INIT STATE ===');
+
+    // Request notification permissions
+    FirebaseMessaging.instance.requestPermission().then((settings) {
+      print('FCM permission status: ${settings.authorizationStatus}');
+
+      // Show permission status on screen
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('🔓 FCM Permission: ${settings.authorizationStatus}'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      });
+    });
+
+    // Set online status
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    print('Current user UID: $uid');
+
+    if (uid != null) {
+      print('Setting user online and saving FCM token...');
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('🔄 Setting up worker...'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      });
+
+      FirebaseFirestore.instance.collection('users').doc(uid).update({
+        'isOnline': true,
+        'lastSeen': FieldValue.serverTimestamp(),
+      });
+
+      // Save FCM token
+      FirebaseMessaging.instance
+          .getToken()
+          .then((token) {
+            print('FCM token obtained: ${token != null ? "YES" : "NO"}');
+            print('FCM token value: ${token?.substring(0, 50)}...');
+            if (token != null) {
+              FirebaseFirestore.instance.collection('users').doc(uid).update({
+                'fcmToken': token,
+              });
+              print('FCM token saved to Firestore successfully');
+
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('✅ FCM token saved'),
+                    duration: const Duration(seconds: 2),
+                  ),
+                );
+              });
+            } else {
+              print('FCM token is null, cannot save to Firestore');
+
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('❌ FCM token is null'),
+                    duration: const Duration(seconds: 3),
+                  ),
+                );
+              });
+            }
+          })
+          .catchError((error) {
+            print('Error getting FCM token: $error');
+
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('❌ FCM token error: $error'),
+                  duration: const Duration(seconds: 3),
+                ),
+              );
+            });
+          });
+    }
+
+    print('Setting up FCM listeners...');
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('🎧 Setting up FCM listeners'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    });
+
+    // Set up FCM listener for incoming calls
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      print('=== FCM onMessage RECEIVED ===');
+      print('Message data: ${message.data}');
+      print(
+        'Message notification: ${message.notification?.title} - ${message.notification?.body}',
+      );
+
+      // Show visible notification on screen
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('📨 FCM Message: ${message.data['type']}'),
+          duration: const Duration(seconds: 3),
+        ),
+      );
+
+      if (message.data['type'] == 'call') {
+        print(
+          'Call notification detected! Call ID: ${message.data['callId']}, Caller: ${message.data['callerName']}',
+        );
+        print('Attempting to show IncomingCallDialog...');
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('📞 Call from: ${message.data['callerName']}'),
+            duration: const Duration(seconds: 5),
+          ),
+        );
+
+        try {
+          showDialog(
+            context: context,
+            builder: (context) => IncomingCallDialog(
+              callId: message.data['callId']!,
+              callerName: message.data['callerName']!,
+            ),
+          );
+          print('IncomingCallDialog showDialog called successfully');
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('✅ IncomingCallDialog shown'),
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        } catch (e) {
+          print('ERROR showing IncomingCallDialog: $e');
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('❌ Dialog error: $e'),
+              duration: const Duration(seconds: 5),
+            ),
+          );
+        }
+      } else {
+        print(
+          'Received FCM message but type is not "call". Type: ${message.data['type']}',
+        );
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❓ Unknown message type: ${message.data['type']}'),
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    });
+
+    // Handle when app is opened from notification
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      print('=== FCM onMessageOpenedApp RECEIVED ===');
+      print('Message data: ${message.data}');
+
+      if (message.data['type'] == 'call') {
+        print('App opened from call notification');
+        try {
+          showDialog(
+            context: context,
+            builder: (context) => IncomingCallDialog(
+              callId: message.data['callId']!,
+              callerName: message.data['callerName']!,
+            ),
+          );
+          print('IncomingCallDialog shown from opened app');
+        } catch (e) {
+          print('ERROR showing IncomingCallDialog from opened app: $e');
+        }
+      }
+    });
+
+    // Handle initial message if app was launched from notification
+    FirebaseMessaging.instance.getInitialMessage().then((
+      RemoteMessage? message,
+    ) {
+      print('=== FCM getInitialMessage CHECKED ===');
+      if (message != null) {
+        print('Initial message found: ${message.data}');
+        if (message.data['type'] == 'call') {
+          print('App launched from call notification');
+          try {
+            showDialog(
+              context: context,
+              builder: (context) => IncomingCallDialog(
+                callId: message.data['callId']!,
+                callerName: message.data['callerName']!,
+              ),
+            );
+            print('IncomingCallDialog shown from initial message');
+          } catch (e) {
+            print('ERROR showing IncomingCallDialog from initial message: $e');
+          }
+        }
+      } else {
+        print('No initial message found');
+      }
+    });
+
+    print('=== WORKER DASHBOARD INIT STATE COMPLETE ===');
+  }
+
+  @override
+  void dispose() {
+    // Set offline status
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null) {
+      FirebaseFirestore.instance.collection('users').doc(uid).update({
+        'isOnline': false,
+        'lastSeen': FieldValue.serverTimestamp(),
+      });
+    }
+    super.dispose();
+  }
+
   Color getStatusColor() {
     if (status == 'Available') return const Color(0xFF00E539);
     if (status == 'On Job') return Colors.orange;
@@ -29,6 +266,85 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
     if (hour < 17) return 'Good Afternoon';
     if (hour < 21) return 'Good Evening';
     return 'Good Night';
+  }
+
+  Future<void> _showNotifications() async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) return;
+
+    // For worker dashboard, receiver is worker
+    bool isEmployer = false;
+
+    // Fetch unread messages
+    final snapshot = await FirebaseFirestore.instance
+        .collectionGroup('messages')
+        .where('receiverId', isEqualTo: currentUser.uid)
+        .where('read', isEqualTo: false)
+        .get();
+
+    List<String> notifications = [];
+    for (var doc in snapshot.docs) {
+      final data = doc.data();
+      final senderId = data['senderId'] as String?;
+      if (senderId == null) continue;
+
+      String name = '';
+      if (!isEmployer) {
+        // Sender is employer, from serviceProviders
+        final senderDoc = await FirebaseFirestore.instance
+            .collection('serviceProviders')
+            .doc(senderId)
+            .get();
+        if (senderDoc.exists) {
+          final senderData = senderDoc.data() as Map<String, dynamic>?;
+          name = senderData?['businessName'] ?? '';
+        }
+      }
+      if (name.isNotEmpty) {
+        notifications.add('You have received a message from $name');
+      }
+    }
+
+    if (!mounted) return;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.5,
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(30),
+              topRight: Radius.circular(30),
+            ),
+          ),
+          child: Column(
+            children: [
+              const Padding(
+                padding: EdgeInsets.all(16.0),
+                child: Text(
+                  'Notifications',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ),
+              Expanded(
+                child: notifications.isEmpty
+                    ? const Center(child: Text('No new notifications'))
+                    : ListView.builder(
+                        itemCount: notifications.length,
+                        itemBuilder: (context, index) {
+                          return ListTile(title: Text(notifications[index]));
+                        },
+                      ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -93,7 +409,7 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
-                                  UserName()
+                                  UserName(),
                                 ],
                               ),
                             ],
@@ -112,16 +428,28 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                                 borderWidth: 0,
                               ),
                               const SizedBox(width: 10),
-                              Container(
-                                width: 40,
-                                height: 40,
-                                decoration: const BoxDecoration(
-                                  color: Colors.white,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  Icons.notifications,
-                                  color: Colors.black,
+                              GestureDetector(
+                                onTap: _showNotifications,
+                                child: Stack(
+                                  children: [
+                                    Container(
+                                      width: 40,
+                                      height: 40,
+                                      decoration: const BoxDecoration(
+                                        color: Colors.white,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(
+                                        Icons.notifications,
+                                        color: Colors.black,
+                                      ),
+                                    ),
+                                    Positioned(
+                                      right: 0,
+                                      top: 0,
+                                      child: UnreadMessagesBadge(),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ],
@@ -720,6 +1048,7 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
               ),
             ),
           ),
+          bottomNavigationBar: BottomNavBar(currentIndex: 0),
         ),
         SideBar(key: _sidebarKey),
       ],

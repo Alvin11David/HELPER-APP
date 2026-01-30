@@ -4,7 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:helper/Worker%20Dashboard/Worker_Jobs_Hub_Screen.dart';
+import 'package:helper/Auth/Forgot_Password_Screen.dart';
+import 'package:helper/Document%20Upload/Select_Worker_Type_Screen.dart';
+import 'package:helper/Employer%20Dashboard/Employer_Dashboard_Screen.dart';
+import 'package:helper/Intro/Role_Selection_Screen.dart';
+import 'package:helper/Worker%20Dashboard/Workers_Dashboard_Screen.dart';
+import 'package:helper/Worker%20Dashboard/Workers_skills_and_Job_details.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/foundation.dart';
@@ -235,9 +240,31 @@ class _SignInScreenState extends State<SignInScreen> {
 
   Future<void> _goToDashboard() async {
     if (!mounted) return;
+
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    // Get user role from Firestore
+    final docSnap = await FirebaseFirestore.instance
+        .collection('Sign Up')
+        .doc(user.uid)
+        .get();
+
+    final role = docSnap.data()?['role'] ?? '';
+
+    Widget dashboard;
+    if (role == 'worker') {
+      dashboard = const WorkersDashboardScreen();
+    } else if (role == 'employer') {
+      dashboard = const EmployerDashboardScreen();
+    } else {
+      // No role set, go to role selection
+      dashboard = const RoleSelectionScreen();
+    }
+
     Navigator.pushAndRemoveUntil(
       context,
-      MaterialPageRoute(builder: (_) => const WorkerJobsHubScreen()),
+      MaterialPageRoute(builder: (_) => dashboard),
       (_) => false,
     );
   }
@@ -397,7 +424,25 @@ class _SignInScreenState extends State<SignInScreen> {
       if (!mounted) return;
       setState(() => _loading = false);
 
-      await _goToDashboard();
+      // Check if user has a role set
+      final docSnap = await FirebaseFirestore.instance
+          .collection('Sign Up')
+          .doc(user.uid)
+          .get();
+
+      final role = docSnap.data()?['role'] ?? '';
+
+      if (role.isEmpty) {
+        // No role set, go to role selection
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => const RoleSelectionScreen()),
+          (_) => false,
+        );
+      } else {
+        // Has role, go to appropriate dashboard
+        await _goToDashboard();
+      }
     } catch (e) {
       if (!mounted) return;
       _toast('Google sign-in failed: $e');
@@ -417,15 +462,26 @@ class _SignInScreenState extends State<SignInScreen> {
       'fullName': user.displayName ?? '',
       'photoUrl': user.photoURL ?? '',
       'phoneNumber': user.phoneNumber ?? '',
-      'role': '',
       'referralCode': _generateReferralCode(),
       'verified': true,
       'updatedAt': FieldValue.serverTimestamp(),
     };
 
     if (!snap.exists) {
+      // New user - set default empty role
+      payload['role'] = '';
       await docRef.set({...payload, 'createdAt': FieldValue.serverTimestamp()});
     } else {
+      // Existing user - don't overwrite role if it exists
+      final existingData = snap.data();
+      if (existingData != null &&
+          existingData['role'] != null &&
+          existingData['role'].toString().isNotEmpty) {
+        // Keep existing role
+      } else {
+        // No role set yet, set to empty
+        payload['role'] = '';
+      }
       await docRef.set(payload, SetOptions(merge: true));
     }
   }
@@ -1052,7 +1108,11 @@ class _EmailBlock extends StatelessWidget {
             const Spacer(),
             GestureDetector(
               onTap: () {
-                // TODO: forgot password later
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const ForgotYourPasswordScreen(),
+                  ),
+                );
               },
               child: Text(
                 'Forgot Password?',

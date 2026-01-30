@@ -15,7 +15,8 @@ import 'package:intl/intl.dart'; // Add this import for NumberFormat
 import '../Worker Dashboard/Workers_Dashboard_Screen.dart'; // Add this import
 
 class WorkerSkillsJobDetailsScreen extends StatefulWidget {
-  const WorkerSkillsJobDetailsScreen({super.key});
+  final String? selectedProfession;
+  const WorkerSkillsJobDetailsScreen({super.key, this.selectedProfession});
 
   @override
   State<WorkerSkillsJobDetailsScreen> createState() =>
@@ -47,6 +48,8 @@ class _WorkerSkillsJobDetailsScreenState
 
   // Step 3 state
   final List<PlatformFile> _pickedFiles = [];
+  final List<String> _existingPortfolioUrls =
+      []; // URLs of existing portfolio files
 
   bool _saving = false;
 
@@ -81,7 +84,27 @@ class _WorkerSkillsJobDetailsScreenState
     _amountCtrl.addListener(_recalcProgress);
     _workplaceCtrl.addListener(_recalcProgress);
     _recalcProgress();
-    _loadCategories().then((_) => _loadWorkerTypeAndProfession());
+    _loadCategories().then((_) {
+      if (widget.selectedProfession != null) {
+        setState(() {
+          _jobCategory = widget.selectedProfession;
+          final category = _categories.firstWhere(
+            (cat) =>
+                cat['name'].toString().toLowerCase() ==
+                _jobCategory!.toLowerCase(),
+            orElse: () => {},
+          );
+          if (category.isNotEmpty) {
+            _jobCategoryId = category['id'];
+          } else {
+            _jobCategoryId = null;
+          }
+        });
+        _recalcProgress();
+      }
+      _loadWorkerTypeAndProfession();
+      _loadExistingServiceProviderData();
+    });
     _initMyLocation();
   }
 
@@ -264,6 +287,33 @@ class _WorkerSkillsJobDetailsScreenState
       }
     } catch (e) {
       // Ignore errors, user can select manually
+    }
+  }
+
+  Future<void> _loadExistingServiceProviderData() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    try {
+      final docSnap = await FirebaseFirestore.instance
+          .collection('serviceProviders')
+          .doc(user.uid)
+          .get();
+
+      if (docSnap.exists && docSnap.data() != null) {
+        // User already has service provider details - go directly to dashboard
+        if (mounted) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (_) => WorkersDashboardScreen()),
+          );
+        }
+        return;
+      }
+
+      // No existing data - user needs to fill the form (normal flow continues)
+    } catch (e) {
+      // Ignore errors, user can fill form manually
+      print('Error loading existing service provider data: $e');
     }
   }
 
@@ -451,7 +501,10 @@ class _WorkerSkillsJobDetailsScreenState
 
     try {
       // 1) Upload files
-      final urls = await _uploadPickedFiles(user.uid);
+      final newUrls = await _uploadPickedFiles(user.uid);
+
+      // 2) Combine existing and new portfolio URLs
+      final allPortfolioUrls = [..._existingPortfolioUrls, ...newUrls];
 
       // 2) Save profile
       final doc = FirebaseFirestore.instance
@@ -481,7 +534,7 @@ class _WorkerSkillsJobDetailsScreenState
             : GeoPoint(_pickedLatLng!.latitude, _pickedLatLng!.longitude),
         'experienceLevel': _experienceLevel,
         'pickedPlaceOnMap': _pickedPlaceOnMap,
-        'portfolioFiles': urls, // list of download urls
+        'portfolioFiles': allPortfolioUrls, // combined list of download urls
         'updatedAt': FieldValue.serverTimestamp(),
         'onboardingStep': 'skills_job_details_done',
 
@@ -1771,10 +1824,11 @@ class _WorkerSkillsJobDetailsScreenState
                     height: 1.25,
                   ),
                 ),
-                if (_pickedFiles.isNotEmpty) ...[
+                if (_pickedFiles.isNotEmpty ||
+                    _existingPortfolioUrls.isNotEmpty) ...[
                   SizedBox(height: h * 0.012),
                   Text(
-                    '${_pickedFiles.length} file(s) selected',
+                    '${_existingPortfolioUrls.length + _pickedFiles.length} file(s) total (${_existingPortfolioUrls.length} existing, ${_pickedFiles.length} new)',
                     style: TextStyle(
                       color: _brandOrange,
                       fontFamily: 'Inter',

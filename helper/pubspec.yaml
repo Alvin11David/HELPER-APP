@@ -72,12 +72,18 @@ dependencies:
   # URL launcher
   url_launcher: ^6.1.10
 
-
   # for the woker skilland job details screen
   uuid: ^4.0.0
 
   #for map location
   dio: ^5.5.0
+
+  # For audio playback
+  audioplayers: ^6.0.0
+  # Firebase messaging
+  firebase_messaging: ^15.0.0
+  # VoIP for voice calls
+  agora_rtc_engine: ^6.3.0
 
 dev_dependencies:
   flutter_test:
@@ -89,6 +95,17 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.13.1
+
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/icons/logo.png"
+  web:
+    generate: true
+    image_path: "assets/icons/logo.png"
+    background_color: "#hex_color" # Optional: Set a background color (e.g., "#ffffff" for white)
+    theme_color: "#hex_color" # Optional: Set a theme color
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

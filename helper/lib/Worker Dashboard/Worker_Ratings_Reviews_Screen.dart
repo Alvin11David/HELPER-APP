@@ -1,47 +1,103 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import 'package:helper/Components/Bottom_Nav_Bar.dart'; // Add this import for ImageFilter
 
-class WorkerRatingsReviewsScreen extends StatelessWidget {
+class WorkerRatingsReviewsScreen extends StatefulWidget {
   const WorkerRatingsReviewsScreen({super.key});
+
+  @override
+  State<WorkerRatingsReviewsScreen> createState() =>
+      _WorkerRatingsReviewsScreenState();
+}
+
+class _WorkerRatingsReviewsScreenState
+    extends State<WorkerRatingsReviewsScreen> {
+  List<Map<String, dynamic>> _reviews = [];
+  bool _isLoading = true;
+  Map<String, double> _ratingProgress = {
+    '5 stars': 0.0,
+    '4 stars': 0.0,
+    '3 stars': 0.0,
+    '2 stars': 0.0,
+    '1 star': 0.0,
+  };
+  double _overallRating = 0.0;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchReviews();
+  }
+
+  Future<void> _fetchReviews() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
+
+    try {
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('Reviews')
+          .where('providerId', isEqualTo: user.uid)
+          .orderBy('timestamp', descending: true)
+          .get();
+
+      final reviews = querySnapshot.docs.map((doc) {
+        final data = doc.data();
+        return {
+          'name': data['reviewerName'] ?? 'Anonymous',
+          'rating': data['rating'] ?? 0,
+          'review': data['reviewText'] ?? '',
+          'date': _formatDate(data['timestamp'] as Timestamp?),
+        };
+      }).toList();
+
+      // Calculate rating distribution
+      final ratingCounts = <int, int>{1: 0, 2: 0, 3: 0, 4: 0, 5: 0};
+      double totalRating = 0;
+
+      for (final review in reviews) {
+        final rating = review['rating'] as int;
+        ratingCounts[rating] = (ratingCounts[rating] ?? 0) + 1;
+        totalRating += rating;
+      }
+
+      final totalReviews = reviews.length;
+      if (totalReviews > 0) {
+        _overallRating = totalRating / totalReviews;
+        _ratingProgress = {
+          '5 stars': ratingCounts[5]! / totalReviews,
+          '4 stars': ratingCounts[4]! / totalReviews,
+          '3 stars': ratingCounts[3]! / totalReviews,
+          '2 stars': ratingCounts[2]! / totalReviews,
+          '1 star': ratingCounts[1]! / totalReviews,
+        };
+      }
+
+      setState(() {
+        _reviews = reviews;
+        _isLoading = false;
+      });
+    } catch (e) {
+      print('Error fetching reviews: $e');
+      setState(() => _isLoading = false);
+    }
+  }
+
+  String _formatDate(Timestamp? timestamp) {
+    if (timestamp == null) return 'Unknown';
+    final date = timestamp.toDate();
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+  }
 
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
     double screenHeight = MediaQuery.of(context).size.height;
-
-    // Sample review data
-    final List<Map<String, dynamic>> reviews = [
-      {
-        'name': 'John Doe',
-        'rating': 5,
-        'review': 'Excellent service! Highly recommended.',
-        'date': '2023-10-01',
-      },
-      {
-        'name': 'Jane Smith',
-        'rating': 4,
-        'review': 'Good job, but could be faster.',
-        'date': '2023-09-25',
-      },
-      {
-        'name': 'Bob Johnson',
-        'rating': 5,
-        'review': 'Very professional and skilled.',
-        'date': '2023-09-20',
-      },
-      // Add more sample reviews as needed
-    ];
-
-    // Sample rating data
-    final Map<String, double> ratingProgress = {
-      '5 stars': 0.6,
-      '4 stars': 0.3,
-      '3 stars': 0.1,
-      '2 stars': 0.0,
-      '1 star': 0.0,
-    };
 
     return Scaffold(
       body: Container(
@@ -170,95 +226,116 @@ class WorkerRatingsReviewsScreen extends StatelessWidget {
                   ),
                   SizedBox(height: screenHeight * 0.02),
                   Expanded(
-                    child: ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: reviews.length,
-                      itemBuilder: (context, index) {
-                        final review = reviews[index];
-                        return Container(
-                          width: screenWidth * 0.8, // Fixed width for each card
-                          height:
-                              screenHeight *
-                              0.15, // Adjusted height for each card
-                          margin: EdgeInsets.only(right: screenWidth * 0.04),
-                          padding: EdgeInsets.all(screenWidth * 0.04),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(15),
-                            border: Border.all(
-                              color: Colors.white.withOpacity(0.3),
-                              width: 1,
+                    child: _isLoading
+                        ? Center(
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
                             ),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  CircleAvatar(
-                                    radius: screenWidth * 0.06,
-                                    backgroundColor: Colors.white.withOpacity(
-                                      0.3,
-                                    ),
-                                    child: Icon(
-                                      Icons.person,
-                                      color: Colors.white,
-                                      size: screenWidth * 0.06,
-                                    ),
+                          )
+                        : _reviews.isEmpty
+                        ? Center(
+                            child: Text(
+                              'No reviews yet',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: screenWidth * 0.04,
+                              ),
+                            ),
+                          )
+                        : ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: _reviews.length,
+                            itemBuilder: (context, index) {
+                              final review = _reviews[index];
+                              return Container(
+                                width:
+                                    screenWidth *
+                                    0.8, // Fixed width for each card
+                                height:
+                                    screenHeight *
+                                    0.15, // Adjusted height for each card
+                                margin: EdgeInsets.only(
+                                  right: screenWidth * 0.04,
+                                ),
+                                padding: EdgeInsets.all(screenWidth * 0.04),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(15),
+                                  border: Border.all(
+                                    color: Colors.white.withOpacity(0.3),
+                                    width: 1,
                                   ),
-                                  SizedBox(width: screenWidth * 0.03),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
                                       children: [
-                                        Text(
-                                          review['name'],
-                                          style: TextStyle(
+                                        CircleAvatar(
+                                          radius: screenWidth * 0.06,
+                                          backgroundColor: Colors.white
+                                              .withOpacity(0.3),
+                                          child: Icon(
+                                            Icons.person,
                                             color: Colors.white,
-                                            fontSize: screenWidth * 0.045,
-                                            fontWeight: FontWeight.bold,
+                                            size: screenWidth * 0.06,
                                           ),
                                         ),
-                                        Row(
-                                          children: List.generate(
-                                            5,
-                                            (starIndex) => Icon(
-                                              starIndex < review['rating']
-                                                  ? Icons.star
-                                                  : Icons.star_border,
-                                              color: Colors.yellow,
-                                              size: screenWidth * 0.04,
+                                        SizedBox(width: screenWidth * 0.03),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                review['name'],
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: screenWidth * 0.045,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                              Row(
+                                                children: List.generate(
+                                                  5,
+                                                  (starIndex) => Icon(
+                                                    starIndex < review['rating']
+                                                        ? Icons.star
+                                                        : Icons.star_border,
+                                                    color: Colors.yellow,
+                                                    size: screenWidth * 0.04,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        Text(
+                                          review['date'],
+                                          style: TextStyle(
+                                            color: Colors.white.withOpacity(
+                                              0.7,
                                             ),
+                                            fontSize: screenWidth * 0.035,
                                           ),
                                         ),
                                       ],
                                     ),
-                                  ),
-                                  Text(
-                                    review['date'],
-                                    style: TextStyle(
-                                      color: Colors.white.withOpacity(0.7),
-                                      fontSize: screenWidth * 0.035,
+                                    SizedBox(height: screenHeight * 0.01),
+                                    Expanded(
+                                      child: Text(
+                                        review['review'],
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: screenWidth * 0.04,
+                                        ),
+                                      ),
                                     ),
-                                  ),
-                                ],
-                              ),
-                              SizedBox(height: screenHeight * 0.01),
-                              Expanded(
-                                child: Text(
-                                  review['review'],
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: screenWidth * 0.04,
-                                  ),
+                                  ],
                                 ),
-                              ),
-                            ],
+                              );
+                            },
                           ),
-                        );
-                      },
-                    ),
                   ),
                 ],
               ),
@@ -296,7 +373,7 @@ class WorkerRatingsReviewsScreen extends StatelessWidget {
                             child: Column(
                               children: [
                                 Text(
-                                  '4.8',
+                                  _overallRating.toStringAsFixed(1),
                                   style: TextStyle(
                                     fontSize: screenWidth * 0.12,
                                     fontWeight: FontWeight.bold,
@@ -315,7 +392,7 @@ class WorkerRatingsReviewsScreen extends StatelessWidget {
                                   ),
                                 ),
                                 Text(
-                                  'Number of reviews',
+                                  '${_reviews.length} reviews',
                                   style: TextStyle(
                                     color: Colors.black,
                                     fontSize: screenWidth * 0.04,
@@ -330,7 +407,7 @@ class WorkerRatingsReviewsScreen extends StatelessWidget {
                             flex: 1,
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
-                              children: ratingProgress.entries.map((entry) {
+                              children: _ratingProgress.entries.map((entry) {
                                 return Padding(
                                   padding: EdgeInsets.only(
                                     bottom:

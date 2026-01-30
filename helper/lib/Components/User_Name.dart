@@ -10,12 +10,12 @@ class UserName extends StatefulWidget {
 }
 
 class _UserNameState extends State<UserName> {
-  late Future<String?> _fullNameFuture;
+  static Future<String?>? _fullNameFuture;
 
   @override
   void initState() {
     super.initState();
-    _fullNameFuture = _fetchFullName(); // runs ONCE
+    _fullNameFuture ??= _fetchFullName(); // runs ONCE globally
   }
 
   Future<String?> _fetchFullName() async {
@@ -42,7 +42,7 @@ class _UserNameState extends State<UserName> {
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<String?>(
-      future: _fullNameFuture, // cached future
+      future: _fullNameFuture, // cached future globally
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Text(
