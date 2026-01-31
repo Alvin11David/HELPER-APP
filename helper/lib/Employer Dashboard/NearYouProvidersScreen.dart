@@ -511,6 +511,8 @@ class _NearYouProvidersScreenState extends State<NearYouProvidersScreen> {
                         ],
                       )
                     : _locLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : _locError != null
                     ? Center(
                         child: Text(
                           _locError!,
@@ -546,6 +548,15 @@ class _NearYouProvidersScreenState extends State<NearYouProvidersScreen> {
                           if (!snapshot.hasData) {
                             return const Center(
                               child: CircularProgressIndicator(),
+                            );
+                          }
+
+                          if (_currentPos == null) {
+                            return const Center(
+                              child: Text(
+                                'Getting your location...',
+                                style: TextStyle(color: Colors.white),
+                              ),
                             );
                           }
 
