@@ -1005,18 +1005,6 @@ class _MapScreenState extends State<MapScreen> {
                     ],
                   ),
                   const SizedBox(width: 10),
-                  GestureDetector(
-                    onTap: () => setState(() => _showFilters = !_showFilters),
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.tune, color: Colors.black),
-                    ),
-                  ),
                 ],
               ),
             ),
@@ -1194,7 +1182,7 @@ class _MapScreenState extends State<MapScreen> {
                 children: [
                   Container(
                     height: 40,
-                    width: w * 0.76,
+                    width: w * 0.89,
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(30),
@@ -1227,25 +1215,6 @@ class _MapScreenState extends State<MapScreen> {
                     ),
                   ),
                   SizedBox(width: 10),
-                  GestureDetector(
-                    onTap: () => setState(() => _showFilters = !_showFilters),
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.2),
-                            blurRadius: 10,
-                            offset: Offset(0, 5),
-                          ),
-                        ],
-                      ),
-                      child: const Icon(Icons.tune, color: Colors.black),
-                    ),
-                  ),
                 ],
               ),
             ),
