@@ -113,8 +113,10 @@ class _ForYouProvidersScreenState extends State<ForYouProvidersScreen> {
               fit: BoxFit.cover,
             ),
           ),
-          child: Column(
+          child: Stack(
             children: [
+              Column(
+                children: [
               // Top bar
               SizedBox(
                 height: 110,
