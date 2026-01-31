@@ -648,6 +648,28 @@ export const sendReviewNotification = onDocumentCreated(
         },
       });
 
+      // Create notification document for the worker
+      console.log(
+        "Creating notification document in workerNotifications collection...",
+      );
+      await admin
+        .firestore()
+        .collection("workerNotifications")
+        .add({
+          workerId: providerId,
+          type: "review",
+          title: "New Review Received",
+          message: `${reviewerName} gave you ${rating} stars`,
+          reviewText: reviewText,
+          reviewerName: reviewerName,
+          rating: rating,
+          reviewId: event.params.reviewId,
+          read: false,
+          timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        });
+
+      console.log("Notification document created successfully");
+
       console.log("SUCCESS: Review notification sent to", providerId);
     } catch (error) {
       console.log("ERROR sending review notification:", error);
@@ -667,5 +689,3 @@ export const testCallNotification = onRequest(async (req, res) => {
     timestamp: new Date().toISOString(),
   });
 });
-
-

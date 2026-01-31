@@ -23,19 +23,30 @@ class _UnreadMessagesBadgeState extends State<UnreadMessagesBadge> {
           .where('receiverId', isEqualTo: currentUser.uid)
           .where('read', isEqualTo: false)
           .snapshots(),
-      builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          // Keep previous count on error
-          return _buildBadge();
-        }
-        if (snapshot.hasData) {
-          final docs = snapshot.data!.docs;
-          // Count unique senders
+      builder: (context, messageSnapshot) {
+        int messageCount = 0;
+        if (messageSnapshot.hasData) {
+          final docs = messageSnapshot.data!.docs;
           final senders = docs.map((doc) => doc['senderId'] as String).toSet();
-          _unreadCount = senders.length;
+          messageCount = senders.length;
         }
-        // Always return the badge with current count
-        return _buildBadge();
+
+        return StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance
+              .collection('workerNotifications')
+              .where('workerId', isEqualTo: currentUser.uid)
+              .where('read', isEqualTo: false)
+              .snapshots(),
+          builder: (context, workerSnapshot) {
+            int workerCount = 0;
+            if (workerSnapshot.hasData) {
+              workerCount = workerSnapshot.data!.docs.length;
+            }
+
+            _unreadCount = messageCount + workerCount;
+            return _buildBadge();
+          },
+        );
       },
     );
   }

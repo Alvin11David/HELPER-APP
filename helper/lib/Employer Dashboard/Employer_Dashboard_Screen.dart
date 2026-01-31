@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:intl/intl.dart';
 import 'package:helper/Components/User_Name.dart';
 import 'package:helper/Components/Side_Bar.dart';
 import 'package:helper/Components/UnreadMessagesBadge.dart';
@@ -11,6 +12,8 @@ import 'package:helper/Employer%20Dashboard/Category_Providers_Screen.dart';
 import 'package:helper/Worker%20Dashboard/Worker_Details_Screen.dart';
 import '../Components/Bottom_Nav_Bar.dart';
 import 'All_Categories_Screen.dart';
+import 'NearYouProvidersScreen.dart';
+import 'ForYouProvidersScreen.dart';
 
 class EmployerDashboardScreen extends StatefulWidget {
   const EmployerDashboardScreen({super.key});
@@ -58,6 +61,8 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
   Position? userPosition;
   List<String> topRatedCategories = [];
   Map<String, double> categoryRatings = {};
+  Map<String, double> providerRatings = {};
+  bool _ratingsLoaded = false;
 
   bool get _hasQuery => _controller.text.trim().length >= 2;
 
@@ -75,7 +80,12 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
     _initLocation(); // ✅ start GPS
     _getUserPosition();
     _getTopRatedCategories();
-    _getCategoryRatings().then((map) => setState(() => categoryRatings = map));
+    _getCategoryRatings().then((map) {
+      setState(() {
+        categoryRatings = map;
+        _ratingsLoaded = true;
+      });
+    });
   }
 
   @override
@@ -96,18 +106,29 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
         .where('read', isEqualTo: false)
         .snapshots()
         .listen((snap) {
-      for (final doc in snap.docs) {
-        final d = doc.data();
-        if (d['type'] == 'reschedule_request') {
-          _showReschedulePopup(context, notifId: doc.id, bookingId: d['bookingId']);
-          break; // show one at a time
-        }
-      }
-    });
+          for (final doc in snap.docs) {
+            final d = doc.data();
+            if (d['type'] == 'reschedule_request') {
+              _showReschedulePopup(
+                context,
+                notifId: doc.id,
+                bookingId: d['bookingId'],
+              );
+              break; // show one at a time
+            }
+          }
+        });
   }
 
-  Future<void> _showReschedulePopup(BuildContext context, {required String notifId, required String bookingId}) async {
-    final bookingSnap = await FirebaseFirestore.instance.collection('bookings').doc(bookingId).get();
+  Future<void> _showReschedulePopup(
+    BuildContext context, {
+    required String notifId,
+    required String bookingId,
+  }) async {
+    final bookingSnap = await FirebaseFirestore.instance
+        .collection('bookings')
+        .doc(bookingId)
+        .get();
     final b = bookingSnap.data() ?? {};
 
     final res = (b['reschedule'] ?? {}) as Map<String, dynamic>;
@@ -125,13 +146,19 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
           TextButton(
             onPressed: () async {
               // decline
-              await FirebaseFirestore.instance.collection('bookings').doc(bookingId).update({
-                'reschedule.employerDecision': 'declined',
-                'reschedule.decidedAt': FieldValue.serverTimestamp(),
-                'status': 'confirmed', // revert back
-                'updatedAt': FieldValue.serverTimestamp(),
-              });
-              await FirebaseFirestore.instance.collection('notifications').doc(notifId).update({'read': true});
+              await FirebaseFirestore.instance
+                  .collection('bookings')
+                  .doc(bookingId)
+                  .update({
+                    'reschedule.employerDecision': 'declined',
+                    'reschedule.decidedAt': FieldValue.serverTimestamp(),
+                    'status': 'confirmed', // revert back
+                    'updatedAt': FieldValue.serverTimestamp(),
+                  });
+              await FirebaseFirestore.instance
+                  .collection('notifications')
+                  .doc(notifId)
+                  .update({'read': true});
               if (!context.mounted) return;
               Navigator.pop(context);
             },
@@ -140,15 +167,21 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
           ElevatedButton(
             onPressed: () async {
               // accept -> replace booking times with proposed
-              await FirebaseFirestore.instance.collection('bookings').doc(bookingId).update({
-                'startDateTime': Timestamp.fromDate(proposedStart),
-                'endDateTime': Timestamp.fromDate(proposedEnd),
-                'reschedule.employerDecision': 'accepted',
-                'reschedule.decidedAt': FieldValue.serverTimestamp(),
-                'status': 'confirmed',
-                'updatedAt': FieldValue.serverTimestamp(),
-              });
-              await FirebaseFirestore.instance.collection('notifications').doc(notifId).update({'read': true});
+              await FirebaseFirestore.instance
+                  .collection('bookings')
+                  .doc(bookingId)
+                  .update({
+                    'startDateTime': Timestamp.fromDate(proposedStart),
+                    'endDateTime': Timestamp.fromDate(proposedEnd),
+                    'reschedule.employerDecision': 'accepted',
+                    'reschedule.decidedAt': FieldValue.serverTimestamp(),
+                    'status': 'confirmed',
+                    'updatedAt': FieldValue.serverTimestamp(),
+                  });
+              await FirebaseFirestore.instance
+                  .collection('notifications')
+                  .doc(notifId)
+                  .update({'read': true});
               if (!context.mounted) return;
               Navigator.pop(context);
             },
@@ -280,7 +313,7 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
     }
 
     final amountText = (amount is num)
-        ? amount.toInt().toString()
+        ? NumberFormat('#,###').format(amount.toInt())
         : amount.toString();
 
     final dist = d['_distanceKm'];
@@ -292,7 +325,8 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => WorkerDetailsScreen(providerId: '', data: d),
+            builder: (context) =>
+                WorkerDetailsScreen(providerId: '', data: d, workerId: ''),
           ),
         );
       },
@@ -395,40 +429,52 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
   }
 
   Future<void> _showNotifications() async {
+    print('Notifications tapped');
     final currentUser = FirebaseAuth.instance.currentUser;
-    if (currentUser == null) return;
+    if (currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please log in to view notifications')),
+      );
+      return;
+    }
 
     // For employer dashboard, receiver is employer
     bool isEmployer = true;
 
-    // Fetch unread messages
-    final snapshot = await FirebaseFirestore.instance
-        .collectionGroup('messages')
-        .where('receiverId', isEqualTo: currentUser.uid)
-        .where('read', isEqualTo: false)
-        .get();
-
     List<String> notifications = [];
-    for (var doc in snapshot.docs) {
-      final data = doc.data();
-      final senderId = data['senderId'] as String?;
-      if (senderId == null) continue;
+    try {
+      // Fetch unread messages
+      final snapshot = await FirebaseFirestore.instance
+          .collectionGroup('messages')
+          .where('receiverId', isEqualTo: currentUser.uid)
+          .get();
 
-      String name = '';
-      if (isEmployer) {
-        // Sender is worker, from Sign Up
-        final senderDoc = await FirebaseFirestore.instance
-            .collection('Sign Up')
-            .doc(senderId)
-            .get();
-        if (senderDoc.exists) {
-          final senderData = senderDoc.data();
-          name = senderData?['fullName'] ?? '';
+      for (var doc in snapshot.docs) {
+        final data = doc.data();
+        final read = data['read'] as bool? ?? false;
+        if (read) continue; // skip read messages
+
+        final senderId = data['senderId'] as String?;
+        if (senderId == null) continue;
+
+        String name = '';
+        if (isEmployer) {
+          // Sender is worker, from Sign Up
+          final senderDoc = await FirebaseFirestore.instance
+              .collection('Sign Up')
+              .doc(senderId)
+              .get();
+          if (senderDoc.exists) {
+            final senderData = senderDoc.data() as Map<String, dynamic>?;
+            name = senderData?['fullName'] ?? '';
+          }
+        }
+        if (name.isNotEmpty) {
+          notifications.add('You have a message from $name');
         }
       }
-      if (name.isNotEmpty) {
-        notifications.add('You have a message from $name');
-      }
+    } catch (e) {
+      print('Error fetching notifications: $e');
     }
 
     if (!mounted) return;
@@ -453,7 +499,11 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                 padding: EdgeInsets.all(16.0),
                 child: Text(
                   'Notifications',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
                 ),
               ),
               Expanded(
@@ -595,6 +645,13 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
         double avg = ratings.reduce((a, b) => a + b) / ratings.length;
         result[category] = avg;
       });
+
+      // Store provider ratings for filtering
+      setState(() {
+        providerRatings = Map.from(providerAvgs);
+      });
+
+      print('Provider ratings populated: $providerRatings');
 
       return result;
     } catch (e) {
@@ -749,6 +806,8 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                                       ? 'Available'
                                       : null;
                                 });
+                                _nearYouFuture = null;
+                                _forYouFuture = null;
                                 if (index == 0 && userPosition == null) {
                                   await _getUserPosition();
                                   setState(() {});
@@ -1089,17 +1148,28 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 5,
-                          ),
-                          child: Text(
-                            'View All',
-                            style: TextStyle(
-                              color: Color(0xFFF79F1A),
-                              fontSize: w * 0.04,
-                              fontWeight: FontWeight.bold,
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const NearYouProvidersScreen(),
+                              ),
+                            );
+                          },
+                          child: Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 5,
+                            ),
+                            child: Text(
+                              'View All',
+                              style: TextStyle(
+                                color: Color(0xFFF79F1A),
+                                fontSize: w * 0.04,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ),
@@ -1183,7 +1253,7 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                               final docs = snap.data!.docs;
 
                               // OPTIONAL geofence radius (km). Set to null to show all.
-                              const double radiusKm =
+                              const double? radiusKm =
                                   15; // change to 5, 10, 20 etc
 
                               // build list with distances
@@ -1205,6 +1275,21 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                                   '_distanceKm': km,
                                   '_docId': doc.id,
                                 });
+                              }
+
+                              if (_ratingsLoaded &&
+                                  selectedFilter == 'Top Rated') {
+                                print(
+                                  'Applying Top Rated filter. Provider ratings: $providerRatings',
+                                );
+                                scored.retainWhere(
+                                  (s) =>
+                                      (providerRatings[s['_docId']] ?? 0) >=
+                                      4.0,
+                                );
+                                print(
+                                  'After filtering, scored length: ${scored.length}',
+                                );
                               }
 
                               // sort shortest distance first
@@ -1257,17 +1342,28 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 5,
-                          ),
-                          child: Text(
-                            'View All',
-                            style: TextStyle(
-                              color: Color(0xFFF79F1A),
-                              fontSize: w * 0.04,
-                              fontWeight: FontWeight.bold,
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const ForYouProvidersScreen(),
+                              ),
+                            );
+                          },
+                          child: Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 5,
+                            ),
+                            child: Text(
+                              'View All',
+                              style: TextStyle(
+                                color: Color(0xFFF79F1A),
+                                fontSize: w * 0.04,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ),
@@ -1292,7 +1388,9 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                                 isEqualTo: 'skills_job_details_done',
                               )
                               .orderBy('updatedAt', descending: true)
-                              .limit(10)
+                              .limit(
+                                250,
+                              ) // fetch enough then sort locally by distance if needed
                               .get();
                           return FutureBuilder<
                             QuerySnapshot<Map<String, dynamic>>
@@ -1322,16 +1420,84 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                               }
 
                               final docs = snap.data!.docs;
+
+                              List<Map<String, dynamic>> show;
+                              if (selectedFilter == 'Nearest' &&
+                                  _currentPos != null) {
+                                // Filter by distance
+                                final scored = <Map<String, dynamic>>[];
+                                for (final doc in docs) {
+                                  final d = doc.data();
+                                  final gp = d['workplaceLatLng'];
+                                  if (gp is! GeoPoint) continue;
+                                  final km = _kmFromCurrent(gp);
+                                  if (km <= 5) {
+                                    scored.add({
+                                      ...d,
+                                      '_distanceKm': km,
+                                      '_docId': doc.id,
+                                    });
+                                  }
+                                }
+                                if (_ratingsLoaded &&
+                                    selectedFilter == 'Top Rated') {
+                                  print(
+                                    'For You: Applying Top Rated filter. Provider ratings: $providerRatings',
+                                  );
+                                  scored.retainWhere(
+                                    (s) =>
+                                        (providerRatings[s['_docId']] ?? 0) >=
+                                        4.0,
+                                  );
+                                  print(
+                                    'For You: After filtering, scored length: ${scored.length}',
+                                  );
+                                }
+                                scored.sort((a, b) {
+                                  final ak = (a['_distanceKm'] as num)
+                                      .toDouble();
+                                  final bk = (b['_distanceKm'] as num)
+                                      .toDouble();
+                                  return ak.compareTo(bk);
+                                });
+                                show = scored.take(10).toList();
+                              } else {
+                                var filteredDocs = docs;
+                                if (_ratingsLoaded &&
+                                    selectedFilter == 'Top Rated') {
+                                  filteredDocs = docs
+                                      .where(
+                                        (doc) =>
+                                            (providerRatings[doc.id] ?? 0) >=
+                                            4.0,
+                                      )
+                                      .toList();
+                                }
+                                show = filteredDocs
+                                    .take(10)
+                                    .map(
+                                      (doc) => {
+                                        ...doc.data(),
+                                        '_docId': doc.id,
+                                      },
+                                    )
+                                    .toList();
+                              }
+
+                              if (show.isEmpty) {
+                                return const Center(
+                                  child: Text("No providers found"),
+                                );
+                              }
+
                               return ListView.separated(
                                 scrollDirection: Axis.horizontal,
                                 padding: EdgeInsets.only(right: w * 0.04),
-                                itemCount: docs.length,
+                                itemCount: show.length,
                                 separatorBuilder: (_, __) =>
                                     SizedBox(width: w * 0.05),
-                                itemBuilder: (_, i) => _providerCard(w, {
-                                  ...docs[i].data(),
-                                  '_docId': docs[i].id,
-                                }),
+                                itemBuilder: (_, i) =>
+                                    _providerCard(w, show[i]),
                               );
                             },
                           );
@@ -1452,6 +1618,7 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                                             WorkerDetailsScreen(
                                               providerId: '',
                                               data: navData,
+                                              workerId: '',
                                             ),
                                       ),
                                     );

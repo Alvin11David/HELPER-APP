@@ -90,13 +90,20 @@ class CallNowButton extends StatelessWidget {
 
     // Worker is online, send call request
     final callerId = FirebaseAuth.instance.currentUser!.uid;
-    final callId = DateTime.now().millisecondsSinceEpoch.toString();
+    final callId = '${callerId}_$providerId';
+
+    // Fetch caller's full name
+    final callerDoc = await FirebaseFirestore.instance
+        .collection('Sign Up')
+        .doc(callerId)
+        .get();
+    final callerFullName = callerDoc.data()?['fullName'] ?? businessName;
 
     print('=== CREATING CALL DOCUMENT ===');
     print('Call ID: $callId');
     print('Caller ID: $callerId');
     print('Receiver ID: $providerId');
-    print('Caller Name: $businessName');
+    print('Caller Name: $callerFullName');
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('📞 Creating call document: $callId')),
@@ -107,7 +114,7 @@ class CallNowButton extends StatelessWidget {
       await FirebaseFirestore.instance.collection('calls').doc(callId).set({
         'callerId': callerId,
         'receiverId': providerId,
-        'callerName': businessName, // Add caller name for the Cloud Function
+        'callerName': callerFullName, // Use full name instead of business name
         'status': 'ringing',
         'timestamp': FieldValue.serverTimestamp(),
       });

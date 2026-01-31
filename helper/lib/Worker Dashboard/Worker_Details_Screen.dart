@@ -25,7 +25,12 @@ class Review {
 class WorkerDetailsScreen extends StatefulWidget {
   final String providerId;
   final Map<String, dynamic>? data;
-  const WorkerDetailsScreen({super.key, required this.providerId, this.data});
+  const WorkerDetailsScreen({
+    super.key,
+    required this.providerId,
+    this.data,
+    required String workerId,
+  });
 
   @override
   State<WorkerDetailsScreen> createState() => _WorkerDetailsScreenState();

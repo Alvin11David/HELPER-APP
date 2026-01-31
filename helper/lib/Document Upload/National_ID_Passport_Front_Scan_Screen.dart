@@ -47,7 +47,7 @@ class _NationalIdPassportFrontScanScreenState
 
     // Wait for 6 seconds after stream starts before allowing capture
     if (_streamStartTime != null &&
-        DateTime.now().difference(_streamStartTime!).inSeconds < 6) {
+        DateTime.now().difference(_streamStartTime!).inSeconds < 10) {
       return;
     }
 
