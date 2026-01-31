@@ -1304,17 +1304,27 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 5,
-                          ),
-                          child: Text(
-                            'View All',
-                            style: TextStyle(
-                              color: Color(0xFFF79F1A),
-                              fontSize: w * 0.04,
-                              fontWeight: FontWeight.bold,
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const AllProvidersScreen(),
+                              ),
+                            );
+                          },
+                          child: Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 5,
+                            ),
+                            child: Text(
+                              'View All',
+                              style: TextStyle(
+                                color: Color(0xFFF79F1A),
+                                fontSize: w * 0.04,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ),
