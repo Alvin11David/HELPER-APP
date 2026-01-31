@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:intl/intl.dart';
 import 'package:helper/Components/User_Name.dart';
 import 'package:helper/Components/Side_Bar.dart';
 import 'package:helper/Components/UnreadMessagesBadge.dart';
@@ -311,7 +312,7 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
     }
 
     final amountText = (amount is num)
-        ? amount.toInt().toString()
+        ? NumberFormat('#,###').format(amount.toInt())
         : amount.toString();
 
     final dist = d['_distanceKm'];
