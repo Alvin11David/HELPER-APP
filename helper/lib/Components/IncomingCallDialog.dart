@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../Chats/Voice_Call_Screen.dart';
 
 class IncomingCallDialog extends StatefulWidget {
   final String callId;
@@ -41,7 +42,20 @@ class _IncomingCallDialogState extends State<IncomingCallDialog> {
         .doc(widget.callId)
         .update({'status': 'accepted'});
     Navigator.of(context).pop();
-    // Navigate to call screen or start VoIP call
+    // Parse callId to get callerId and providerId
+    final ids = widget.callId.split('_');
+    final callerId = ids[0];
+    final providerId = ids[1];
+    // Navigate to VoiceCallScreen
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => VoiceCallScreen(
+          businessName: widget.callerName,
+          providerId: providerId,
+          callerId: callerId,
+        ),
+      ),
+    );
   }
 
   void _declineCall() async {

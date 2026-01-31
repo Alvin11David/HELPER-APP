@@ -25,6 +25,10 @@ class _MapScreenState extends State<MapScreen> {
   final GlobalKey<SideBarState> _sidebarKey = GlobalKey();
   final String _googleApiKey = 'AIzaSyBUJXjLSEFn_8OfVkaaLAIHYGUcGJEDD9w';
   bool _showFilters = false;
+  String? selectedFilter;
+  Position? userPosition;
+  List<String> topRatedCategories = [];
+  Map<String, double> categoryRatings = {};
 
   late GoogleMapController mapController;
 
@@ -119,6 +123,105 @@ class _MapScreenState extends State<MapScreen> {
       _selectedIndex = index;
     });
     // Add navigation logic if needed
+  }
+
+  Future<void> _getUserPosition() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Location services are disabled. Please enable them.'),
+        ),
+      );
+      return;
+    }
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Location permissions are denied.')),
+        );
+        return;
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Location permissions are permanently denied. Please enable them in settings.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    userPosition = await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high,
+    );
+  }
+
+  Future<void> _getTopRatedCategories() async {
+    try {
+      final categoriesSnapshot = await FirebaseFirestore.instance
+          .collection('categories')
+          .get();
+
+      topRatedCategories.clear();
+      categoryRatings.clear();
+
+      for (var categoryDoc in categoriesSnapshot.docs) {
+        final categoryName = categoryDoc['name'] as String?;
+        if (categoryName != null) {
+          final rating = await _getCategoryRatings(categoryName);
+          if (rating >= 4.0) {
+            topRatedCategories.add(categoryName);
+            categoryRatings[categoryName] = rating;
+          }
+        }
+      }
+    } catch (e) {
+      print('Error fetching top rated categories: $e');
+    }
+  }
+
+  Future<double> _getCategoryRatings(String categoryName) async {
+    try {
+      final providersSnapshot = await FirebaseFirestore.instance
+          .collection('serviceProviders')
+          .where('category', isEqualTo: categoryName)
+          .get();
+
+      double totalRating = 0.0;
+      int count = 0;
+
+      for (var providerDoc in providersSnapshot.docs) {
+        final providerId = providerDoc.id;
+        final reviewsSnapshot = await FirebaseFirestore.instance
+            .collection('serviceProviders')
+            .doc(providerId)
+            .collection('reviews')
+            .get();
+
+        for (var reviewDoc in reviewsSnapshot.docs) {
+          final rating = reviewDoc['rating'] as num?;
+          if (rating != null) {
+            totalRating += rating.toDouble();
+            count++;
+          }
+        }
+      }
+
+      return count > 0 ? totalRating / count : 0.0;
+    } catch (e) {
+      print('Error fetching ratings for category $categoryName: $e');
+      return 0.0;
+    }
   }
 
   Future<LatLng?> _getCurrentLocation() async {
@@ -901,7 +1004,143 @@ class _MapScreenState extends State<MapScreen> {
                       ),
                     ],
                   ),
+                  const SizedBox(width: 10),
+                  GestureDetector(
+                    onTap: () => setState(() => _showFilters = !_showFilters),
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.tune, color: Colors.black),
+                    ),
+                  ),
                 ],
+              ),
+            ),
+            AnimatedPositioned(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+              top: _showFilters ? 130 : 175,
+              left: _showFilters ? w * 0.04 : -500,
+              child: SizedBox(
+                width: w - 2 * w * 0.04,
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: List.generate(
+                      4,
+                      (index) => GestureDetector(
+                        onTap: () async {
+                          setState(() {
+                            selectedFilter = index == 0
+                                ? 'Nearest'
+                                : index == 1
+                                ? 'Top Rated'
+                                : index == 2
+                                ? 'Available'
+                                : null;
+                          });
+                          if (index == 0 && userPosition == null) {
+                            await _getUserPosition();
+                            setState(() {});
+                          }
+                        },
+                        child: Container(
+                          width: 100,
+                          height: 40,
+                          margin: const EdgeInsets.only(right: 10),
+                          decoration: BoxDecoration(
+                            color:
+                                (index == 0 && selectedFilter == 'Nearest') ||
+                                    (index == 1 &&
+                                        selectedFilter == 'Top Rated') ||
+                                    (index == 2 &&
+                                        selectedFilter == 'Available')
+                                ? Colors.blue[100]
+                                : Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: index == 0
+                              ? Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.location_on,
+                                        color: Colors.black,
+                                        size: 16,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      const Text(
+                                        'Nearest',
+                                        style: TextStyle(
+                                          color: Colors.black,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                )
+                              : index == 1
+                              ? Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.star,
+                                        color: Colors.orange,
+                                        size: 16,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      const Text(
+                                        'Top Rated',
+                                        style: TextStyle(
+                                          color: Colors.black,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                )
+                              : index == 2
+                              ? Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.calendar_today,
+                                        color: Colors.black,
+                                        size: 16,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      const Text(
+                                        'Available',
+                                        style: TextStyle(
+                                          color: Colors.black,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                )
+                              : null,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               ),
             ),
             Positioned(

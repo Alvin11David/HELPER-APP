@@ -6,6 +6,7 @@ import 'package:helper/main.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class VoiceCallScreen extends StatefulWidget {
   final String businessName;
@@ -37,6 +38,9 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
   late DocumentReference _callDoc;
   StreamSubscription? _callSub;
   StreamSubscription? _iceSub;
+  String _callStatus = 'ringing';
+  Timer? _callTimer;
+  int _callDuration = 0;
 
   String get callId =>
       widget.callerId + '_' + widget.providerId; // Example unique callId
@@ -58,6 +62,7 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
     _peerConnection?.close();
     _callSub?.cancel();
     _iceSub?.cancel();
+    _callTimer?.cancel();
     super.dispose();
   }
 
@@ -111,6 +116,21 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
       } else {
         final data = snapshot.data() as Map<String, dynamic>?;
         if (data == null) return;
+        final status = data['status'] as String?;
+        if (status != null && status != _callStatus) {
+          setState(() {
+            _callStatus = status;
+          });
+          if (status == 'accepted') {
+            _startCallTimer();
+          } else if (status == 'declined') {
+            Navigator.of(context).pop();
+          }
+        }
+        if (data['offer'] == null &&
+            FirebaseAuth.instance.currentUser!.uid == widget.callerId) {
+          await _createOffer();
+        }
         if (data['offer'] != null) {
           final remoteDesc = await _peerConnection?.getRemoteDescription();
           if (remoteDesc == null) {
@@ -167,6 +187,20 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
     await _callDoc.update({'answer': answer.toMap()});
   }
 
+  void _startCallTimer() {
+    _callTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      setState(() {
+        _callDuration++;
+      });
+    });
+  }
+
+  String _formatDuration(int seconds) {
+    final minutes = seconds ~/ 60;
+    final secs = seconds % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}';
+  }
+
   void _endCall() async {
     await _peerConnection?.close();
     await _localStream?.dispose();
@@ -208,7 +242,9 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
                         ),
                       ),
                       Text(
-                        'Ringing...',
+                        _callStatus == 'accepted'
+                            ? _formatDuration(_callDuration)
+                            : 'Ringing...',
                         style: TextStyle(color: Colors.white, fontSize: 18),
                       ),
                     ],
