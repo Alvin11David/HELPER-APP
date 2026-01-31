@@ -280,7 +280,7 @@ class _SignInScreenState extends State<SignInScreen> {
 
     Navigator.pushAndRemoveUntil(
       context,
-      MaterialPageRoute(builder: (_) => WorkerJobsHubScreen()),
+      MaterialPageRoute(builder: (_) => dashboard),
       (_) => false,
     );
   }
