@@ -43,7 +43,7 @@ class _NonProfessionalFaceScanScreenState
       _controller = CameraController(frontCamera, ResolutionPreset.medium);
       await _controller!.initialize();
       setState(() {});
-      _captureTimer = Timer(Duration(seconds: 6), _takePicture);
+      _captureTimer = Timer(Duration(seconds: 10), _takePicture);
     }
   }
 
@@ -170,7 +170,7 @@ class _NonProfessionalFaceScanScreenState
                           });
                           _captureTimer?.cancel();
                           _captureTimer = Timer(
-                            Duration(seconds: 6),
+                            Duration(seconds: 10),
                             _takePicture,
                           );
                         } else {

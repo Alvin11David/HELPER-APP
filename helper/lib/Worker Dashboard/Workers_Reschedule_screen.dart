@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:helper/Components/Worker_Notifications.dart';
 
 class WorkerJobRescheduleScreen extends StatefulWidget {
   const WorkerJobRescheduleScreen({super.key});
@@ -416,17 +417,26 @@ class _WorkerJobRescheduleScreenState extends State<WorkerJobRescheduleScreen> {
                       child: const Icon(Icons.person, color: Colors.black),
                     ),
                     const SizedBox(width: 10),
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.notifications,
-                        color: Colors.black,
-                      ),
+                    Stack(
+                      children: [
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: const BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.notifications,
+                            color: Colors.black,
+                          ),
+                        ),
+                        Positioned(
+                          right: 0,
+                          top: 0,
+                          child: WorkerNotificationsBadge(),
+                        ),
+                      ],
                     ),
                   ],
                 ),

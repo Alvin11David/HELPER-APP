@@ -230,6 +230,31 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                             color: Colors.black,
                           ),
                           const SizedBox(height: 20),
+                          Padding(
+                            padding: EdgeInsets.only(left: 8, right: 8),
+                            child: Row(
+                              children: [
+                                Text(
+                                  "Verified?",
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                Spacer(),
+                                Text(
+                                  "--",
+                                  style: TextStyle(
+                                    color: Colors.green,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 20),
                           GestureDetector(
                             onTap: () async {
                               try {

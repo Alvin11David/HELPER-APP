@@ -12,7 +12,7 @@ class WorkerProfession extends StatelessWidget {
 
       // First, get the workerType from the user's document
       DocumentSnapshot userDoc = await FirebaseFirestore.instance
-          .collection('users')
+          .collection('Sign Up')
           .doc(user.uid)
           .get();
 
@@ -35,7 +35,7 @@ class WorkerProfession extends StatelessWidget {
         } else {
           // For Professional Workers, use the existing logic
           DocumentSnapshot doc = await FirebaseFirestore.instance
-              .collection('users')
+              .collection('Sign Up')
               .doc(user.uid)
               .collection('documents')
               .doc('Professional Workers')
