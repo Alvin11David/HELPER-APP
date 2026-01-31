@@ -12,7 +12,7 @@ import 'package:helper/Worker%20Dashboard/Worker_Details_Screen.dart';
 import '../Components/Bottom_Nav_Bar.dart';
 import 'All_Categories_Screen.dart';
 import 'NearYouProvidersScreen.dart';
-import 'AllProvidersScreen.dart';
+import 'ForYouProvidersScreen.dart';
 
 class EmployerDashboardScreen extends StatefulWidget {
   const EmployerDashboardScreen({super.key});
@@ -104,18 +104,29 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
         .where('read', isEqualTo: false)
         .snapshots()
         .listen((snap) {
-      for (final doc in snap.docs) {
-        final d = doc.data();
-        if (d['type'] == 'reschedule_request') {
-          _showReschedulePopup(context, notifId: doc.id, bookingId: d['bookingId']);
-          break; // show one at a time
-        }
-      }
-    });
+          for (final doc in snap.docs) {
+            final d = doc.data();
+            if (d['type'] == 'reschedule_request') {
+              _showReschedulePopup(
+                context,
+                notifId: doc.id,
+                bookingId: d['bookingId'],
+              );
+              break; // show one at a time
+            }
+          }
+        });
   }
 
-  Future<void> _showReschedulePopup(BuildContext context, {required String notifId, required String bookingId}) async {
-    final bookingSnap = await FirebaseFirestore.instance.collection('bookings').doc(bookingId).get();
+  Future<void> _showReschedulePopup(
+    BuildContext context, {
+    required String notifId,
+    required String bookingId,
+  }) async {
+    final bookingSnap = await FirebaseFirestore.instance
+        .collection('bookings')
+        .doc(bookingId)
+        .get();
     final b = bookingSnap.data() ?? {};
 
     final res = (b['reschedule'] ?? {}) as Map<String, dynamic>;
@@ -133,13 +144,19 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
           TextButton(
             onPressed: () async {
               // decline
-              await FirebaseFirestore.instance.collection('bookings').doc(bookingId).update({
-                'reschedule.employerDecision': 'declined',
-                'reschedule.decidedAt': FieldValue.serverTimestamp(),
-                'status': 'confirmed', // revert back
-                'updatedAt': FieldValue.serverTimestamp(),
-              });
-              await FirebaseFirestore.instance.collection('notifications').doc(notifId).update({'read': true});
+              await FirebaseFirestore.instance
+                  .collection('bookings')
+                  .doc(bookingId)
+                  .update({
+                    'reschedule.employerDecision': 'declined',
+                    'reschedule.decidedAt': FieldValue.serverTimestamp(),
+                    'status': 'confirmed', // revert back
+                    'updatedAt': FieldValue.serverTimestamp(),
+                  });
+              await FirebaseFirestore.instance
+                  .collection('notifications')
+                  .doc(notifId)
+                  .update({'read': true});
               if (!context.mounted) return;
               Navigator.pop(context);
             },
@@ -148,15 +165,21 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
           ElevatedButton(
             onPressed: () async {
               // accept -> replace booking times with proposed
-              await FirebaseFirestore.instance.collection('bookings').doc(bookingId).update({
-                'startDateTime': Timestamp.fromDate(proposedStart),
-                'endDateTime': Timestamp.fromDate(proposedEnd),
-                'reschedule.employerDecision': 'accepted',
-                'reschedule.decidedAt': FieldValue.serverTimestamp(),
-                'status': 'confirmed',
-                'updatedAt': FieldValue.serverTimestamp(),
-              });
-              await FirebaseFirestore.instance.collection('notifications').doc(notifId).update({'read': true});
+              await FirebaseFirestore.instance
+                  .collection('bookings')
+                  .doc(bookingId)
+                  .update({
+                    'startDateTime': Timestamp.fromDate(proposedStart),
+                    'endDateTime': Timestamp.fromDate(proposedEnd),
+                    'reschedule.employerDecision': 'accepted',
+                    'reschedule.decidedAt': FieldValue.serverTimestamp(),
+                    'status': 'confirmed',
+                    'updatedAt': FieldValue.serverTimestamp(),
+                  });
+              await FirebaseFirestore.instance
+                  .collection('notifications')
+                  .doc(notifId)
+                  .update({'read': true});
               if (!context.mounted) return;
               Navigator.pop(context);
             },
@@ -1309,7 +1332,8 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => const AllProvidersScreen(),
+                                builder: (context) =>
+                                    const ForYouProvidersScreen(),
                               ),
                             );
                           },

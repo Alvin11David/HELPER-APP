@@ -9,14 +9,14 @@ import 'package:helper/Components/Side_Bar.dart';
 import 'package:helper/Worker%20Dashboard/Worker_Details_Screen.dart';
 import '../Components/Bottom_Nav_Bar.dart';
 
-class AllProvidersScreen extends StatefulWidget {
-  const AllProvidersScreen({super.key});
+class ForYouProvidersScreen extends StatefulWidget {
+  const ForYouProvidersScreen({super.key});
 
   @override
-  State<AllProvidersScreen> createState() => _AllProvidersScreenState();
+  State<ForYouProvidersScreen> createState() => _ForYouProvidersScreenState();
 }
 
-class _AllProvidersScreenState extends State<AllProvidersScreen> {
+class _ForYouProvidersScreenState extends State<ForYouProvidersScreen> {
   final GlobalKey<SideBarState> _sidebarKey = GlobalKey();
 
   late FocusNode _focusNode;
@@ -286,7 +286,8 @@ class _AllProvidersScreenState extends State<AllProvidersScreen> {
                                 ),
                                 const Spacer(),
                                 GestureDetector(
-                                  onTap: () => setState(() => _searchResults = []),
+                                  onTap: () =>
+                                      setState(() => _searchResults = []),
                                   child: Container(
                                     padding: const EdgeInsets.all(8),
                                     decoration: const BoxDecoration(
@@ -344,11 +345,12 @@ class _AllProvidersScreenState extends State<AllProvidersScreen> {
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (context) => WorkerDetailsScreen(
-                                          providerId: doc.id,
-                                          data: data,
-                                          workerId: '',
-                                        ),
+                                        builder: (context) =>
+                                            WorkerDetailsScreen(
+                                              providerId: doc.id,
+                                              data: data,
+                                              workerId: '',
+                                            ),
                                       ),
                                     );
                                   },
@@ -435,8 +437,8 @@ class _AllProvidersScreenState extends State<AllProvidersScreen> {
                                                             pricingType
                                                                 .toString()
                                                                 .isNotEmpty
-                                                    ? ' / $pricingType'
-                                                    : ''),
+                                                        ? ' / $pricingType'
+                                                        : ''),
                                                 style: TextStyle(
                                                   color: Colors.black,
                                                   fontSize: 12,
@@ -622,8 +624,8 @@ class _AllProvidersScreenState extends State<AllProvidersScreen> {
                                                           pricingType
                                                               .toString()
                                                               .isNotEmpty
-                                                  ? ' / $pricingType'
-                                                  : ''),
+                                                      ? ' / $pricingType'
+                                                      : ''),
                                               style: TextStyle(
                                                 color: Colors.black,
                                                 fontSize: 12,
