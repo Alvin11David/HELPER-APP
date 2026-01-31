@@ -285,15 +285,16 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
     // For worker dashboard, receiver is worker
     bool isEmployer = false;
 
+    List<String> notifications = [];
+
     // Fetch unread messages
-    final snapshot = await FirebaseFirestore.instance
+    final messageSnapshot = await FirebaseFirestore.instance
         .collectionGroup('messages')
         .where('receiverId', isEqualTo: currentUser.uid)
         .where('read', isEqualTo: false)
         .get();
 
-    List<String> notifications = [];
-    for (var doc in snapshot.docs) {
+    for (var doc in messageSnapshot.docs) {
       final data = doc.data();
       final senderId = data['senderId'] as String?;
       if (senderId == null) continue;
@@ -313,6 +314,27 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
       if (name.isNotEmpty) {
         notifications.add('You have received a message from $name');
       }
+    }
+
+    // Fetch worker notifications
+    final workerNotifSnapshot = await FirebaseFirestore.instance
+        .collection('workerNotifications')
+        .where('workerId', isEqualTo: currentUser.uid)
+        .where('read', isEqualTo: false)
+        .get();
+
+    for (var doc in workerNotifSnapshot.docs) {
+      final data = doc.data();
+      final title = data['title'] as String?;
+      final message = data['message'] as String?;
+      if (title != null && message != null) {
+        notifications.add('$title: $message');
+      }
+    }
+
+    // Mark worker notifications as read
+    for (var doc in workerNotifSnapshot.docs) {
+      await doc.reference.update({'read': true});
     }
 
     if (!mounted) return;

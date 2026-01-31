@@ -543,7 +543,18 @@ class _WorkerSkillsJobDetailsScreenState
         'searchableText': searchableText,
       }, SetOptions(merge: true));
 
-      _toast('Submitted ✅ Saved to backend');
+      // Add notification for successful submission
+      await FirebaseFirestore.instance.collection('workerNotifications').add({
+        'workerId': user.uid,
+        'title': 'Profile Submission Successful',
+        'message':
+            'Your skills and job details have been successfully submitted. Your profile is now active and visible to employers.',
+        'type': 'profile_submission',
+        'read': false,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+
+      _toast('Your workplace has been successfully registered');
       // Navigate to WorkersDashboardScreen
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => WorkersDashboardScreen()),

@@ -328,40 +328,55 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
   }
 
   Future<void> _showNotifications() async {
+    print('Notifications tapped');
     final currentUser = FirebaseAuth.instance.currentUser;
-    if (currentUser == null) return;
+    if (currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please log in to view notifications')),
+      );
+      return;
+    }
 
     // For employer dashboard, receiver is employer
     bool isEmployer = true;
 
-    // Fetch unread messages
-    final snapshot = await FirebaseFirestore.instance
-        .collectionGroup('messages')
-        .where('receiverId', isEqualTo: currentUser.uid)
-        .where('read', isEqualTo: false)
-        .get();
-
     List<String> notifications = [];
-    for (var doc in snapshot.docs) {
-      final data = doc.data();
-      final senderId = data['senderId'] as String?;
-      if (senderId == null) continue;
+    try {
+      // Fetch unread messages
+      final snapshot = await FirebaseFirestore.instance
+          .collectionGroup('messages')
+          .where('receiverId', isEqualTo: currentUser.uid)
+          .get();
 
-      String name = '';
-      if (isEmployer) {
-        // Sender is worker, from Sign Up
-        final senderDoc = await FirebaseFirestore.instance
-            .collection('Sign Up')
-            .doc(senderId)
-            .get();
-        if (senderDoc.exists) {
-          final senderData = senderDoc.data() as Map<String, dynamic>?;
-          name = senderData?['fullName'] ?? '';
+      for (var doc in snapshot.docs) {
+        final data = doc.data();
+        final read = data['read'] as bool? ?? false;
+        if (read) continue; // skip read messages
+
+        final senderId = data['senderId'] as String?;
+        if (senderId == null) continue;
+
+        String name = '';
+        if (isEmployer) {
+          // Sender is worker, from Sign Up
+          final senderDoc = await FirebaseFirestore.instance
+              .collection('Sign Up')
+              .doc(senderId)
+              .get();
+          if (senderDoc.exists) {
+            final senderData = senderDoc.data() as Map<String, dynamic>?;
+            name = senderData?['fullName'] ?? '';
+          }
+        }
+        if (name.isNotEmpty) {
+          notifications.add('You have a message from $name');
         }
       }
-      if (name.isNotEmpty) {
-        notifications.add('You have a message from $name');
-      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error loading notifications: $e')),
+      );
+      return;
     }
 
     if (!mounted) return;
@@ -386,7 +401,11 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                 padding: EdgeInsets.all(16.0),
                 child: Text(
                   'Notifications',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
                 ),
               ),
               Expanded(
@@ -1142,8 +1161,13 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                                 });
                               }
 
-                              if (_ratingsLoaded && selectedFilter == 'Top Rated') {
-                                scored.retainWhere((s) => (categoryRatings[s['_docId']] ?? 0) >= 3.0);
+                              if (_ratingsLoaded &&
+                                  selectedFilter == 'Top Rated') {
+                                scored.retainWhere(
+                                  (s) =>
+                                      (categoryRatings[s['_docId']] ?? 0) >=
+                                      3.0,
+                                );
                               }
 
                               // sort shortest distance first
@@ -1282,8 +1306,13 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                                     });
                                   }
                                 }
-                                if (_ratingsLoaded && selectedFilter == 'Top Rated') {
-                                  scored.retainWhere((s) => (categoryRatings[s['_docId']] ?? 0) >= 3.0);
+                                if (_ratingsLoaded &&
+                                    selectedFilter == 'Top Rated') {
+                                  scored.retainWhere(
+                                    (s) =>
+                                        (categoryRatings[s['_docId']] ?? 0) >=
+                                        3.0,
+                                  );
                                 }
                                 scored.sort((a, b) {
                                   final ak = (a['_distanceKm'] as num)
@@ -1295,8 +1324,15 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                                 show = scored.take(10).toList();
                               } else {
                                 var filteredDocs = docs;
-                                if (_ratingsLoaded && selectedFilter == 'Top Rated') {
-                                  filteredDocs = docs.where((doc) => (categoryRatings[doc.id] ?? 0) >= 3.0).toList();
+                                if (_ratingsLoaded &&
+                                    selectedFilter == 'Top Rated') {
+                                  filteredDocs = docs
+                                      .where(
+                                        (doc) =>
+                                            (categoryRatings[doc.id] ?? 0) >=
+                                            3.0,
+                                      )
+                                      .toList();
                                 }
                                 show = filteredDocs
                                     .take(10)
