@@ -61,6 +61,7 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
   Position? userPosition;
   List<String> topRatedCategories = [];
   Map<String, double> categoryRatings = {};
+  Map<String, double> providerRatings = {};
   bool _ratingsLoaded = false;
 
   bool get _hasQuery => _controller.text.trim().length >= 2;
@@ -643,6 +644,11 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
       categoryRatingsMap.forEach((category, ratings) {
         double avg = ratings.reduce((a, b) => a + b) / ratings.length;
         result[category] = avg;
+      });
+
+      // Store provider ratings for filtering
+      setState(() {
+        providerRatings = Map.from(providerAvgs);
       });
 
       return result;
@@ -1273,8 +1279,8 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                                   selectedFilter == 'Top Rated') {
                                 scored.retainWhere(
                                   (s) =>
-                                      (categoryRatings[s['_docId']] ?? 0) >=
-                                      3.0,
+                                      (providerRatings[s['_docId']] ?? 0) >=
+                                      4.0,
                                 );
                               }
 
@@ -1429,8 +1435,8 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                                     selectedFilter == 'Top Rated') {
                                   scored.retainWhere(
                                     (s) =>
-                                        (categoryRatings[s['_docId']] ?? 0) >=
-                                        3.0,
+                                        (providerRatings[s['_docId']] ?? 0) >=
+                                        4.0,
                                   );
                                 }
                                 scored.sort((a, b) {
@@ -1448,8 +1454,8 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                                   filteredDocs = docs
                                       .where(
                                         (doc) =>
-                                            (categoryRatings[doc.id] ?? 0) >=
-                                            3.0,
+                                            (providerRatings[doc.id] ?? 0) >=
+                                            4.0,
                                       )
                                       .toList();
                                 }
