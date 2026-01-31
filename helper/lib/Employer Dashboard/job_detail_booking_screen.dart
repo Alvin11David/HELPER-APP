@@ -115,6 +115,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
   @override
   void initState() {
     super.initState();
+    debugPrint("BOOKING SCREEN providerId: '${widget.serviceProviderId}'");
     if (widget.pricingType != null) {
       _pricingType = widget.pricingType;
     }
@@ -197,7 +198,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
 
     if (_isPerJob) return base;
     if (_isPerDay) return base * _daysSelected;
-    if (_isPerHour) return base * _daysSelected * _hoursSelected;
+    if (_isPerHour) return base * _hoursSelected;
 
     return base;
   }
@@ -212,14 +213,30 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
       return "$baseFmt per day × $_daysSelected day(s) = ($totalFmt)";
     }
     if (_isPerHour) {
-      return "$baseFmt per hour × $_hoursSelected hour(s) × $_daysSelected day(s) = ($totalFmt)";
+      return "$baseFmt per hour × $_hoursSelected hour(s) = ($totalFmt)";
     }
 
     return "Total = ($totalFmt)";
   }
 
   void _recalcAmount() {
-    final total = _computeTotal();
+    final base = int.tryParse((_amount ?? "0").toString()) ?? 0;
+    final type = (_pricingType ?? "").trim();
+
+    final days = int.tryParse(_workingDays ?? "1") ?? 1;
+    final hours = int.tryParse(_workingHours ?? "1") ?? 1;
+
+    int total;
+    if (type == "Per Job") {
+      total = base;
+    } else if (type == "Per Day") {
+      total = base * days;
+    } else if (type == "Per Hour") {
+      total = base * hours;
+    } else {
+      total = base;
+    }
+
     _amountCtrl.text = NumberFormat('#,##0').format(total);
   }
 
@@ -379,6 +396,13 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
         return;
       }
 
+      final providerId = widget.serviceProviderId.trim();
+      if (providerId.isEmpty) {
+        _toast("BUG: serviceProviderId is empty. Booking not sent.");
+        debugPrint("BUG: widget.serviceProviderId='${widget.serviceProviderId}'");
+        return;
+      }
+
       // ✅ validate (you already validate per step, but enforce here too)
       if (!_phase1Complete) {
         _toast("Please complete job details first.");
@@ -444,7 +468,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
         'employerPhone': '',
 
         // provider info
-        'serviceProviderId': widget.serviceProviderId,
+        'serviceProviderId': providerId,
 
         // job details
         'jobDescription': _descCtrl.text.trim(),
