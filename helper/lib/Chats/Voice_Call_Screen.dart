@@ -7,6 +7,7 @@ import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:audio_session/audio_session.dart';
 
 class VoiceCallScreen extends StatefulWidget {
   final String businessName;
@@ -35,7 +36,6 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
   MediaStream? _remoteStream;
 
   final _localRenderer = RTCVideoRenderer();
-  final _remoteRenderer = RTCVideoRenderer();
 
   late CollectionReference _callsRef;
   late DocumentReference _callDoc;
@@ -66,8 +66,34 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
   }
 
   Future<void> _init() async {
+    await _configureAudioSession();
     await _initRenderers();
     await _startCall();
+  }
+
+  Future<void> _configureAudioSession() async {
+    final session = await AudioSession.instance;
+    await session.configure(
+      AudioSessionConfiguration(
+        avAudioSessionCategory: AVAudioSessionCategory.playAndRecord,
+        avAudioSessionCategoryOptions:
+            AVAudioSessionCategoryOptions.allowBluetooth |
+            AVAudioSessionCategoryOptions.defaultToSpeaker,
+        avAudioSessionMode: AVAudioSessionMode.voiceChat,
+        avAudioSessionRouteSharingPolicy:
+            AVAudioSessionRouteSharingPolicy.defaultPolicy,
+        avAudioSessionSetActiveOptions: AVAudioSessionSetActiveOptions.none,
+        androidAudioAttributes: const AndroidAudioAttributes(
+          contentType: AndroidAudioContentType.speech,
+          flags: AndroidAudioFlags.none,
+          usage: AndroidAudioUsage.voiceCommunication,
+        ),
+        androidAudioFocusGainType: AndroidAudioFocusGainType.gain,
+        androidWillPauseWhenDucked: false,
+      ),
+    );
+    await session.setActive(true);
+    print('Audio session configured and activated');
   }
 
   @override
@@ -79,13 +105,22 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
     _localStream?.dispose();
     _remoteStream?.dispose();
     _localRenderer.dispose();
-    _remoteRenderer.dispose();
+    _deactivateAudioSession();
     super.dispose();
+  }
+
+  Future<void> _deactivateAudioSession() async {
+    try {
+      final session = await AudioSession.instance;
+      await session.setActive(false);
+      print('Audio session deactivated');
+    } catch (e) {
+      print('Error deactivating audio session: $e');
+    }
   }
 
   Future<void> _initRenderers() async {
     await _localRenderer.initialize();
-    await _remoteRenderer.initialize();
   }
 
   Future<void> _startCall() async {
@@ -98,8 +133,19 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
         'echoCancellation': true,
         'noiseSuppression': true,
         'autoGainControl': true,
+        'sampleRate': 16000,
+        'channelCount': 1,
       },
       'video': false,
+    });
+
+    print('Local stream obtained: ${_localStream?.id}');
+    print('Local audio tracks: ${_localStream?.getAudioTracks().length}');
+
+    // Ensure local audio tracks are enabled
+    _localStream?.getAudioTracks().forEach((track) {
+      print('Enabling local audio track: ${track.id}');
+      track.enabled = true;
     });
 
     _localRenderer.srcObject = _localStream;
@@ -112,28 +158,40 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
     final config = {
       'iceServers': [
         {'urls': 'stun:stun.l.google.com:19302'},
+        {'urls': 'stun:stun1.l.google.com:19302'},
       ],
     };
 
     _peerConnection = await createPeerConnection(config);
 
-    _remoteStream = await createLocalMediaStream('remote');
-    _remoteRenderer.srcObject = _remoteStream;
-
+    // Handle remote tracks when they arrive
     _peerConnection!.onTrack = (event) {
+      print('Received remote track: ${event.track.kind}');
       if (event.track.kind == 'audio') {
-        _remoteStream!.addTrack(event.track);
+        print('Setting remote stream from track event');
+        setState(() {
+          _remoteStream = event.streams[0];
+        });
+        print('Remote stream set: ${_remoteStream?.id}');
+        // Ensure remote audio tracks are enabled
+        _remoteStream?.getAudioTracks().forEach((track) {
+          print('Enabling remote audio track: ${track.id}');
+          track.enabled = true;
+        });
       }
     };
 
-    _peerConnection!.onIceCandidate = (candidate) async {
-      if (candidate == null) return;
-
-      final collection = isCaller ? 'callerCandidates' : 'calleeCandidates';
-      await _callDoc.collection(collection).add(candidate.toMap());
+    _peerConnection!.onConnectionState = (state) {
+      print('Peer connection state changed: $state');
     };
 
+    _peerConnection!.onIceConnectionState = (state) {
+      print('ICE connection state changed: $state');
+    };
+
+    // Add local tracks to peer connection
     for (var track in _localStream!.getTracks()) {
+      print('Adding local track: ${track.kind}');
       await _peerConnection!.addTrack(track, _localStream!);
     }
   }
@@ -158,6 +216,16 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
 
         if (status == 'accepted') {
           _startCallTimer();
+          print('Call accepted - starting timer');
+          // Ensure remote audio tracks are enabled when call is accepted
+          Future.delayed(const Duration(milliseconds: 500), () {
+            _remoteStream?.getAudioTracks().forEach((track) {
+              if (!track.enabled) {
+                print('Re-enabling remote audio track: ${track.id}');
+                track.enabled = true;
+              }
+            });
+          });
         }
 
         if (status == 'declined' || status == 'ended') {
@@ -322,11 +390,14 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       GestureDetector(
-                        onTap: () {
+                        onTap: () async {
                           setState(() => _volumeClicked = !_volumeClicked);
                           try {
-                            Helper.setSpeakerphoneOn(_volumeClicked);
-                          } catch (_) {}
+                            await Helper.setSpeakerphoneOn(_volumeClicked);
+                            print('Speakerphone set to: $_volumeClicked');
+                          } catch (e) {
+                            print('Error setting speakerphone: $e');
+                          }
                         },
                         child: Container(
                           width: 40,

@@ -8,10 +8,10 @@ class IncomingCallDialog extends StatefulWidget {
   final String callerName;
 
   const IncomingCallDialog({
-    Key? key,
+    super.key,
     required this.callId,
     required this.callerName,
-  }) : super(key: key);
+  });
 
   @override
   _IncomingCallDialogState createState() => _IncomingCallDialogState();

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:intl/intl.dart';
 import 'package:helper/Components/User_Name.dart';
 import 'package:helper/Components/Side_Bar.dart';
 import 'package:helper/Worker%20Dashboard/Worker_Details_Screen.dart';
@@ -144,6 +145,22 @@ class _NearYouProvidersScreenState extends State<NearYouProvidersScreen> {
                       ),
                     ),
                     Positioned(
+                      top: 125,
+                      left: w * 0.04,
+                      child: GestureDetector(
+                        onTap: () => Navigator.of(context).pop(),
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                          child: const Icon(Icons.chevron_left, color: Colors.black),
+                        ),
+                      ),
+                    ),
+                    Positioned(
                       top: 20,
                       right: w * 0.04,
                       child: Row(
@@ -252,8 +269,18 @@ class _NearYouProvidersScreenState extends State<NearYouProvidersScreen> {
                             );
                           }
 
-                          return ListView.builder(
-                            padding: EdgeInsets.symmetric(horizontal: w * 0.04),
+                          return GridView.builder(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 0,
+                            ),
+                            gridDelegate:
+                                const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2,
+                                  mainAxisSpacing: 16,
+                                  crossAxisSpacing: 16,
+                                  childAspectRatio: 0.85,
+                                ),
                             itemCount: docs.length,
                             itemBuilder: (context, index) {
                               final doc = docs[index];
@@ -262,7 +289,20 @@ class _NearYouProvidersScreenState extends State<NearYouProvidersScreen> {
                                   data['businessName'] ?? 'Unknown';
                               final jobCategory =
                                   data['jobCategoryName'] ?? 'Unknown';
-                              final skills = data['skillsDescription'] ?? '';
+                              final workplaceLocation =
+                                  data['workplaceLocationText'] ?? '';
+                              final amount = data['amount'];
+                              final pricingType = data['pricingType'];
+
+                              // Get portfolio image
+                              final files = data['portfolioFiles'];
+                              String img = '';
+                              if (files is List &&
+                                  files.isNotEmpty &&
+                                  files.last is String) {
+                                img = files.last;
+                              }
+
                               final latLng =
                                   data['workplaceLatLng'] as GeoPoint?;
                               final distance = latLng != null
@@ -275,27 +315,115 @@ class _NearYouProvidersScreenState extends State<NearYouProvidersScreen> {
                                         1000 // to km
                                   : 0.0;
 
-                              return Card(
-                                margin: const EdgeInsets.only(bottom: 10),
-                                child: ListTile(
-                                  title: Text(businessName),
-                                  subtitle: Text(
-                                    '$jobCategory\n${distance.toStringAsFixed(1)} km away\n$skills',
+                              return GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => WorkerDetailsScreen(
+                                        providerId: doc.id,
+                                        data: data,
+                                        workerId: '',
+                                      ),
+                                    ),
+                                  );
+                                },
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.95),
+                                    borderRadius: BorderRadius.circular(20),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black12,
+                                        blurRadius: 6,
+                                        offset: Offset(0, 2),
+                                      ),
+                                    ],
                                   ),
-                                  trailing: ElevatedButton(
-                                    onPressed: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              WorkerDetailsScreen(
-                                                workerId: doc.id,
-                                                providerId: '',
-                                              ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      ClipRRect(
+                                        borderRadius: const BorderRadius.only(
+                                          topLeft: Radius.circular(20),
+                                          topRight: Radius.circular(20),
                                         ),
-                                      );
-                                    },
-                                    child: const Text('View Details'),
+                                        child: img.isNotEmpty
+                                            ? Image.network(
+                                                img,
+                                                height: 100,
+                                                width: double.infinity,
+                                                fit: BoxFit.cover,
+                                              )
+                                            : Container(
+                                                height: 70,
+                                                width: double.infinity,
+                                                color: Colors.grey[300],
+                                                child: const Icon(
+                                                  Icons.person,
+                                                  size: 40,
+                                                  color: Colors.grey,
+                                                ),
+                                              ),
+                                      ),
+                                      Padding(
+                                        padding: const EdgeInsets.all(10),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              businessName,
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 14,
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              workplaceLocation.isNotEmpty
+                                                  ? workplaceLocation
+                                                  : '${distance.toStringAsFixed(1)} km away',
+                                              style: TextStyle(
+                                                color: Colors.grey[700],
+                                                fontSize: 12,
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              (amount != null
+                                                      ? NumberFormat(
+                                                          '#,###',
+                                                        ).format(
+                                                          num.tryParse(
+                                                                amount
+                                                                    .toString(),
+                                                              ) ??
+                                                              0,
+                                                        )
+                                                      : '') +
+                                                  (pricingType != null &&
+                                                          pricingType
+                                                              .toString()
+                                                              .isNotEmpty
+                                                      ? ' / $pricingType'
+                                                      : ''),
+                                              style: TextStyle(
+                                                color: Colors.black,
+                                                fontSize: 12,
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               );

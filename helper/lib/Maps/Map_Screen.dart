@@ -753,7 +753,7 @@ class _MapScreenState extends State<MapScreen> {
     }
     try {
       final url =
-          'https://maps.googleapis.com/maps/api/directions/json?origin=${origin.latitude},${origin.longitude}&destination=${dest.latitude},${dest.longitude}&key=${_googleApiKey}';
+          'https://maps.googleapis.com/maps/api/directions/json?origin=${origin.latitude},${origin.longitude}&destination=${dest.latitude},${dest.longitude}&key=$_googleApiKey';
       print('Fetching directions from: $url');
       final response = await http.get(Uri.parse(url));
       print('Response status: ${response.statusCode}');
@@ -885,7 +885,7 @@ class _MapScreenState extends State<MapScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
       ),
       builder: (context) {
-        return Container(
+        return SizedBox(
           height: 400,
           child: ListView.builder(
             itemCount: _currentSteps!.length,

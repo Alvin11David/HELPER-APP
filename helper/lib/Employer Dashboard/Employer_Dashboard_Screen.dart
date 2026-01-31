@@ -93,6 +93,79 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
     super.dispose();
   }
 
+  void _listenForRescheduleNotifications() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    FirebaseFirestore.instance
+        .collection('notifications')
+        .where('toUserId', isEqualTo: user.uid)
+        .where('read', isEqualTo: false)
+        .snapshots()
+        .listen((snap) {
+      for (final doc in snap.docs) {
+        final d = doc.data();
+        if (d['type'] == 'reschedule_request') {
+          _showReschedulePopup(context, notifId: doc.id, bookingId: d['bookingId']);
+          break; // show one at a time
+        }
+      }
+    });
+  }
+
+  Future<void> _showReschedulePopup(BuildContext context, {required String notifId, required String bookingId}) async {
+    final bookingSnap = await FirebaseFirestore.instance.collection('bookings').doc(bookingId).get();
+    final b = bookingSnap.data() ?? {};
+
+    final res = (b['reschedule'] ?? {}) as Map<String, dynamic>;
+    final proposedStart = (res['proposedStart'] as Timestamp).toDate();
+    final proposedEnd = (res['proposedEnd'] as Timestamp).toDate();
+
+    if (!mounted) return;
+
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Reschedule Request"),
+        content: Text("Worker proposes:\n$proposedStart\nto\n$proposedEnd"),
+        actions: [
+          TextButton(
+            onPressed: () async {
+              // decline
+              await FirebaseFirestore.instance.collection('bookings').doc(bookingId).update({
+                'reschedule.employerDecision': 'declined',
+                'reschedule.decidedAt': FieldValue.serverTimestamp(),
+                'status': 'confirmed', // revert back
+                'updatedAt': FieldValue.serverTimestamp(),
+              });
+              await FirebaseFirestore.instance.collection('notifications').doc(notifId).update({'read': true});
+              if (!context.mounted) return;
+              Navigator.pop(context);
+            },
+            child: const Text("Decline"),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              // accept -> replace booking times with proposed
+              await FirebaseFirestore.instance.collection('bookings').doc(bookingId).update({
+                'startDateTime': Timestamp.fromDate(proposedStart),
+                'endDateTime': Timestamp.fromDate(proposedEnd),
+                'reschedule.employerDecision': 'accepted',
+                'reschedule.decidedAt': FieldValue.serverTimestamp(),
+                'status': 'confirmed',
+                'updatedAt': FieldValue.serverTimestamp(),
+              });
+              await FirebaseFirestore.instance.collection('notifications').doc(notifId).update({'read': true});
+              if (!context.mounted) return;
+              Navigator.pop(context);
+            },
+            child: const Text("Accept"),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _initLocation() async {
     setState(() {
       _locLoading = true;
@@ -375,10 +448,7 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
         }
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error loading notifications: $e')),
-      );
-      return;
+      print('Error fetching notifications: $e');
     }
 
     if (!mounted) return;
@@ -1150,8 +1220,8 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                               final docs = snap.data!.docs;
 
                               // OPTIONAL geofence radius (km). Set to null to show all.
-                              final double? radiusKm =
-                                  selectedFilter == 'Nearest' ? 5 : 15;
+                              const double? radiusKm =
+                                  15; // change to 5, 10, 20 etc
 
                               // build list with distances
                               final scored = <Map<String, dynamic>>[];
@@ -1165,7 +1235,7 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
 
                                 final km = _kmFromCurrent(gp);
 
-                                if (radiusKm != null && km > radiusKm) continue;
+                                if (km > radiusKm) continue;
 
                                 scored.add({
                                   ...d,
@@ -1467,7 +1537,7 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                                     data,
                                   );
                                   if (safeData['portfolioFiles'] == null ||
-                                      !(safeData['portfolioFiles'] is List) ||
+                                      safeData['portfolioFiles'] is! List ||
                                       (safeData['portfolioFiles'] as List)
                                           .isEmpty) {
                                     safeData['portfolioFiles'] = [''];

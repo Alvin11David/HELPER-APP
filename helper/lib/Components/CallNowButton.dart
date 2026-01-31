@@ -10,10 +10,10 @@ class CallNowButton extends StatelessWidget {
   final String businessName;
 
   const CallNowButton({
-    Key? key,
+    super.key,
     required this.providerId,
     required this.businessName,
-  }) : super(key: key);
+  });
 
   Future<void> _handleCall(BuildContext context) async {
     // Show initial debug info

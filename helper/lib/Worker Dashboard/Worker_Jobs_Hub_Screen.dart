@@ -1,6 +1,9 @@
 // ignore_for_file: depend_on_referenced_packages
 
+import 'dart:async';
 import 'dart:ui';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 /// ✅ Suggested file name:
@@ -21,6 +24,10 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
 
   int _tab = 0; // 0 pending, 1 active, 2 completed, 3 cancelled
 
+  // Conflict detection state
+  int _conflictCount = 0;
+  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _conflictsSub;
+
   // Fake data (replace with API later)
   final List<_JobItem> _jobs = List.generate(
     7,
@@ -39,6 +46,36 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
   );
 
   void _setTab(int i) => setState(() => _tab = i);
+
+  @override
+  void initState() {
+    super.initState();
+    _listenConflictsBadge();
+  }
+
+  @override
+  void dispose() {
+    _conflictsSub?.cancel();
+    super.dispose();
+  }
+
+  void _listenConflictsBadge() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final workerId = user.uid;
+
+    _conflictsSub = FirebaseFirestore.instance
+        .collection('bookings')
+        .where('serviceProviderId', isEqualTo: workerId)
+        .where('status', whereIn: const ['pending', 'confirmed', 'reschedule_requested'])
+        .where('hasConflict', isEqualTo: true)
+        .snapshots()
+        .listen((snap) {
+      if (!mounted) return;
+      setState(() => _conflictCount = snap.docs.length);
+    });
+  }
 
   String get _title {
     switch (_tab) {
@@ -107,6 +144,263 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
         content: Text(msg, style: const TextStyle(fontFamily: 'Poppins')),
         backgroundColor: Colors.black.withOpacity(0.85),
       ),
+    );
+  }
+
+  Widget _pendingJobsStream(double w, double h) {
+    final workerId = FirebaseAuth.instance.currentUser!.uid;
+    debugPrint("CURRENT USER UID: $workerId");
+
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: FirebaseFirestore.instance
+          .collection('bookings')
+          .where('serviceProviderId', isEqualTo: workerId)
+          .where('status', isEqualTo: 'pending')
+          .orderBy('createdAt', descending: true)
+          .snapshots(),
+      builder: (context, snap) {
+        if (snap.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snap.hasError) {
+          debugPrint("BOOKINGS STREAM ERROR: ${snap.error}");
+          return Center(
+            child: Text(
+              "Error: ${snap.error}",
+              style: const TextStyle(color: Colors.white),
+            ),
+          );
+        }
+        final docs = snap.data?.docs ?? [];
+        if (docs.isEmpty) {
+          return const Center(
+            child: Text(
+              "No pending jobs",
+              style: TextStyle(color: Colors.white),
+            ),
+          );
+        }
+
+        return ListView.separated(
+          padding: EdgeInsets.only(bottom: h * 0.02),
+          itemCount: docs.length,
+          separatorBuilder: (_, __) => SizedBox(height: h * 0.012),
+          itemBuilder: (_, i) {
+            final d = docs[i].data();
+            final bookingId = docs[i].id;
+            final jobItem = _JobItem(
+              employerName: d['employerName'] ?? 'Employer',
+              jobDesc: d['jobDescription'] ?? '',
+              payment: "${d['amount'] ?? '0'}",
+              location: d['jobLocationText'] ?? 'Unknown',
+              category: "Booking",
+              duration: d['pricingType'] ?? 'Fixed',
+              timeRemaining: "Pending",
+              specialNotes: "",
+              pricingType: d['pricingType'] ?? 'Fixed',
+              paymentAmount: "${d['amount'] ?? '0'}",
+            );
+            return _JobCard(
+              w: w,
+              h: h,
+              tab: _tab,
+              job: jobItem,
+              onTap: () => _openDetails(jobItem),
+              onAccept: () async {
+                try {
+                  final newStart = (d['startDateTime'] as Timestamp?)?.toDate();
+                  final newEnd = (d['endDateTime'] as Timestamp?)?.toDate();
+                  if (newStart == null || newEnd == null) {
+                    _toast("Missing booking time range");
+                    return;
+                  }
+
+                  final overlapSnap = await FirebaseFirestore.instance
+                      .collection('bookings')
+                      .where('serviceProviderId', isEqualTo: workerId)
+                      .where('status', isEqualTo: 'confirmed')
+                      .where('startDateTime', isLessThan: Timestamp.fromDate(newEnd))
+                      .where('endDateTime', isGreaterThan: Timestamp.fromDate(newStart))
+                      .get();
+
+                  final conflicts = overlapSnap.docs
+                      .where((doc) => doc.id != bookingId)
+                      .toList();
+
+                  final hasConflict = conflicts.isNotEmpty;
+
+                  final updateData = <String, dynamic>{
+                    'status': 'confirmed',
+                    'updatedAt': FieldValue.serverTimestamp(),
+                    'acceptedAt': FieldValue.serverTimestamp(),
+                    'workerAcceptedBy': workerId,
+                    'hasConflict': hasConflict,
+                  };
+
+                  if (hasConflict) {
+                    updateData['conflictDetectedAt'] = FieldValue.serverTimestamp();
+                  } else {
+                    updateData['conflictDetectedAt'] = FieldValue.delete();
+                  }
+
+                  await FirebaseFirestore.instance
+                      .collection('bookings')
+                      .doc(bookingId)
+                      .update(updateData);
+
+                  if (hasConflict) {
+                    final batch = FirebaseFirestore.instance.batch();
+                    for (final doc in conflicts) {
+                      batch.update(doc.reference, {
+                        'hasConflict': true,
+                        'conflictDetectedAt': FieldValue.serverTimestamp(),
+                      });
+                    }
+                    await batch.commit();
+                    _toast("Booking accepted (conflict detected)");
+                  } else {
+                    _toast("Booking accepted!");
+                  }
+                  setState(() => _tab = 1);
+                } catch (e) {
+                  debugPrint("ERROR ACCEPTING BOOKING: $e");
+                  _toast("Error accepting booking: $e");
+                }
+              },
+              onDelete: () async {
+                try {
+                  await FirebaseFirestore.instance
+                      .collection('bookings')
+                      .doc(bookingId)
+                      .update({
+                    'status': 'cancelled',
+                    'updatedAt': FieldValue.serverTimestamp(),
+                    'cancelledAt': FieldValue.serverTimestamp(),
+                    'cancelledBy': workerId,
+                  });
+                  _toast("Booking cancelled!");
+                  setState(() => _tab = 3);
+                } catch (e) {
+                  debugPrint("ERROR DELETING PENDING BOOKING: $e");
+                  _toast("Delete error: $e");
+                }
+              },
+              onResume: () => _toast("Resume (hook API later)"),
+              onPause: () => _toast("Pause (hook API later)"),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _jobsByStatusStream(double w, double h, String status) {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      return const Center(
+        child: Text(
+          "Not logged in",
+          style: TextStyle(color: Colors.white),
+        ),
+      );
+    }
+    final workerId = user.uid;
+
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: FirebaseFirestore.instance
+          .collection('bookings')
+          .where('serviceProviderId', isEqualTo: workerId)
+          .where('status', isEqualTo: status)
+          .orderBy('createdAt', descending: true)
+          .snapshots(),
+      builder: (context, snap) {
+        if (snap.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snap.hasError) {
+          debugPrint("BOOKINGS STREAM ERROR: ${snap.error}");
+          return Center(
+            child: Text(
+              "Error: ${snap.error}",
+              style: const TextStyle(color: Colors.white),
+            ),
+          );
+        }
+
+        final docs = snap.data?.docs ?? [];
+        if (docs.isEmpty) {
+          return Center(
+            child: Text(
+              "No $status jobs",
+              style: const TextStyle(color: Colors.white),
+            ),
+          );
+        }
+
+        return ListView.separated(
+          padding: EdgeInsets.only(bottom: h * 0.02),
+          itemCount: docs.length,
+          separatorBuilder: (_, __) => SizedBox(height: h * 0.012),
+          itemBuilder: (_, i) {
+            final d = docs[i].data();
+            final bookingId = docs[i].id;
+
+            final jobItem = _JobItem(
+              employerName: d['employerName'] ?? 'Employer',
+              jobDesc: d['jobDescription'] ?? '',
+              payment: "${d['amount'] ?? '0'}",
+              location: d['jobLocationText'] ?? 'Unknown',
+              category: "Booking",
+              duration: d['pricingType'] ?? 'Fixed',
+              timeRemaining: status,
+              specialNotes: "",
+              pricingType: d['pricingType'] ?? 'Fixed',
+              paymentAmount: "${d['amount'] ?? '0'}",
+            );
+
+            return _JobCard(
+              w: w,
+              h: h,
+              tab: _tab,
+              job: jobItem,
+              onTap: () => _openDetails(jobItem),
+
+              // Active tab buttons
+              onResume: () async {
+                // optional: implement later
+                _toast("Resume not implemented yet");
+              },
+              onPause: () async {
+                // optional: implement later
+                _toast("Pause not implemented yet");
+              },
+
+              // Pending tab buttons already handled elsewhere
+              onAccept: () async {},
+
+              // Delete -> cancel booking (recommended behavior)
+              onDelete: () async {
+                try {
+                  await FirebaseFirestore.instance
+                      .collection('bookings')
+                      .doc(bookingId)
+                      .update({
+                    'status': 'cancelled',
+                    'updatedAt': FieldValue.serverTimestamp(),
+                    'cancelledAt': FieldValue.serverTimestamp(),
+                    'cancelledBy': workerId,
+                  });
+                  _toast("Booking cancelled!");
+                  setState(() => _tab = 3);
+                } catch (e) {
+                  debugPrint("ERROR CANCELLING BOOKING: $e");
+                  _toast("Cancel error: $e");
+                }
+              },
+            );
+          },
+        );
+      },
     );
   }
 
@@ -225,6 +519,7 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
                       active: _tab == 0,
                       bg: _tabChipColor(0),
                       fg: _tabChipTextColor(0),
+                      badgeCount: _conflictCount,
                       onTap: () => _setTab(0),
                     ),
                     SizedBox(width: w * 0.02),
@@ -253,33 +548,16 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
                     ),
                   ],
                 ),
-
                 SizedBox(height: h * 0.014),
 
                 // List
                 Expanded(
-                  child: ListView.separated(
-                    padding: EdgeInsets.only(bottom: h * 0.02),
-                    itemCount: _filtered.length,
-                    separatorBuilder: (_, __) => SizedBox(height: h * 0.012),
-                    itemBuilder: (context, i) {
-                      final job = _filtered[i];
-                      return _JobCard(
-                        w: w,
-                        h: h,
-                        tab: _tab,
-                        job: job,
-                        onTap: () => _openDetails(job),
-                        onAccept: () {
-                          _toast("Accepted (hook API later)");
-                          setState(() => _tab = 1);
-                        },
-                        onDelete: () => _toast("Deleted (hook API later)"),
-                        onResume: () => _toast("Resume (hook API later)"),
-                        onPause: () => _toast("Pause (hook API later)"),
-                      );
-                    },
-                  ),
+                  child: () {
+                    if (_tab == 0) return _pendingJobsStream(w, h);
+                    if (_tab == 1) return _jobsByStatusStream(w, h, 'confirmed');
+                    if (_tab == 2) return _jobsByStatusStream(w, h, 'completed');
+                    return _jobsByStatusStream(w, h, 'cancelled');
+                  }(),
                 ),
               ],
             ),
@@ -507,6 +785,7 @@ class _TabChip extends StatelessWidget {
   final Color bg;
   final Color fg;
   final VoidCallback onTap;
+  final int badgeCount; // NEW
 
   const _TabChip({
     required this.text,
@@ -514,6 +793,7 @@ class _TabChip extends StatelessWidget {
     required this.bg,
     required this.fg,
     required this.onTap,
+    this.badgeCount = 0,
   });
 
   @override
@@ -528,16 +808,45 @@ class _TabChip extends StatelessWidget {
             color: bg,
             borderRadius: BorderRadius.circular(999),
           ),
-          child: Text(
-            text,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: fg,
-              fontFamily: 'Poppins',
-              fontWeight: FontWeight.w900,
-              fontSize: 12.5,
-            ),
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Center(
+                child: Text(
+                  text,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: fg,
+                    fontFamily: 'Poppins',
+                    fontWeight: FontWeight.w900,
+                    fontSize: 12.5,
+                  ),
+                ),
+              ),
+
+              if (badgeCount > 0)
+                Positioned(
+                  right: -6,
+                  top: -6,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: Colors.white, width: 2),
+                    ),
+                    child: Text(
+                      badgeCount > 99 ? "99+" : badgeCount.toString(),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 10,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
           ),
         ),
       ),
