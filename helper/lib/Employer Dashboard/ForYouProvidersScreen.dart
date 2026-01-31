@@ -117,7 +117,7 @@ class _ForYouProvidersScreenState extends State<ForYouProvidersScreen> {
             children: [
               // Top bar
               SizedBox(
-                height: 170,
+                height: 110,
                 child: Stack(
                   children: [
                     Positioned(
