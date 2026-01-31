@@ -93,7 +93,10 @@ class CallNowButton extends StatelessWidget {
     final callId = '${callerId}_$providerId';
 
     // Fetch caller's full name
-    final callerDoc = await FirebaseFirestore.instance.collection('users').doc(callerId).get();
+    final callerDoc = await FirebaseFirestore.instance
+        .collection('Sign Up')
+        .doc(callerId)
+        .get();
     final callerFullName = callerDoc.data()?['fullName'] ?? businessName;
 
     print('=== CREATING CALL DOCUMENT ===');

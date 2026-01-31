@@ -18,11 +18,31 @@ class IncomingCallDialog extends StatefulWidget {
 }
 
 class _IncomingCallDialogState extends State<IncomingCallDialog> {
+  String? callerFullName;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchCallerName();
+  }
+
+  Future<void> _fetchCallerName() async {
+    final ids = widget.callId.split('_');
+    final callerId = ids[0];
+    final doc = await FirebaseFirestore.instance
+        .collection('Sign Up')
+        .doc(callerId)
+        .get();
+    setState(() {
+      callerFullName = doc.data()?['fullName'] ?? widget.callerName;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
       title: const Text('Incoming Call'),
-      content: Text('${widget.callerName} is calling you.'),
+      content: Text('${callerFullName ?? widget.callerName} is calling you.'),
       actions: [
         TextButton(
           onPressed: () => _declineCall(),
