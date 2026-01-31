@@ -11,6 +11,7 @@ import 'package:helper/Employer%20Dashboard/Category_Providers_Screen.dart';
 import 'package:helper/Worker%20Dashboard/Worker_Details_Screen.dart';
 import '../Components/Bottom_Nav_Bar.dart';
 import 'All_Categories_Screen.dart';
+import 'NearYouProvidersScreen.dart';
 
 class EmployerDashboardScreen extends StatefulWidget {
   const EmployerDashboardScreen({super.key});
@@ -225,7 +226,8 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => WorkerDetailsScreen(providerId: '', data: d),
+            builder: (context) =>
+                WorkerDetailsScreen(providerId: '', data: d, workerId: ''),
           ),
         );
       },
@@ -1043,17 +1045,28 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 5,
-                          ),
-                          child: Text(
-                            'View All',
-                            style: TextStyle(
-                              color: Color(0xFFF79F1A),
-                              fontSize: w * 0.04,
-                              fontWeight: FontWeight.bold,
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const NearYouProvidersScreen(),
+                              ),
+                            );
+                          },
+                          child: Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 5,
+                            ),
+                            child: Text(
+                              'View All',
+                              style: TextStyle(
+                                color: Color(0xFFF79F1A),
+                                fontSize: w * 0.04,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ),
@@ -1479,6 +1492,7 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                                             WorkerDetailsScreen(
                                               providerId: '',
                                               data: navData,
+                                              workerId: '',
                                             ),
                                       ),
                                     );
