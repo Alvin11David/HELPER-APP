@@ -22,6 +22,7 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
   final GlobalKey<SideBarState> _sidebarKey = GlobalKey();
 
   String status = 'Available'; // Can be 'Available', 'On Job', 'Not Available'
+  bool _isCallDialogShowing = false;
 
   @override
   void initState() {
@@ -152,13 +153,16 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
         );
 
         try {
-          showDialog(
-            context: context,
-            builder: (context) => IncomingCallDialog(
-              callId: message.data['callId']!,
-              callerName: message.data['callerName']!,
-            ),
-          );
+          if (!_isCallDialogShowing) {
+            _isCallDialogShowing = true;
+            showDialog(
+              context: context,
+              builder: (context) => IncomingCallDialog(
+                callId: message.data['callId']!,
+                callerName: message.data['callerName']!,
+              ),
+            ).then((_) => _isCallDialogShowing = false);
+          }
           print('IncomingCallDialog showDialog called successfully');
 
           ScaffoldMessenger.of(context).showSnackBar(
@@ -197,13 +201,16 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
       if (message.data['type'] == 'call') {
         print('App opened from call notification');
         try {
-          showDialog(
-            context: context,
-            builder: (context) => IncomingCallDialog(
-              callId: message.data['callId']!,
-              callerName: message.data['callerName']!,
-            ),
-          );
+          if (!_isCallDialogShowing) {
+            _isCallDialogShowing = true;
+            showDialog(
+              context: context,
+              builder: (context) => IncomingCallDialog(
+                callId: message.data['callId']!,
+                callerName: message.data['callerName']!,
+              ),
+            ).then((_) => _isCallDialogShowing = false);
+          }
           print('IncomingCallDialog shown from opened app');
         } catch (e) {
           print('ERROR showing IncomingCallDialog from opened app: $e');
@@ -221,13 +228,16 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
         if (message.data['type'] == 'call') {
           print('App launched from call notification');
           try {
-            showDialog(
-              context: context,
-              builder: (context) => IncomingCallDialog(
-                callId: message.data['callId']!,
-                callerName: message.data['callerName']!,
-              ),
-            );
+            if (!_isCallDialogShowing) {
+              _isCallDialogShowing = true;
+              showDialog(
+                context: context,
+                builder: (context) => IncomingCallDialog(
+                  callId: message.data['callId']!,
+                  callerName: message.data['callerName']!,
+                ),
+              ).then((_) => _isCallDialogShowing = false);
+            }
             print('IncomingCallDialog shown from initial message');
           } catch (e) {
             print('ERROR showing IncomingCallDialog from initial message: $e');
