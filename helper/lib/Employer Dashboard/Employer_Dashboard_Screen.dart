@@ -676,6 +676,8 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                                       ? 'Available'
                                       : null;
                                 });
+                                _nearYouFuture = null;
+                                _forYouFuture = null;
                                 if (index == 0 && userPosition == null) {
                                   await _getUserPosition();
                                   setState(() {});
@@ -1110,8 +1112,8 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                               final docs = snap.data!.docs;
 
                               // OPTIONAL geofence radius (km). Set to null to show all.
-                              const double? radiusKm =
-                                  15; // change to 5, 10, 20 etc
+                              final double? radiusKm =
+                                  selectedFilter == 'Nearest' ? 5 : 15;
 
                               // build list with distances
                               final scored = <Map<String, dynamic>>[];
@@ -1219,7 +1221,9 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                                 isEqualTo: 'skills_job_details_done',
                               )
                               .orderBy('updatedAt', descending: true)
-                              .limit(10)
+                              .limit(
+                                250,
+                              ) // fetch enough then sort locally by distance if needed
                               .get();
                           return FutureBuilder<
                             QuerySnapshot<Map<String, dynamic>>
@@ -1249,16 +1253,59 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                               }
 
                               final docs = snap.data!.docs;
+
+                              List<Map<String, dynamic>> show;
+                              if (selectedFilter == 'Nearest' &&
+                                  _currentPos != null) {
+                                // Filter by distance
+                                final scored = <Map<String, dynamic>>[];
+                                for (final doc in docs) {
+                                  final d = doc.data();
+                                  final gp = d['workplaceLatLng'];
+                                  if (gp is! GeoPoint) continue;
+                                  final km = _kmFromCurrent(gp);
+                                  if (km <= 5) {
+                                    scored.add({
+                                      ...d,
+                                      '_distanceKm': km,
+                                      '_docId': doc.id,
+                                    });
+                                  }
+                                }
+                                scored.sort((a, b) {
+                                  final ak = (a['_distanceKm'] as num)
+                                      .toDouble();
+                                  final bk = (b['_distanceKm'] as num)
+                                      .toDouble();
+                                  return ak.compareTo(bk);
+                                });
+                                show = scored.take(10).toList();
+                              } else {
+                                show = docs
+                                    .take(10)
+                                    .map(
+                                      (doc) => {
+                                        ...doc.data(),
+                                        '_docId': doc.id,
+                                      },
+                                    )
+                                    .toList();
+                              }
+
+                              if (show.isEmpty) {
+                                return const Center(
+                                  child: Text("No providers found"),
+                                );
+                              }
+
                               return ListView.separated(
                                 scrollDirection: Axis.horizontal,
                                 padding: EdgeInsets.only(right: w * 0.04),
-                                itemCount: docs.length,
+                                itemCount: show.length,
                                 separatorBuilder: (_, __) =>
                                     SizedBox(width: w * 0.05),
-                                itemBuilder: (_, i) => _providerCard(w, {
-                                  ...docs[i].data(),
-                                  '_docId': docs[i].id,
-                                }),
+                                itemBuilder: (_, i) =>
+                                    _providerCard(w, show[i]),
                               );
                             },
                           );

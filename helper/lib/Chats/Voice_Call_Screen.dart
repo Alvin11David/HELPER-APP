@@ -28,15 +28,14 @@ class VoiceCallScreen extends StatefulWidget {
 
 class _VoiceCallScreenState extends State<VoiceCallScreen> {
   bool _volumeClicked = false;
-  bool _micClicked = false;
+  bool _micClicked = true;
 
   RTCPeerConnection? _peerConnection;
   MediaStream? _localStream;
+  MediaStream? _remoteStream;
 
   final _localRenderer = RTCVideoRenderer();
   final _remoteRenderer = RTCVideoRenderer();
-
-  bool _inCall = false;
 
   late CollectionReference _callsRef;
   late DocumentReference _callDoc;
@@ -48,6 +47,8 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
 
   Timer? _callTimer;
   int _callDuration = 0;
+
+  bool _offerCreated = false;
 
   String get callId => '${widget.callerId}_${widget.providerId}';
 
@@ -61,10 +62,12 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
     _callsRef = FirebaseFirestore.instance.collection('calls');
     _callDoc = _callsRef.doc(callId);
 
-    _micClicked = true;
+    _init();
+  }
 
-    _initRenderers();
-    _startCall();
+  Future<void> _init() async {
+    await _initRenderers();
+    await _startCall();
   }
 
   @override
@@ -74,6 +77,7 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
     _iceSub?.cancel();
     _peerConnection?.close();
     _localStream?.dispose();
+    _remoteStream?.dispose();
     _localRenderer.dispose();
     _remoteRenderer.dispose();
     super.dispose();
@@ -85,10 +89,16 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
   }
 
   Future<void> _startCall() async {
-    await Permission.microphone.request();
+    final phoneStatus = await Permission.phone.request();
+    final micStatus = await Permission.microphone.request();
+    if (!micStatus.isGranted) return;
 
     _localStream = await navigator.mediaDevices.getUserMedia({
-      'audio': true,
+      'audio': {
+        'echoCancellation': true,
+        'noiseSuppression': true,
+        'autoGainControl': true,
+      },
       'video': false,
     });
 
@@ -96,10 +106,6 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
 
     await _createPeerConnection();
     await _setupSignaling();
-
-    setState(() {
-      _inCall = true;
-    });
   }
 
   Future<void> _createPeerConnection() async {
@@ -111,9 +117,12 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
 
     _peerConnection = await createPeerConnection(config);
 
+    _remoteStream = await createLocalMediaStream('remote');
+    _remoteRenderer.srcObject = _remoteStream;
+
     _peerConnection!.onTrack = (event) {
       if (event.track.kind == 'audio') {
-        event.track.enabled = true;
+        _remoteStream!.addTrack(event.track);
       }
     };
 
@@ -121,20 +130,19 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
       if (candidate == null) return;
 
       final collection = isCaller ? 'callerCandidates' : 'calleeCandidates';
-
       await _callDoc.collection(collection).add(candidate.toMap());
     };
 
     for (var track in _localStream!.getTracks()) {
-      _peerConnection!.addTrack(track, _localStream!);
+      await _peerConnection!.addTrack(track, _localStream!);
     }
   }
 
   Future<void> _setupSignaling() async {
-    /// Listen to call document
     _callSub = _callDoc.snapshots().listen((snapshot) async {
       if (!snapshot.exists) {
-        if (isCaller) {
+        if (isCaller && !_offerCreated) {
+          _offerCreated = true;
           await _createOffer();
         }
         return;
@@ -146,27 +154,20 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
 
       final status = data['status'];
       if (status != null && status != _callStatus) {
-        setState(() {
-          _callStatus = status;
-        });
+        setState(() => _callStatus = status);
 
         if (status == 'accepted') {
           _startCallTimer();
         }
 
-        if (status == 'declined') {
-          Navigator.of(context).pop();
-        }
-
-        if (status == 'ended') {
+        if (status == 'declined' || status == 'ended') {
           Navigator.of(context).pop();
         }
       }
 
-      /// CALLEE receives OFFER
       if (!isCaller && data['offer'] != null) {
-        final remoteDesc = await _peerConnection!.getRemoteDescription();
-        if (remoteDesc == null) {
+        final desc = await _peerConnection!.getRemoteDescription();
+        if (desc == null) {
           await _peerConnection!.setRemoteDescription(
             RTCSessionDescription(data['offer']['sdp'], data['offer']['type']),
           );
@@ -175,10 +176,9 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
         }
       }
 
-      /// CALLER receives ANSWER
       if (isCaller && data['answer'] != null) {
-        final remoteDesc = await _peerConnection!.getRemoteDescription();
-        if (remoteDesc == null) {
+        final desc = await _peerConnection!.getRemoteDescription();
+        if (desc == null) {
           await _peerConnection!.setRemoteDescription(
             RTCSessionDescription(
               data['answer']['sdp'],
@@ -189,16 +189,18 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
       }
     });
 
-    /// ICE candidates
     final remoteCandidates = isCaller ? 'calleeCandidates' : 'callerCandidates';
 
     _iceSub = _callDoc.collection(remoteCandidates).snapshots().listen((
       snapshot,
-    ) {
+    ) async {
+      final desc = await _peerConnection!.getRemoteDescription();
+      if (desc == null) return;
+
       for (var change in snapshot.docChanges) {
         final data = change.doc.data();
         if (data != null) {
-          _peerConnection!.addCandidate(
+          await _peerConnection!.addCandidate(
             RTCIceCandidate(
               data['candidate'],
               data['sdpMid'],
@@ -226,9 +228,7 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
 
   void _startCallTimer() {
     _callTimer ??= Timer.periodic(const Duration(seconds: 1), (_) {
-      setState(() {
-        _callDuration++;
-      });
+      setState(() => _callDuration++);
     });
   }
 
@@ -238,15 +238,10 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
     return '${minutes.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}';
   }
 
-  void _endCall() async {
+  Future<void> _endCall() async {
     await _peerConnection?.close();
     await _localStream?.dispose();
     await _callDoc.update({'status': 'ended'});
-
-    setState(() {
-      _inCall = false;
-    });
-
     Navigator.of(context).pop();
   }
 
@@ -329,7 +324,9 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
                       GestureDetector(
                         onTap: () {
                           setState(() => _volumeClicked = !_volumeClicked);
-                          Helper.setSpeakerphoneOn(_volumeClicked);
+                          try {
+                            Helper.setSpeakerphoneOn(_volumeClicked);
+                          } catch (_) {}
                         },
                         child: Container(
                           width: 40,
