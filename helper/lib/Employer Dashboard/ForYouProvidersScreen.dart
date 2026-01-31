@@ -650,8 +650,10 @@ class _ForYouProvidersScreenState extends State<ForYouProvidersScreen> {
 
               // Bottom nav
               BottomNavBar(currentIndex: 0),
-            ],
-          ),
+              ],
+            ),
+            SideBar(key: _sidebarKey),
+          ],
         ),
       ),
     );
