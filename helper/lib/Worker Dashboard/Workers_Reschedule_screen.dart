@@ -1,4 +1,6 @@
 import 'dart:ui';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class WorkerJobRescheduleScreen extends StatefulWidget {
@@ -21,6 +23,7 @@ class _WorkerJobRescheduleScreenState extends State<WorkerJobRescheduleScreen> {
   final List<_ConflictingJob> _jobs = List.generate(
     6,
     (i) => _ConflictingJob(
+      bookingId: "fake_booking_$i",
       employerName: "Employer Name",
       description: "Job Description here",
       dateRange: "Job Date Range",
@@ -166,7 +169,42 @@ class _WorkerJobRescheduleScreenState extends State<WorkerJobRescheduleScreen> {
     return "$h:$m $p";
   }
 
-  void _save() {
+  Future<bool> _isWorkerFree({
+    required String workerId,
+    required String excludeBookingId,
+    required DateTime newStart,
+    required DateTime newEnd,
+  }) async {
+    final snap = await FirebaseFirestore.instance
+        .collection('bookings')
+        .where('serviceProviderId', isEqualTo: workerId)
+        .where('status', whereIn: const ['confirmed', 'pending', 'reschedule_requested'])
+        .get();
+
+    for (final doc in snap.docs) {
+      if (doc.id == excludeBookingId) continue;
+
+      final d = doc.data();
+      final s = (d['startDateTime'] as Timestamp).toDate();
+      final e = (d['endDateTime'] as Timestamp).toDate();
+
+      if (_overlaps(newStart, newEnd, s, e)) return false;
+    }
+    return true;
+  }
+
+  Future<void> _save() async {
+    final worker = FirebaseAuth.instance.currentUser;
+    if (worker == null) {
+      _toast("Not logged in");
+      return;
+    }
+
+    if (_selected == null) {
+      _toast("Select a job first");
+      return;
+    }
+
     if (_rangeStart == null || _rangeEnd == null) {
       _toast("Pick an available date range");
       return;
@@ -176,8 +214,130 @@ class _WorkerJobRescheduleScreenState extends State<WorkerJobRescheduleScreen> {
       return;
     }
 
-    _toast("Saved (hook API later)");
-    // TODO: send update to backend / firebase
+    final bookingId = _selected!.bookingId;
+    final workerId = worker.uid;
+
+    // Build newStart/newEnd from chosen date+time
+    // Using current month/year (you may want to make this dynamic)
+    final now = DateTime.now();
+    final year = now.year;
+    final month = now.month;
+
+    final startDate = DateTime(year, month, _rangeStart!);
+    final endDate = DateTime(year, month, _rangeEnd!);
+
+    final newStart = DateTime(
+      startDate.year,
+      startDate.month,
+      startDate.day,
+      _from!.hour,
+      _from!.minute,
+    );
+
+    final newEnd = DateTime(
+      endDate.year,
+      endDate.month,
+      endDate.day,
+      _to!.hour,
+      _to!.minute,
+    );
+
+    if (!newEnd.isAfter(newStart)) {
+      _toast("End time must be after start time");
+      return;
+    }
+
+    // Check if worker is free
+    final free = await _isWorkerFree(
+      workerId: workerId,
+      excludeBookingId: bookingId,
+      newStart: newStart,
+      newEnd: newEnd,
+    );
+
+    if (!free) {
+      _toast("You are not free on that time. Choose another slot.");
+      return;
+    }
+
+    try {
+      // Update booking with reschedule proposal
+      await FirebaseFirestore.instance.collection('bookings').doc(bookingId).update({
+        'status': 'reschedule_requested',
+        'reschedule': {
+          'proposedStart': Timestamp.fromDate(newStart),
+          'proposedEnd': Timestamp.fromDate(newEnd),
+          'requestedAt': FieldValue.serverTimestamp(),
+          'requestedBy': 'worker',
+          'employerDecision': 'pending',
+        },
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      // Send employer notification
+      final bookingSnap = await FirebaseFirestore.instance.collection('bookings').doc(bookingId).get();
+      final bookingData = bookingSnap.data() ?? {};
+      final employerId = (bookingData['employerId'] ?? '').toString();
+
+      await FirebaseFirestore.instance.collection('notifications').add({
+        'toUserId': employerId,
+        'fromUserId': workerId,
+        'type': 'reschedule_request',
+        'title': 'Reschedule request',
+        'message': 'Worker proposed a new schedule.',
+        'bookingId': bookingId,
+        'read': false,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+
+      _toast("Reschedule sent to employer");
+      Navigator.pop(context);
+    } catch (e) {
+      debugPrint("ERROR SAVING RESCHEDULE: $e");
+      _toast("Error saving reschedule: $e");
+    }
+  }
+
+  Stream<QuerySnapshot<Map<String, dynamic>>> _workerBookingsStream(String workerId) {
+    return FirebaseFirestore.instance
+        .collection('bookings')
+        .where('serviceProviderId', isEqualTo: workerId)
+        .where('status', whereIn: const ['pending', 'confirmed', 'reschedule_requested'])
+        .orderBy('startDateTime', descending: false)
+        .snapshots();
+  }
+
+  bool _overlaps(DateTime aStart, DateTime aEnd, DateTime bStart, DateTime bEnd) {
+    return aStart.isBefore(bEnd) && bStart.isBefore(aEnd);
+  }
+
+  List<Map<String, dynamic>> _findConflicts(List<QueryDocumentSnapshot<Map<String, dynamic>>> docs) {
+    final bookings = docs.map((d) {
+      final data = d.data();
+      return {
+        'id': d.id,
+        ...data,
+        'start': (data['startDateTime'] as Timestamp).toDate(),
+        'end': (data['endDateTime'] as Timestamp).toDate(),
+      };
+    }).toList();
+
+    final conflicts = <Map<String, dynamic>>[];
+
+    for (int i = 0; i < bookings.length; i++) {
+      for (int j = i + 1; j < bookings.length; j++) {
+        final a = bookings[i];
+        final b = bookings[j];
+        if (_overlaps(a['start'], a['end'], b['start'], b['end'])) {
+          conflicts.add(a);
+          conflicts.add(b);
+        }
+      }
+    }
+
+    // remove duplicates by id
+    final seen = <String>{};
+    return conflicts.where((c) => seen.add(c['id'])).toList();
   }
 
   void _toast(String msg) {
@@ -922,11 +1082,13 @@ class _ConflictCard extends StatelessWidget {
 }
 
 class _ConflictingJob {
+  final String bookingId;
   final String employerName;
   final String description;
   final String dateRange;
 
   _ConflictingJob({
+    required this.bookingId,
     required this.employerName,
     required this.description,
     required this.dateRange,

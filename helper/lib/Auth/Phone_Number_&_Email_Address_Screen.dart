@@ -14,7 +14,6 @@ import 'package:helper/Intro/Role_Selection_Screen.dart';
 
 import 'OTP_Verification_Screen.dart';
 import 'Sign_In_Screen.dart';
-import 'package:helper/Worker Dashboard/workers_dashboard_screen.dart';
 
 class _UgandaPhoneFormatter extends TextInputFormatter {
   @override
@@ -801,8 +800,9 @@ class _PhoneBlock extends StatelessWidget {
           validator: (v) {
             final t = (v ?? '').trim();
             if (t.isEmpty) return 'Phone number is required';
-            if (!t.startsWith('+256 '))
+            if (!t.startsWith('+256 ')) {
               return 'Phone number must start with +256';
+            }
             final digits = t.substring(5);
             if (digits.length != 9) return 'Enter exactly 9 digits after +256';
             if (!RegExp(r'^[0-9]{9}$').hasMatch(digits)) {
