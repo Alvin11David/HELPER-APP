@@ -652,7 +652,6 @@ class _ForYouProvidersScreenState extends State<ForYouProvidersScreen> {
           ),
         ),
       ),
-      drawer: SideBar(key: _sidebarKey),
     );
   }
 }
