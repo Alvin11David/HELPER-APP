@@ -3,25 +3,21 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
 import 'package:helper/Components/User_Name.dart';
 import 'package:helper/Components/Side_Bar.dart';
 import 'package:helper/Worker%20Dashboard/Worker_Details_Screen.dart';
 import '../Components/Bottom_Nav_Bar.dart';
 
-class NearYouProvidersScreen extends StatefulWidget {
-  const NearYouProvidersScreen({super.key});
+class AllProvidersScreen extends StatefulWidget {
+  const AllProvidersScreen({super.key});
 
   @override
-  State<NearYouProvidersScreen> createState() => _NearYouProvidersScreenState();
+  State<AllProvidersScreen> createState() => _AllProvidersScreenState();
 }
 
-class _NearYouProvidersScreenState extends State<NearYouProvidersScreen> {
+class _AllProvidersScreenState extends State<AllProvidersScreen> {
   final GlobalKey<SideBarState> _sidebarKey = GlobalKey();
-  Position? _currentPos;
-  bool _locLoading = true;
-  String? _locError;
 
   late FocusNode _focusNode;
   late TextEditingController _controller;
@@ -39,7 +35,6 @@ class _NearYouProvidersScreenState extends State<NearYouProvidersScreen> {
         setState(() => _searchResults = []);
       }
     });
-    _getCurrentLocation();
   }
 
   @override
@@ -48,53 +43,6 @@ class _NearYouProvidersScreenState extends State<NearYouProvidersScreen> {
     _controller.dispose();
     _debounce?.cancel();
     super.dispose();
-  }
-
-  Future<void> _getCurrentLocation() async {
-    setState(() => _locLoading = true);
-    try {
-      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) {
-        setState(() {
-          _locError = 'Location services are disabled.';
-          _locLoading = false;
-        });
-        return;
-      }
-
-      LocationPermission permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) {
-          setState(() {
-            _locError = 'Location permissions are denied.';
-            _locLoading = false;
-          });
-          return;
-        }
-      }
-
-      if (permission == LocationPermission.deniedForever) {
-        setState(() {
-          _locError = 'Location permissions are permanently denied.';
-          _locLoading = false;
-        });
-        return;
-      }
-
-      Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      );
-      setState(() {
-        _currentPos = position;
-        _locLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        _locError = 'Error getting location: $e';
-        _locLoading = false;
-      });
-    }
   }
 
   Future<void> _runSearch(String input) async {
@@ -169,7 +117,7 @@ class _NearYouProvidersScreenState extends State<NearYouProvidersScreen> {
             children: [
               // Top bar
               SizedBox(
-                height: 110,
+                height: 170,
                 child: Stack(
                   children: [
                     Positioned(
@@ -260,7 +208,7 @@ class _NearYouProvidersScreenState extends State<NearYouProvidersScreen> {
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: w * 0.04),
                 child: Text(
-                  'Service Providers Near You',
+                  'All Service Providers',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: w * 0.06,
@@ -338,8 +286,7 @@ class _NearYouProvidersScreenState extends State<NearYouProvidersScreen> {
                                 ),
                                 const Spacer(),
                                 GestureDetector(
-                                  onTap: () =>
-                                      setState(() => _searchResults = []),
+                                  onTap: () => setState(() => _searchResults = []),
                                   child: Container(
                                     padding: const EdgeInsets.all(8),
                                     decoration: const BoxDecoration(
@@ -397,12 +344,11 @@ class _NearYouProvidersScreenState extends State<NearYouProvidersScreen> {
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (context) =>
-                                            WorkerDetailsScreen(
-                                              providerId: doc.id,
-                                              data: data,
-                                              workerId: '',
-                                            ),
+                                        builder: (context) => WorkerDetailsScreen(
+                                          providerId: doc.id,
+                                          data: data,
+                                          workerId: '',
+                                        ),
                                       ),
                                     );
                                   },
@@ -489,8 +435,8 @@ class _NearYouProvidersScreenState extends State<NearYouProvidersScreen> {
                                                             pricingType
                                                                 .toString()
                                                                 .isNotEmpty
-                                                        ? ' / $pricingType'
-                                                        : ''),
+                                                    ? ' / $pricingType'
+                                                    : ''),
                                                 style: TextStyle(
                                                   color: Colors.black,
                                                   fontSize: 12,
@@ -509,20 +455,6 @@ class _NearYouProvidersScreenState extends State<NearYouProvidersScreen> {
                             ),
                           ),
                         ],
-                      )
-                    : _locLoading
-                    ? Center(
-                        child: Text(
-                          _locError!,
-                          style: const TextStyle(color: Colors.white),
-                        ),
-                      )
-                    : _currentPos == null
-                    ? const Center(
-                        child: Text(
-                          "Unable to get your location",
-                          style: TextStyle(color: Colors.white),
-                        ),
                       )
                     : StreamBuilder<QuerySnapshot>(
                         stream: FirebaseFirestore.instance
@@ -549,27 +481,12 @@ class _NearYouProvidersScreenState extends State<NearYouProvidersScreen> {
                             );
                           }
 
-                          final docs = snapshot.data!.docs.where((doc) {
-                            final data = doc.data() as Map<String, dynamic>;
-                            final latLng = data['workplaceLatLng'] as GeoPoint?;
-                            if (latLng == null) return false;
-
-                            // Calculate distance
-                            final distance = Geolocator.distanceBetween(
-                              _currentPos!.latitude,
-                              _currentPos!.longitude,
-                              latLng.latitude,
-                              latLng.longitude,
-                            );
-
-                            // Return providers within 50km (adjust as needed)
-                            return distance <= 50000; // 50km in meters
-                          }).toList();
+                          final docs = snapshot.data!.docs;
 
                           if (docs.isEmpty) {
                             return const Center(
                               child: Text(
-                                'No service providers found near you',
+                                'No service providers found',
                                 style: TextStyle(color: Colors.white),
                               ),
                             );
@@ -608,18 +525,6 @@ class _NearYouProvidersScreenState extends State<NearYouProvidersScreen> {
                                   files.last is String) {
                                 img = files.last;
                               }
-
-                              final latLng =
-                                  data['workplaceLatLng'] as GeoPoint?;
-                              final distance = latLng != null
-                                  ? Geolocator.distanceBetween(
-                                          _currentPos!.latitude,
-                                          _currentPos!.longitude,
-                                          latLng.latitude,
-                                          latLng.longitude,
-                                        ) /
-                                        1000 // to km
-                                  : 0.0;
 
                               return GestureDetector(
                                 onTap: () {
@@ -692,7 +597,7 @@ class _NearYouProvidersScreenState extends State<NearYouProvidersScreen> {
                                             Text(
                                               workplaceLocation.isNotEmpty
                                                   ? workplaceLocation
-                                                  : '${distance.toStringAsFixed(1)} km away',
+                                                  : 'Location not specified',
                                               style: TextStyle(
                                                 color: Colors.grey[700],
                                                 fontSize: 12,
@@ -717,8 +622,8 @@ class _NearYouProvidersScreenState extends State<NearYouProvidersScreen> {
                                                           pricingType
                                                               .toString()
                                                               .isNotEmpty
-                                                      ? ' / $pricingType'
-                                                      : ''),
+                                                  ? ' / $pricingType'
+                                                  : ''),
                                               style: TextStyle(
                                                 color: Colors.black,
                                                 fontSize: 12,

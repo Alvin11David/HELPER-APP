@@ -12,6 +12,7 @@ import 'package:helper/Worker%20Dashboard/Worker_Details_Screen.dart';
 import '../Components/Bottom_Nav_Bar.dart';
 import 'All_Categories_Screen.dart';
 import 'NearYouProvidersScreen.dart';
+import 'AllProvidersScreen.dart';
 
 class EmployerDashboardScreen extends StatefulWidget {
   const EmployerDashboardScreen({super.key});
