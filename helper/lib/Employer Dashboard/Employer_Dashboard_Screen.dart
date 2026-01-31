@@ -58,6 +58,7 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
   Position? userPosition;
   List<String> topRatedCategories = [];
   Map<String, double> categoryRatings = {};
+  bool _ratingsLoaded = false;
 
   bool get _hasQuery => _controller.text.trim().length >= 2;
 
@@ -75,7 +76,12 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
     _initLocation(); // ✅ start GPS
     _getUserPosition();
     _getTopRatedCategories();
-    _getCategoryRatings().then((map) => setState(() => categoryRatings = map));
+    _getCategoryRatings().then((map) {
+      setState(() {
+        categoryRatings = map;
+        _ratingsLoaded = true;
+      });
+    });
   }
 
   @override
@@ -1136,6 +1142,10 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                                 });
                               }
 
+                              if (_ratingsLoaded && selectedFilter == 'Top Rated') {
+                                scored.retainWhere((s) => (categoryRatings[s['_docId']] ?? 0) >= 3.0);
+                              }
+
                               // sort shortest distance first
                               scored.sort((a, b) {
                                 final ak = (a['_distanceKm'] as num).toDouble();
@@ -1272,6 +1282,9 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                                     });
                                   }
                                 }
+                                if (_ratingsLoaded && selectedFilter == 'Top Rated') {
+                                  scored.retainWhere((s) => (categoryRatings[s['_docId']] ?? 0) >= 3.0);
+                                }
                                 scored.sort((a, b) {
                                   final ak = (a['_distanceKm'] as num)
                                       .toDouble();
@@ -1281,7 +1294,11 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                                 });
                                 show = scored.take(10).toList();
                               } else {
-                                show = docs
+                                var filteredDocs = docs;
+                                if (_ratingsLoaded && selectedFilter == 'Top Rated') {
+                                  filteredDocs = docs.where((doc) => (categoryRatings[doc.id] ?? 0) >= 3.0).toList();
+                                }
+                                show = filteredDocs
                                     .take(10)
                                     .map(
                                       (doc) => {
