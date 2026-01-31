@@ -101,11 +101,11 @@ class _NearYouProvidersScreenState extends State<NearYouProvidersScreen> {
             children: [
               // Top bar
               SizedBox(
-                height: 70,
+                height: 110,
                 child: Stack(
                   children: [
                     Positioned(
-                      top: 20,
+                      top: 10,
                       left: w * 0.04,
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -145,22 +145,6 @@ class _NearYouProvidersScreenState extends State<NearYouProvidersScreen> {
                       ),
                     ),
                     Positioned(
-                      top: 125,
-                      left: w * 0.04,
-                      child: GestureDetector(
-                        onTap: () => Navigator.of(context).pop(),
-                        child: Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(15),
-                          ),
-                          child: const Icon(Icons.chevron_left, color: Colors.black),
-                        ),
-                      ),
-                    ),
-                    Positioned(
                       top: 20,
                       right: w * 0.04,
                       child: Row(
@@ -181,6 +165,25 @@ class _NearYouProvidersScreenState extends State<NearYouProvidersScreen> {
                         ],
                       ),
                     ),
+                    Positioned(
+                      top: 60,
+                      left: w * 0.04,
+                      child: GestureDetector(
+                        onTap: () => Navigator.of(context).pop(),
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                          child: const Icon(
+                            Icons.chevron_left,
+                            color: Colors.black,
+                          ),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -197,6 +200,7 @@ class _NearYouProvidersScreenState extends State<NearYouProvidersScreen> {
                   ),
                 ),
               ),
+              
 
               const SizedBox(height: 20),
 
