@@ -39,7 +39,7 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
   StreamSubscription? _iceSub;
 
   String get callId =>
-      widget.callerId + '_' + widget.providerId; // Example unique callId
+      '${widget.callerId}_${widget.providerId}'; // Example unique callId
 
   @override
   void initState() {
@@ -93,10 +93,8 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
       }
     };
     _peerConnection?.onIceCandidate = (candidate) async {
-      if (candidate != null) {
-        await _callDoc.collection('candidates').add(candidate.toMap());
-      }
-    };
+      await _callDoc.collection('candidates').add(candidate.toMap());
+        };
     _localStream?.getTracks().forEach((track) {
       _peerConnection?.addTrack(track, _localStream!);
     });

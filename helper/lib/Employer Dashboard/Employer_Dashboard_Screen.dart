@@ -422,7 +422,7 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
             .doc(senderId)
             .get();
         if (senderDoc.exists) {
-          final senderData = senderDoc.data() as Map<String, dynamic>?;
+          final senderData = senderDoc.data();
           name = senderData?['fullName'] ?? '';
         }
       }
@@ -1427,7 +1427,7 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                                     data,
                                   );
                                   if (safeData['portfolioFiles'] == null ||
-                                      !(safeData['portfolioFiles'] is List) ||
+                                      safeData['portfolioFiles'] is! List ||
                                       (safeData['portfolioFiles'] as List)
                                           .isEmpty) {
                                     safeData['portfolioFiles'] = [''];

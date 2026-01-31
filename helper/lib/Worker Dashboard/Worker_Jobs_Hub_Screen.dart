@@ -267,7 +267,24 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
                   _toast("Error accepting booking: $e");
                 }
               },
-              onDelete: () => _toast("Deleted (hook API later)"),
+              onDelete: () async {
+                try {
+                  await FirebaseFirestore.instance
+                      .collection('bookings')
+                      .doc(bookingId)
+                      .update({
+                    'status': 'cancelled',
+                    'updatedAt': FieldValue.serverTimestamp(),
+                    'cancelledAt': FieldValue.serverTimestamp(),
+                    'cancelledBy': workerId,
+                  });
+                  _toast("Booking cancelled!");
+                  setState(() => _tab = 3);
+                } catch (e) {
+                  debugPrint("ERROR DELETING PENDING BOOKING: $e");
+                  _toast("Delete error: $e");
+                }
+              },
               onResume: () => _toast("Resume (hook API later)"),
               onPause: () => _toast("Pause (hook API later)"),
             );

@@ -54,7 +54,7 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('🔄 Setting up worker...'),
-            duration: const Duration(seconds: 2),
+            duration: Duration(seconds: 2),
           ),
         );
       });
@@ -80,7 +80,7 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('✅ FCM token saved'),
-                    duration: const Duration(seconds: 2),
+                    duration: Duration(seconds: 2),
                   ),
                 );
               });
@@ -91,7 +91,7 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('❌ FCM token is null'),
-                    duration: const Duration(seconds: 3),
+                    duration: Duration(seconds: 3),
                   ),
                 );
               });
@@ -117,7 +117,7 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('🎧 Setting up FCM listeners'),
-          duration: const Duration(seconds: 2),
+          duration: Duration(seconds: 2),
         ),
       );
     });
@@ -164,7 +164,7 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('✅ IncomingCallDialog shown'),
-              duration: const Duration(seconds: 3),
+              duration: Duration(seconds: 3),
             ),
           );
         } catch (e) {
@@ -296,7 +296,7 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
             .doc(senderId)
             .get();
         if (senderDoc.exists) {
-          final senderData = senderDoc.data() as Map<String, dynamic>?;
+          final senderData = senderDoc.data();
           name = senderData?['businessName'] ?? '';
         }
       }
