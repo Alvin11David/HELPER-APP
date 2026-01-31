@@ -651,6 +651,8 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
         providerRatings = Map.from(providerAvgs);
       });
 
+      print('Provider ratings populated: $providerRatings');
+
       return result;
     } catch (e) {
       print('Error getting category ratings: $e');
@@ -1277,10 +1279,16 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
 
                               if (_ratingsLoaded &&
                                   selectedFilter == 'Top Rated') {
+                                print(
+                                  'Applying Top Rated filter. Provider ratings: $providerRatings',
+                                );
                                 scored.retainWhere(
                                   (s) =>
                                       (providerRatings[s['_docId']] ?? 0) >=
                                       4.0,
+                                );
+                                print(
+                                  'After filtering, scored length: ${scored.length}',
                                 );
                               }
 
@@ -1433,10 +1441,16 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                                 }
                                 if (_ratingsLoaded &&
                                     selectedFilter == 'Top Rated') {
+                                  print(
+                                    'For You: Applying Top Rated filter. Provider ratings: $providerRatings',
+                                  );
                                   scored.retainWhere(
                                     (s) =>
                                         (providerRatings[s['_docId']] ?? 0) >=
                                         4.0,
+                                  );
+                                  print(
+                                    'For You: After filtering, scored length: ${scored.length}',
                                   );
                                 }
                                 scored.sort((a, b) {
