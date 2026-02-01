@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:audioplayers/audioplayers.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import '../Chats/Voice_Call_Screen.dart';
 
 class CallNowButton extends StatelessWidget {
