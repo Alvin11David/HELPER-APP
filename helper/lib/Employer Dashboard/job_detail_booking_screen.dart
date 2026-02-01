@@ -122,6 +122,8 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
     if (widget.amount != null) {
       _amount = widget.amount.toString();
     }
+    // Ensure UI shows computed amount when pricing/amount provided by caller
+    _recalcAmount();
     if (widget.pricingType == null || widget.amount == null) {
       _fetchServiceProviderData();
     }
@@ -958,11 +960,14 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
                     Center(
                       child: _StepIndicator(
                         width: w,
-                        activeIndex: _step < 3 ? _step : 2,
+                        // allow activeIndex 0..3
+                        activeIndex: _step,
+                        // Order: Job Details -> Payment Details -> Choose Date -> Summary
                         labels: const [
                           'Job Details',
-                          'Choose Date',
                           'Payment Details',
+                          'Choose Date',
+                          'Summary',
                         ],
                         accent: _brandOrange,
                       ),
@@ -1054,17 +1059,17 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
   }
 
   String _stepTitle() {
-    if (_step == 3) return "Payments";
+    if (_step == 3) return "Summary";
     if (_step == 2) return "Choose Date";
-    if (_step == 1) return "Job Details";
+    if (_step == 1) return "Payment Details";
     return "Job Details";
   }
 
   String _stepHeadline() {
     if (_step == 0) return "Job Details";
-    if (_step == 1) return "Workers & Pricing";
+    if (_step == 1) return "Payment Details";
     if (_step == 2) return "Choose Date";
-    return "Summary";
+    return "Summary / Preview";
   }
 
   // ===================== PHASE 1 (Job Details) =====================
@@ -1442,7 +1447,8 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
   }
 
   Widget _calendarCard(double w, double h) {
-    final cardH = h * 0.44;
+    // Increase calendar height to ensure all rows are visible on smaller screens
+    final cardH = h * 0.60;
 
     final monthName = _monthName(_calendarMonth.month);
     final year = _calendarMonth.year;
@@ -1561,6 +1567,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
             // Grid
             Expanded(
               child: GridView.builder(
+                // keep grid non-scrollable inside the card; card height increased
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: days.length,
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -1891,13 +1898,17 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
         padding: EdgeInsets.symmetric(horizontal: w * 0.05),
         child: Row(
           children: [
-            Text(
-              label,
-              style: TextStyle(
-                color: Colors.black.withOpacity(0.60),
-                fontFamily: 'Inter',
-                fontWeight: FontWeight.w900,
-                fontSize: w * 0.034,
+            Expanded(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: Colors.black.withOpacity(0.60),
+                  fontFamily: 'Inter',
+                  fontWeight: FontWeight.w900,
+                  fontSize: w * 0.032,
+                ),
               ),
             ),
             const Spacer(),
@@ -1907,14 +1918,14 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
                 color: Colors.black,
                 fontFamily: 'Inter',
                 fontWeight: FontWeight.w900,
-                fontSize: w * 0.036,
+                fontSize: w * 0.034,
               ),
             ),
             SizedBox(width: w * 0.02),
             Icon(
               Icons.keyboard_arrow_down_rounded,
               color: Colors.black,
-              size: w * 0.07,
+              size: w * 0.06,
             ),
           ],
         ),

@@ -334,7 +334,7 @@ class _WorkerSkillsJobDetailsScreenState
   }
 
   Future<void> _pickPricingType() async {
-    final items = const ['Hourly', 'Fixed Price', 'Per Day', 'Per Job'];
+    final items = const ['Per Hour', 'Per Day', 'Per Job'];
     final selected = await _bottomPick(
       title: 'Pricing Type',
       items: items,
