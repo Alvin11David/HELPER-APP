@@ -34,8 +34,7 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
   RTCPeerConnection? _peerConnection;
   MediaStream? _localStream;
   MediaStream? _remoteStream;
-
-  final _localRenderer = RTCVideoRenderer();
+  RTCVideoRenderer _remoteRenderer = RTCVideoRenderer();
 
   late CollectionReference _callsRef;
   late DocumentReference _callDoc;
@@ -58,17 +57,19 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
   @override
   void initState() {
     super.initState();
-
+    _remoteRenderer.initialize();
     _callsRef = FirebaseFirestore.instance.collection('calls');
     _callDoc = _callsRef.doc(callId);
-
     _init();
   }
 
   Future<void> _init() async {
     await _configureAudioSession();
-    await _initRenderers();
     await _startCall();
+  }
+
+  Future<void> _forceAudioToSpeaker() async {
+    await Helper.setSpeakerphoneOn(true);
   }
 
   Future<void> _configureAudioSession() async {
@@ -94,6 +95,7 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
         ),
       );
       await session.setActive(true);
+      await _forceAudioToSpeaker();
       print('Audio session configured and activated');
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -123,7 +125,7 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
     _peerConnection?.close();
     _localStream?.dispose();
     _remoteStream?.dispose();
-    _localRenderer.dispose();
+    _remoteRenderer.dispose();
     _deactivateAudioSession();
     super.dispose();
   }
@@ -136,10 +138,6 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
     } catch (e) {
       print('Error deactivating audio session: $e');
     }
-  }
-
-  Future<void> _initRenderers() async {
-    await _localRenderer.initialize();
   }
 
   Future<void> _startCall() async {
@@ -206,8 +204,6 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
       track.enabled = true;
     });
 
-    _localRenderer.srcObject = _localStream;
-
     await _createPeerConnection();
     await _setupSignaling();
   }
@@ -222,41 +218,43 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
 
     _peerConnection = await createPeerConnection(config);
 
+    _peerConnection!.onIceCandidate = (candidate) {
+      if (candidate.candidate != null) {
+        final collection = isCaller ? 'callerCandidates' : 'calleeCandidates';
+
+        _callDoc.collection(collection).add({
+          'candidate': candidate.candidate,
+          'sdpMid': candidate.sdpMid,
+          'sdpMLineIndex': candidate.sdpMLineIndex,
+        });
+      }
+    };
+
     // Handle remote tracks when they arrive
     _peerConnection!.onTrack = (event) {
       print('Received remote track: ${event.track.kind}');
       if (event.track.kind == 'audio') {
-        print('Setting remote stream from track event');
+        _forceAudioToSpeaker();
         setState(() {
           _remoteStream = event.streams[0];
+          _remoteRenderer.srcObject = _remoteStream;
         });
-        print('Remote stream set: ${_remoteStream?.id}');
 
-        if (_remoteStream?.getAudioTracks().isEmpty ?? true) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('❌ No audio tracks in remote stream'),
-              backgroundColor: Colors.red,
-              duration: Duration(seconds: 4),
-            ),
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                '✅ Remote audio stream received (${_remoteStream!.getAudioTracks().length} track(s))',
-              ),
-              backgroundColor: Colors.green,
-              duration: Duration(seconds: 3),
-            ),
-          );
-        }
-
-        // Ensure remote audio tracks are enabled
+        // Enable all remote audio tracks
         _remoteStream?.getAudioTracks().forEach((track) {
-          print('Enabling remote audio track: ${track.id}');
           track.enabled = true;
+          print('Enabling remote audio track: ${track.id}');
         });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '✅ Remote audio stream received (${_remoteStream!.getAudioTracks().length} track(s))',
+            ),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 3),
+          ),
+        );
       }
     };
 
@@ -491,6 +489,15 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
           ),
           child: Stack(
             children: [
+              Positioned(
+                width: 0,
+                height: 0,
+                child: RTCVideoView(
+                  _remoteRenderer,
+                  objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
+                  mirror: false,
+                ),
+              ),
               Positioned(
                 top: 20,
                 left: 0,
