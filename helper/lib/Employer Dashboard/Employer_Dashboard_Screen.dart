@@ -326,7 +326,7 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
           context,
           MaterialPageRoute(
             builder: (context) =>
-                WorkerDetailsScreen(providerId: docId, data: d, workerId: ''),
+                WorkerDetailsScreen(providerId: '', data: d, workerId: ''),
           ),
         );
       },
@@ -1279,17 +1279,13 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
 
                               if (_ratingsLoaded &&
                                   selectedFilter == 'Top Rated') {
-                                print(
-                                  'Applying Top Rated filter. Provider ratings: $providerRatings',
-                                );
+                                print('Applying Top Rated filter. Provider ratings: $providerRatings');
                                 scored.retainWhere(
                                   (s) =>
                                       (providerRatings[s['_docId']] ?? 0) >=
                                       4.0,
                                 );
-                                print(
-                                  'After filtering, scored length: ${scored.length}',
-                                );
+                                print('After filtering, scored length: ${scored.length}');
                               }
 
                               // sort shortest distance first
@@ -1441,17 +1437,13 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                                 }
                                 if (_ratingsLoaded &&
                                     selectedFilter == 'Top Rated') {
-                                  print(
-                                    'For You: Applying Top Rated filter. Provider ratings: $providerRatings',
-                                  );
+                                  print('For You: Applying Top Rated filter. Provider ratings: $providerRatings');
                                   scored.retainWhere(
                                     (s) =>
                                         (providerRatings[s['_docId']] ?? 0) >=
                                         4.0,
                                   );
-                                  print(
-                                    'For You: After filtering, scored length: ${scored.length}',
-                                  );
+                                  print('For You: After filtering, scored length: ${scored.length}');
                                 }
                                 scored.sort((a, b) {
                                   final ak = (a['_distanceKm'] as num)
@@ -1616,7 +1608,7 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                                       MaterialPageRoute(
                                         builder: (context) =>
                                             WorkerDetailsScreen(
-                                              providerId: navData['_docId'] ?? '',
+                                              providerId: '',
                                               data: navData,
                                               workerId: '',
                                             ),
