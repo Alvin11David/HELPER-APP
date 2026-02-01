@@ -13,8 +13,14 @@ import 'package:helper/Employer%20Dashboard/job_detail_booking_screen.dart';
 import 'package:helper/Intro/Role_Selection_Screen.dart';
 import 'package:helper/Intro/Splash_Screen.dart';
 import 'firebase_options.dart';
+import 'package:helper/Components/IncomingCallDialog.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 final GlobalKey<NavigatorState> appNavKey = GlobalKey<NavigatorState>();
+
+// Global flag to prevent multiple call dialogs
+bool _isCallDialogShowing = false;
 
 // Background message handler
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -39,8 +45,119 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  // Request notification permissions
+  await FirebaseMessaging.instance.requestPermission(
+    alert: true,
+    badge: true,
+    sound: true,
+  );
+
   // Set up background message handler
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+  // Set up global foreground FCM listener for incoming calls
+  FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+    print('=== GLOBAL FCM onMessage RECEIVED ===');
+    print('Message data: ${message.data}');
+    print(
+      'Message notification: ${message.notification?.title} - ${message.notification?.body}',
+    );
+
+    // Show snackbar for any FCM message received
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final context = appNavKey.currentContext;
+      if (context != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '📨 FCM Message: ${message.data['type'] ?? 'unknown'}',
+            ),
+            backgroundColor: Colors.purple,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    });
+
+    if (message.data['type'] == 'call') {
+      print(
+        'Call notification detected globally! Call ID: ${message.data['callId']}, Caller: ${message.data['callerName']}',
+      );
+
+      // Show snackbar for call message
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final context = appNavKey.currentContext;
+        if (context != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('📞 Call from: ${message.data['callerName']}'),
+              backgroundColor: Colors.orange,
+              duration: const Duration(seconds: 4),
+            ),
+          );
+        }
+      });
+
+      // Show incoming call dialog using global navigator key
+      final context = appNavKey.currentContext;
+      if (context != null && !_isCallDialogShowing) {
+        _isCallDialogShowing = true;
+
+        // Show snackbar before showing dialog
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('🎯 Showing incoming call dialog...'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 2),
+            ),
+          );
+        });
+
+        showDialog(
+          context: context,
+          barrierDismissible: false, // Prevent dismissing by tapping outside
+          builder: (context) => IncomingCallDialog(
+            callId: message.data['callId']!,
+            callerName: message.data['callerName']!,
+          ),
+        ).then((_) => _isCallDialogShowing = false);
+      } else {
+        print('Call dialog already showing or context is null');
+
+        // Show error snackbar
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          final context = appNavKey.currentContext;
+          if (context != null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  _isCallDialogShowing
+                      ? '⚠️ Call dialog already showing'
+                      : '❌ Context is null',
+                ),
+                backgroundColor: Colors.red,
+                duration: const Duration(seconds: 3),
+              ),
+            );
+          }
+        });
+      }
+    }
+  });
+
+  // Handle when app is opened from notification
+  FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+    print('=== FCM onMessageOpenedApp RECEIVED ===');
+    print('Message data: ${message.data}');
+
+    if (message.data['type'] == 'call') {
+      print('App opened from call notification: ${message.data['callId']}');
+      // Could navigate to call screen or show dialog here if needed
+    }
+  });
+
   runApp(const MyApp());
 }
 

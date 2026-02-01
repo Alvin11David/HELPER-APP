@@ -274,6 +274,66 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
       }
     });
 
+    // BACKUP: Set up Firestore listener for incoming calls (in case FCM fails)
+    final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+    if (currentUserId != null) {
+      print('Setting up Firestore listener for incoming calls...');
+
+      FirebaseFirestore.instance
+          .collection('calls')
+          .where('receiverId', isEqualTo: currentUserId)
+          .where('status', isEqualTo: 'ringing')
+          .snapshots()
+          .listen((snapshot) {
+            print('=== FIRESTORE CALL LISTENER TRIGGERED ===');
+            print('Found ${snapshot.docs.length} ringing calls');
+
+            for (var doc in snapshot.docs) {
+              final callData = doc.data();
+              final callId = doc.id;
+              final callerName = callData['callerName'] ?? 'Unknown Caller';
+
+              print('Incoming call detected: $callId from $callerName');
+
+              // Show snackbar about Firestore-detected call
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('📞 Firestore: Call from $callerName'),
+                    backgroundColor: Colors.purple,
+                    duration: const Duration(seconds: 3),
+                  ),
+                );
+              });
+
+              // Show dialog if not already showing
+              if (!_isCallDialogShowing) {
+                _isCallDialogShowing = true;
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  showDialog(
+                    context: context,
+                    barrierDismissible: false,
+                    builder: (context) => IncomingCallDialog(
+                      callId: callId,
+                      callerName: callerName,
+                    ),
+                  ).then((_) => _isCallDialogShowing = false);
+                });
+              }
+            }
+          });
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('🔄 Firestore call listener active'),
+            backgroundColor: Colors.blue,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      });
+    }
+
     print('=== WORKER DASHBOARD INIT STATE COMPLETE ===');
   }
 
