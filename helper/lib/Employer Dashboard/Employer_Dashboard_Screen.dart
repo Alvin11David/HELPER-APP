@@ -351,7 +351,7 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
           context,
           MaterialPageRoute(
             builder: (context) =>
-                WorkerDetailsScreen(providerId: '', data: d, workerId: ''),
+              WorkerDetailsScreen(providerId: docId, data: d, workerId: ''),
           ),
         );
       },
