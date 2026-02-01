@@ -305,104 +305,169 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
   }
 
   Future<void> _showNotifications() async {
+    print('=== _showNotifications called ===');
+
+    // First, show a test notification to verify SnackBar works
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Loading notifications...'),
+        backgroundColor: Colors.blue,
+        duration: Duration(seconds: 1),
+      ),
+    );
+
     final currentUser = FirebaseAuth.instance.currentUser;
-    if (currentUser == null) return;
+    if (currentUser == null) {
+      print('=== No current user ===');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please log in to view notifications'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+    print('=== Current user: ${currentUser.uid} ===');
 
     // For worker dashboard, receiver is worker
     bool isEmployer = false;
 
     List<String> notifications = [];
 
-    // Fetch unread messages
-    final messageSnapshot = await FirebaseFirestore.instance
-        .collectionGroup('messages')
-        .where('receiverId', isEqualTo: currentUser.uid)
-        .where('read', isEqualTo: false)
-        .get();
+    try {
+      // Try to fetch unread messages - use a simpler approach
+      List<String> notifications = [];
 
-    for (var doc in messageSnapshot.docs) {
-      final data = doc.data();
-      final senderId = data['senderId'] as String?;
-      if (senderId == null) continue;
-
-      String name = '';
-      if (!isEmployer) {
-        // Sender is employer, from serviceProviders
-        final senderDoc = await FirebaseFirestore.instance
-            .collection('serviceProviders')
-            .doc(senderId)
+      try {
+        // Fetch unread messages - simplified query to avoid index requirements
+        final messageSnapshot = await FirebaseFirestore.instance
+            .collectionGroup('messages')
+            .where('receiverId', isEqualTo: currentUser.uid)
             .get();
-        if (senderDoc.exists) {
-          final senderData = senderDoc.data();
-          name = senderData?['businessName'] ?? '';
+
+        print('=== Message snapshot: ${messageSnapshot.docs.length} docs ===');
+
+        // Filter unread messages in memory
+        final unreadMessages = messageSnapshot.docs.where((doc) {
+          final data = doc.data();
+          return data['read'] == false;
+        });
+
+        for (var doc in unreadMessages) {
+          final data = doc.data();
+          final senderId = data['senderId'] as String?;
+          if (senderId == null) continue;
+
+          String name = '';
+          if (!isEmployer) {
+            // Sender is employer, from serviceProviders
+            try {
+              final senderDoc = await FirebaseFirestore.instance
+                  .collection('serviceProviders')
+                  .doc(senderId)
+                  .get();
+              if (senderDoc.exists) {
+                final senderData = senderDoc.data();
+                name = senderData?['businessName'] ?? '';
+              }
+            } catch (e) {
+              print('=== Error fetching sender: $e ===');
+            }
+          }
+          if (name.isNotEmpty) {
+            notifications.add('Message from $name');
+          }
         }
+      } catch (e) {
+        print('=== Error fetching messages: $e ===');
+        // Continue with worker notifications even if messages fail
       }
-      if (name.isNotEmpty) {
-        notifications.add('You have received a message from $name');
+
+      // Fetch worker notifications - simplified query
+      try {
+        final workerNotifSnapshot = await FirebaseFirestore.instance
+            .collection('workerNotifications')
+            .where('workerId', isEqualTo: currentUser.uid)
+            .get();
+
+        print(
+          '=== Worker notifications: ${workerNotifSnapshot.docs.length} docs ===',
+        );
+
+        // Filter unread notifications in memory
+        final unreadWorkerNotifications = workerNotifSnapshot.docs.where((doc) {
+          final data = doc.data();
+          return data['read'] == false;
+        });
+
+        for (var doc in unreadWorkerNotifications) {
+          final data = doc.data();
+          final title = data['title'] as String?;
+          final message = data['message'] as String?;
+          if (title != null && message != null) {
+            notifications.add('$title: $message');
+          }
+        }
+
+        // Mark worker notifications as read
+        for (var doc in unreadWorkerNotifications) {
+          try {
+            await doc.reference.update({'read': true});
+          } catch (e) {
+            print('=== Error marking notification as read: $e ===');
+          }
+        }
+      } catch (e) {
+        print('=== Error fetching worker notifications: $e ===');
+        // Continue even if worker notifications fail
       }
-    }
 
-    // Fetch worker notifications
-    final workerNotifSnapshot = await FirebaseFirestore.instance
-        .collection('workerNotifications')
-        .where('workerId', isEqualTo: currentUser.uid)
-        .where('read', isEqualTo: false)
-        .get();
+      print('=== Total notifications: ${notifications.length} ===');
 
-    for (var doc in workerNotifSnapshot.docs) {
-      final data = doc.data();
-      final title = data['title'] as String?;
-      final message = data['message'] as String?;
-      if (title != null && message != null) {
-        notifications.add('$title: $message');
+      if (!mounted) {
+        print('=== Widget not mounted ===');
+        return;
       }
-    }
 
-    // Mark worker notifications as read
-    for (var doc in workerNotifSnapshot.docs) {
-      await doc.reference.update({'read': true});
-    }
-
-    if (!mounted) return;
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (BuildContext context) {
-        return Container(
-          height: MediaQuery.of(context).size.height * 0.5,
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(30),
-              topRight: Radius.circular(30),
-            ),
-          ),
-          child: Column(
-            children: [
-              const Padding(
-                padding: EdgeInsets.all(16.0),
-                child: Text(
-                  'Notifications',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ),
-              Expanded(
-                child: notifications.isEmpty
-                    ? const Center(child: Text('No new notifications'))
-                    : ListView.builder(
-                        itemCount: notifications.length,
-                        itemBuilder: (context, index) {
-                          return ListTile(title: Text(notifications[index]));
-                        },
-                      ),
-              ),
-            ],
+      if (notifications.isEmpty) {
+        print('=== No notifications to show ===');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No new notifications'),
+            backgroundColor: Colors.blue,
           ),
         );
-      },
-    );
+        return;
+      }
+
+      // Show each notification as a SnackBar with delay
+      for (int i = 0; i < notifications.length; i++) {
+        print('=== Showing notification ${i + 1}: ${notifications[i]} ===');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(notifications[i]),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 6),
+          ),
+        );
+
+        // Wait before showing next notification (if there are multiple)
+        if (i < notifications.length - 1) {
+          await Future.delayed(const Duration(seconds: 7));
+        }
+      }
+    } catch (e) {
+      print('=== Error in _showNotifications: $e ===');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Unable to load notifications. Please check your connection and try again.',
+          ),
+          backgroundColor: Colors.orange,
+          duration: const Duration(seconds: 4),
+        ),
+      );
+    }
   }
 
   @override
@@ -488,26 +553,31 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                               const SizedBox(width: 10),
                               GestureDetector(
                                 onTap: _showNotifications,
-                                child: Stack(
-                                  children: [
-                                    Container(
-                                      width: 40,
-                                      height: 40,
-                                      decoration: const BoxDecoration(
-                                        color: Colors.white,
-                                        shape: BoxShape.circle,
+                                child: Container(
+                                  width: 50, // Increased to accommodate badge
+                                  height: 50, // Increased to accommodate badge
+                                  child: Stack(
+                                    alignment: Alignment.center,
+                                    children: [
+                                      Container(
+                                        width: 40,
+                                        height: 40,
+                                        decoration: const BoxDecoration(
+                                          color: Colors.white,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Icon(
+                                          Icons.notifications,
+                                          color: Colors.black,
+                                        ),
                                       ),
-                                      child: const Icon(
-                                        Icons.notifications,
-                                        color: Colors.black,
+                                      Positioned(
+                                        right: 0,
+                                        top: 0,
+                                        child: UnreadMessagesBadge(),
                                       ),
-                                    ),
-                                    Positioned(
-                                      right: 0,
-                                      top: 0,
-                                      child: UnreadMessagesBadge(),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
                               ),
                             ],
