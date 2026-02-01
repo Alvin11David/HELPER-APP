@@ -47,6 +47,32 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
     // Set online status
     final uid = FirebaseAuth.instance.currentUser?.uid;
     print('Current user UID: $uid');
+    print('Current user: ${FirebaseAuth.instance.currentUser}');
+    print('🔥 WORKER DASHBOARD: Current user object printed above!');
+
+    // Show current user info on screen
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('👤 Current User UID: $uid'),
+          duration: const Duration(seconds: 3),
+        ),
+      );
+      // Show user email if available
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        Future.delayed(const Duration(seconds: 1), () {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('📧 User Email: ${user.email ?? "No email"}'),
+                duration: const Duration(seconds: 3),
+              ),
+            );
+          }
+        });
+      }
+    });
 
     if (uid != null) {
       print('Setting user online and saving FCM token...');

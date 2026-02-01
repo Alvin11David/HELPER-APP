@@ -29,6 +29,32 @@ class _WorkerRatingsReviewsScreenState
   @override
   void initState() {
     super.initState();
+
+    // Show current user info on screen
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('👤 Current User UID: $uid'),
+          duration: const Duration(seconds: 3),
+        ),
+      );
+      // Show user email if available
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        Future.delayed(const Duration(seconds: 1), () {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('📧 User Email: ${user.email ?? "No email"}'),
+                duration: const Duration(seconds: 3),
+              ),
+            );
+          }
+        });
+      }
+    });
+
     _fetchReviews();
   }
 
@@ -36,23 +62,63 @@ class _WorkerRatingsReviewsScreenState
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       setState(() => _isLoading = false);
+      // Show error snackbar
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('❌ No user logged in'),
+            duration: Duration(seconds: 3),
+          ),
+        );
+      });
       return;
     }
 
+    print('Current user UID: ${user.uid}'); // Debug print
+
     try {
+      // TEMPORARY: Remove orderBy to avoid index requirement
       final querySnapshot = await FirebaseFirestore.instance
           .collection('Reviews')
           .where('providerId', isEqualTo: user.uid)
-          .orderBy('timestamp', descending: true)
+          // .orderBy('timestamp', descending: true)  // Temporarily removed
           .get();
 
-      final reviews = querySnapshot.docs.map((doc) {
+      // Sort in memory instead
+      final docs = querySnapshot.docs;
+      docs.sort((a, b) {
+        final aTime = a.data()['timestamp'] as Timestamp?;
+        final bTime = b.data()['timestamp'] as Timestamp?;
+        if (aTime == null && bTime == null) return 0;
+        if (aTime == null) return 1;
+        if (bTime == null) return -1;
+        return bTime.compareTo(aTime); // Descending order
+      });
+
+      print(
+        'Found ${docs.length} reviews for user ${user.uid} (sorted in memory)',
+      ); // Debug print
+
+      // Show results in snackbar
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('🔍 Found ${docs.length} reviews (memory sorted)'),
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      });
+
+      final reviews = docs.map((doc) {
         final data = doc.data();
+        print('Review data: $data'); // Debug print
         return {
           'name': data['reviewerName'] ?? 'Anonymous',
           'rating': data['rating'] ?? 0,
           'review': data['reviewText'] ?? '',
           'date': _formatDate(data['timestamp'] as Timestamp?),
+          'providerId':
+              data['providerId'] ?? 'Unknown', // Add providerId for debugging
         };
       }).toList();
 
@@ -85,6 +151,16 @@ class _WorkerRatingsReviewsScreenState
     } catch (e) {
       print('Error fetching reviews: $e');
       setState(() => _isLoading = false);
+
+      // Show error in snackbar
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ Error fetching reviews: $e'),
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      });
     }
   }
 
