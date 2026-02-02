@@ -373,57 +373,62 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                     ),
                     Positioned(
                       top: h * 0.4 + 60,
-                      left: w * 0.04,
-                      child: Row(
-                        children: [
-                          GestureDetector(
-                            onTap: () {
-                              final businessName = _businessName ?? 'Provider';
-                              final providerId =
-                                  widget.data?['uid'] ?? widget.providerId;
-                              final employerId =
-                                  FirebaseAuth.instance.currentUser!.uid;
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => ChatScreen(
-                                    chatPartnerName: businessName,
-                                    providerId: providerId,
-                                    employerId: employerId,
-                                  ),
-                                ),
-                              );
-                            },
-                            child: Container(
-                              width: 148,
-                              height: 30,
-                              decoration: const BoxDecoration(
-                                color: Color(0xFFFFA10D),
-                                borderRadius: BorderRadius.all(
-                                  Radius.circular(20),
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.chat,
-                                    color: Colors.white,
-                                    size: 16,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  const Text(
-                                    'Message',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 12,
+                      right: w * 0.04,
+                      child: Center(
+                        child: Row(
+                          children: [
+                            GestureDetector(
+                              onTap: () {
+                                final businessName =
+                                    _businessName ?? 'Provider';
+                                final providerId =
+                                    widget.data?['uid'] ?? widget.providerId;
+                                final employerId =
+                                    FirebaseAuth.instance.currentUser!.uid;
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => ChatScreen(
+                                      chatPartnerName: businessName,
+                                      providerId: providerId,
+                                      employerId: employerId,
                                     ),
                                   ),
-                                ],
+                                );
+                              },
+                              child: Center(
+                                child: Container(
+                                  width: 148,
+                                  height: 30,
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFFFFA10D),
+                                    borderRadius: BorderRadius.all(
+                                      Radius.circular(20),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.chat,
+                                        color: Colors.white,
+                                        size: 16,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      const Text(
+                                        'Message',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                     Positioned(

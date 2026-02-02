@@ -7,7 +7,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class WorkerJobsHubScreen extends StatefulWidget {
-  const WorkerJobsHubScreen({super.key});
+  final String providerId;
+  final int initialTab;
+
+  const WorkerJobsHubScreen({super.key, required this.providerId, this.initialTab = 0});
 
   @override
   State<WorkerJobsHubScreen> createState() => _WorkerJobsHubScreenState();
@@ -25,6 +28,7 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
   @override
   void initState() {
     super.initState();
+    _tab = widget.initialTab;
     _listenConflictsBadge();
   }
 
@@ -35,10 +39,7 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
   }
 
   void _listenConflictsBadge() {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
-
-    final workerId = user.uid;
+    final workerId = widget.providerId;
 
     _conflictsSub = FirebaseFirestore.instance
         .collection('bookings')
@@ -155,7 +156,7 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
   }
 
   Future<void> _acceptBooking(String bookingId, Map<String, dynamic> d) async {
-    final workerId = FirebaseAuth.instance.currentUser!.uid;
+    final workerId = widget.providerId;
 
     final newStart = (d['startDateTime'] as Timestamp?)?.toDate();
     final newEnd = (d['endDateTime'] as Timestamp?)?.toDate();
@@ -218,7 +219,7 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
   }
 
   Future<void> _cancelBooking(String bookingId) async {
-    final workerId = FirebaseAuth.instance.currentUser!.uid;
+    final workerId = widget.providerId;
     try {
       await FirebaseFirestore.instance
           .collection('bookings')
@@ -237,7 +238,7 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
   }
 
   Future<void> _startJob(String bookingId) async {
-    final workerId = FirebaseAuth.instance.currentUser!.uid;
+    final workerId = widget.providerId;
     try {
       await FirebaseFirestore.instance
           .collection('bookings')
@@ -257,7 +258,7 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
   // ---------------------- Streams / UI ----------------------
 
   Widget _pendingJobsStream(double w, double h) {
-    final workerId = FirebaseAuth.instance.currentUser!.uid;
+    final workerId = widget.providerId;
 
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
       stream: FirebaseFirestore.instance
@@ -329,12 +330,7 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
   }
 
   Widget _jobsByStatusStream(double w, double h, String status) {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null)
-      return const Center(
-        child: Text('Not logged in', style: TextStyle(color: Colors.white)),
-      );
-    final workerId = user.uid;
+    final workerId = widget.providerId;
 
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
       stream: FirebaseFirestore.instance

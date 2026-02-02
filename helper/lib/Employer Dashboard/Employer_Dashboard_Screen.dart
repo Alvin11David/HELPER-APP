@@ -490,7 +490,7 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
               .doc(senderId)
               .get();
           if (senderDoc.exists) {
-            final senderData = senderDoc.data() as Map<String, dynamic>?;
+            final senderData = senderDoc.data();
             name = senderData?['fullName'] ?? '';
           }
         }
@@ -1278,7 +1278,7 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                               final docs = snap.data!.docs;
 
                               // OPTIONAL geofence radius (km). Set to null to show all.
-                              const double? radiusKm =
+                              const double radiusKm =
                                   15; // change to 5, 10, 20 etc
 
                               // build list with distances
