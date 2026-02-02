@@ -1,5 +1,6 @@
 {
   "dependencies": {
-    "firebase-functions": "^7.0.5"
+    "firebase-functions": "^7.0.5",
+    "livekit-server-sdk": "^2.15.0"
   }
 }

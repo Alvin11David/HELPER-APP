@@ -140,10 +140,17 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
             ),
           );
         }
+      } else if (message.data['type'] == 'review') {
+        print(
+          'Review notification received! Review ID: ${message.data['reviewId']}, Reviewer: ${message.data['reviewerName']}, Rating: ${message.data['rating']}',
+        );
+        // Let review notifications show as system notifications instead of snackbars
+        // The notification will appear in the phone's notification tray like WhatsApp
       } else {
         print(
-          'Received FCM message but type is not "call". Type: ${message.data['type']}',
+          'Received FCM message but type is not handled. Type: ${message.data['type']}',
         );
+        // Only show snackbar for truly unknown message types
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('❓ Unknown message type: ${message.data['type']}'),
@@ -661,15 +668,25 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                                 ),
                                 GestureDetector(
                                   onTap: () {
-                                    final uid = FirebaseAuth.instance.currentUser?.uid;
+                                    final uid =
+                                        FirebaseAuth.instance.currentUser?.uid;
                                     if (uid == null) {
-                                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Not signed in')));
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        const SnackBar(
+                                          content: Text('Not signed in'),
+                                        ),
+                                      );
                                       return;
                                     }
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (_) => WorkerJobsHubScreen(providerId: uid, initialTab: 0),
+                                        builder: (_) => WorkerJobsHubScreen(
+                                          providerId: uid,
+                                          initialTab: 0,
+                                        ),
                                       ),
                                     );
                                   },
