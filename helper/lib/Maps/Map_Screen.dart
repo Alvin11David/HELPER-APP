@@ -670,8 +670,10 @@ class _MapScreenState extends State<MapScreen> {
                             MaterialPageRoute(
                               builder: (_) => JobDetailBookingScreen(
                                 serviceProviderId: worker['uid'] ?? '',
-                                businessName: worker['businessName'] ?? 'Provider',
-                                profession: worker['jobCategoryName'] ?? 'Service',
+                                businessName:
+                                    worker['businessName'] ?? 'Provider',
+                                profession:
+                                    worker['jobCategoryName'] ?? 'Service',
                                 amount: worker['amount'] ?? 0,
                                 pricingType: worker['pricingType'] ?? 'fixed',
                               ),
@@ -978,8 +980,7 @@ class _MapScreenState extends State<MapScreen> {
                     child: const Icon(Icons.person, color: Colors.black),
                   ),
                   const SizedBox(width: 10),
-                  Stack(
-                    children: [
+                  Stack(children: [
                     ],
                   ),
                   const SizedBox(width: 10),

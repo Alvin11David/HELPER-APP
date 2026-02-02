@@ -248,6 +248,36 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                             color: Colors.black,
                           ),
                           const SizedBox(height: 20),
+                          if (_userRole == 'employer')
+                            GestureDetector(
+                              onTap: () => setState(() => _selectedIndex = 1),
+                              child: Padding(
+                                padding: EdgeInsets.only(left: 8, right: 8),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.book_online,
+                                      color: _selectedIndex == 1
+                                          ? Colors.orange
+                                          : Colors.black.withOpacity(0.6),
+                                    ),
+                                    SizedBox(width: 15),
+                                    Text(
+                                      "My Bookings",
+                                      style: TextStyle(
+                                        color: _selectedIndex == 1
+                                            ? Colors.orange
+                                            : Colors.black,
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          if (_userRole == 'employer')
+                            const SizedBox(height: 20),
                           if (_userRole != 'employer') ...[
                             GestureDetector(
                               onTap: () async {
