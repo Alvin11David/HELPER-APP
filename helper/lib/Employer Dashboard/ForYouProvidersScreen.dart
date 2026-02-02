@@ -329,7 +329,7 @@ class _ForYouProvidersScreenState extends State<ForYouProvidersScreen> {
                                   itemBuilder: (context, index) {
                                     final doc = _searchResults[index];
                                     final data =
-                                        doc.data() as Map<String, dynamic>;
+                                        doc.data();
                                     final businessName =
                                         data['businessName'] ?? 'Unknown';
                                     final jobCategory =

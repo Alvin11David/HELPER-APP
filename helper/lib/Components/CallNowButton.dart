@@ -23,14 +23,16 @@ class CallNowButton extends StatelessWidget {
 
   Future<void> _handleCall(BuildContext context) async {
     // Show initial debug info
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('🔍 Call Now Button Tapped')));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('🔍 Call Now Button Tapped - LiveKit Voice Call'),
+      ),
+    );
 
     // Show worker's user ID being called
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('👷 Calling Worker ID: $providerId'),
+        content: Text('👷 Calling Worker ID: $providerId via LiveKit'),
         duration: const Duration(seconds: 3),
         backgroundColor: Colors.blue,
       ),
@@ -49,15 +51,15 @@ class CallNowButton extends StatelessWidget {
     final isOnline = doc.data()?['isOnline'] ?? false;
     print('Provider online status: $isOnline');
 
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text('📱 Provider online: $isOnline')));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('📱 Provider online for LiveKit call: $isOnline')),
+    );
 
     if (!isOnline) {
       print('Provider is offline, but bypassing check for testing');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('⚠️ Provider offline - bypassing for testing'),
+          content: Text('⚠️ Provider offline - bypassing for LiveKit testing'),
         ),
       );
     }
@@ -78,12 +80,18 @@ class CallNowButton extends StatelessWidget {
           portfolioImageUrl = portfolioFiles[0] as String?;
           print('Portfolio image found: $portfolioImageUrl');
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('🖼️ Portfolio image found')),
+            const SnackBar(
+              content: Text('🖼️ Portfolio image found for LiveKit call'),
+            ),
           );
         } else {
           print('No portfolio files found in serviceProviders document');
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('❌ No portfolio files found')),
+            const SnackBar(
+              content: Text(
+                '❌ No portfolio files found - proceeding with LiveKit call',
+              ),
+            ),
           );
         }
       } else {
@@ -92,15 +100,19 @@ class CallNowButton extends StatelessWidget {
         );
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('❌ serviceProviders document not found'),
+            content: Text(
+              '❌ serviceProviders document not found - LiveKit call may fail',
+            ),
           ),
         );
       }
     } catch (e) {
       print('Error fetching portfolio image: $e');
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('❌ Error fetching portfolio: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('❌ Error fetching portfolio for LiveKit call: $e'),
+        ),
+      );
     }
 
     // Worker is online, send call request
@@ -121,7 +133,7 @@ class CallNowButton extends StatelessWidget {
     print('Caller Name: $callerFullName');
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('📞 Creating call document: $callId')),
+      SnackBar(content: Text('📞 Creating LiveKit call document: $callId')),
     );
 
     try {
@@ -145,7 +157,7 @@ class CallNowButton extends StatelessWidget {
         print('✅ Document verified in Firestore: ${createdDoc.data()}');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('✅ Document verified in Firestore'),
+            content: Text('✅ LiveKit call document verified in Firestore'),
             backgroundColor: Colors.green,
             duration: Duration(seconds: 2),
           ),
@@ -154,7 +166,7 @@ class CallNowButton extends StatelessWidget {
         print('❌ Document not found in Firestore after creation!');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('❌ Document creation failed'),
+            content: Text('❌ LiveKit call document creation failed'),
             backgroundColor: Colors.red,
             duration: Duration(seconds: 3),
           ),
@@ -163,7 +175,9 @@ class CallNowButton extends StatelessWidget {
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('✅ Call document created - waiting for Cloud Function'),
+          content: Text(
+            '✅ LiveKit call initiated - waiting for worker response',
+          ),
           backgroundColor: Colors.blue,
           duration: Duration(seconds: 3),
         ),
@@ -335,7 +349,9 @@ class CallNowButton extends StatelessWidget {
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('🔄 Testing FCM via Cloud Function...'),
+          content: Text(
+            '🔄 Testing FCM for LiveKit call via Cloud Function...',
+          ),
           backgroundColor: Colors.blue,
         ),
       );
@@ -349,7 +365,7 @@ class CallNowButton extends StatelessWidget {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              '✅ Cloud Function responded: ${result.data['message'] ?? 'OK'}',
+              '✅ LiveKit Cloud Function test successful: ${result.data['message'] ?? 'OK'}',
             ),
             backgroundColor: Colors.green,
           ),
@@ -358,7 +374,7 @@ class CallNowButton extends StatelessWidget {
         print('Cloud Function call failed: $e');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('❌ Cloud Function error: $e'),
+            content: Text('❌ LiveKit Cloud Function test failed: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -367,7 +383,7 @@ class CallNowButton extends StatelessWidget {
       print('Error testing FCM: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('❌ FCM test error: $e'),
+          content: Text('❌ LiveKit FCM test error: $e'),
           backgroundColor: Colors.red,
         ),
       );

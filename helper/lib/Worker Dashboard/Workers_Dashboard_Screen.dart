@@ -8,6 +8,7 @@ import 'package:helper/Components/IncomingCallDialog.dart';
 import '../Components/Side_Bar.dart';
 import 'package:helper/Components/user_avatar_circle.dart';
 import 'package:helper/Components/Bottom_Nav_Bar.dart';
+import 'Worker_Jobs_Hub_Screen.dart';
 
 class WorkersDashboardScreen extends StatefulWidget {
   const WorkersDashboardScreen({super.key});
@@ -764,17 +765,32 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
-                                Container(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 5,
-                                  ),
-                                  child: Text(
-                                    'View All',
-                                    style: TextStyle(
-                                      color: Color(0xFFF79F1A),
-                                      fontSize: w * 0.04,
-                                      fontWeight: FontWeight.bold,
+                                GestureDetector(
+                                  onTap: () {
+                                    final uid = FirebaseAuth.instance.currentUser?.uid;
+                                    if (uid == null) {
+                                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Not signed in')));
+                                      return;
+                                    }
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => WorkerJobsHubScreen(providerId: uid, initialTab: 0),
+                                      ),
+                                    );
+                                  },
+                                  child: Container(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 5,
+                                    ),
+                                    child: Text(
+                                      'View All',
+                                      style: TextStyle(
+                                        color: Color(0xFFF79F1A),
+                                        fontSize: w * 0.04,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   ),
                                 ),

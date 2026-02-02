@@ -505,7 +505,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
       // ✅ go to worker hub screen
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const WorkerJobsHubScreen()),
+        MaterialPageRoute(builder: (_) => WorkerJobsHubScreen(providerId: widget.serviceProviderId)),
       );
     } catch (e) {
       debugPrint("CREATE BOOKING ERROR: $e");

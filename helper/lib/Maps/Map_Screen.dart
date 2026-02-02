@@ -24,7 +24,7 @@ class MapScreen extends StatefulWidget {
 class _MapScreenState extends State<MapScreen> {
   final GlobalKey<SideBarState> _sidebarKey = GlobalKey();
   final String _googleApiKey = 'AIzaSyBUJXjLSEFn_8OfVkaaLAIHYGUcGJEDD9w';
-  bool _showFilters = false;
+  final bool _showFilters = false;
   String? selectedFilter;
   Position? userPosition;
   List<String> topRatedCategories = [];
