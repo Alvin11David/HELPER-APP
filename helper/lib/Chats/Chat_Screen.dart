@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'Voice_Call_Screen.dart';
 
 class ChatScreen extends StatefulWidget {
   final String chatPartnerName;
@@ -181,30 +180,6 @@ class _ChatScreenState extends State<ChatScreen> {
                           ],
                         ),
                         const Spacer(),
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => VoiceCallScreen(
-                                  businessName: widget.chatPartnerName,
-                                  providerId: widget.providerId,
-                                  callerId: widget.employerId,
-                                ),
-                              ),
-                            );
-                          },
-                          child: Container(
-                            width: screenWidth * 0.12,
-                            height: screenWidth * 0.12,
-                            decoration: const BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(Icons.phone, color: Colors.black),
-                          ),
-                        ),
-                        SizedBox(width: screenWidth * 0.025),
                         StreamBuilder<DocumentSnapshot>(
                           stream: FirebaseFirestore.instance
                               .collection('serviceProviders')
