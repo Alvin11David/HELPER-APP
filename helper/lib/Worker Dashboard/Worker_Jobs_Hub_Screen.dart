@@ -459,12 +459,6 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
                     ),
                     SizedBox(width: w * 0.02),
                     _TopAvatar(w: w),
-                    SizedBox(width: w * 0.02),
-                    _TopIcon(
-                      w: w,
-                      icon: Icons.notifications_none_rounded,
-                      onTap: () {},
-                    ),
                   ],
                 ),
                 SizedBox(height: h * 0.012),

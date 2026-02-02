@@ -248,61 +248,65 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                             color: Colors.black,
                           ),
                           const SizedBox(height: 20),
-                          GestureDetector(
-                            onTap: () async {
-                              bool? isVerified = await _fetchVerifiedStatus();
-                              if (isVerified == false) {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => RoleSelectionScreen(),
-                                  ),
-                                );
-                              }
-                            },
-                            child: Padding(
-                              padding: EdgeInsets.only(left: 8, right: 8),
-                              child: Row(
-                                children: [
-                                  Text(
-                                    "Verified?",
-                                    style: TextStyle(
-                                      color: Colors.black,
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w600,
+                          if (_userRole != 'employer') ...[
+                            GestureDetector(
+                              onTap: () async {
+                                bool? isVerified = await _fetchVerifiedStatus();
+                                if (isVerified == false) {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          RoleSelectionScreen(),
                                     ),
-                                  ),
-                                  Spacer(),
-                                  FutureBuilder<bool?>(
-                                    future: _fetchVerifiedStatus(),
-                                    builder: (context, snapshot) {
-                                      if (snapshot.connectionState ==
-                                          ConnectionState.waiting) {
+                                  );
+                                }
+                              },
+                              child: Padding(
+                                padding: EdgeInsets.only(left: 8, right: 8),
+                                child: Row(
+                                  children: [
+                                    Text(
+                                      "Verified?",
+                                      style: TextStyle(
+                                        color: Colors.black,
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    Spacer(),
+                                    FutureBuilder<bool?>(
+                                      future: _fetchVerifiedStatus(),
+                                      builder: (context, snapshot) {
+                                        if (snapshot.connectionState ==
+                                            ConnectionState.waiting) {
+                                          return Text(
+                                            'Loading...',
+                                            style: TextStyle(
+                                              color: Colors.green,
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          );
+                                        }
+                                        bool isVerified =
+                                            snapshot.data ?? false;
                                         return Text(
-                                          'Loading...',
+                                          isVerified ? 'Yes' : 'No',
                                           style: TextStyle(
                                             color: Colors.green,
                                             fontSize: 15,
                                             fontWeight: FontWeight.w600,
                                           ),
                                         );
-                                      }
-                                      bool isVerified = snapshot.data ?? false;
-                                      return Text(
-                                        isVerified ? 'Yes' : 'No',
-                                        style: TextStyle(
-                                          color: Colors.green,
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                ],
+                                      },
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
-                          const SizedBox(height: 20),
+                            const SizedBox(height: 20),
+                          ],
                           GestureDetector(
                             onTap: () async {
                               try {
