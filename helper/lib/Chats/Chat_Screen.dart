@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:record/record.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 class ChatScreen extends StatefulWidget {
   final String chatPartnerName;
@@ -29,6 +30,8 @@ class _ChatScreenState extends State<ChatScreen> {
   final AudioRecorder _audioRecorder = AudioRecorder();
   bool _isRecording = false;
   String? _recordedFilePath;
+  final AudioPlayer _audioPlayer = AudioPlayer();
+  String? _currentlyPlayingAudioUrl;
 
   @override
   void initState() {
@@ -65,6 +68,7 @@ class _ChatScreenState extends State<ChatScreen> {
     _controller.dispose();
     _scrollController.dispose();
     _audioRecorder.dispose();
+    _audioPlayer.dispose();
     super.dispose();
   }
 
@@ -76,6 +80,33 @@ class _ChatScreenState extends State<ChatScreen> {
     String period = hour < 12 ? 'AM' : 'PM';
     int displayHour = hour == 0 ? 12 : (hour > 12 ? hour - 12 : hour);
     return '$displayHour:$minute $period';
+  }
+
+  Future<void> _playAudio(String audioUrl) async {
+    if (_currentlyPlayingAudioUrl == audioUrl) {
+      // If the same audio is playing, stop it
+      await _audioPlayer.stop();
+      setState(() {
+        _currentlyPlayingAudioUrl = null;
+      });
+    } else {
+      // Stop any currently playing audio
+      if (_currentlyPlayingAudioUrl != null) {
+        await _audioPlayer.stop();
+      }
+      // Play the new audio
+      await _audioPlayer.play(UrlSource(audioUrl));
+      setState(() {
+        _currentlyPlayingAudioUrl = audioUrl;
+      });
+
+      // Listen for when the audio finishes
+      _audioPlayer.onPlayerComplete.listen((event) {
+        setState(() {
+          _currentlyPlayingAudioUrl = null;
+        });
+      });
+    }
   }
 
   @override
@@ -274,15 +305,69 @@ class _ChatScreenState extends State<ChatScreen> {
                                 children: [
                                   msg['type'] == 'text'
                                       ? Text(
-                                          msg['text'],
+                                          msg['text'] ?? '',
                                           style: const TextStyle(
                                             color: Colors.black,
                                           ),
                                         )
-                                      : Image.network(
+                                      : msg['type'] == 'audio'
+                                      ? GestureDetector(
+                                          onTap: () {
+                                            if (msg['audioUrl'] != null) {
+                                              _playAudio(msg['audioUrl']);
+                                            }
+                                          },
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 12,
+                                              vertical: 8,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color:
+                                                  _currentlyPlayingAudioUrl ==
+                                                      msg['audioUrl']
+                                                  ? Colors.blue.withOpacity(0.2)
+                                                  : Colors.grey.withOpacity(
+                                                      0.1,
+                                                    ),
+                                              borderRadius:
+                                                  BorderRadius.circular(20),
+                                            ),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Icon(
+                                                  _currentlyPlayingAudioUrl ==
+                                                          msg['audioUrl']
+                                                      ? Icons.pause
+                                                      : Icons.play_arrow,
+                                                  color: Colors.black,
+                                                  size: 20,
+                                                ),
+                                                const SizedBox(width: 8),
+                                                Text(
+                                                  _currentlyPlayingAudioUrl ==
+                                                          msg['audioUrl']
+                                                      ? 'Playing...'
+                                                      : '🎵 Audio',
+                                                  style: const TextStyle(
+                                                    color: Colors.black,
+                                                    fontSize: 14,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        )
+                                      : msg['imageUrl'] != null
+                                      ? Image.network(
                                           msg['imageUrl'],
                                           width: 200,
                                           height: 200,
+                                        )
+                                      : const Text(
+                                          'Image not available',
+                                          style: TextStyle(color: Colors.grey),
                                         ),
                                   const SizedBox(height: 5),
                                   Text(

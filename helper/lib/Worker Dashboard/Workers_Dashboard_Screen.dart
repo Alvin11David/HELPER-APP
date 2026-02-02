@@ -33,16 +33,6 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
     // Request notification permissions
     FirebaseMessaging.instance.requestPermission().then((settings) {
       print('FCM permission status: ${settings.authorizationStatus}');
-
-      // Show permission status on screen
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('🔓 FCM Permission: ${settings.authorizationStatus}'),
-            duration: const Duration(seconds: 2),
-          ),
-        );
-      });
     });
 
     // Set online status
@@ -51,41 +41,8 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
     print('Current user: ${FirebaseAuth.instance.currentUser}');
     print('🔥 WORKER DASHBOARD: Current user object printed above!');
 
-    // Show current user info on screen
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('👤 Current User UID: $uid'),
-          duration: const Duration(seconds: 3),
-        ),
-      );
-      // Show user email if available
-      final user = FirebaseAuth.instance.currentUser;
-      if (user != null) {
-        Future.delayed(const Duration(seconds: 1), () {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('📧 User Email: ${user.email ?? "No email"}'),
-                duration: const Duration(seconds: 3),
-              ),
-            );
-          }
-        });
-      }
-    });
-
     if (uid != null) {
       print('Setting user online and saving FCM token...');
-
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('🔄 Setting up worker...'),
-            duration: Duration(seconds: 2),
-          ),
-        );
-      });
 
       FirebaseFirestore.instance.collection('users').doc(uid).update({
         'isOnline': true,
@@ -141,15 +98,6 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
 
     print('Setting up FCM listeners...');
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('🎧 Setting up FCM listeners'),
-          duration: Duration(seconds: 2),
-        ),
-      );
-    });
-
     // Set up FCM listener for incoming calls
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       print('=== FCM onMessage RECEIVED ===');
@@ -158,26 +106,11 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
         'Message notification: ${message.notification?.title} - ${message.notification?.body}',
       );
 
-      // Show visible notification on screen
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('📨 FCM Message: ${message.data['type']}'),
-          duration: const Duration(seconds: 3),
-        ),
-      );
-
       if (message.data['type'] == 'call') {
         print(
           'Call notification detected! Call ID: ${message.data['callId']}, Caller: ${message.data['callerName']}',
         );
         print('Attempting to show IncomingCallDialog...');
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('📞 Call from: ${message.data['callerName']}'),
-            duration: const Duration(seconds: 5),
-          ),
-        );
 
         try {
           if (!_isCallDialogShowing) {
@@ -296,17 +229,6 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
 
               print('Incoming call detected: $callId from $callerName');
 
-              // Show snackbar about Firestore-detected call
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('📞 Firestore: Call from $callerName'),
-                    backgroundColor: Colors.purple,
-                    duration: const Duration(seconds: 3),
-                  ),
-                );
-              });
-
               // Show dialog if not already showing
               if (!_isCallDialogShowing) {
                 _isCallDialogShowing = true;
@@ -368,24 +290,9 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
   Future<void> _showNotifications() async {
     print('=== _showNotifications called ===');
 
-    // First, show a test notification to verify SnackBar works
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Loading notifications...'),
-        backgroundColor: Colors.blue,
-        duration: Duration(seconds: 1),
-      ),
-    );
-
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) {
       print('=== No current user ===');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please log in to view notifications'),
-          backgroundColor: Colors.red,
-        ),
-      );
       return;
     }
     print('=== Current user: ${currentUser.uid} ===');
@@ -492,25 +399,12 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
 
       if (notifications.isEmpty) {
         print('=== No notifications to show ===');
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('No new notifications'),
-            backgroundColor: Colors.blue,
-          ),
-        );
         return;
       }
 
       // Show each notification as a SnackBar with delay
       for (int i = 0; i < notifications.length; i++) {
         print('=== Showing notification ${i + 1}: ${notifications[i]} ===');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(notifications[i]),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 6),
-          ),
-        );
 
         // Wait before showing next notification (if there are multiple)
         if (i < notifications.length - 1) {
