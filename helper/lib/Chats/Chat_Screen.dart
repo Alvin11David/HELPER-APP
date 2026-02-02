@@ -4,6 +4,8 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:record/record.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class ChatScreen extends StatefulWidget {
   final String chatPartnerName;
@@ -24,6 +26,9 @@ class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   late String chatId;
+  final AudioRecorder _audioRecorder = AudioRecorder();
+  bool _isRecording = false;
+  String? _recordedFilePath;
 
   @override
   void initState() {
@@ -59,6 +64,7 @@ class _ChatScreenState extends State<ChatScreen> {
   void dispose() {
     _controller.dispose();
     _scrollController.dispose();
+    _audioRecorder.dispose();
     super.dispose();
   }
 
@@ -397,22 +403,68 @@ class _ChatScreenState extends State<ChatScreen> {
                                 Padding(
                                   padding: const EdgeInsets.only(right: 10),
                                   child: GestureDetector(
-                                    onTap: () {
-                                      // TODO: Implement voice recording functionality
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        const SnackBar(
-                                          content: Text(
-                                            'Voice recording coming soon!',
+                                    onTap: () async {
+                                      if (_isRecording) {
+                                        // Stop recording
+                                        final path = await _audioRecorder
+                                            .stop();
+                                        setState(() {
+                                          _isRecording = false;
+                                          _recordedFilePath = path;
+                                        });
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          const SnackBar(
+                                            content: Text('Recording stopped'),
+                                            backgroundColor: Colors.green,
                                           ),
-                                          backgroundColor: Colors.blue,
-                                        ),
-                                      );
+                                        );
+                                      } else {
+                                        // Start recording
+                                        final micStatus = await Permission
+                                            .microphone
+                                            .request();
+                                        if (!micStatus.isGranted) {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                'Microphone permission required',
+                                              ),
+                                              backgroundColor: Colors.red,
+                                            ),
+                                          );
+                                          return;
+                                        }
+                                        final path =
+                                            '${Directory.systemTemp.path}/audio_${DateTime.now().millisecondsSinceEpoch}.m4a';
+                                        await _audioRecorder.start(
+                                          const RecordConfig(),
+                                          path: path,
+                                        );
+                                        setState(() {
+                                          _isRecording = true;
+                                          _recordedFilePath = null;
+                                        });
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          const SnackBar(
+                                            content: Text(
+                                              'Recording started...',
+                                            ),
+                                            backgroundColor: Colors.red,
+                                          ),
+                                        );
+                                      }
                                     },
-                                    child: const Icon(
+                                    child: Icon(
                                       Icons.mic,
-                                      color: Colors.black,
+                                      color: _isRecording
+                                          ? Colors.red
+                                          : Colors.black,
                                     ),
                                   ),
                                 ),
@@ -423,25 +475,64 @@ class _ChatScreenState extends State<ChatScreen> {
                         const SizedBox(width: 10),
                         GestureDetector(
                           onTap: () async {
-                            if (_controller.text.isNotEmpty) {
-                              // Ensure the chat document exists
-                              final chatDoc = FirebaseFirestore.instance
+                            // Ensure the chat document exists
+                            final chatDoc = FirebaseFirestore.instance
+                                .collection('chats')
+                                .doc(chatId);
+                            final docSnapshot = await chatDoc.get();
+                            if (!docSnapshot.exists) {
+                              await chatDoc.set({
+                                'employerId': widget.employerId,
+                                'providerId': widget.providerId,
+                                'chatPartnerName': widget.chatPartnerName,
+                              });
+                            }
+                            final currentUserId =
+                                FirebaseAuth.instance.currentUser!.uid;
+                            final receiverId =
+                                currentUserId == widget.employerId
+                                ? widget.providerId
+                                : widget.employerId;
+
+                            if (_recordedFilePath != null) {
+                              // Send audio message
+                              final file = File(_recordedFilePath!);
+                              final fileName =
+                                  'audio_${DateTime.now().millisecondsSinceEpoch}.m4a';
+                              final storageRef = FirebaseStorage.instance
+                                  .ref()
+                                  .child('Chat Audio')
+                                  .child(fileName);
+                              final uploadTask = storageRef.putFile(file);
+                              final snapshot = await uploadTask.whenComplete(
+                                () {},
+                              );
+                              final downloadUrl = await snapshot.ref
+                                  .getDownloadURL();
+                              final message = {
+                                'audioUrl': downloadUrl,
+                                'senderId': currentUserId,
+                                'receiverId': receiverId,
+                                'timestamp': FieldValue.serverTimestamp(),
+                                'type': 'audio',
+                                'read': false,
+                              };
+                              await FirebaseFirestore.instance
                                   .collection('chats')
-                                  .doc(chatId);
-                              final docSnapshot = await chatDoc.get();
-                              if (!docSnapshot.exists) {
-                                await chatDoc.set({
-                                  'employerId': widget.employerId,
-                                  'providerId': widget.providerId,
-                                  'chatPartnerName': widget.chatPartnerName,
-                                });
-                              }
-                              final currentUserId =
-                                  FirebaseAuth.instance.currentUser!.uid;
-                              final receiverId =
-                                  currentUserId == widget.employerId
-                                  ? widget.providerId
-                                  : widget.employerId;
+                                  .doc(chatId)
+                                  .collection('messages')
+                                  .add(message);
+                              setState(() {
+                                _recordedFilePath = null;
+                              });
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Voice message sent!'),
+                                  backgroundColor: Colors.green,
+                                ),
+                              );
+                            } else if (_controller.text.isNotEmpty) {
+                              // Send text message
                               final message = {
                                 'text': _controller.text,
                                 'senderId': currentUserId,

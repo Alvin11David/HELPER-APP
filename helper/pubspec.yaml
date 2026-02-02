@@ -87,6 +87,7 @@ dependencies:
   # VoIP for voice calls
   agora_rtc_engine: ^6.5.3
   flutter_webrtc: ^1.3.0
+  record: ^5.0.4
   audio_session: ^0.2.2
   livekit_client: ^2.5.0+hotfix.3
 
