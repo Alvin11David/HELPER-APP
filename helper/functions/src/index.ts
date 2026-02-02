@@ -678,14 +678,14 @@ export const sendReviewNotification = onDocumentCreated(
 );
 
 // Test function to verify Cloud Functions are working
-export const testCallNotification = onRequest(async (req, res) => {
-  console.log("=== TEST CALL NOTIFICATION ENDPOINT CALLED ===");
-  console.log("Request method:", req.method);
-  console.log("Request body:", req.body);
+// Function to test call notification (callable function)
+export const testCallNotification = onCall(async (request) => {
+  console.log("=== TEST CALL NOTIFICATION FUNCTION CALLED ===");
+  console.log("Request data:", request.data);
 
-  res.status(200).json({
+  return {
     success: true,
     message: "Cloud Function is working! Check Firebase Functions logs.",
     timestamp: new Date().toISOString(),
-  });
+  };
 });

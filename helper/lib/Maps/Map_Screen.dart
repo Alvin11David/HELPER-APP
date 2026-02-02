@@ -978,30 +978,6 @@ class _MapScreenState extends State<MapScreen> {
                   const SizedBox(width: 10),
                   Stack(
                     children: [
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.2),
-                              blurRadius: 10,
-                              offset: Offset(0, 5),
-                            ),
-                          ],
-                        ),
-                        child: const Icon(
-                          Icons.notifications,
-                          color: Colors.black,
-                        ),
-                      ),
-                      Positioned(
-                        top: 0,
-                        right: 0,
-                        child: UnreadMessagesBadge(),
-                      ),
                     ],
                   ),
                   const SizedBox(width: 10),

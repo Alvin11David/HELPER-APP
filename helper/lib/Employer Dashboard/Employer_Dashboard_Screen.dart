@@ -77,6 +77,31 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
       }
     });
 
+    // Show current user info on screen
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('👤 Current User UID: $uid'),
+          duration: const Duration(seconds: 3),
+        ),
+      );
+      // Show user email if available
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        Future.delayed(const Duration(seconds: 1), () {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('📧 User Email: ${user.email ?? "No email"}'),
+                duration: const Duration(seconds: 3),
+              ),
+            );
+          }
+        });
+      }
+    });
+
     _initLocation(); // ✅ start GPS
     _getUserPosition();
     _getTopRatedCategories();
@@ -1279,13 +1304,17 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
 
                               if (_ratingsLoaded &&
                                   selectedFilter == 'Top Rated') {
-                                print('Applying Top Rated filter. Provider ratings: $providerRatings');
+                                print(
+                                  'Applying Top Rated filter. Provider ratings: $providerRatings',
+                                );
                                 scored.retainWhere(
                                   (s) =>
                                       (providerRatings[s['_docId']] ?? 0) >=
                                       4.0,
                                 );
-                                print('After filtering, scored length: ${scored.length}');
+                                print(
+                                  'After filtering, scored length: ${scored.length}',
+                                );
                               }
 
                               // sort shortest distance first
@@ -1437,13 +1466,17 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                                 }
                                 if (_ratingsLoaded &&
                                     selectedFilter == 'Top Rated') {
-                                  print('For You: Applying Top Rated filter. Provider ratings: $providerRatings');
+                                  print(
+                                    'For You: Applying Top Rated filter. Provider ratings: $providerRatings',
+                                  );
                                   scored.retainWhere(
                                     (s) =>
                                         (providerRatings[s['_docId']] ?? 0) >=
                                         4.0,
                                   );
-                                  print('For You: After filtering, scored length: ${scored.length}');
+                                  print(
+                                    'For You: After filtering, scored length: ${scored.length}',
+                                  );
                                 }
                                 scored.sort((a, b) {
                                   final ak = (a['_distanceKm'] as num)
