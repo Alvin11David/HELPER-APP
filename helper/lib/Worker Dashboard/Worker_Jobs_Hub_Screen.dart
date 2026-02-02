@@ -97,7 +97,7 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
   void _toast(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(msg, style: const TextStyle(fontFamily: 'Poppins')),
+        content: Text(msg, style: const TextStyle(fontFamily: 'Inter')),
         backgroundColor: Colors.black.withOpacity(0.85),
       ),
     );
@@ -398,9 +398,9 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
                   ],
                 ),
                 SizedBox(height: h * 0.012),
-                Center(child: _GlassPill(radius: 18, padding: EdgeInsets.symmetric(horizontal: w * 0.05, vertical: h * 0.007), child: Text(_helperPillText, style: TextStyle(color: Colors.white.withOpacity(0.92), fontFamily: 'Poppins', fontWeight: FontWeight.w700, fontSize: w * 0.03)))),
+                Center(child: _GlassPill(radius: 18, padding: EdgeInsets.symmetric(horizontal: w * 0.05, vertical: h * 0.007), child: Text(_helperPillText, style: TextStyle(color: Colors.white.withOpacity(0.92), fontFamily: 'Inter', fontWeight: FontWeight.w700, fontSize: w * 0.03)))),
                 SizedBox(height: h * 0.018),
-                Align(alignment: Alignment.centerLeft, child: Text('Job List', style: TextStyle(color: Colors.white, fontFamily: 'Poppins', fontWeight: FontWeight.w900, fontSize: w * 0.04))),
+                Align(alignment: Alignment.centerLeft, child: Text('Job List', style: TextStyle(color: Colors.white, fontFamily: 'Inter', fontWeight: FontWeight.w900, fontSize: w * 0.04))),
                 SizedBox(height: h * 0.012),
                 Row(children: [
                   _TabChip(text: 'Pending', active: _tab == 0, bg: _tabChipColor(0), fg: _tabChipTextColor(0), badgeCount: _conflictCount, onTap: () => _setTab(0)),
@@ -547,20 +547,20 @@ class _BookingDetailsSheet extends StatelessWidget {
 
               if (tab == 0) ...[
                 Row(children: [
-                  Expanded(child: OutlinedButton(onPressed: onViewLocation, style: OutlinedButton.styleFrom(side: BorderSide(color: accent.withOpacity(0.9), width: 1.5), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)), padding: EdgeInsets.symmetric(vertical: h * 0.016)), child: Text('View Location', style: TextStyle(color: accent, fontFamily: 'Poppins', fontWeight: FontWeight.w900, fontSize: w * 0.035)))),
+                  Expanded(child: OutlinedButton(onPressed: onViewLocation, style: OutlinedButton.styleFrom(side: BorderSide(color: accent.withOpacity(0.9), width: 1.5), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)), padding: EdgeInsets.symmetric(vertical: h * 0.016)), child: Text('View Location', style: TextStyle(color: accent, fontFamily: 'Inter', fontWeight: FontWeight.w900, fontSize: w * 0.035)))),
                   SizedBox(width: w * 0.03),
-                  Expanded(child: ElevatedButton(onPressed: onAcceptPending, style: ElevatedButton.styleFrom(backgroundColor: accent, elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)), padding: EdgeInsets.symmetric(vertical: h * 0.016)), child: Text('Accept', style: TextStyle(color: Colors.white, fontFamily: 'Poppins', fontWeight: FontWeight.w900, fontSize: w * 0.035)))),
+                  Expanded(child: ElevatedButton(onPressed: onAcceptPending, style: ElevatedButton.styleFrom(backgroundColor: accent, elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)), padding: EdgeInsets.symmetric(vertical: h * 0.016)), child: Text('Accept', style: TextStyle(color: Colors.white, fontFamily: 'Inter', fontWeight: FontWeight.w900, fontSize: w * 0.035)))),
                 ]),
                 SizedBox(height: h * 0.012),
-                SizedBox(width: double.infinity, child: OutlinedButton(onPressed: onDeletePending, style: OutlinedButton.styleFrom(side: BorderSide(color: Colors.red.withOpacity(0.9), width: 1.5), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)), padding: EdgeInsets.symmetric(vertical: h * 0.016)), child: Text('Delete (Cancel Request)', style: TextStyle(color: Colors.red, fontFamily: 'Poppins', fontWeight: FontWeight.w900, fontSize: w * 0.035)))),
+                SizedBox(width: double.infinity, child: OutlinedButton(onPressed: onDeletePending, style: OutlinedButton.styleFrom(side: BorderSide(color: Colors.red.withOpacity(0.9), width: 1.5), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)), padding: EdgeInsets.symmetric(vertical: h * 0.016)), child: Text('Delete (Cancel Request)', style: TextStyle(color: Colors.red, fontFamily: 'Inter', fontWeight: FontWeight.w900, fontSize: w * 0.035)))),
               ] else if (tab == 1) ...[
                 Row(children: [
-                  Expanded(child: OutlinedButton(onPressed: onViewLocation, style: OutlinedButton.styleFrom(side: BorderSide(color: accent.withOpacity(0.9), width: 1.5), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)), padding: EdgeInsets.symmetric(vertical: h * 0.016)), child: Text('View Location', style: TextStyle(color: accent, fontFamily: 'Poppins', fontWeight: FontWeight.w900, fontSize: w * 0.032)))),
+                  Expanded(child: OutlinedButton(onPressed: onViewLocation, style: OutlinedButton.styleFrom(side: BorderSide(color: accent.withOpacity(0.9), width: 1.5), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)), padding: EdgeInsets.symmetric(vertical: h * 0.016)), child: Text('View Location', style: TextStyle(color: accent, fontFamily: 'Inter', fontWeight: FontWeight.w900, fontSize: w * 0.032)))),
                   SizedBox(width: w * 0.02),
-                  Expanded(child: ElevatedButton(onPressed: onStartJob, style: ElevatedButton.styleFrom(backgroundColor: accent, elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)), padding: EdgeInsets.symmetric(vertical: h * 0.016)), child: Text('Start Job', style: TextStyle(color: Colors.white, fontFamily: 'Poppins', fontWeight: FontWeight.w900, fontSize: w * 0.032)))),
+                  Expanded(child: ElevatedButton(onPressed: onStartJob, style: ElevatedButton.styleFrom(backgroundColor: accent, elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)), padding: EdgeInsets.symmetric(vertical: h * 0.016)), child: Text('Start Job', style: TextStyle(color: Colors.white, fontFamily: 'Inter', fontWeight: FontWeight.w900, fontSize: w * 0.032)))),
                 ]),
                 SizedBox(height: h * 0.012),
-                SizedBox(width: double.infinity, child: OutlinedButton(onPressed: onReschedule, style: OutlinedButton.styleFrom(side: BorderSide(color: accent.withOpacity(0.9), width: 1.5), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)), padding: EdgeInsets.symmetric(vertical: h * 0.016)), child: Text('Reschedule', style: TextStyle(color: accent, fontFamily: 'Poppins', fontWeight: FontWeight.w900, fontSize: w * 0.035)))),
+                SizedBox(width: double.infinity, child: OutlinedButton(onPressed: onReschedule, style: OutlinedButton.styleFrom(side: BorderSide(color: accent.withOpacity(0.9), width: 1.5), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)), padding: EdgeInsets.symmetric(vertical: h * 0.016)), child: Text('Reschedule', style: TextStyle(color: accent, fontFamily: 'Inter', fontWeight: FontWeight.w900, fontSize: w * 0.035)))),
               ],
             ],
           ),
@@ -573,9 +573,9 @@ class _BookingDetailsSheet extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(children: [
-        Expanded(child: Text(label, style: TextStyle(color: Colors.black, fontFamily: 'Poppins', fontWeight: FontWeight.w800, fontSize: w * 0.032))),
+        Expanded(child: Text(label, style: TextStyle(color: Colors.black, fontFamily: 'Inter', fontWeight: FontWeight.w800, fontSize: w * 0.032))),
         SizedBox(width: w * 0.03),
-        Flexible(child: Text(value, textAlign: TextAlign.right, maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(color: valueColor ?? Colors.black.withOpacity(0.75), fontFamily: 'Poppins', fontWeight: FontWeight.w900, fontSize: w * 0.032))),
+        Flexible(child: Text(value, textAlign: TextAlign.right, maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(color: valueColor ?? Colors.black.withOpacity(0.75), fontFamily: 'Inter', fontWeight: FontWeight.w900, fontSize: w * 0.032))),
       ]),
     );
   }
@@ -605,11 +605,11 @@ class _JobCard extends StatelessWidget {
         decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18)),
         child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(job.employerName, style: TextStyle(color: Colors.black, fontFamily: 'Poppins', fontWeight: FontWeight.w900, fontSize: w * 0.036)),
+            Text(job.employerName, style: TextStyle(color: Colors.black, fontFamily: 'Inter', fontWeight: FontWeight.w900, fontSize: w * 0.036)),
             SizedBox(height: h * 0.002),
-            Text(job.jobDesc, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: Colors.black.withOpacity(0.65), fontFamily: 'Poppins', fontWeight: FontWeight.w700, fontSize: w * 0.03)),
+            Text(job.jobDesc, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: Colors.black.withOpacity(0.65), fontFamily: 'Inter', fontWeight: FontWeight.w700, fontSize: w * 0.03)),
             SizedBox(height: h * 0.002),
-            Text(job.payment, style: TextStyle(color: Colors.black.withOpacity(0.75), fontFamily: 'Poppins', fontWeight: FontWeight.w900, fontSize: w * 0.03)),
+            Text(job.payment, style: TextStyle(color: Colors.black.withOpacity(0.75), fontFamily: 'Inter', fontWeight: FontWeight.w900, fontSize: w * 0.03)),
           ])),
           SizedBox(width: w * 0.03),
           if (tab == 0) ...[
@@ -649,7 +649,7 @@ class _TinyPillButton extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: w * 0.035, vertical: w * 0.012),
         decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(999)),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [Icon(icon, color: Colors.white, size: w * 0.04), SizedBox(width: w * 0.012), Text(text, style: TextStyle(color: Colors.white, fontFamily: 'Poppins', fontWeight: FontWeight.w900, fontSize: w * 0.028))]),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [Icon(icon, color: Colors.white, size: w * 0.04), SizedBox(width: w * 0.012), Text(text, style: TextStyle(color: Colors.white, fontFamily: 'Inter', fontWeight: FontWeight.w900, fontSize: w * 0.028))]),
       ),
     );
   }
@@ -667,7 +667,7 @@ class _TabChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(child: GestureDetector(onTap: onTap, child: Container(height: 34, alignment: Alignment.center, decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(999)), child: Stack(clipBehavior: Clip.none, children: [Center(child: Text(text, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: fg, fontFamily: 'Poppins', fontWeight: FontWeight.w900, fontSize: 12.5))), if (badgeCount > 0) Positioned(right: -6, top: -6, child: Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), decoration: BoxDecoration(color: Colors.red, borderRadius: BorderRadius.circular(999), border: Border.all(color: Colors.white, width: 2)), child: Text(badgeCount > 99 ? '99+' : badgeCount.toString(), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 10))))]))));
+    return Expanded(child: GestureDetector(onTap: onTap, child: Container(height: 34, alignment: Alignment.center, decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(999)), child: Stack(clipBehavior: Clip.none, children: [Center(child: Text(text, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: fg, fontFamily: 'Inter', fontWeight: FontWeight.w900, fontSize: 12.5))), if (badgeCount > 0) Positioned(right: -6, top: -6, child: Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), decoration: BoxDecoration(color: Colors.red, borderRadius: BorderRadius.circular(999), border: Border.all(color: Colors.white, width: 2)), child: Text(badgeCount > 99 ? '99+' : badgeCount.toString(), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 10))))]))));
   }
 }
 
