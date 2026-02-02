@@ -9,6 +9,7 @@ import '../Components/Side_Bar.dart';
 import 'package:helper/Components/user_avatar_circle.dart';
 import 'package:helper/Components/Bottom_Nav_Bar.dart';
 import 'Worker_Jobs_Hub_Screen.dart';
+import 'Active_Job_detail.dart';
 
 class WorkersDashboardScreen extends StatefulWidget {
   const WorkersDashboardScreen({super.key});
@@ -936,17 +937,27 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
-                                Container(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 5,
-                                  ),
-                                  child: Text(
-                                    'View Job',
-                                    style: TextStyle(
-                                      color: Color(0xFFF79F1A),
-                                      fontSize: w * 0.04,
-                                      fontWeight: FontWeight.bold,
+                                GestureDetector(
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => const ActiveJobScreen(),
+                                      ),
+                                    );
+                                  },
+                                  child: Container(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 5,
+                                    ),
+                                    child: Text(
+                                      'View Job',
+                                      style: TextStyle(
+                                        color: Color(0xFFF79F1A),
+                                        fontSize: w * 0.04,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   ),
                                 ),

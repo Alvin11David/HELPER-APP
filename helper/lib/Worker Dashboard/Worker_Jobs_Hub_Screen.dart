@@ -5,6 +5,7 @@ import 'dart:ui';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'Workers_Reschedule_screen.dart';
+import 'Active_Job_detail.dart';
 
 
 
@@ -141,9 +142,14 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
               }
             : null,
         onStartJob: tab == 1
-            ? () {
+            ? () async {
                 Navigator.pop(context);
-                _startJob(bookingId);
+                await _startJob(bookingId);
+                if (!context.mounted) return;
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ActiveJobScreen()),
+                );
               }
             : null,
         onReschedule: tab == 1
