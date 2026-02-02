@@ -2,10 +2,18 @@ import 'dart:ui';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:helper/Components/Worker_Notifications.dart';
 
 class WorkerJobRescheduleScreen extends StatefulWidget {
-  const WorkerJobRescheduleScreen({super.key});
+  final String bookingId;
+  final Map<String, dynamic> bookingData;
+
+  const WorkerJobRescheduleScreen({
+    super.key,
+    required this.bookingId,
+    required this.bookingData,
+  });
 
   @override
   State<WorkerJobRescheduleScreen> createState() =>
@@ -17,57 +25,53 @@ class _WorkerJobRescheduleScreenState extends State<WorkerJobRescheduleScreen> {
   static const _brandGreen = Color(0xFF24E61F);
   static const _brandRed = Color(0xFFFF2B2B);
 
-  // 0 = list, 1 = reschedule
-  int _step = 0;
-
-  // Fake jobs
-  final List<_ConflictingJob> _jobs = List.generate(
-    6,
-    (i) => _ConflictingJob(
-      bookingId: "fake_booking_$i",
-      employerName: "Employer Name",
-      description: "Job Description here",
-      dateRange: "Job Date Range",
-    ),
-  );
-
-  _ConflictingJob? _selected;
-
-  // Date/time selections (UI only)
-  String _selectedDateRangeLabel = "Selected Date Range";
-  String _selectedTimeRangeLabel = "Selected Time Range";
+  // Date/time selections (UI)
+  String _selectedDateRangeLabel = "Select date range";
+  String _selectedTimeRangeLabel = "Select time range";
 
   TimeOfDay? _from;
   TimeOfDay? _to;
+  GeoPoint? _proposedLocation;
+  bool _attachingLocation = false;
+  final TextEditingController _noteController = TextEditingController();
 
-  // Calendar month
-  final String _monthTitle = "January 2026";
+  // Displayed month/year (fixes wrong year/month issues)
+  final int _displayYear = DateTime.now().year;
+  final int _displayMonth = DateTime.now().month;
+  static const List<String> _monthNames = [
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December'
+  ];
+
+  String get _monthTitle => '${_monthNames[_displayMonth - 1]} $_displayYear';
+
+  // Calendar month helpers
   final Set<int> _unavailableDays = {16, 17, 18, 19, 20, 21};
-  final int _currentDay = 7;
+  final int _currentDay = DateTime.now().day;
   int? _rangeStart;
   int? _rangeEnd;
 
   void _back() {
-    if (_step == 0) {
-      Navigator.of(context).maybePop();
-      return;
-    }
-    setState(() => _step = 0);
+    Navigator.of(context).maybePop();
   }
 
-  void _openReschedule(_ConflictingJob job) {
-    setState(() {
-      _selected = job;
-      _step = 1;
-    });
-  }
 
   void _pickDay(int day) {
     if (_unavailableDays.contains(day)) return;
     setState(() {
       if (_rangeStart == null) {
         _rangeStart = day;
-        _selectedDateRangeLabel = "Jan $day, 2026";
+        _selectedDateRangeLabel = "${_monthNames[_displayMonth - 1]} $day, $_displayYear";
       } else if (_rangeEnd == null) {
         if (day < _rangeStart!) {
           _rangeEnd = _rangeStart;
@@ -75,12 +79,12 @@ class _WorkerJobRescheduleScreenState extends State<WorkerJobRescheduleScreen> {
         } else {
           _rangeEnd = day;
         }
-        _selectedDateRangeLabel = "Jan $_rangeStart - $_rangeEnd, 2026";
+        _selectedDateRangeLabel = "${_monthNames[_displayMonth - 1]} $_rangeStart - $_rangeEnd, $_displayYear";
       } else {
         // Reset for new selection
         _rangeStart = day;
         _rangeEnd = null;
-        _selectedDateRangeLabel = "Jan $day, 2026";
+        _selectedDateRangeLabel = "${_monthNames[_displayMonth - 1]} $day, $_displayYear";
       }
     });
   }
@@ -153,6 +157,30 @@ class _WorkerJobRescheduleScreenState extends State<WorkerJobRescheduleScreen> {
     }
   }
 
+  Future<void> _attachLocation() async {
+    setState(() => _attachingLocation = true);
+    try {
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) throw Exception('Location services disabled');
+
+      LocationPermission perm = await Geolocator.checkPermission();
+      if (perm == LocationPermission.denied) {
+        perm = await Geolocator.requestPermission();
+      }
+      if (perm == LocationPermission.denied || perm == LocationPermission.deniedForever) throw Exception('Location permission denied');
+
+      final pos = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+      setState(() {
+        _proposedLocation = GeoPoint(pos.latitude, pos.longitude);
+      });
+      _toast('Location attached');
+    } catch (e) {
+      _toast('Could not attach location: $e');
+    } finally {
+      setState(() => _attachingLocation = false);
+    }
+  }
+
   void _recalcTimeRangeLabel() {
     if (_from == null && _to == null) {
       _selectedTimeRangeLabel = "Selected Time Range";
@@ -170,30 +198,6 @@ class _WorkerJobRescheduleScreenState extends State<WorkerJobRescheduleScreen> {
     return "$h:$m $p";
   }
 
-  Future<bool> _isWorkerFree({
-    required String workerId,
-    required String excludeBookingId,
-    required DateTime newStart,
-    required DateTime newEnd,
-  }) async {
-    final snap = await FirebaseFirestore.instance
-        .collection('bookings')
-        .where('serviceProviderId', isEqualTo: workerId)
-        .where('status', whereIn: const ['confirmed', 'pending', 'reschedule_requested'])
-        .get();
-
-    for (final doc in snap.docs) {
-      if (doc.id == excludeBookingId) continue;
-
-      final d = doc.data();
-      final s = (d['startDateTime'] as Timestamp).toDate();
-      final e = (d['endDateTime'] as Timestamp).toDate();
-
-      if (_overlaps(newStart, newEnd, s, e)) return false;
-    }
-    return true;
-  }
-
   Future<void> _save() async {
     final worker = FirebaseAuth.instance.currentUser;
     if (worker == null) {
@@ -201,31 +205,20 @@ class _WorkerJobRescheduleScreenState extends State<WorkerJobRescheduleScreen> {
       return;
     }
 
-    if (_selected == null) {
-      _toast("Select a job first");
-      return;
-    }
-
     if (_rangeStart == null || _rangeEnd == null) {
-      _toast("Pick an available date range");
+      _toast("Pick a date range");
       return;
     }
     if (_from == null || _to == null) {
-      _toast("Select a time range");
+      _toast("Pick a time range");
       return;
     }
 
-    final bookingId = _selected!.bookingId;
+    final bookingId = widget.bookingId;
     final workerId = worker.uid;
 
-    // Build newStart/newEnd from chosen date+time
-    // Using current month/year (you may want to make this dynamic)
-    final now = DateTime.now();
-    final year = now.year;
-    final month = now.month;
-
-    final startDate = DateTime(year, month, _rangeStart!);
-    final endDate = DateTime(year, month, _rangeEnd!);
+    final startDate = DateTime(_displayYear, _displayMonth, _rangeStart!);
+    final endDate = DateTime(_displayYear, _displayMonth, _rangeEnd!);
 
     final newStart = DateTime(
       startDate.year,
@@ -244,58 +237,68 @@ class _WorkerJobRescheduleScreenState extends State<WorkerJobRescheduleScreen> {
     );
 
     if (!newEnd.isAfter(newStart)) {
-      _toast("End time must be after start time");
+      _toast("End must be after start");
       return;
     }
 
-    // Check if worker is free
-    final free = await _isWorkerFree(
-      workerId: workerId,
-      excludeBookingId: bookingId,
-      newStart: newStart,
-      newEnd: newEnd,
+    // Confirm with user before sending
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Confirm reschedule'),
+        content: const Text('Make sure you\'ve talked to the employer before rescheduling. Sending will notify the employer to review the proposed schedule. Proceed?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
+          ElevatedButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Confirm & Send')),
+        ],
+      ),
     );
 
-    if (!free) {
-      _toast("You are not free on that time. Choose another slot.");
-      return;
-    }
+    if (confirm != true) return;
 
     try {
-      // Update booking with reschedule proposal
+      final resPayload = {
+        'state': 'pending',
+        'proposedStart': Timestamp.fromDate(newStart),
+        'proposedEnd': Timestamp.fromDate(newEnd),
+        'proposedLocationText': null,
+        'proposedLatLng': null,
+        'note': (_noteController.text).trim(),
+        'requestedById': workerId,
+        'requestedAt': FieldValue.serverTimestamp(),
+        'employerDecisionById': null,
+        'decidedAt': null,
+      };
+      if (_proposedLocation != null) {
+        resPayload['proposedLatLng'] = _proposedLocation!;
+      }
+
       await FirebaseFirestore.instance.collection('bookings').doc(bookingId).update({
         'status': 'reschedule_requested',
-        'reschedule': {
-          'proposedStart': Timestamp.fromDate(newStart),
-          'proposedEnd': Timestamp.fromDate(newEnd),
-          'requestedAt': FieldValue.serverTimestamp(),
-          'requestedBy': 'worker',
-          'employerDecision': 'pending',
-        },
+        'reschedule': resPayload,
         'updatedAt': FieldValue.serverTimestamp(),
       });
 
-      // Send employer notification
-      final bookingSnap = await FirebaseFirestore.instance.collection('bookings').doc(bookingId).get();
-      final bookingData = bookingSnap.data() ?? {};
-      final employerId = (bookingData['employerId'] ?? '').toString();
+      final employerId = (widget.bookingData['employerId'] ?? '').toString();
+      if (employerId.isNotEmpty) {
+        await FirebaseFirestore.instance.collection('notifications').add({
+          'type': 'reschedule_request',
+          'toUserId': employerId,
+          'fromUserId': workerId,
+          'bookingId': bookingId,
+          'read': false,
+          'createdAt': FieldValue.serverTimestamp(),
+          'title': 'Reschedule request',
+          'message': 'Worker proposed a new schedule',
+        });
+      }
 
-      await FirebaseFirestore.instance.collection('notifications').add({
-        'toUserId': employerId,
-        'fromUserId': workerId,
-        'type': 'reschedule_request',
-        'title': 'Reschedule request',
-        'message': 'Worker proposed a new schedule.',
-        'bookingId': bookingId,
-        'read': false,
-        'createdAt': FieldValue.serverTimestamp(),
-      });
-
-      _toast("Reschedule sent to employer");
+      _toast('Request sent');
+      if (!mounted) return;
       Navigator.pop(context);
     } catch (e) {
-      debugPrint("ERROR SAVING RESCHEDULE: $e");
-      _toast("Error saving reschedule: $e");
+      debugPrint('Error saving reschedule: $e');
+      _toast('Error: $e');
     }
   }
 
@@ -348,6 +351,12 @@ class _WorkerJobRescheduleScreenState extends State<WorkerJobRescheduleScreen> {
         backgroundColor: Colors.black.withOpacity(0.85),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _noteController.dispose();
+    super.dispose();
   }
 
   @override
@@ -470,22 +479,21 @@ class _WorkerJobRescheduleScreenState extends State<WorkerJobRescheduleScreen> {
                     switchInCurve: Curves.easeOut,
                     switchOutCurve: Curves.easeIn,
                     transitionBuilder: (child, anim) {
-                      final slide =
-                          Tween<Offset>(
-                            begin: const Offset(0.05, 0),
-                            end: Offset.zero,
-                          ).animate(
-                            CurvedAnimation(
-                              parent: anim,
-                              curve: Curves.easeOut,
-                            ),
-                          );
+                      final slide = Tween<Offset>(
+                        begin: const Offset(0.05, 0),
+                        end: Offset.zero,
+                      ).animate(
+                        CurvedAnimation(
+                          parent: anim,
+                          curve: Curves.easeOut,
+                        ),
+                      );
                       return FadeTransition(
                         opacity: anim,
                         child: SlideTransition(position: slide, child: child),
                       );
                     },
-                    child: _step == 0 ? _listView(w, h) : _rescheduleView(w, h),
+                    child: _rescheduleView(w, h),
                   ),
                 ),
               ],
@@ -493,65 +501,6 @@ class _WorkerJobRescheduleScreenState extends State<WorkerJobRescheduleScreen> {
           ),
         ),
       ),
-    );
-  }
-
-  // --------------------------- Step 0 (List) ---------------------------
-
-  Widget _listView(double w, double h) {
-    return ListView(
-      key: const ValueKey("list"),
-      padding: EdgeInsets.only(bottom: h * 0.02),
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                "Contradicting Jobs",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontFamily: 'Inter',
-                  fontWeight: FontWeight.w900,
-                  fontSize: w * 0.04,
-                ),
-              ),
-            ),
-            Text(
-              "Reschedule one of these Jobs",
-              style: TextStyle(
-                color: Colors.white.withOpacity(0.65),
-                fontFamily: 'Inter',
-                fontWeight: FontWeight.w700,
-                fontSize: w * 0.028,
-              ),
-            ),
-          ],
-        ),
-        SizedBox(height: h * 0.012),
-
-        for (int i = 0; i < _jobs.length; i++) ...[
-          _ConflictCard(
-            job: _jobs[i],
-            onReschedule: () => _openReschedule(_jobs[i]),
-            onMore: () => _toast("More actions (hook later)"),
-          ),
-          if (i != _jobs.length - 1) ...[
-            SizedBox(height: h * 0.014),
-            Center(
-              child: Text(
-                "And",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontFamily: 'Inter',
-                  fontWeight: FontWeight.w900,
-                  fontSize: w * 0.04,
-                ),
-              ),
-            ),
-            SizedBox(height: h * 0.014),
-          ],
-        ],
-      ],
     );
   }
 
@@ -599,36 +548,65 @@ class _WorkerJobRescheduleScreenState extends State<WorkerJobRescheduleScreen> {
 
         SizedBox(height: h * 0.02),
 
-        SizedBox(
-          width: double.infinity,
-          height: h * 0.07,
-          child: ElevatedButton(
-            onPressed: _save,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _brandOrange,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(999),
-              ),
+        // Optional note
+        Container(
+          padding: EdgeInsets.symmetric(horizontal: w * 0.03),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: TextField(
+            controller: _noteController,
+            maxLines: 3,
+            decoration: InputDecoration(
+              hintText: 'Add a note (optional) — reason for reschedule',
+              border: InputBorder.none,
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  "Save",
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontFamily: 'Inter',
-                    fontWeight: FontWeight.w900,
-                    fontSize: w * 0.045,
-                  ),
-                ),
-                SizedBox(width: w * 0.02),
-                Icon(Icons.arrow_forward, color: Colors.black, size: w * 0.06),
-              ],
-            ),
+            style: TextStyle(fontFamily: 'Inter', fontSize: w * 0.034),
           ),
         ),
+
+        SizedBox(height: h * 0.02),
+
+        Row(children: [
+          Expanded(
+            child: OutlinedButton.icon(
+              onPressed: _attachLocation,
+              icon: _attachingLocation ? SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.location_on_outlined),
+              label: Text(_proposedLocation == null ? 'Attach Location (optional)' : 'Location attached', style: TextStyle(fontFamily: 'Inter', fontWeight: FontWeight.w900)),
+              style: OutlinedButton.styleFrom(side: BorderSide(color: _brandOrange), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)), padding: EdgeInsets.symmetric(vertical: h * 0.016)),
+            ),
+          ),
+          SizedBox(width: w * 0.03),
+          Expanded(
+            child: ElevatedButton(
+              onPressed: _save,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _brandOrange,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    "Save",
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontFamily: 'Inter',
+                      fontWeight: FontWeight.w900,
+                      fontSize: w * 0.045,
+                    ),
+                  ),
+                  SizedBox(width: w * 0.02),
+                  Icon(Icons.arrow_forward, color: Colors.black, size: w * 0.06),
+                ],
+              ),
+            ),
+          ),
+        ]),
       ],
     );
   }
@@ -973,137 +951,7 @@ class _WorkerJobRescheduleScreenState extends State<WorkerJobRescheduleScreen> {
   }
 }
 
-// --------------------------- Conflict card ---------------------------
-
-class _ConflictCard extends StatelessWidget {
-  final _ConflictingJob job;
-  final VoidCallback onReschedule;
-  final VoidCallback onMore;
-
-  const _ConflictCard({
-    required this.job,
-    required this.onReschedule,
-    required this.onMore,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final w = MediaQuery.of(context).size.width;
-
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: w * 0.04, vertical: w * 0.032),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.12),
-            blurRadius: 16,
-            spreadRadius: 1,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  job.employerName,
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontFamily: 'Inter',
-                    fontWeight: FontWeight.w900,
-                    fontSize: w * 0.036,
-                  ),
-                ),
-                SizedBox(height: w * 0.01),
-                Text(
-                  job.description,
-                  style: TextStyle(
-                    color: Colors.black.withOpacity(0.75),
-                    fontFamily: 'Inter',
-                    fontWeight: FontWeight.w800,
-                    fontSize: w * 0.028,
-                  ),
-                ),
-                SizedBox(height: w * 0.01),
-                Text(
-                  job.dateRange,
-                  style: TextStyle(
-                    color: Colors.black.withOpacity(0.75),
-                    fontFamily: 'Inter',
-                    fontWeight: FontWeight.w900,
-                    fontSize: w * 0.028,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          SizedBox(width: w * 0.02),
-          Padding(
-            padding: EdgeInsets.only(
-              top: MediaQuery.of(context).size.height * 0.009,
-            ),
-            child: Row(
-              children: [
-                SizedBox(
-                  height: 30,
-                  child: ElevatedButton(
-                    onPressed: onReschedule,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF1FE21A),
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                      padding: const EdgeInsets.symmetric(horizontal: 14),
-                    ),
-                    child: const Text(
-                      "Reschedule",
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontFamily: 'Inter',
-                        fontWeight: FontWeight.w900,
-                        fontSize: 11.5,
-                      ),
-                    ),
-                  ),
-                ),
-                SizedBox(width: w * 0.02),
-                GestureDetector(
-                  onTap: onMore,
-                  child: Icon(
-                    Icons.more_vert,
-                    color: Colors.black,
-                    size: w * 0.06,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ConflictingJob {
-  final String bookingId;
-  final String employerName;
-  final String description;
-  final String dateRange;
-
-  _ConflictingJob({
-    required this.bookingId,
-    required this.employerName,
-    required this.description,
-    required this.dateRange,
-  });
-}
+// Conflict UI removed: this screen now operates on a single bookingId + bookingData
 
 // --------------------------- Weekday ---------------------------
 

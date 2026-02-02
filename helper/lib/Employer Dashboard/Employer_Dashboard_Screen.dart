@@ -86,6 +86,12 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
         _ratingsLoaded = true;
       });
     });
+
+    // On entry, process any pending reschedule requests and block dashboard
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _processPendingRescheduleNotifications();
+      _listenForRescheduleNotifications();
+    });
   }
 
   @override
@@ -137,7 +143,7 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
 
     if (!mounted) return;
 
-    showDialog(
+    await showDialog(
       context: context,
       builder: (_) => AlertDialog(
         title: const Text("Reschedule Request"),
@@ -145,14 +151,14 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
         actions: [
           TextButton(
             onPressed: () async {
-              // decline
+              // decline -> mark as cancelled and record decision
               await FirebaseFirestore.instance
                   .collection('bookings')
                   .doc(bookingId)
                   .update({
                     'reschedule.employerDecision': 'declined',
                     'reschedule.decidedAt': FieldValue.serverTimestamp(),
-                    'status': 'confirmed', // revert back
+                    'status': 'cancelled',
                     'updatedAt': FieldValue.serverTimestamp(),
                   });
               await FirebaseFirestore.instance
@@ -190,6 +196,25 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _processPendingRescheduleNotifications() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final snap = await FirebaseFirestore.instance
+        .collection('notifications')
+        .where('toUserId', isEqualTo: user.uid)
+        .where('read', isEqualTo: false)
+        .where('type', isEqualTo: 'reschedule_request')
+        .get();
+
+    for (final doc in snap.docs) {
+      final data = doc.data();
+      final bookingId = (data['bookingId'] ?? '').toString();
+      if (bookingId.isEmpty) continue;
+      await _showReschedulePopup(context, notifId: doc.id, bookingId: bookingId);
+    }
   }
 
   Future<void> _initLocation() async {
