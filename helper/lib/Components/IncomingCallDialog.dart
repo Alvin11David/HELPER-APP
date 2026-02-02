@@ -24,6 +24,19 @@ class _IncomingCallDialogState extends State<IncomingCallDialog> {
   void initState() {
     super.initState();
     _fetchCallerName();
+
+    // Show snackbar when dialog appears
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '📞 Incoming call dialog shown for: ${widget.callerName}',
+          ),
+          backgroundColor: Colors.blue,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    });
   }
 
   Future<void> _fetchCallerName() async {
@@ -57,6 +70,14 @@ class _IncomingCallDialogState extends State<IncomingCallDialog> {
   }
 
   void _acceptCall() async {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('✅ Call accepted - connecting...'),
+        backgroundColor: Colors.green,
+        duration: Duration(seconds: 2),
+      ),
+    );
+
     await FirebaseFirestore.instance
         .collection('calls')
         .doc(widget.callId)
@@ -79,6 +100,14 @@ class _IncomingCallDialogState extends State<IncomingCallDialog> {
   }
 
   void _declineCall() async {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('❌ Call declined'),
+        backgroundColor: Colors.red,
+        duration: Duration(seconds: 2),
+      ),
+    );
+
     await FirebaseFirestore.instance
         .collection('calls')
         .doc(widget.callId)

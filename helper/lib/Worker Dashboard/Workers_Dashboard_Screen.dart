@@ -47,6 +47,32 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
     // Set online status
     final uid = FirebaseAuth.instance.currentUser?.uid;
     print('Current user UID: $uid');
+    print('Current user: ${FirebaseAuth.instance.currentUser}');
+    print('🔥 WORKER DASHBOARD: Current user object printed above!');
+
+    // Show current user info on screen
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('👤 Current User UID: $uid'),
+          duration: const Duration(seconds: 3),
+        ),
+      );
+      // Show user email if available
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        Future.delayed(const Duration(seconds: 1), () {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('📧 User Email: ${user.email ?? "No email"}'),
+                duration: const Duration(seconds: 3),
+              ),
+            );
+          }
+        });
+      }
+    });
 
     if (uid != null) {
       print('Setting user online and saving FCM token...');
@@ -248,6 +274,66 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
       }
     });
 
+    // BACKUP: Set up Firestore listener for incoming calls (in case FCM fails)
+    final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+    if (currentUserId != null) {
+      print('Setting up Firestore listener for incoming calls...');
+
+      FirebaseFirestore.instance
+          .collection('calls')
+          .where('receiverId', isEqualTo: currentUserId)
+          .where('status', isEqualTo: 'ringing')
+          .snapshots()
+          .listen((snapshot) {
+            print('=== FIRESTORE CALL LISTENER TRIGGERED ===');
+            print('Found ${snapshot.docs.length} ringing calls');
+
+            for (var doc in snapshot.docs) {
+              final callData = doc.data();
+              final callId = doc.id;
+              final callerName = callData['callerName'] ?? 'Unknown Caller';
+
+              print('Incoming call detected: $callId from $callerName');
+
+              // Show snackbar about Firestore-detected call
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('📞 Firestore: Call from $callerName'),
+                    backgroundColor: Colors.purple,
+                    duration: const Duration(seconds: 3),
+                  ),
+                );
+              });
+
+              // Show dialog if not already showing
+              if (!_isCallDialogShowing) {
+                _isCallDialogShowing = true;
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  showDialog(
+                    context: context,
+                    barrierDismissible: false,
+                    builder: (context) => IncomingCallDialog(
+                      callId: callId,
+                      callerName: callerName,
+                    ),
+                  ).then((_) => _isCallDialogShowing = false);
+                });
+              }
+            }
+          });
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('🔄 Firestore call listener active'),
+            backgroundColor: Colors.blue,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      });
+    }
+
     print('=== WORKER DASHBOARD INIT STATE COMPLETE ===');
   }
 
@@ -279,104 +365,169 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
   }
 
   Future<void> _showNotifications() async {
+    print('=== _showNotifications called ===');
+
+    // First, show a test notification to verify SnackBar works
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Loading notifications...'),
+        backgroundColor: Colors.blue,
+        duration: Duration(seconds: 1),
+      ),
+    );
+
     final currentUser = FirebaseAuth.instance.currentUser;
-    if (currentUser == null) return;
+    if (currentUser == null) {
+      print('=== No current user ===');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please log in to view notifications'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+    print('=== Current user: ${currentUser.uid} ===');
 
     // For worker dashboard, receiver is worker
     bool isEmployer = false;
 
     List<String> notifications = [];
 
-    // Fetch unread messages
-    final messageSnapshot = await FirebaseFirestore.instance
-        .collectionGroup('messages')
-        .where('receiverId', isEqualTo: currentUser.uid)
-        .where('read', isEqualTo: false)
-        .get();
+    try {
+      // Try to fetch unread messages - use a simpler approach
+      List<String> notifications = [];
 
-    for (var doc in messageSnapshot.docs) {
-      final data = doc.data();
-      final senderId = data['senderId'] as String?;
-      if (senderId == null) continue;
-
-      String name = '';
-      if (!isEmployer) {
-        // Sender is employer, from serviceProviders
-        final senderDoc = await FirebaseFirestore.instance
-            .collection('serviceProviders')
-            .doc(senderId)
+      try {
+        // Fetch unread messages - simplified query to avoid index requirements
+        final messageSnapshot = await FirebaseFirestore.instance
+            .collectionGroup('messages')
+            .where('receiverId', isEqualTo: currentUser.uid)
             .get();
-        if (senderDoc.exists) {
-          final senderData = senderDoc.data();
-          name = senderData?['businessName'] ?? '';
+
+        print('=== Message snapshot: ${messageSnapshot.docs.length} docs ===');
+
+        // Filter unread messages in memory
+        final unreadMessages = messageSnapshot.docs.where((doc) {
+          final data = doc.data();
+          return data['read'] == false;
+        });
+
+        for (var doc in unreadMessages) {
+          final data = doc.data();
+          final senderId = data['senderId'] as String?;
+          if (senderId == null) continue;
+
+          String name = '';
+          if (!isEmployer) {
+            // Sender is employer, from serviceProviders
+            try {
+              final senderDoc = await FirebaseFirestore.instance
+                  .collection('serviceProviders')
+                  .doc(senderId)
+                  .get();
+              if (senderDoc.exists) {
+                final senderData = senderDoc.data();
+                name = senderData?['businessName'] ?? '';
+              }
+            } catch (e) {
+              print('=== Error fetching sender: $e ===');
+            }
+          }
+          if (name.isNotEmpty) {
+            notifications.add('Message from $name');
+          }
         }
+      } catch (e) {
+        print('=== Error fetching messages: $e ===');
+        // Continue with worker notifications even if messages fail
       }
-      if (name.isNotEmpty) {
-        notifications.add('You have received a message from $name');
+
+      // Fetch worker notifications - simplified query
+      try {
+        final workerNotifSnapshot = await FirebaseFirestore.instance
+            .collection('workerNotifications')
+            .where('workerId', isEqualTo: currentUser.uid)
+            .get();
+
+        print(
+          '=== Worker notifications: ${workerNotifSnapshot.docs.length} docs ===',
+        );
+
+        // Filter unread notifications in memory
+        final unreadWorkerNotifications = workerNotifSnapshot.docs.where((doc) {
+          final data = doc.data();
+          return data['read'] == false;
+        });
+
+        for (var doc in unreadWorkerNotifications) {
+          final data = doc.data();
+          final title = data['title'] as String?;
+          final message = data['message'] as String?;
+          if (title != null && message != null) {
+            notifications.add('$title: $message');
+          }
+        }
+
+        // Mark worker notifications as read
+        for (var doc in unreadWorkerNotifications) {
+          try {
+            await doc.reference.update({'read': true});
+          } catch (e) {
+            print('=== Error marking notification as read: $e ===');
+          }
+        }
+      } catch (e) {
+        print('=== Error fetching worker notifications: $e ===');
+        // Continue even if worker notifications fail
       }
-    }
 
-    // Fetch worker notifications
-    final workerNotifSnapshot = await FirebaseFirestore.instance
-        .collection('workerNotifications')
-        .where('workerId', isEqualTo: currentUser.uid)
-        .where('read', isEqualTo: false)
-        .get();
+      print('=== Total notifications: ${notifications.length} ===');
 
-    for (var doc in workerNotifSnapshot.docs) {
-      final data = doc.data();
-      final title = data['title'] as String?;
-      final message = data['message'] as String?;
-      if (title != null && message != null) {
-        notifications.add('$title: $message');
+      if (!mounted) {
+        print('=== Widget not mounted ===');
+        return;
       }
-    }
 
-    // Mark worker notifications as read
-    for (var doc in workerNotifSnapshot.docs) {
-      await doc.reference.update({'read': true});
-    }
-
-    if (!mounted) return;
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (BuildContext context) {
-        return Container(
-          height: MediaQuery.of(context).size.height * 0.5,
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(30),
-              topRight: Radius.circular(30),
-            ),
-          ),
-          child: Column(
-            children: [
-              const Padding(
-                padding: EdgeInsets.all(16.0),
-                child: Text(
-                  'Notifications',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ),
-              Expanded(
-                child: notifications.isEmpty
-                    ? const Center(child: Text('No new notifications'))
-                    : ListView.builder(
-                        itemCount: notifications.length,
-                        itemBuilder: (context, index) {
-                          return ListTile(title: Text(notifications[index]));
-                        },
-                      ),
-              ),
-            ],
+      if (notifications.isEmpty) {
+        print('=== No notifications to show ===');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No new notifications'),
+            backgroundColor: Colors.blue,
           ),
         );
-      },
-    );
+        return;
+      }
+
+      // Show each notification as a SnackBar with delay
+      for (int i = 0; i < notifications.length; i++) {
+        print('=== Showing notification ${i + 1}: ${notifications[i]} ===');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(notifications[i]),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 6),
+          ),
+        );
+
+        // Wait before showing next notification (if there are multiple)
+        if (i < notifications.length - 1) {
+          await Future.delayed(const Duration(seconds: 7));
+        }
+      }
+    } catch (e) {
+      print('=== Error in _showNotifications: $e ===');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Unable to load notifications. Please check your connection and try again.',
+          ),
+          backgroundColor: Colors.orange,
+          duration: const Duration(seconds: 4),
+        ),
+      );
+    }
   }
 
   @override
@@ -462,26 +613,31 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                               const SizedBox(width: 10),
                               GestureDetector(
                                 onTap: _showNotifications,
-                                child: Stack(
-                                  children: [
-                                    Container(
-                                      width: 40,
-                                      height: 40,
-                                      decoration: const BoxDecoration(
-                                        color: Colors.white,
-                                        shape: BoxShape.circle,
+                                child: Container(
+                                  width: 50, // Increased to accommodate badge
+                                  height: 50, // Increased to accommodate badge
+                                  child: Stack(
+                                    alignment: Alignment.center,
+                                    children: [
+                                      Container(
+                                        width: 40,
+                                        height: 40,
+                                        decoration: const BoxDecoration(
+                                          color: Colors.white,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Icon(
+                                          Icons.notifications,
+                                          color: Colors.black,
+                                        ),
                                       ),
-                                      child: const Icon(
-                                        Icons.notifications,
-                                        color: Colors.black,
+                                      Positioned(
+                                        right: 0,
+                                        top: 0,
+                                        child: UnreadMessagesBadge(),
                                       ),
-                                    ),
-                                    Positioned(
-                                      right: 0,
-                                      top: 0,
-                                      child: UnreadMessagesBadge(),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
                               ),
                             ],
