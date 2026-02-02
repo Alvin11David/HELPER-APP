@@ -394,6 +394,28 @@ class _ChatScreenState extends State<ChatScreen> {
                                     ),
                                   ),
                                 ),
+                                Padding(
+                                  padding: const EdgeInsets.only(right: 10),
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      // TODO: Implement voice recording functionality
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                            'Voice recording coming soon!',
+                                          ),
+                                          backgroundColor: Colors.blue,
+                                        ),
+                                      );
+                                    },
+                                    child: const Icon(
+                                      Icons.mic,
+                                      color: Colors.black,
+                                    ),
+                                  ),
+                                ),
                               ],
                             ),
                           ),
