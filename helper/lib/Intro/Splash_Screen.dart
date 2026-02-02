@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:helper/Auth/Phone_Number_&_Email_Address_Screen.dart';
 import 'dart:async';
-
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:helper/Employer Dashboard/Employer_Dashboard_Screen.dart';
+import 'package:helper/Worker Dashboard/Workers_Dashboard_Screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -21,12 +24,67 @@ class _SplashScreenState extends State<SplashScreen> {
   void initState() {
     super.initState();
     _startTypewriterEffect();
-    Timer(const Duration(seconds: 5), () {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const PhoneNumberEmailAddressScreen()),
-      );
-    });
+    _checkAuthAndNavigate();
+  }
+
+  Future<void> _checkAuthAndNavigate() async {
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      // User is signed in, fetch role
+      try {
+        DocumentSnapshot doc = await FirebaseFirestore.instance
+            .collection('Sign Up')
+            .doc(user.uid)
+            .get();
+        if (doc.exists && doc.data() != null) {
+          String role = (doc.data() as Map<String, dynamic>)['role'] ?? '';
+          Widget nextScreen;
+          if (role == 'employer') {
+            nextScreen = const EmployerDashboardScreen();
+          } else if (role == 'worker') {
+            nextScreen = const WorkersDashboardScreen();
+          } else {
+            nextScreen = const PhoneNumberEmailAddressScreen();
+          }
+          Timer(const Duration(seconds: 5), () {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => nextScreen),
+            );
+          });
+        } else {
+          // No role data, go to login
+          Timer(const Duration(seconds: 5), () {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const PhoneNumberEmailAddressScreen(),
+              ),
+            );
+          });
+        }
+      } catch (e) {
+        // Error fetching, go to login
+        Timer(const Duration(seconds: 5), () {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const PhoneNumberEmailAddressScreen(),
+            ),
+          );
+        });
+      }
+    } else {
+      // Not signed in, go to login
+      Timer(const Duration(seconds: 5), () {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const PhoneNumberEmailAddressScreen(),
+          ),
+        );
+      });
+    }
   }
 
   void _startTypewriterEffect() {

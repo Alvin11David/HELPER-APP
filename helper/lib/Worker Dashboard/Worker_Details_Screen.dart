@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:helper/Components/User_Name.dart';
-import 'package:helper/Components/CallNowButton.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:helper/Employer%20Dashboard/job_detail_booking_screen.dart';
@@ -377,12 +376,6 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                       left: w * 0.04,
                       child: Row(
                         children: [
-                          CallNowButton(
-                            providerId:
-                                widget.data?['uid'] ?? widget.providerId,
-                            businessName: _businessName ?? 'Provider',
-                          ),
-                          const SizedBox(width: 10),
                           GestureDetector(
                             onTap: () {
                               final businessName = _businessName ?? 'Provider';
