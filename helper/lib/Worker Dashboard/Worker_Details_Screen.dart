@@ -373,7 +373,7 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                     ),
                     Positioned(
                       top: h * 0.4 + 60,
-                      right: w * 0.04,
+                      right: w * 0.31,
                       child: Center(
                         child: Row(
                           children: [
