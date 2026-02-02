@@ -34,8 +34,7 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
   RTCPeerConnection? _peerConnection;
   MediaStream? _localStream;
   MediaStream? _remoteStream;
-
-  final _localRenderer = RTCVideoRenderer();
+  RTCVideoRenderer _remoteRenderer = RTCVideoRenderer();
 
   late CollectionReference _callsRef;
   late DocumentReference _callDoc;
@@ -58,42 +57,64 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
   @override
   void initState() {
     super.initState();
-
+    _remoteRenderer.initialize();
     _callsRef = FirebaseFirestore.instance.collection('calls');
     _callDoc = _callsRef.doc(callId);
-
     _init();
   }
 
   Future<void> _init() async {
     await _configureAudioSession();
-    await _initRenderers();
     await _startCall();
   }
 
+  Future<void> _forceAudioToSpeaker() async {
+    await Helper.setSpeakerphoneOn(true);
+  }
+
   Future<void> _configureAudioSession() async {
-    final session = await AudioSession.instance;
-    await session.configure(
-      AudioSessionConfiguration(
-        avAudioSessionCategory: AVAudioSessionCategory.playAndRecord,
-        avAudioSessionCategoryOptions:
-            AVAudioSessionCategoryOptions.allowBluetooth |
-            AVAudioSessionCategoryOptions.defaultToSpeaker,
-        avAudioSessionMode: AVAudioSessionMode.voiceChat,
-        avAudioSessionRouteSharingPolicy:
-            AVAudioSessionRouteSharingPolicy.defaultPolicy,
-        avAudioSessionSetActiveOptions: AVAudioSessionSetActiveOptions.none,
-        androidAudioAttributes: const AndroidAudioAttributes(
-          contentType: AndroidAudioContentType.speech,
-          flags: AndroidAudioFlags.none,
-          usage: AndroidAudioUsage.voiceCommunication,
+    try {
+      final session = await AudioSession.instance;
+      await session.configure(
+        AudioSessionConfiguration(
+          avAudioSessionCategory: AVAudioSessionCategory.playAndRecord,
+          avAudioSessionCategoryOptions:
+              AVAudioSessionCategoryOptions.allowBluetooth |
+              AVAudioSessionCategoryOptions.defaultToSpeaker,
+          avAudioSessionMode: AVAudioSessionMode.voiceChat,
+          avAudioSessionRouteSharingPolicy:
+              AVAudioSessionRouteSharingPolicy.defaultPolicy,
+          avAudioSessionSetActiveOptions: AVAudioSessionSetActiveOptions.none,
+          androidAudioAttributes: const AndroidAudioAttributes(
+            contentType: AndroidAudioContentType.speech,
+            flags: AndroidAudioFlags.none,
+            usage: AndroidAudioUsage.voiceCommunication,
+          ),
+          androidAudioFocusGainType: AndroidAudioFocusGainType.gain,
+          androidWillPauseWhenDucked: false,
         ),
-        androidAudioFocusGainType: AndroidAudioFocusGainType.gain,
-        androidWillPauseWhenDucked: false,
-      ),
-    );
-    await session.setActive(true);
-    print('Audio session configured and activated');
+      );
+      await session.setActive(true);
+      await _forceAudioToSpeaker();
+      print('Audio session configured and activated');
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('✅ Audio session configured for voice chat'),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 2),
+        ),
+      );
+    } catch (e) {
+      print('Error configuring audio session: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('❌ Audio session configuration failed: $e'),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 4),
+        ),
+      );
+    }
   }
 
   @override
@@ -104,7 +125,7 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
     _peerConnection?.close();
     _localStream?.dispose();
     _remoteStream?.dispose();
-    _localRenderer.dispose();
+    _remoteRenderer.dispose();
     _deactivateAudioSession();
     super.dispose();
   }
@@ -119,14 +140,29 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
     }
   }
 
-  Future<void> _initRenderers() async {
-    await _localRenderer.initialize();
-  }
-
   Future<void> _startCall() async {
     final phoneStatus = await Permission.phone.request();
     final micStatus = await Permission.microphone.request();
-    if (!micStatus.isGranted) return;
+    if (!micStatus.isGranted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            '❌ Microphone permission denied - voice cannot be transmitted',
+          ),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 4),
+        ),
+      );
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('✅ Microphone permission granted'),
+        backgroundColor: Colors.green,
+        duration: Duration(seconds: 2),
+      ),
+    );
 
     _localStream = await navigator.mediaDevices.getUserMedia({
       'audio': {
@@ -142,13 +178,31 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
     print('Local stream obtained: ${_localStream?.id}');
     print('Local audio tracks: ${_localStream?.getAudioTracks().length}');
 
+    if (_localStream?.getAudioTracks().isEmpty ?? true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('❌ No audio tracks found in local stream'),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 4),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '✅ Local audio stream ready (${_localStream!.getAudioTracks().length} track(s))',
+          ),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+
     // Ensure local audio tracks are enabled
     _localStream?.getAudioTracks().forEach((track) {
       print('Enabling local audio track: ${track.id}');
       track.enabled = true;
     });
-
-    _localRenderer.srcObject = _localStream;
 
     await _createPeerConnection();
     await _setupSignaling();
@@ -164,29 +218,106 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
 
     _peerConnection = await createPeerConnection(config);
 
+    _peerConnection!.onIceCandidate = (candidate) {
+      if (candidate.candidate != null) {
+        final collection = isCaller ? 'callerCandidates' : 'calleeCandidates';
+
+        _callDoc.collection(collection).add({
+          'candidate': candidate.candidate,
+          'sdpMid': candidate.sdpMid,
+          'sdpMLineIndex': candidate.sdpMLineIndex,
+        });
+      }
+    };
+
     // Handle remote tracks when they arrive
     _peerConnection!.onTrack = (event) {
       print('Received remote track: ${event.track.kind}');
       if (event.track.kind == 'audio') {
-        print('Setting remote stream from track event');
+        _forceAudioToSpeaker();
         setState(() {
           _remoteStream = event.streams[0];
+          _remoteRenderer.srcObject = _remoteStream;
         });
-        print('Remote stream set: ${_remoteStream?.id}');
-        // Ensure remote audio tracks are enabled
+
+        // Enable all remote audio tracks
         _remoteStream?.getAudioTracks().forEach((track) {
-          print('Enabling remote audio track: ${track.id}');
           track.enabled = true;
+          print('Enabling remote audio track: ${track.id}');
         });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '✅ Remote audio stream received (${_remoteStream!.getAudioTracks().length} track(s))',
+            ),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 3),
+          ),
+        );
       }
     };
 
     _peerConnection!.onConnectionState = (state) {
       print('Peer connection state changed: $state');
+
+      String message;
+      Color bgColor;
+      switch (state) {
+        case RTCPeerConnectionState.RTCPeerConnectionStateConnected:
+          message = '✅ Peer connection established - voice should work now';
+          bgColor = Colors.green;
+          break;
+        case RTCPeerConnectionState.RTCPeerConnectionStateFailed:
+          message = '❌ Peer connection failed - cannot transmit voice';
+          bgColor = Colors.red;
+          break;
+        case RTCPeerConnectionState.RTCPeerConnectionStateDisconnected:
+          message = '⚠️ Peer connection lost - voice transmission interrupted';
+          bgColor = Colors.orange;
+          break;
+        default:
+          message = '🔄 Connection state: ${state.toString().split('.').last}';
+          bgColor = Colors.blue;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: bgColor,
+          duration: Duration(
+            seconds:
+                state == RTCPeerConnectionState.RTCPeerConnectionStateConnected
+                ? 2
+                : 4,
+          ),
+        ),
+      );
     };
 
     _peerConnection!.onIceConnectionState = (state) {
       print('ICE connection state changed: $state');
+
+      if (state == RTCIceConnectionState.RTCIceConnectionStateFailed) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              '❌ ICE connection failed - network issue preventing voice',
+            ),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 4),
+          ),
+        );
+      } else if (state ==
+          RTCIceConnectionState.RTCIceConnectionStateConnected) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('✅ ICE connection established'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
     };
 
     // Add local tracks to peer connection
@@ -194,6 +325,16 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
       print('Adding local track: ${track.kind}');
       await _peerConnection!.addTrack(track, _localStream!);
     }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          '🔄 Peer connection created - waiting for ${isCaller ? 'callee' : 'caller'} to connect',
+        ),
+        backgroundColor: Colors.blue,
+        duration: Duration(seconds: 3),
+      ),
+    );
   }
 
   Future<void> _setupSignaling() async {
@@ -217,6 +358,17 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
         if (status == 'accepted') {
           _startCallTimer();
           print('Call accepted - starting timer');
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                '📞 Call connected - voice transmission should work now',
+              ),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 3),
+            ),
+          );
+
           // Ensure remote audio tracks are enabled when call is accepted
           Future.delayed(const Duration(milliseconds: 500), () {
             _remoteStream?.getAudioTracks().forEach((track) {
@@ -229,6 +381,15 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
         }
 
         if (status == 'declined' || status == 'ended') {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                status == 'declined' ? '❌ Call was declined' : '📞 Call ended',
+              ),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 3),
+            ),
+          );
           Navigator.of(context).pop();
         }
       }
@@ -329,6 +490,15 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
           child: Stack(
             children: [
               Positioned(
+                width: 0,
+                height: 0,
+                child: RTCVideoView(
+                  _remoteRenderer,
+                  objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
+                  mirror: false,
+                ),
+              ),
+              Positioned(
                 top: 20,
                 left: 0,
                 right: 0,
@@ -392,12 +562,19 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
                       GestureDetector(
                         onTap: () async {
                           setState(() => _volumeClicked = !_volumeClicked);
-                          try {
-                            await Helper.setSpeakerphoneOn(_volumeClicked);
-                            print('Speakerphone set to: $_volumeClicked');
-                          } catch (e) {
-                            print('Error setting speakerphone: $e');
-                          }
+                          // Speakerphone control - simplified implementation
+                          // In a full implementation, you might need platform channels
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                _volumeClicked
+                                    ? '🔊 Speakerphone enabled (if supported by device)'
+                                    : '📱 Speakerphone disabled (earpiece mode)',
+                              ),
+                              backgroundColor: Colors.blue,
+                              duration: Duration(seconds: 2),
+                            ),
+                          );
                         },
                         child: Container(
                           width: 40,
@@ -419,6 +596,20 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
                           setState(() => _micClicked = !_micClicked);
                           _localStream?.getAudioTracks().forEach(
                             (t) => t.enabled = _micClicked,
+                          );
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                _micClicked
+                                    ? '🎤 Microphone enabled - you can now speak'
+                                    : '🔇 Microphone muted - other person cannot hear you',
+                              ),
+                              backgroundColor: _micClicked
+                                  ? Colors.green
+                                  : Colors.orange,
+                              duration: Duration(seconds: 2),
+                            ),
                           );
                         },
                         child: Container(

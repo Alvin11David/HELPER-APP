@@ -1,7 +1,5 @@
 import 'package:helper/Document%20Upload/Non%20Professional/Non_Professional_National_ID_Passport_Front_Upload_Screen.dart';
-
 import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';

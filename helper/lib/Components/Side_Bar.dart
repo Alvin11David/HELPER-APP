@@ -10,6 +10,7 @@ import '../Employer Dashboard/Employer_Dashboard_Screen.dart';
 import '../Worker Dashboard/Workers_Dashboard_Screen.dart';
 import '../Worker Dashboard/Worker_Ratings_Reviews_Screen.dart';
 import '../Document Upload/Profile/Support_Screen.dart'; // Add this import
+import '../Intro/Role_Selection_Screen.dart'; // Add this import
 
 class SideBar extends StatefulWidget {
   const SideBar({super.key});
@@ -90,6 +91,23 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
       return null;
     } catch (e) {
       print('Error fetching user role: $e'); // Debug print
+      return null;
+    }
+  }
+
+  Future<bool?> _fetchVerifiedStatus() async {
+    try {
+      User? user = FirebaseAuth.instance.currentUser;
+      if (user == null) return null;
+      DocumentSnapshot doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+      if (doc.exists && doc.data() != null) {
+        return (doc.data() as Map<String, dynamic>)['verified'] as bool?;
+      }
+      return null;
+    } catch (e) {
       return null;
     }
   }
@@ -230,28 +248,58 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                             color: Colors.black,
                           ),
                           const SizedBox(height: 20),
-                          Padding(
-                            padding: EdgeInsets.only(left: 8, right: 8),
-                            child: Row(
-                              children: [
-                                Text(
-                                  "Verified?",
-                                  style: TextStyle(
-                                    color: Colors.black,
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w600,
+                          GestureDetector(
+                            onTap: () async {
+                              bool? isVerified = await _fetchVerifiedStatus();
+                              if (isVerified == false) {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => RoleSelectionScreen(),
                                   ),
-                                ),
-                                Spacer(),
-                                Text(
-                                  "--",
-                                  style: TextStyle(
-                                    color: Colors.green,
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w600,
+                                );
+                              }
+                            },
+                            child: Padding(
+                              padding: EdgeInsets.only(left: 8, right: 8),
+                              child: Row(
+                                children: [
+                                  Text(
+                                    "Verified?",
+                                    style: TextStyle(
+                                      color: Colors.black,
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w600,
+                                    ),
                                   ),
-                                ),
-                              ],
+                                  Spacer(),
+                                  FutureBuilder<bool?>(
+                                    future: _fetchVerifiedStatus(),
+                                    builder: (context, snapshot) {
+                                      if (snapshot.connectionState ==
+                                          ConnectionState.waiting) {
+                                        return Text(
+                                          'Loading...',
+                                          style: TextStyle(
+                                            color: Colors.green,
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        );
+                                      }
+                                      bool isVerified = snapshot.data ?? false;
+                                      return Text(
+                                        isVerified ? 'Yes' : 'No',
+                                        style: TextStyle(
+                                          color: Colors.green,
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                           const SizedBox(height: 20),
