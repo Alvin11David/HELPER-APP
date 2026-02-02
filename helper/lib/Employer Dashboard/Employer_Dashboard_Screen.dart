@@ -176,20 +176,43 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
         actions: [
           TextButton(
             onPressed: () async {
-              // decline -> mark as cancelled and record decision
+              // decline -> mark reschedule as declined, keep booking confirmed
+              final employerId = FirebaseAuth.instance.currentUser?.uid;
+              // determine worker id from reschedule.requestedById or serviceProviderId
+              final workerId = (res['requestedById'] ?? b['serviceProviderId'] ?? '').toString();
+
               await FirebaseFirestore.instance
                   .collection('bookings')
                   .doc(bookingId)
                   .update({
-                    'reschedule.employerDecision': 'declined',
-                    'reschedule.decidedAt': FieldValue.serverTimestamp(),
-                    'status': 'cancelled',
-                    'updatedAt': FieldValue.serverTimestamp(),
-                  });
+                'reschedule.state': 'declined',
+                'reschedule.employerDecisionById': employerId,
+                'reschedule.decidedAt': FieldValue.serverTimestamp(),
+                'status': 'confirmed',
+                'updatedAt': FieldValue.serverTimestamp(),
+              });
+
+              // mark the incoming notification as read
               await FirebaseFirestore.instance
                   .collection('notifications')
                   .doc(notifId)
                   .update({'read': true});
+
+              // notify worker about the decline
+              if (workerId.isNotEmpty) {
+                await FirebaseFirestore.instance.collection('notifications').add({
+                  'type': 'reschedule_response',
+                  'decision': 'declined',
+                  'toUserId': workerId,
+                  'fromUserId': employerId,
+                  'bookingId': bookingId,
+                  'read': false,
+                  'createdAt': FieldValue.serverTimestamp(),
+                  'title': 'Reschedule declined',
+                  'message': 'Employer declined your reschedule request',
+                });
+              }
+
               if (!context.mounted) return;
               Navigator.pop(context);
             },
@@ -197,22 +220,46 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
           ),
           ElevatedButton(
             onPressed: () async {
-              // accept -> replace booking times with proposed
+              // accept -> replace booking times with proposed and notify worker
+              final employerId = FirebaseAuth.instance.currentUser?.uid;
+              final workerId = (res['requestedById'] ?? b['serviceProviderId'] ?? '').toString();
+
               await FirebaseFirestore.instance
                   .collection('bookings')
                   .doc(bookingId)
                   .update({
-                    'startDateTime': Timestamp.fromDate(proposedStart),
-                    'endDateTime': Timestamp.fromDate(proposedEnd),
-                    'reschedule.employerDecision': 'accepted',
-                    'reschedule.decidedAt': FieldValue.serverTimestamp(),
-                    'status': 'confirmed',
-                    'updatedAt': FieldValue.serverTimestamp(),
-                  });
+                'startDateTime': Timestamp.fromDate(proposedStart),
+                'endDateTime': Timestamp.fromDate(proposedEnd),
+                'reschedule.state': 'accepted',
+                'reschedule.employerDecisionById': employerId,
+                'reschedule.decidedAt': FieldValue.serverTimestamp(),
+                'status': 'confirmed',
+                'updatedAt': FieldValue.serverTimestamp(),
+              });
+
+              // mark incoming notification read
               await FirebaseFirestore.instance
                   .collection('notifications')
                   .doc(notifId)
                   .update({'read': true});
+
+              // notify worker about the acceptance
+              if (workerId.isNotEmpty) {
+                await FirebaseFirestore.instance.collection('notifications').add({
+                  'type': 'reschedule_response',
+                  'decision': 'accepted',
+                  'toUserId': workerId,
+                  'fromUserId': employerId,
+                  'bookingId': bookingId,
+                  'proposedStart': Timestamp.fromDate(proposedStart),
+                  'proposedEnd': Timestamp.fromDate(proposedEnd),
+                  'read': false,
+                  'createdAt': FieldValue.serverTimestamp(),
+                  'title': 'Reschedule accepted',
+                  'message': 'Employer accepted your reschedule request',
+                });
+              }
+
               if (!context.mounted) return;
               Navigator.pop(context);
             },

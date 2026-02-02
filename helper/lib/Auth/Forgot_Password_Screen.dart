@@ -472,7 +472,7 @@ class _PillInput extends StatelessWidget {
     required this.keyboardType,
     this.contentFontSize = 16.0,
     this.validator,
-    required this.obscure,
+    required this.obscure, this.suffix, this.inputFormatters,
   });
 
   @override
