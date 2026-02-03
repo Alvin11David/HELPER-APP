@@ -144,8 +144,29 @@ void main() async {
         message.notification?.body ?? 'You have a new support reply',
         platformChannelSpecifics,
       );
+    } else {
+      // Show local notification for other types (e.g., general notifications)
+      const AndroidNotificationDetails androidPlatformChannelSpecifics =
+          AndroidNotificationDetails(
+            'default', // Use the default channel we created
+            'Default Notifications',
+            channelDescription: 'Default notification channel',
+            importance: Importance.max,
+            priority: Priority.high,
+            showWhen: false,
+          );
+      const NotificationDetails platformChannelSpecifics = NotificationDetails(
+        android: androidPlatformChannelSpecifics,
+      );
+
+      await flutterLocalNotificationsPlugin.show(
+        DateTime.now().millisecondsSinceEpoch ~/
+            1000, // Unique ID based on timestamp
+        message.notification?.title ?? 'Notification',
+        message.notification?.body ?? 'You have a new notification',
+        platformChannelSpecifics,
+      );
     }
-    // Other notifications will be handled by the system notification tray
   });
 
   // Handle when app is opened from notification
