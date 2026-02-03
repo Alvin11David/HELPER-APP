@@ -215,7 +215,6 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
       stream: FirebaseFirestore.instance
           .collection('bookings')
           .where('employerId', isEqualTo: user.uid)
-          .orderBy('createdAt', descending: true)
           .snapshots(),
       builder: (context, snap) {
         if (snap.connectionState == ConnectionState.waiting)
