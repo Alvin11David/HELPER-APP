@@ -140,14 +140,34 @@ class _ChatScreenState extends State<ChatScreen> {
           borderRadius: BorderRadius.circular(30),
           border: Border.all(color: Colors.grey, width: 1),
         ),
-        child: Center(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.mic, color: Colors.red),
-              SizedBox(width: 10),
-              Text('Recording...', style: TextStyle(color: Colors.red)),
-            ],
+        child: GestureDetector(
+          onTap: () async {
+            final path = await _audioRecorder.stop();
+            setState(() {
+              _isRecording = false;
+              _recordedFilePath = path;
+              _showRecordingUI = false;
+              _showPlaybackUI = true;
+            });
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Recording stopped'),
+                backgroundColor: Colors.green,
+              ),
+            );
+          },
+          child: Center(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.mic, color: Colors.red),
+                SizedBox(width: 10),
+                Text(
+                  'Recording... Tap to stop',
+                  style: TextStyle(color: Colors.red),
+                ),
+              ],
+            ),
           ),
         ),
       );
@@ -168,9 +188,15 @@ class _ChatScreenState extends State<ChatScreen> {
                   padding: const EdgeInsets.only(left: 20),
                   child: Row(
                     children: [
-                      Icon(_isPlayingRecorded ? Icons.pause : Icons.play_arrow, color: Colors.black),
+                      Icon(
+                        _isPlayingRecorded ? Icons.pause : Icons.play_arrow,
+                        color: Colors.black,
+                      ),
                       SizedBox(width: 10),
-                      Text('Play Recorded Audio', style: TextStyle(color: Colors.black)),
+                      Text(
+                        'Play Recorded Audio',
+                        style: TextStyle(color: Colors.black),
+                      ),
                     ],
                   ),
                 ),
@@ -211,9 +237,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     hintText: 'Message',
                     border: InputBorder.none,
                   ),
-                  style: const TextStyle(
-                    color: Colors.black,
-                  ),
+                  style: const TextStyle(color: Colors.black),
                 ),
               ),
             ),
@@ -225,7 +249,9 @@ class _ChatScreenState extends State<ChatScreen> {
                   final List<XFile> images = await picker.pickMultiImage();
                   for (var image in images) {
                     // Ensure the chat document exists
-                    final chatDoc = FirebaseFirestore.instance.collection('chats').doc(chatId);
+                    final chatDoc = FirebaseFirestore.instance
+                        .collection('chats')
+                        .doc(chatId);
                     final docSnapshot = await chatDoc.get();
                     if (!docSnapshot.exists) {
                       await chatDoc.set({
@@ -235,13 +261,20 @@ class _ChatScreenState extends State<ChatScreen> {
                       });
                     }
                     final file = File(image.path);
-                    final fileName = '${DateTime.now().millisecondsSinceEpoch}_${image.name}';
-                    final storageRef = FirebaseStorage.instance.ref().child('Chat Images').child(fileName);
+                    final fileName =
+                        '${DateTime.now().millisecondsSinceEpoch}_${image.name}';
+                    final storageRef = FirebaseStorage.instance
+                        .ref()
+                        .child('Chat Images')
+                        .child(fileName);
                     final uploadTask = storageRef.putFile(file);
                     final snapshot = await uploadTask.whenComplete(() {});
                     final downloadUrl = await snapshot.ref.getDownloadURL();
-                    final currentUserId = FirebaseAuth.instance.currentUser!.uid;
-                    final receiverId = currentUserId == widget.employerId ? widget.providerId : widget.employerId;
+                    final currentUserId =
+                        FirebaseAuth.instance.currentUser!.uid;
+                    final receiverId = currentUserId == widget.employerId
+                        ? widget.providerId
+                        : widget.employerId;
                     final message = {
                       'imageUrl': downloadUrl,
                       'senderId': currentUserId,
@@ -250,13 +283,14 @@ class _ChatScreenState extends State<ChatScreen> {
                       'type': 'image',
                       'read': false,
                     };
-                    await FirebaseFirestore.instance.collection('chats').doc(chatId).collection('messages').add(message);
+                    await FirebaseFirestore.instance
+                        .collection('chats')
+                        .doc(chatId)
+                        .collection('messages')
+                        .add(message);
                   }
                 },
-                child: const Icon(
-                  Icons.image,
-                  color: Colors.black,
-                ),
+                child: const Icon(Icons.image, color: Colors.black),
               ),
             ),
             Padding(
@@ -288,8 +322,12 @@ class _ChatScreenState extends State<ChatScreen> {
                       );
                       return;
                     }
-                    final path = '${Directory.systemTemp.path}/audio_${DateTime.now().millisecondsSinceEpoch}.m4a';
-                    await _audioRecorder.start(const RecordConfig(), path: path);
+                    final path =
+                        '${Directory.systemTemp.path}/audio_${DateTime.now().millisecondsSinceEpoch}.m4a';
+                    await _audioRecorder.start(
+                      const RecordConfig(),
+                      path: path,
+                    );
                     setState(() {
                       _isRecording = true;
                       _recordedFilePath = null;
@@ -594,9 +632,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     ),
                     child: Row(
                       children: [
-                        Expanded(
-                          child: inputWidget,
-                        ),
+                        Expanded(child: inputWidget),
                         const SizedBox(width: 10),
                         GestureDetector(
                           onTap: () async {
