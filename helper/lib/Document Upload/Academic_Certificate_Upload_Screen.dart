@@ -714,7 +714,7 @@ class _AcademicCertificateUploadScreenState
                         ? 'Selected Professions will appear here'
                         : selectedProfessions.join(', '),
                     style: TextStyle(
-                      fontSize: screenWidth * 0.035,
+                      fontSize: screenWidth * 0.030,
                       fontWeight: FontWeight.w500,
                       fontFamily: 'Inter',
                     ),
