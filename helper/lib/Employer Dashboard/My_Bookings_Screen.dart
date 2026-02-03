@@ -461,7 +461,8 @@ class _BookingDetailsSheet extends StatelessWidget {
     final w = MediaQuery.of(context).size.width;
     final h = MediaQuery.of(context).size.height;
 
-    final startDateTime = (bookingData['startDateTime'] as Timestamp?)?.toDate();
+    final startDateTime = (bookingData['startDateTime'] as Timestamp?)
+        ?.toDate();
     final endDateTime = (bookingData['endDateTime'] as Timestamp?)?.toDate();
     final createdAt = (bookingData['createdAt'] as Timestamp?)?.toDate();
 
@@ -475,10 +476,15 @@ class _BookingDetailsSheet extends StatelessWidget {
         children: [
           // Header
           Container(
-            padding: EdgeInsets.symmetric(horizontal: w * 0.06, vertical: h * 0.02),
+            padding: EdgeInsets.symmetric(
+              horizontal: w * 0.06,
+              vertical: h * 0.02,
+            ),
             decoration: BoxDecoration(
               color: accent,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(20),
+              ),
             ),
             child: Row(
               children: [
@@ -493,11 +499,7 @@ class _BookingDetailsSheet extends StatelessWidget {
                 const Spacer(),
                 GestureDetector(
                   onTap: () => Navigator.pop(context),
-                  child: Icon(
-                    Icons.close,
-                    color: Colors.white,
-                    size: w * 0.06,
-                  ),
+                  child: Icon(Icons.close, color: Colors.white, size: w * 0.06),
                 ),
               ],
             ),
@@ -547,14 +549,16 @@ class _BookingDetailsSheet extends StatelessWidget {
                   if (startDateTime != null) ...[
                     _DetailRow(
                       label: 'Start Date & Time',
-                      value: '${startDateTime.day}/${startDateTime.month}/${startDateTime.year} ${startDateTime.hour}:${startDateTime.minute.toString().padLeft(2, '0')}',
+                      value:
+                          '${startDateTime.day}/${startDateTime.month}/${startDateTime.year} ${startDateTime.hour}:${startDateTime.minute.toString().padLeft(2, '0')}',
                     ),
                     SizedBox(height: h * 0.01),
                   ],
                   if (endDateTime != null) ...[
                     _DetailRow(
                       label: 'End Date & Time',
-                      value: '${endDateTime.day}/${endDateTime.month}/${endDateTime.year} ${endDateTime.hour}:${endDateTime.minute.toString().padLeft(2, '0')}',
+                      value:
+                          '${endDateTime.day}/${endDateTime.month}/${endDateTime.year} ${endDateTime.hour}:${endDateTime.minute.toString().padLeft(2, '0')}',
                     ),
                     SizedBox(height: h * 0.02),
                   ],
@@ -570,7 +574,8 @@ class _BookingDetailsSheet extends StatelessWidget {
                   if (createdAt != null) ...[
                     _DetailRow(
                       label: 'Created At',
-                      value: '${createdAt.day}/${createdAt.month}/${createdAt.year} ${createdAt.hour}:${createdAt.minute.toString().padLeft(2, '0')}',
+                      value:
+                          '${createdAt.day}/${createdAt.month}/${createdAt.year} ${createdAt.hour}:${createdAt.minute.toString().padLeft(2, '0')}',
                     ),
                     SizedBox(height: h * 0.02),
                   ],
@@ -617,10 +622,7 @@ class _DetailRow extends StatelessWidget {
   final String label;
   final String value;
 
-  const _DetailRow({
-    required this.label,
-    required this.value,
-  });
+  const _DetailRow({required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
@@ -871,10 +873,7 @@ class _GlassPill extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.15),
         borderRadius: BorderRadius.circular(radius),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.2),
-          width: 1,
-        ),
+        border: Border.all(color: Colors.white.withOpacity(0.2), width: 1),
       ),
       child: child,
     );
