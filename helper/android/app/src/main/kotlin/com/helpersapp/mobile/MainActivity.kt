@@ -1,4 +1,4 @@
-package com.example.helper
+package com.helpersapp.mobile
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
