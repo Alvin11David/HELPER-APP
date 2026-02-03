@@ -15,7 +15,7 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen> {
   String _displayedText = '';
-  final String _fullText = 'Helper';
+  final String _fullText = 'Helper\'s';
   Timer? _timer;
   int _currentIndex = 0;
   bool _isTyping = true;
