@@ -131,6 +131,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
       stream: FirebaseFirestore.instance
           .collection('bookings')
           .where('employerId', isEqualTo: user.uid)
+          .orderBy('createdAt', descending: true)
           .snapshots(),
       builder: (context, snap) {
         if (snap.connectionState == ConnectionState.waiting)
@@ -143,15 +144,11 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
             ),
           );
 
-        // Filter by status client-side and sort by createdAt
-        final docs = snap.data?.docs
-            .where((doc) => doc.data()['status'] == 'pending')
-            .toList()
-          ?..sort((a, b) {
-            final aTime = (a.data()['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now();
-            final bTime = (b.data()['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now();
-            return bTime.compareTo(aTime); // Descending order
-          });
+        // Filter by status client-side
+        final docs =
+            snap.data?.docs
+                .where((doc) => doc.data()['status'] == 'pending')
+                .toList() ??
             [];
 
         if (docs.isEmpty)
@@ -215,6 +212,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
       stream: FirebaseFirestore.instance
           .collection('bookings')
           .where('employerId', isEqualTo: user.uid)
+          .orderBy('createdAt', descending: true)
           .snapshots(),
       builder: (context, snap) {
         if (snap.connectionState == ConnectionState.waiting)
@@ -227,16 +225,12 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
             ),
           );
 
-        // Filter by status client-side and sort by createdAt
+        // Filter by status client-side
         final docs =
             snap.data?.docs
                 .where((doc) => doc.data()['status'] == status)
-                .toList()
-              ?..sort((a, b) {
-                final aTime = (a.data()['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now();
-                final bTime = (b.data()['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now();
-                return bTime.compareTo(aTime); // Descending order
-              });
+                .toList() ??
+            [];
 
         if (docs.isEmpty)
           return Center(
