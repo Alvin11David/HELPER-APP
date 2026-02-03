@@ -131,7 +131,6 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
       stream: FirebaseFirestore.instance
           .collection('bookings')
           .where('employerId', isEqualTo: user.uid)
-          .orderBy('createdAt', descending: true)
           .snapshots(),
       builder: (context, snap) {
         if (snap.connectionState == ConnectionState.waiting)
@@ -144,11 +143,17 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
             ),
           );
 
-        // Filter by status client-side
+        // Filter by status client-side and sort by createdAt
         final docs = snap.data?.docs
             .where((doc) => doc.data()['status'] == 'pending')
-            .toList() ?? [];
-        
+            .toList()
+          ?..sort((a, b) {
+            final aTime = (a.data()['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now();
+            final bTime = (b.data()['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now();
+            return bTime.compareTo(aTime); // Descending order
+          });
+            [];
+
         if (docs.isEmpty)
           return Center(
             child: Text(
@@ -224,10 +229,12 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
           );
 
         // Filter by status client-side
-        final docs = snap.data?.docs
-            .where((doc) => doc.data()['status'] == status)
-            .toList() ?? [];
-        
+        final docs =
+            snap.data?.docs
+                .where((doc) => doc.data()['status'] == status)
+                .toList() ??
+            [];
+
         if (docs.isEmpty)
           return Center(
             child: Text(
