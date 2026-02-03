@@ -39,7 +39,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
   String get _title {
     switch (_tab) {
       case 0:
-        return "Pending Bookings";
+        return "My Bookings";
       case 1:
         return "Active Bookings";
       case 2:

@@ -257,7 +257,8 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => const MyBookingsScreen(),
+                                    builder: (context) =>
+                                        const MyBookingsScreen(),
                                   ),
                                 );
                               },
