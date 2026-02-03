@@ -219,7 +219,6 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
       stream: FirebaseFirestore.instance
           .collection('bookings')
           .where('employerId', isEqualTo: user.uid)
-          .orderBy('createdAt', descending: true)
           .snapshots(),
       builder: (context, snap) {
         if (snap.connectionState == ConnectionState.waiting)
@@ -232,14 +231,22 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
             ),
           );
 
-        // Filter by status client-side
-        final docs =
+        // Filter by status client-side and sort by createdAt descending
+        final filteredDocs =
             snap.data?.docs
                 .where((doc) => doc.data()['status'] == status)
                 .toList() ??
             [];
+        filteredDocs.sort((a, b) {
+          final aTime = a.data()['createdAt'] as Timestamp?;
+          final bTime = b.data()['createdAt'] as Timestamp?;
+          if (aTime == null && bTime == null) return 0;
+          if (aTime == null) return 1;
+          if (bTime == null) return -1;
+          return bTime.compareTo(aTime);
+        });
 
-        if (docs.isEmpty)
+        if (filteredDocs.isEmpty)
           return Center(
             child: Text(
               'No $status bookings',
@@ -249,11 +256,11 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
 
         return ListView.separated(
           padding: EdgeInsets.only(bottom: h * 0.02),
-          itemCount: docs.length,
+          itemCount: filteredDocs.length,
           separatorBuilder: (_, __) => SizedBox(height: h * 0.012),
           itemBuilder: (_, i) {
-            final d = docs[i].data();
-            final bookingId = docs[i].id;
+            final d = filteredDocs[i].data();
+            final bookingId = filteredDocs[i].id;
 
             final jobItem = _BookingItem(
               serviceProviderId: d['serviceProviderId'] ?? '',
