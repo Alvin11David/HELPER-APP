@@ -210,7 +210,6 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
       stream: FirebaseFirestore.instance
           .collection('bookings')
           .where('employerId', isEqualTo: user.uid)
-          .where('status', isEqualTo: status)
           .orderBy('createdAt', descending: true)
           .snapshots(),
       builder: (context, snap) {
@@ -224,7 +223,11 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
             ),
           );
 
-        final docs = snap.data?.docs ?? [];
+        // Filter by status client-side
+        final docs = snap.data?.docs
+            .where((doc) => doc.data()['status'] == status)
+            .toList() ?? [];
+        
         if (docs.isEmpty)
           return Center(
             child: Text(
