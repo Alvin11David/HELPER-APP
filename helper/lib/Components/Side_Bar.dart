@@ -251,7 +251,16 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                           const SizedBox(height: 20),
                           if (_userRole == 'employer')
                             GestureDetector(
-                              onTap: () => setState(() => _selectedIndex = 1),
+                              onTap: () {
+                                setState(() => _selectedIndex = 1);
+                                toggleDrawer();
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const MyBookingsScreen(),
+                                  ),
+                                );
+                              },
                               child: Padding(
                                 padding: EdgeInsets.only(left: 8, right: 8),
                                 child: Row(
