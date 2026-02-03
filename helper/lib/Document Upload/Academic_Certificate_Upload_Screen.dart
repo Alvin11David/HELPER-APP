@@ -445,7 +445,6 @@ class _AcademicCertificateUploadScreenState
     'International Relations Specialist',
   ];
 
-
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -545,7 +544,7 @@ class _AcademicCertificateUploadScreenState
                         'Search your profession/Job and upload\nits certificate',
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: screenWidth * 0.033,
+                          fontSize: screenWidth * 0.030,
                           fontWeight: FontWeight.w500,
                           fontFamily: 'Inter',
                         ),
