@@ -116,6 +116,7 @@ class _WorkerSkillsJobDetailsScreenState
     _businessNameCtrl.dispose();
     _skillsDescCtrl.dispose();
     _amountCtrl.dispose();
+    _jobCategoryCtrl.dispose();
     _workplaceCtrl.dispose();
     _debounce?.cancel();
     super.dispose();
@@ -282,6 +283,7 @@ class _WorkerSkillsJobDetailsScreenState
                 } else {
                   _jobCategoryId = null; // Custom profession not in Firestore
                 }
+                _jobCategoryCtrl.text = _jobCategory ?? '';
               });
               _recalcProgress();
             }
