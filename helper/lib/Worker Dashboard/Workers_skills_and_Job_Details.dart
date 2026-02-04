@@ -137,7 +137,7 @@ class _WorkerSkillsJobDetailsScreenState
     int done = 0;
 
     // Step 1 required (6)
-    if (_jobCategory != null) done++;
+    if (_jobCategoryCtrl.text.trim().isNotEmpty) done++;
     if (_businessNameCtrl.text.trim().isNotEmpty) done++;
     if (_skillsDescCtrl.text.trim().isNotEmpty) done++;
     if (_yearsExp != null) done++;
