@@ -4,7 +4,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:helper/Worker%20Dashboard/Workers_skills_and_Job_Details.dart';
 import 'package:intl/intl.dart';
 import 'package:helper/Components/User_Name.dart';
 import 'package:helper/Components/Side_Bar.dart';
@@ -1126,7 +1125,7 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                           onTap: () => Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const WorkerSkillsJobDetailsScreen(),
+                              builder: (context) => const AllCategoriesScreen(),
                             ),
                           ),
                           child: Column(

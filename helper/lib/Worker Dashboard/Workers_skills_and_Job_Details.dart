@@ -1455,7 +1455,11 @@ class _WorkerSkillsJobDetailsScreenState
           isCollapsed: true,
           contentPadding: EdgeInsets.symmetric(vertical: fieldH * 0.22),
           suffixIcon: IconButton(
-            icon: Icon(Icons.arrow_drop_down, color: Colors.black, size: w * 0.06),
+            icon: Icon(
+              Icons.arrow_drop_down,
+              color: Colors.black,
+              size: w * 0.06,
+            ),
             onPressed: onIconTap,
           ),
         ),
