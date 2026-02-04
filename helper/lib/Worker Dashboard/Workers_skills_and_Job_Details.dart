@@ -83,6 +83,7 @@ class _WorkerSkillsJobDetailsScreenState
     _businessNameCtrl.addListener(_recalcProgress);
     _skillsDescCtrl.addListener(_recalcProgress);
     _amountCtrl.addListener(_recalcProgress);
+    _jobCategoryCtrl.addListener(_recalcProgress);
     _workplaceCtrl.addListener(_recalcProgress);
     _recalcProgress();
     _loadCategories().then((_) {
@@ -100,6 +101,7 @@ class _WorkerSkillsJobDetailsScreenState
           } else {
             _jobCategoryId = null;
           }
+          _jobCategoryCtrl.text = _jobCategory ?? '';
         });
         _recalcProgress();
       }
