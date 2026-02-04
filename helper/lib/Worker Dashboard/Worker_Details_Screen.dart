@@ -668,7 +668,18 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                       ),
                     ),
                     Positioned(
-                      top: h * 0.4 + 480,
+                      top: h * 0.4 + 470,
+                      left: w * 0.04,
+                      child: const Text(
+                        'Tap the orange underlined text to navigate to the worker\'s location',
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      top: h * 0.4 + 485,
                       left: w * 0.04,
                       child: const Text(
                         'Reviews and Ratings',
@@ -680,7 +691,7 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                       ),
                     ),
                     Positioned(
-                      top: h * 0.4 + 510,
+                      top: h * 0.4 + 520,
                       left: w * 0.04,
                       child: const Text(
                         'Rate this service',
@@ -688,7 +699,7 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                       ),
                     ),
                     Positioned(
-                      top: h * 0.4 + 540,
+                      top: h * 0.4 + 550,
                       left: w * 0.04,
                       child: Row(
                         children: List.generate(
