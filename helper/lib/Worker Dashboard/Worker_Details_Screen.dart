@@ -672,10 +672,7 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                       left: w * 0.04,
                       child: const Text(
                         'Tap the orange underlined text to navigate to the worker\'s location',
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 12,
-                        ),
+                        style: TextStyle(color: Colors.white70, fontSize: 10),
                       ),
                     ),
                     Positioned(
