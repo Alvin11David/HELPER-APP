@@ -14,6 +14,11 @@ import * as logger from "firebase-functions/logger";
 import * as nodemailer from "nodemailer";
 import * as admin from "firebase-admin";
 import axios from "axios";
+import { AccessToken, TrackSource } from "livekit-server-sdk";
+import * as dotenv from "dotenv";
+
+// Load environment variables from .env file
+dotenv.config();
 
 // Initialize Firebase Admin
 admin.initializeApp();
@@ -688,4 +693,37 @@ export const testCallNotification = onCall(async (request) => {
     message: "Cloud Function is working! Check Firebase Functions logs.",
     timestamp: new Date().toISOString(),
   };
+});
+
+// Function to generate LiveKit token for voice calls
+export const generateLiveKitToken = onCall(async (request) => {
+  try {
+    const { roomName, identity } = request.data;
+
+    if (!roomName || !identity) {
+      throw new Error("Missing required parameters: roomName and identity");
+    }
+
+    const token = new AccessToken(
+      process.env.LIVEKIT_API_KEY!,
+      process.env.LIVEKIT_API_SECRET!,
+    );
+
+    token.identity = identity;
+    token.name = identity; // Optional: set display name
+    token.addGrant({
+      roomJoin: true,
+      room: roomName,
+      canPublish: true,
+      canSubscribe: true,
+      canPublishSources: [TrackSource.MICROPHONE], // Voice calls only
+    });
+
+    const jwt = token.toJwt();
+
+    return { token: jwt };
+  } catch (error) {
+    logger.error("Error generating LiveKit token:", error);
+    throw new Error("Failed to generate token");
+  }
 });

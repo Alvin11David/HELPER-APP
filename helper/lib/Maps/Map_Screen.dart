@@ -665,13 +665,17 @@ class _MapScreenState extends State<MapScreen> {
                       SizedBox(width: screenWidth * 0.07),
                       GestureDetector(
                         onTap: () {
-                          Navigator.of(context).push(
+                          Navigator.push(
+                            context,
                             MaterialPageRoute(
-                              builder: (context) => JobDetailBookingScreen(
+                              builder: (_) => JobDetailBookingScreen(
+                                serviceProviderId: worker['uid'] ?? '',
                                 businessName:
-                                    worker['businessName'] ??
-                                    'Unknown Business',
-                                serviceProviderId: '',
+                                    worker['businessName'] ?? 'Provider',
+                                profession:
+                                    worker['jobCategoryName'] ?? 'Service',
+                                amount: worker['amount'] ?? 0,
+                                pricingType: worker['pricingType'] ?? 'fixed',
                               ),
                             ),
                           );
@@ -976,8 +980,7 @@ class _MapScreenState extends State<MapScreen> {
                     child: const Icon(Icons.person, color: Colors.black),
                   ),
                   const SizedBox(width: 10),
-                  Stack(
-                    children: [
+                  Stack(children: [
                     ],
                   ),
                   const SizedBox(width: 10),

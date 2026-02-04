@@ -7,6 +7,7 @@ import 'package:helper/Components/User_Avatar_Circle.dart'; // Add this import
 import '../Document Upload/Profile/Profile_Screen.dart'; // Add this import
 import '../Auth/Sign_In_Screen.dart'; // Add this import
 import '../Employer Dashboard/Employer_Dashboard_Screen.dart';
+import '../Employer Dashboard/My_Bookings_Screen.dart';
 import '../Worker Dashboard/Workers_Dashboard_Screen.dart';
 import '../Worker Dashboard/Worker_Ratings_Reviews_Screen.dart';
 import '../Document Upload/Profile/Support_Screen.dart'; // Add this import
@@ -248,61 +249,105 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                             color: Colors.black,
                           ),
                           const SizedBox(height: 20),
-                          GestureDetector(
-                            onTap: () async {
-                              bool? isVerified = await _fetchVerifiedStatus();
-                              if (isVerified == false) {
+                          if (_userRole == 'employer')
+                            GestureDetector(
+                              onTap: () {
+                                setState(() => _selectedIndex = 1);
+                                toggleDrawer();
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => RoleSelectionScreen(),
+                                    builder: (context) =>
+                                        const MyBookingsScreen(),
                                   ),
                                 );
-                              }
-                            },
-                            child: Padding(
-                              padding: EdgeInsets.only(left: 8, right: 8),
-                              child: Row(
-                                children: [
-                                  Text(
-                                    "Verified?",
-                                    style: TextStyle(
-                                      color: Colors.black,
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w600,
+                              },
+                              child: Padding(
+                                padding: EdgeInsets.only(left: 8, right: 8),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.book_online,
+                                      color: _selectedIndex == 1
+                                          ? Colors.orange
+                                          : Colors.black.withOpacity(0.6),
                                     ),
-                                  ),
-                                  Spacer(),
-                                  FutureBuilder<bool?>(
-                                    future: _fetchVerifiedStatus(),
-                                    builder: (context, snapshot) {
-                                      if (snapshot.connectionState ==
-                                          ConnectionState.waiting) {
+                                    SizedBox(width: 15),
+                                    Text(
+                                      "My Bookings",
+                                      style: TextStyle(
+                                        color: _selectedIndex == 1
+                                            ? Colors.orange
+                                            : Colors.black,
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          if (_userRole == 'employer')
+                            const SizedBox(height: 20),
+                          if (_userRole != 'employer') ...[
+                            GestureDetector(
+                              onTap: () async {
+                                bool? isVerified = await _fetchVerifiedStatus();
+                                if (isVerified == false) {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          RoleSelectionScreen(),
+                                    ),
+                                  );
+                                }
+                              },
+                              child: Padding(
+                                padding: EdgeInsets.only(left: 8, right: 8),
+                                child: Row(
+                                  children: [
+                                    Text(
+                                      "Verified?",
+                                      style: TextStyle(
+                                        color: Colors.black,
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    Spacer(),
+                                    FutureBuilder<bool?>(
+                                      future: _fetchVerifiedStatus(),
+                                      builder: (context, snapshot) {
+                                        if (snapshot.connectionState ==
+                                            ConnectionState.waiting) {
+                                          return Text(
+                                            'Loading...',
+                                            style: TextStyle(
+                                              color: Colors.green,
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          );
+                                        }
+                                        bool isVerified =
+                                            snapshot.data ?? false;
                                         return Text(
-                                          'Loading...',
+                                          isVerified ? 'Yes' : 'No',
                                           style: TextStyle(
                                             color: Colors.green,
                                             fontSize: 15,
                                             fontWeight: FontWeight.w600,
                                           ),
                                         );
-                                      }
-                                      bool isVerified = snapshot.data ?? false;
-                                      return Text(
-                                        isVerified ? 'Yes' : 'No',
-                                        style: TextStyle(
-                                          color: Colors.green,
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                ],
+                                      },
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
-                          const SizedBox(height: 20),
+                            const SizedBox(height: 20),
+                          ],
                           GestureDetector(
                             onTap: () async {
                               try {

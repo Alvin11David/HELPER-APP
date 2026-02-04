@@ -50,13 +50,16 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
     _conflictsSub = FirebaseFirestore.instance
         .collection('bookings')
         .where('serviceProviderId', isEqualTo: workerId)
-        .where('status', whereIn: const ['pending', 'confirmed', 'reschedule_requested'])
+        .where(
+          'status',
+          whereIn: const ['pending', 'confirmed', 'reschedule_requested'],
+        )
         .where('hasConflict', isEqualTo: true)
         .snapshots()
         .listen((snap) {
-      if (!mounted) return;
-      setState(() => _conflictCount = snap.docs.length);
-    });
+          if (!mounted) return;
+          setState(() => _conflictCount = snap.docs.length);
+        });
   }
 
   void _setTab(int i) => setState(() => _tab = i);
@@ -82,7 +85,7 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
       case 3:
         return "Cancelled Jobs";
       default:
-        return "Reschedule Requests";
+        return "Cancelled Jobs";
     }
   }
 
@@ -97,14 +100,14 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
       case 3:
         return "View all cancelled Jobs here";
       default:
-        return "View reschedule requests and their status";
+        return "View all cancelled Jobs here";
     }
   }
 
   void _toast(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(msg, style: const TextStyle(fontFamily: 'Poppins')),
+        content: Text(msg, style: const TextStyle(fontFamily: 'Inter')),
         backgroundColor: Colors.black.withOpacity(0.85),
       ),
     );
@@ -189,7 +192,9 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
           .where('endDateTime', isGreaterThan: Timestamp.fromDate(newStart))
           .get();
 
-      final conflicts = overlapSnap.docs.where((doc) => doc.id != bookingId).toList();
+      final conflicts = overlapSnap.docs
+          .where((doc) => doc.id != bookingId)
+          .toList();
       final hasConflict = conflicts.isNotEmpty;
 
       final updateData = <String, dynamic>{
@@ -206,7 +211,10 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
         updateData['conflictDetectedAt'] = FieldValue.delete();
       }
 
-      await FirebaseFirestore.instance.collection('bookings').doc(bookingId).update(updateData);
+      await FirebaseFirestore.instance
+          .collection('bookings')
+          .doc(bookingId)
+          .update(updateData);
 
       if (hasConflict) {
         final batch = FirebaseFirestore.instance.batch();
@@ -231,12 +239,15 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
   Future<void> _cancelBooking(String bookingId) async {
     final workerId = widget.providerId;
     try {
-      await FirebaseFirestore.instance.collection('bookings').doc(bookingId).update({
-        'status': 'cancelled',
-        'updatedAt': FieldValue.serverTimestamp(),
-        'cancelledAt': FieldValue.serverTimestamp(),
-        'cancelledBy': workerId,
-      });
+      await FirebaseFirestore.instance
+          .collection('bookings')
+          .doc(bookingId)
+          .update({
+            'status': 'cancelled',
+            'updatedAt': FieldValue.serverTimestamp(),
+            'cancelledAt': FieldValue.serverTimestamp(),
+            'cancelledBy': workerId,
+          });
       _toast("Booking cancelled!");
       setState(() => _tab = 3);
     } catch (e) {
@@ -247,12 +258,15 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
   Future<void> _startJob(String bookingId) async {
     final workerId = widget.providerId;
     try {
-      await FirebaseFirestore.instance.collection('bookings').doc(bookingId).update({
-        'status': 'in_progress',
-        'updatedAt': FieldValue.serverTimestamp(),
-        'startedAt': FieldValue.serverTimestamp(),
-        'startedBy': workerId,
-      });
+      await FirebaseFirestore.instance
+          .collection('bookings')
+          .doc(bookingId)
+          .update({
+            'status': 'in_progress',
+            'updatedAt': FieldValue.serverTimestamp(),
+            'startedAt': FieldValue.serverTimestamp(),
+            'startedBy': workerId,
+          });
       _toast("Job started!");
     } catch (e) {
       _toast("Start job error: $e");
@@ -272,11 +286,24 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
           .orderBy('createdAt', descending: true)
           .snapshots(),
       builder: (context, snap) {
-        if (snap.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
-        if (snap.hasError) return Center(child: Text('Error: ${snap.error}', style: const TextStyle(color: Colors.white)));
+        if (snap.connectionState == ConnectionState.waiting)
+          return const Center(child: CircularProgressIndicator());
+        if (snap.hasError)
+          return Center(
+            child: Text(
+              'Error: ${snap.error}',
+              style: const TextStyle(color: Colors.white),
+            ),
+          );
 
         final docs = snap.data?.docs ?? [];
-        if (docs.isEmpty) return const Center(child: Text('No pending jobs', style: TextStyle(color: Colors.white)));
+        if (docs.isEmpty)
+          return const Center(
+            child: Text(
+              'No pending jobs',
+              style: TextStyle(color: Colors.white),
+            ),
+          );
 
         return ListView.separated(
           padding: EdgeInsets.only(bottom: h * 0.02),
@@ -304,7 +331,11 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
               h: h,
               tab: _tab,
               job: jobItem,
-              onTap: () => _openBookingDetails(bookingId: bookingId, bookingData: d, tab: 0),
+              onTap: () => _openBookingDetails(
+                bookingId: bookingId,
+                bookingData: d,
+                tab: 0,
+              ),
               onAccept: () async => await _acceptBooking(bookingId, d),
               onDelete: () async => await _cancelBooking(bookingId),
               onResume: () => _toast('Resume (hook API later)'),
@@ -327,11 +358,24 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
           .orderBy('createdAt', descending: true)
           .snapshots(),
       builder: (context, snap) {
-        if (snap.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
-        if (snap.hasError) return Center(child: Text('Error: ${snap.error}', style: const TextStyle(color: Colors.white)));
+        if (snap.connectionState == ConnectionState.waiting)
+          return const Center(child: CircularProgressIndicator());
+        if (snap.hasError)
+          return Center(
+            child: Text(
+              'Error: ${snap.error}',
+              style: const TextStyle(color: Colors.white),
+            ),
+          );
 
         final docs = snap.data?.docs ?? [];
-        if (docs.isEmpty) return Center(child: Text('No $status jobs', style: const TextStyle(color: Colors.white)));
+        if (docs.isEmpty)
+          return Center(
+            child: Text(
+              'No $status jobs',
+              style: const TextStyle(color: Colors.white),
+            ),
+          );
 
         return ListView.separated(
           padding: EdgeInsets.only(bottom: h * 0.02),
@@ -359,7 +403,11 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
               h: h,
               tab: _tab,
               job: jobItem,
-              onTap: () => _openBookingDetails(bookingId: bookingId, bookingData: d, tab: _tab),
+              onTap: () => _openBookingDetails(
+                bookingId: bookingId,
+                bookingData: d,
+                tab: _tab,
+              ),
               onResume: () => _toast('Resume not implemented yet'),
               onPause: () => _toast('Pause not implemented yet'),
               onAccept: () async {},
@@ -382,7 +430,10 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
         child: Container(
           constraints: const BoxConstraints.expand(),
           decoration: const BoxDecoration(
-            image: DecorationImage(image: AssetImage('assets/background/normalscreenbg.png'), fit: BoxFit.cover),
+            image: DecorationImage(
+              image: AssetImage('assets/background/normalscreenbg.png'),
+              fit: BoxFit.cover,
+            ),
           ),
           child: Padding(
             padding: EdgeInsets.symmetric(horizontal: sidePad),
@@ -396,24 +447,66 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
                       child: Container(
                         width: w * 0.13,
                         height: w * 0.13,
-                        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(15)),
-                        child: Icon(Icons.chevron_left, color: Colors.black, size: w * 0.10),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                        child: Icon(
+                          Icons.chevron_left,
+                          color: Colors.black,
+                          size: w * 0.10,
+                        ),
                       ),
                     ),
                     SizedBox(width: w * 0.04),
                     Expanded(
-                      child: Text(_title, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: Colors.white, fontSize: w * 0.055, fontFamily: 'AbrilFatface')),
+                      child: Text(
+                        _title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: w * 0.055,
+                          fontFamily: 'AbrilFatface',
+                        ),
+                      ),
                     ),
                     SizedBox(width: w * 0.02),
                     _TopAvatar(w: w),
-                    SizedBox(width: w * 0.02),
-                    _TopIcon(w: w, icon: Icons.notifications_none_rounded, onTap: () {}),
                   ],
                 ),
                 SizedBox(height: h * 0.012),
-                Center(child: _GlassPill(radius: 18, padding: EdgeInsets.symmetric(horizontal: w * 0.05, vertical: h * 0.007), child: Text(_helperPillText, style: TextStyle(color: Colors.white.withOpacity(0.92), fontFamily: 'Poppins', fontWeight: FontWeight.w700, fontSize: w * 0.03)))),
+                Center(
+                  child: _GlassPill(
+                    radius: 18,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: w * 0.05,
+                      vertical: h * 0.007,
+                    ),
+                    child: Text(
+                      _helperPillText,
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.92),
+                        fontFamily: 'Inter',
+                        fontWeight: FontWeight.w700,
+                        fontSize: w * 0.03,
+                      ),
+                    ),
+                  ),
+                ),
                 SizedBox(height: h * 0.018),
-                Align(alignment: Alignment.centerLeft, child: Text('Job List', style: TextStyle(color: Colors.white, fontFamily: 'Poppins', fontWeight: FontWeight.w900, fontSize: w * 0.04))),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Job List',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontFamily: 'Inter',
+                      fontWeight: FontWeight.w900,
+                      fontSize: w * 0.04,
+                    ),
+                  ),
+                ),
                 SizedBox(height: h * 0.012),
                 Row(children: [
                   _TabChip(text: 'Pending', active: _tab == 0, bg: _tabChipColor(0), fg: _tabChipTextColor(0), badgeCount: _conflictCount, onTap: () => _setTab(0)),
@@ -421,71 +514,21 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
                   _TabChip(text: 'Active', active: _tab == 1, bg: _tabChipColor(1), fg: _tabChipTextColor(1), onTap: () => _setTab(1)),
                   SizedBox(width: w * 0.02),
                   _TabChip(text: 'Completed', active: _tab == 2, bg: _tabChipColor(2), fg: _tabChipTextColor(2), onTap: () => _setTab(2)),
-                    SizedBox(width: w * 0.02),
-                    _TabChip(text: 'Cancelled', active: _tab == 3, bg: _tabChipColor(3), fg: _tabChipTextColor(3), onTap: () => _setTab(3)),
-                    SizedBox(width: w * 0.02),
-                    _TabChip(text: 'Reschedule', active: _tab == 4, bg: _tabChipColor(4), fg: _tabChipTextColor(4), onTap: () => _setTab(4)),
+                  SizedBox(width: w * 0.02),
+                  _TabChip(text: 'Cancelled', active: _tab == 3, bg: _tabChipColor(3), fg: _tabChipTextColor(3), onTap: () => _setTab(3)),
                 ]),
                 SizedBox(height: h * 0.014),
                 Expanded(child: () {
                   if (_tab == 0) return _pendingJobsStream(w, h);
                   if (_tab == 1) return _jobsByStatusStream(w, h, 'confirmed');
                   if (_tab == 2) return _jobsByStatusStream(w, h, 'completed');
-                  if (_tab == 3) return _jobsByStatusStream(w, h, 'cancelled');
-                  return _rescheduleStream(w, h);
+                  return _jobsByStatusStream(w, h, 'cancelled');
                 }()),
               ],
             ),
           ),
         ),
       ),
-    );
-  }
-
-  Widget _rescheduleStream(double w, double h) {
-    final workerId = widget.providerId;
-
-    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-      stream: FirebaseFirestore.instance
-          .collection('bookings')
-          .where('serviceProviderId', isEqualTo: workerId)
-          .where('status', whereIn: const ['reschedule_requested', 'confirmed', 'cancelled'])
-          .orderBy('updatedAt', descending: true)
-          .snapshots(),
-      builder: (context, snap) {
-        if (snap.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
-        if (snap.hasError) return Center(child: Text('Error: ${snap.error}', style: const TextStyle(color: Colors.white)));
-
-        final docs = (snap.data?.docs ?? []).where((d) => (d.data().containsKey('reschedule'))).toList();
-        if (docs.isEmpty) return const Center(child: Text('No reschedule requests', style: TextStyle(color: Colors.white)));
-
-        final pending = docs.where((d) => ((d.data()['reschedule'] ?? {})['employerDecision'] ?? 'pending') == 'pending').toList();
-        final accepted = docs.where((d) => ((d.data()['reschedule'] ?? {})['employerDecision'] ?? '') == 'accepted').toList();
-        final declined = docs.where((d) => ((d.data()['reschedule'] ?? {})['employerDecision'] ?? '') == 'declined').toList();
-
-        return ListView(
-          padding: EdgeInsets.only(bottom: h * 0.02),
-          children: [
-            if (pending.isNotEmpty) ...[
-              Padding(padding: EdgeInsets.symmetric(horizontal: w * 0.02), child: Text('Pending', style: TextStyle(color: Colors.white, fontFamily: 'Poppins', fontWeight: FontWeight.w900, fontSize: w * 0.04))),
-              SizedBox(height: h * 0.01),
-              for (final d in pending) _RescheduleCard(doc: d),
-              SizedBox(height: h * 0.02),
-            ],
-            if (accepted.isNotEmpty) ...[
-              Padding(padding: EdgeInsets.symmetric(horizontal: w * 0.02), child: Text('Accepted', style: TextStyle(color: Colors.white, fontFamily: 'Poppins', fontWeight: FontWeight.w900, fontSize: w * 0.04))),
-              SizedBox(height: h * 0.01),
-              for (final d in accepted) _RescheduleCard(doc: d),
-              SizedBox(height: h * 0.02),
-            ],
-            if (declined.isNotEmpty) ...[
-              Padding(padding: EdgeInsets.symmetric(horizontal: w * 0.02), child: Text('Declined', style: TextStyle(color: Colors.white, fontFamily: 'Poppins', fontWeight: FontWeight.w900, fontSize: w * 0.04))),
-              SizedBox(height: h * 0.01),
-              for (final d in declined) _RescheduleCard(doc: d),
-            ],
-          ],
-        );
-      },
     );
   }
 }
@@ -553,10 +596,12 @@ class _BookingDetailsSheet extends StatelessWidget {
     final w = MediaQuery.of(context).size.width;
     final h = MediaQuery.of(context).size.height;
 
-    String employerName = (bookingData['employerName'] ?? 'Employer').toString();
+    String employerName = (bookingData['employerName'] ?? 'Employer')
+        .toString();
     String notes = (bookingData['specialNotes'] ?? '').toString();
     String desc = (bookingData['jobDescription'] ?? '').toString();
-    String locationText = (bookingData['jobLocationText'] ?? 'Unknown').toString();
+    String locationText = (bookingData['jobLocationText'] ?? 'Unknown')
+        .toString();
     String pricingType = (bookingData['pricingType'] ?? 'Fixed').toString();
     String amount = "${bookingData['amount'] ?? 0}";
 
@@ -573,10 +618,10 @@ class _BookingDetailsSheet extends StatelessWidget {
     final title = tab == 0
         ? "Pending Job Details"
         : tab == 1
-            ? "Active Job Details"
-            : tab == 2
-                ? "Completed Job Details"
-                : "Cancelled Job Details";
+        ? "Active Job Details"
+        : tab == 2
+        ? "Completed Job Details"
+        : "Cancelled Job Details";
 
     return ClipRRect(
       borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
@@ -591,13 +636,31 @@ class _BookingDetailsSheet extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Container(width: 60, height: 6, decoration: BoxDecoration(color: Colors.black.withOpacity(0.12), borderRadius: BorderRadius.circular(99))),
+              Container(
+                width: 60,
+                height: 6,
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(99),
+                ),
+              ),
               SizedBox(height: h * 0.014),
-              Text(title, style: TextStyle(color: Colors.black, fontFamily: 'AbrilFatface', fontSize: w * 0.052)),
+              Text(
+                title,
+                style: TextStyle(
+                  color: Colors.black,
+                  fontFamily: 'AbrilFatface',
+                  fontSize: w * 0.052,
+                ),
+              ),
               SizedBox(height: h * 0.012),
 
               _detailRow(w, "Employer Name:", employerName),
-              _detailRow(w, "Employer Special Notes:", notes.isEmpty ? "-" : notes),
+              _detailRow(
+                w,
+                "Employer Special Notes:",
+                notes.isEmpty ? "-" : notes,
+              ),
               _detailRow(w, "Job Description:", desc.isEmpty ? "-" : desc),
               _detailRow(w, "Job Location:", locationText, valueColor: accent),
               _detailRow(w, "Job Duration:", durationText),
@@ -609,21 +672,161 @@ class _BookingDetailsSheet extends StatelessWidget {
               SizedBox(height: h * 0.018),
 
               if (tab == 0) ...[
-                Row(children: [
-                  Expanded(child: OutlinedButton(onPressed: onViewLocation, style: OutlinedButton.styleFrom(side: BorderSide(color: accent.withOpacity(0.9), width: 1.5), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)), padding: EdgeInsets.symmetric(vertical: h * 0.016)), child: Text('View Location', style: TextStyle(color: accent, fontFamily: 'Poppins', fontWeight: FontWeight.w900, fontSize: w * 0.035)))),
-                  SizedBox(width: w * 0.03),
-                  Expanded(child: ElevatedButton(onPressed: onAcceptPending, style: ElevatedButton.styleFrom(backgroundColor: accent, elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)), padding: EdgeInsets.symmetric(vertical: h * 0.016)), child: Text('Accept', style: TextStyle(color: Colors.white, fontFamily: 'Poppins', fontWeight: FontWeight.w900, fontSize: w * 0.035)))),
-                ]),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: onViewLocation,
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(
+                            color: accent.withOpacity(0.9),
+                            width: 1.5,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          padding: EdgeInsets.symmetric(vertical: h * 0.016),
+                        ),
+                        child: Text(
+                          'View Location',
+                          style: TextStyle(
+                            color: accent,
+                            fontFamily: 'Inter',
+                            fontWeight: FontWeight.w900,
+                            fontSize: w * 0.035,
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: w * 0.03),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: onAcceptPending,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: accent,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          padding: EdgeInsets.symmetric(vertical: h * 0.016),
+                        ),
+                        child: Text(
+                          'Accept',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontFamily: 'Inter',
+                            fontWeight: FontWeight.w900,
+                            fontSize: w * 0.035,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
                 SizedBox(height: h * 0.012),
-                SizedBox(width: double.infinity, child: OutlinedButton(onPressed: onDeletePending, style: OutlinedButton.styleFrom(side: BorderSide(color: Colors.red.withOpacity(0.9), width: 1.5), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)), padding: EdgeInsets.symmetric(vertical: h * 0.016)), child: Text('Delete (Cancel Request)', style: TextStyle(color: Colors.red, fontFamily: 'Poppins', fontWeight: FontWeight.w900, fontSize: w * 0.035)))),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: onDeletePending,
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(
+                        color: Colors.red.withOpacity(0.9),
+                        width: 1.5,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      padding: EdgeInsets.symmetric(vertical: h * 0.016),
+                    ),
+                    child: Text(
+                      'Delete (Cancel Request)',
+                      style: TextStyle(
+                        color: Colors.red,
+                        fontFamily: 'Inter',
+                        fontWeight: FontWeight.w900,
+                        fontSize: w * 0.035,
+                      ),
+                    ),
+                  ),
+                ),
               ] else if (tab == 1) ...[
-                Row(children: [
-                  Expanded(child: OutlinedButton(onPressed: onViewLocation, style: OutlinedButton.styleFrom(side: BorderSide(color: accent.withOpacity(0.9), width: 1.5), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)), padding: EdgeInsets.symmetric(vertical: h * 0.016)), child: Text('View Location', style: TextStyle(color: accent, fontFamily: 'Poppins', fontWeight: FontWeight.w900, fontSize: w * 0.032)))),
-                  SizedBox(width: w * 0.02),
-                  Expanded(child: ElevatedButton(onPressed: onStartJob, style: ElevatedButton.styleFrom(backgroundColor: accent, elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)), padding: EdgeInsets.symmetric(vertical: h * 0.016)), child: Text('Start Job', style: TextStyle(color: Colors.white, fontFamily: 'Poppins', fontWeight: FontWeight.w900, fontSize: w * 0.032)))),
-                ]),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: onViewLocation,
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(
+                            color: accent.withOpacity(0.9),
+                            width: 1.5,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          padding: EdgeInsets.symmetric(vertical: h * 0.016),
+                        ),
+                        child: Text(
+                          'View Location',
+                          style: TextStyle(
+                            color: accent,
+                            fontFamily: 'Inter',
+                            fontWeight: FontWeight.w900,
+                            fontSize: w * 0.032,
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: w * 0.02),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: onStartJob,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: accent,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          padding: EdgeInsets.symmetric(vertical: h * 0.016),
+                        ),
+                        child: Text(
+                          'Start Job',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontFamily: 'Inter',
+                            fontWeight: FontWeight.w900,
+                            fontSize: w * 0.032,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
                 SizedBox(height: h * 0.012),
-                SizedBox(width: double.infinity, child: OutlinedButton(onPressed: onReschedule, style: OutlinedButton.styleFrom(side: BorderSide(color: accent.withOpacity(0.9), width: 1.5), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)), padding: EdgeInsets.symmetric(vertical: h * 0.016)), child: Text('Reschedule', style: TextStyle(color: accent, fontFamily: 'Poppins', fontWeight: FontWeight.w900, fontSize: w * 0.035)))),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: onReschedule,
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(
+                        color: accent.withOpacity(0.9),
+                        width: 1.5,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      padding: EdgeInsets.symmetric(vertical: h * 0.016),
+                    ),
+                    child: Text(
+                      'Reschedule',
+                      style: TextStyle(
+                        color: accent,
+                        fontFamily: 'Inter',
+                        fontWeight: FontWeight.w900,
+                        fontSize: w * 0.035,
+                      ),
+                    ),
+                  ),
+                ),
               ],
             ],
           ),
@@ -635,11 +838,36 @@ class _BookingDetailsSheet extends StatelessWidget {
   Widget _detailRow(double w, String label, String value, {Color? valueColor}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(children: [
-        Expanded(child: Text(label, style: TextStyle(color: Colors.black, fontFamily: 'Poppins', fontWeight: FontWeight.w800, fontSize: w * 0.032))),
-        SizedBox(width: w * 0.03),
-        Flexible(child: Text(value, textAlign: TextAlign.right, maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(color: valueColor ?? Colors.black.withOpacity(0.75), fontFamily: 'Poppins', fontWeight: FontWeight.w900, fontSize: w * 0.032))),
-      ]),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(
+                color: Colors.black,
+                fontFamily: 'Inter',
+                fontWeight: FontWeight.w800,
+                fontSize: w * 0.032,
+              ),
+            ),
+          ),
+          SizedBox(width: w * 0.03),
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: valueColor ?? Colors.black.withOpacity(0.75),
+                fontFamily: 'Inter',
+                fontWeight: FontWeight.w900,
+                fontSize: w * 0.032,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -657,40 +885,125 @@ class _JobCard extends StatelessWidget {
   final VoidCallback onResume;
   final VoidCallback onPause;
 
-  const _JobCard({required this.w, required this.h, required this.tab, required this.job, required this.onTap, required this.onAccept, required this.onDelete, required this.onResume, required this.onPause});
+  const _JobCard({
+    required this.w,
+    required this.h,
+    required this.tab,
+    required this.job,
+    required this.onTap,
+    required this.onAccept,
+    required this.onDelete,
+    required this.onResume,
+    required this.onPause,
+  });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: w * 0.04, vertical: h * 0.014),
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18)),
-        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(job.employerName, style: TextStyle(color: Colors.black, fontFamily: 'Poppins', fontWeight: FontWeight.w900, fontSize: w * 0.036)),
-            SizedBox(height: h * 0.002),
-            Text(job.jobDesc, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: Colors.black.withOpacity(0.65), fontFamily: 'Poppins', fontWeight: FontWeight.w700, fontSize: w * 0.03)),
-            SizedBox(height: h * 0.002),
-            Text(job.payment, style: TextStyle(color: Colors.black.withOpacity(0.75), fontFamily: 'Poppins', fontWeight: FontWeight.w900, fontSize: w * 0.03)),
-          ])),
-          SizedBox(width: w * 0.03),
-          if (tab == 0) ...[
-            Column(children: [
-              _TinyPillButton(w: w, bg: const Color(0xFF3AD11B), text: 'Accept', icon: Icons.check_rounded, onTap: onAccept),
-              SizedBox(height: h * 0.008),
-              _TinyPillButton(w: w, bg: const Color(0xFFE93B2F), text: 'Delete', icon: Icons.delete_outline_rounded, onTap: onDelete),
-            ])
-          ] else if (tab == 1) ...[
-            Column(children: [
-              _TinyPillButton(w: w, bg: const Color(0xFF3AD11B), text: 'Resume', icon: Icons.play_arrow_rounded, onTap: onResume),
-              SizedBox(height: h * 0.008),
-              _TinyPillButton(w: w, bg: const Color(0xFFE93B2F), text: 'Pause', icon: Icons.pause_rounded, onTap: onPause),
-            ])
-          ] else ...[
-            Padding(padding: EdgeInsets.only(top: h * 0.012), child: Icon(Icons.more_vert, color: Colors.black, size: w * 0.06)),
+        padding: EdgeInsets.symmetric(
+          horizontal: w * 0.04,
+          vertical: h * 0.014,
+        ),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    job.employerName,
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontFamily: 'Inter',
+                      fontWeight: FontWeight.w900,
+                      fontSize: w * 0.036,
+                    ),
+                  ),
+                  SizedBox(height: h * 0.002),
+                  Text(
+                    job.jobDesc,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: Colors.black.withOpacity(0.65),
+                      fontFamily: 'Inter',
+                      fontWeight: FontWeight.w700,
+                      fontSize: w * 0.03,
+                    ),
+                  ),
+                  SizedBox(height: h * 0.002),
+                  Text(
+                    job.payment,
+                    style: TextStyle(
+                      color: Colors.black.withOpacity(0.75),
+                      fontFamily: 'Inter',
+                      fontWeight: FontWeight.w900,
+                      fontSize: w * 0.03,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(width: w * 0.03),
+            if (tab == 0) ...[
+              Column(
+                children: [
+                  _TinyPillButton(
+                    w: w,
+                    bg: const Color(0xFF3AD11B),
+                    text: 'Accept',
+                    icon: Icons.check_rounded,
+                    onTap: onAccept,
+                  ),
+                  SizedBox(height: h * 0.008),
+                  _TinyPillButton(
+                    w: w,
+                    bg: const Color(0xFFE93B2F),
+                    text: 'Delete',
+                    icon: Icons.delete_outline_rounded,
+                    onTap: onDelete,
+                  ),
+                ],
+              ),
+            ] else if (tab == 1) ...[
+              Column(
+                children: [
+                  _TinyPillButton(
+                    w: w,
+                    bg: const Color(0xFF3AD11B),
+                    text: 'Resume',
+                    icon: Icons.play_arrow_rounded,
+                    onTap: onResume,
+                  ),
+                  SizedBox(height: h * 0.008),
+                  _TinyPillButton(
+                    w: w,
+                    bg: const Color(0xFFE93B2F),
+                    text: 'Pause',
+                    icon: Icons.pause_rounded,
+                    onTap: onPause,
+                  ),
+                ],
+              ),
+            ] else ...[
+              Padding(
+                padding: EdgeInsets.only(top: h * 0.012),
+                child: Icon(
+                  Icons.more_vert,
+                  color: Colors.black,
+                  size: w * 0.06,
+                ),
+              ),
+            ],
           ],
-        ]),
+        ),
       ),
     );
   }
@@ -703,16 +1016,43 @@ class _TinyPillButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
 
-  const _TinyPillButton({required this.w, required this.bg, required this.text, required this.icon, required this.onTap});
+  const _TinyPillButton({
+    required this.w,
+    required this.bg,
+    required this.text,
+    required this.icon,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: w * 0.035, vertical: w * 0.012),
-        decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(999)),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [Icon(icon, color: Colors.white, size: w * 0.04), SizedBox(width: w * 0.012), Text(text, style: TextStyle(color: Colors.white, fontFamily: 'Poppins', fontWeight: FontWeight.w900, fontSize: w * 0.028))]),
+        padding: EdgeInsets.symmetric(
+          horizontal: w * 0.035,
+          vertical: w * 0.012,
+        ),
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: Colors.white, size: w * 0.04),
+            SizedBox(width: w * 0.012),
+            Text(
+              text,
+              style: TextStyle(
+                color: Colors.white,
+                fontFamily: 'Inter',
+                fontWeight: FontWeight.w900,
+                fontSize: w * 0.028,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -726,11 +1066,72 @@ class _TabChip extends StatelessWidget {
   final VoidCallback onTap;
   final int badgeCount;
 
-  const _TabChip({required this.text, required this.active, required this.bg, required this.fg, required this.onTap, this.badgeCount = 0});
+  const _TabChip({
+    required this.text,
+    required this.active,
+    required this.bg,
+    required this.fg,
+    required this.onTap,
+    this.badgeCount = 0,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(child: GestureDetector(onTap: onTap, child: Container(height: 34, alignment: Alignment.center, decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(999)), child: Stack(clipBehavior: Clip.none, children: [Center(child: Text(text, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: fg, fontFamily: 'Poppins', fontWeight: FontWeight.w900, fontSize: 12.5))), if (badgeCount > 0) Positioned(right: -6, top: -6, child: Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), decoration: BoxDecoration(color: Colors.red, borderRadius: BorderRadius.circular(999), border: Border.all(color: Colors.white, width: 2)), child: Text(badgeCount > 99 ? '99+' : badgeCount.toString(), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 10))))]))));
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          height: 34,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: bg,
+            borderRadius: BorderRadius.circular(999),
+          ),
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Center(
+                child: Text(
+                  text,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: fg,
+                    fontFamily: 'Inter',
+                    fontWeight: FontWeight.w900,
+                    fontSize: 12.5,
+                  ),
+                ),
+              ),
+              if (badgeCount > 0)
+                Positioned(
+                  right: -6,
+                  top: -6,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: Colors.white, width: 2),
+                    ),
+                    child: Text(
+                      badgeCount > 99 ? '99+' : badgeCount.toString(),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 10,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -740,7 +1141,33 @@ class _TopAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(width: w * 0.10, height: w * 0.10, decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.white, border: Border.all(color: Colors.white.withOpacity(0.35)), image: const DecorationImage(image: AssetImage('assets/images/person.png'), fit: BoxFit.cover)));
+    return Row(
+      children: [
+        Container(
+          width: 40,
+          height: 40,
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(Icons.person, color: Colors.black),
+        ),
+        const SizedBox(width: 10),
+        Stack(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.notifications, color: Colors.black),
+            ),
+          ],
+        ),
+      ],
+    );
   }
 }
 
@@ -753,7 +1180,21 @@ class _TopIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(onTap: onTap, child: Container(width: w * 0.10, height: w * 0.10, decoration: BoxDecoration(color: Colors.white.withOpacity(0.12), shape: BoxShape.circle, border: Border.all(color: Colors.white.withOpacity(0.25))), child: Center(child: Icon(icon, color: Colors.white, size: w * 0.06))));
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: w * 0.10,
+        height: w * 0.10,
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.12),
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.white.withOpacity(0.25)),
+        ),
+        child: Center(
+          child: Icon(icon, color: Colors.white, size: w * 0.06),
+        ),
+      ),
+    );
   }
 }
 
@@ -762,11 +1203,46 @@ class _GlassPill extends StatelessWidget {
   final EdgeInsets padding;
   final double radius;
 
-  const _GlassPill({required this.child, required this.padding, required this.radius});
+  const _GlassPill({
+    required this.child,
+    required this.padding,
+    required this.radius,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(borderRadius: BorderRadius.circular(radius), child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15), child: Container(padding: padding, decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Colors.white.withOpacity(0.22), Colors.white.withOpacity(0.12)]), borderRadius: BorderRadius.circular(radius), border: Border.all(color: Colors.white.withOpacity(0.35), width: 1.6), boxShadow: [BoxShadow(color: Colors.white.withOpacity(0.08), blurRadius: 15, spreadRadius: 2)]), child: child)));
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(radius),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+        child: Container(
+          padding: padding,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Colors.white.withOpacity(0.22),
+                Colors.white.withOpacity(0.12),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(radius),
+            border: Border.all(
+              color: Colors.white.withOpacity(0.35),
+              width: 1.6,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.white.withOpacity(0.08),
+                blurRadius: 15,
+                spreadRadius: 2,
+              ),
+            ],
+          ),
+          child: child,
+        ),
+      ),
+    );
   }
 }
 
@@ -777,37 +1253,7 @@ class _RescheduleCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final w = MediaQuery.of(context).size.width;
-    final data = doc.data();
-    final res = (data['reschedule'] ?? {}) as Map<String, dynamic>;
-    final proposedStart = (res['proposedStart'] as Timestamp?)?.toDate();
-    final proposedEnd = (res['proposedEnd'] as Timestamp?)?.toDate();
-    final decision = (res['employerDecision'] ?? 'pending').toString();
-
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: w * 0.02, vertical: 8),
-      padding: EdgeInsets.all(w * 0.04),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(data['employerName'] ?? 'Employer', style: TextStyle(fontWeight: FontWeight.w900, fontSize: w * 0.036)),
-        SizedBox(height: 6),
-        Text('Proposed: ${proposedStart ?? '-'} → ${proposedEnd ?? '-'}', style: TextStyle(fontSize: w * 0.032)),
-        SizedBox(height: 8),
-        Row(children: [
-          Expanded(child: Text('Status: ${decision.toUpperCase()}', style: TextStyle(fontWeight: FontWeight.w900, color: decision == 'accepted' ? Colors.green : decision == 'declined' ? Colors.red : Colors.orange))),
-          if (decision == 'pending') ...[
-            ElevatedButton(onPressed: () => _openBooking(context), style: ElevatedButton.styleFrom(backgroundColor: Colors.orange), child: const Text('View'))
-          ] else ...[
-            TextButton(onPressed: () => _openBooking(context), child: const Text('View'))
-          ]
-        ])
-      ]),
-    );
-  }
-
-  void _openBooking(BuildContext context) {
-    final data = doc.data();
-    showModalBottomSheet(context: context, backgroundColor: Colors.transparent, isScrollControlled: true, builder: (_) => _BookingDetailsSheet(bookingId: doc.id, bookingData: data, tab: 4, accent: const Color(0xFFFFA10D), onViewLocation: () {}, onAcceptPending: null, onDeletePending: null, onStartJob: null, onReschedule: null));
+    return Scaffold(body: Center(child: Text('Reschedule screen (implement separately)')));
   }
 }
 

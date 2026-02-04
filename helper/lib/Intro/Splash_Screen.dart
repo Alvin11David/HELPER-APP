@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:helper/Auth/Phone_Number_&_Email_Address_Screen.dart';
 import 'dart:async';
-
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:helper/Employer Dashboard/Employer_Dashboard_Screen.dart';
+import 'package:helper/Worker Dashboard/Workers_Dashboard_Screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -12,7 +15,7 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen> {
   String _displayedText = '';
-  final String _fullText = 'Helper';
+  final String _fullText = 'Helper\'s';
   Timer? _timer;
   int _currentIndex = 0;
   bool _isTyping = true;
@@ -21,12 +24,122 @@ class _SplashScreenState extends State<SplashScreen> {
   void initState() {
     super.initState();
     _startTypewriterEffect();
-    Timer(const Duration(seconds: 5), () {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const PhoneNumberEmailAddressScreen()),
-      );
-    });
+    _checkAuthAndNavigate();
+  }
+
+  Future<void> _checkAuthAndNavigate() async {
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      // User is signed in, fetch status and role
+      try {
+        DocumentSnapshot doc = await FirebaseFirestore.instance
+            .collection('Sign Up')
+            .doc(user.uid)
+            .get();
+        if (doc.exists && doc.data() != null) {
+          String status =
+              (doc.data() as Map<String, dynamic>)['status'] ?? 'active';
+          if (status == 'suspended') {
+            // Show suspended dialog and navigate to login
+            showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (context) => AlertDialog(
+                title: Text('Account Suspended'),
+                content: Text('Your account has been suspended.'),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              const PhoneNumberEmailAddressScreen(),
+                        ),
+                      );
+                    },
+                    child: Text('OK'),
+                  ),
+                ],
+              ),
+            );
+          } else if (status == 'banned') {
+            // Show banned dialog and navigate to login
+            showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (context) => AlertDialog(
+                title: Text('Account Banned'),
+                content: Text('Your account has been banned.'),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              const PhoneNumberEmailAddressScreen(),
+                        ),
+                      );
+                    },
+                    child: Text('OK'),
+                  ),
+                ],
+              ),
+            );
+          } else {
+            // Status is active, proceed with role-based navigation
+            String role = (doc.data() as Map<String, dynamic>)['role'] ?? '';
+            Widget nextScreen;
+            if (role == 'employer') {
+              nextScreen = const EmployerDashboardScreen();
+            } else if (role == 'worker') {
+              nextScreen = const WorkersDashboardScreen();
+            } else {
+              nextScreen = const PhoneNumberEmailAddressScreen();
+            }
+            Timer(const Duration(seconds: 5), () {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => nextScreen),
+              );
+            });
+          }
+        } else {
+          // No user data, go to login after 5 seconds
+          Timer(const Duration(seconds: 5), () {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const PhoneNumberEmailAddressScreen(),
+              ),
+            );
+          });
+        }
+      } catch (e) {
+        // Error fetching, go to login after 5 seconds
+        Timer(const Duration(seconds: 5), () {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const PhoneNumberEmailAddressScreen(),
+            ),
+          );
+        });
+      }
+    } else {
+      // Not signed in, go to login after 5 seconds
+      Timer(const Duration(seconds: 5), () {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const PhoneNumberEmailAddressScreen(),
+          ),
+        );
+      });
+    }
   }
 
   void _startTypewriterEffect() {

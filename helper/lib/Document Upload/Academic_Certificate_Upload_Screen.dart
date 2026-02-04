@@ -445,12 +445,13 @@ class _AcademicCertificateUploadScreenState
     'International Relations Specialist',
   ];
 
-
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
+    final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       body: Stack(
         fit: StackFit.expand,
         children: [
@@ -543,7 +544,7 @@ class _AcademicCertificateUploadScreenState
                         'Search your profession/Job and upload\nits certificate',
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: screenWidth * 0.033,
+                          fontSize: screenWidth * 0.030,
                           fontWeight: FontWeight.w500,
                           fontFamily: 'Inter',
                         ),
@@ -713,7 +714,7 @@ class _AcademicCertificateUploadScreenState
                         ? 'Selected Professions will appear here'
                         : selectedProfessions.join(', '),
                     style: TextStyle(
-                      fontSize: screenWidth * 0.035,
+                      fontSize: screenWidth * 0.030,
                       fontWeight: FontWeight.w500,
                       fontFamily: 'Inter',
                     ),

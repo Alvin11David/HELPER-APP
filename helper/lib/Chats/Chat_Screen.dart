@@ -4,7 +4,9 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'Voice_Call_Screen.dart';
+import 'package:record/record.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 class ChatScreen extends StatefulWidget {
   final String chatPartnerName;
@@ -25,6 +27,14 @@ class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   late String chatId;
+  final AudioRecorder _audioRecorder = AudioRecorder();
+  bool _isRecording = false;
+  String? _recordedFilePath;
+  final AudioPlayer _audioPlayer = AudioPlayer();
+  String? _currentlyPlayingAudioUrl;
+  bool _showRecordingUI = false;
+  bool _showPlaybackUI = false;
+  bool _isPlayingRecorded = false;
 
   @override
   void initState() {
@@ -60,6 +70,8 @@ class _ChatScreenState extends State<ChatScreen> {
   void dispose() {
     _controller.dispose();
     _scrollController.dispose();
+    _audioRecorder.dispose();
+    _audioPlayer.dispose();
     super.dispose();
   }
 
@@ -73,9 +85,272 @@ class _ChatScreenState extends State<ChatScreen> {
     return '$displayHour:$minute $period';
   }
 
+  Future<void> _playAudio(String audioUrl) async {
+    if (_currentlyPlayingAudioUrl == audioUrl) {
+      // If the same audio is playing, stop it
+      await _audioPlayer.stop();
+      setState(() {
+        _currentlyPlayingAudioUrl = null;
+      });
+    } else {
+      // Stop any currently playing audio
+      if (_currentlyPlayingAudioUrl != null) {
+        await _audioPlayer.stop();
+      }
+      // Play the new audio
+      await _audioPlayer.play(UrlSource(audioUrl));
+      setState(() {
+        _currentlyPlayingAudioUrl = audioUrl;
+      });
+
+      // Listen for when the audio finishes
+      _audioPlayer.onPlayerComplete.listen((event) {
+        setState(() {
+          _currentlyPlayingAudioUrl = null;
+          _isPlayingRecorded = false;
+        });
+      });
+    }
+  }
+
+  Future<void> _playRecordedAudio() async {
+    if (_recordedFilePath == null) return;
+    if (_isPlayingRecorded) {
+      await _audioPlayer.pause();
+      setState(() {
+        _isPlayingRecorded = false;
+      });
+    } else {
+      await _audioPlayer.play(DeviceFileSource(_recordedFilePath!));
+      setState(() {
+        _isPlayingRecorded = true;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
+    Widget inputWidget;
+    if (_showRecordingUI) {
+      inputWidget = Container(
+        height: 50,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(30),
+          border: Border.all(color: Colors.grey, width: 1),
+        ),
+        child: GestureDetector(
+          onTap: () async {
+            final path = await _audioRecorder.stop();
+            setState(() {
+              _isRecording = false;
+              _recordedFilePath = path;
+              _showRecordingUI = false;
+              _showPlaybackUI = true;
+            });
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Recording stopped'),
+                backgroundColor: Colors.green,
+              ),
+            );
+          },
+          child: Center(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.mic, color: Colors.red),
+                SizedBox(width: 10),
+                Text(
+                  'Recording... Tap to stop',
+                  style: TextStyle(color: Colors.red),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    } else if (_showPlaybackUI) {
+      inputWidget = Container(
+        height: 50,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(30),
+          border: Border.all(color: Colors.grey, width: 1),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: GestureDetector(
+                onTap: _playRecordedAudio,
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 20),
+                  child: Row(
+                    children: [
+                      Icon(
+                        _isPlayingRecorded ? Icons.pause : Icons.play_arrow,
+                        color: Colors.black,
+                      ),
+                      SizedBox(width: 10),
+                      Text(
+                        'Play Recorded Audio',
+                        style: TextStyle(color: Colors.black),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(right: 10),
+              child: GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _showPlaybackUI = false;
+                    _recordedFilePath = null;
+                    _isPlayingRecorded = false;
+                  });
+                },
+                child: Icon(Icons.cancel, color: Colors.black),
+              ),
+            ),
+          ],
+        ),
+      );
+    } else {
+      inputWidget = Container(
+        height: 50,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(30),
+          border: Border.all(color: Colors.grey, width: 1),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(left: 20),
+                child: TextField(
+                  controller: _controller,
+                  decoration: const InputDecoration(
+                    hintText: 'Message',
+                    border: InputBorder.none,
+                  ),
+                  style: const TextStyle(color: Colors.black),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(right: 10),
+              child: GestureDetector(
+                onTap: () async {
+                  final ImagePicker picker = ImagePicker();
+                  final List<XFile> images = await picker.pickMultiImage();
+                  for (var image in images) {
+                    // Ensure the chat document exists
+                    final chatDoc = FirebaseFirestore.instance
+                        .collection('chats')
+                        .doc(chatId);
+                    final docSnapshot = await chatDoc.get();
+                    if (!docSnapshot.exists) {
+                      await chatDoc.set({
+                        'employerId': widget.employerId,
+                        'providerId': widget.providerId,
+                        'chatPartnerName': widget.chatPartnerName,
+                      });
+                    }
+                    final file = File(image.path);
+                    final fileName =
+                        '${DateTime.now().millisecondsSinceEpoch}_${image.name}';
+                    final storageRef = FirebaseStorage.instance
+                        .ref()
+                        .child('Chat Images')
+                        .child(fileName);
+                    final uploadTask = storageRef.putFile(file);
+                    final snapshot = await uploadTask.whenComplete(() {});
+                    final downloadUrl = await snapshot.ref.getDownloadURL();
+                    final currentUserId =
+                        FirebaseAuth.instance.currentUser!.uid;
+                    final receiverId = currentUserId == widget.employerId
+                        ? widget.providerId
+                        : widget.employerId;
+                    final message = {
+                      'imageUrl': downloadUrl,
+                      'senderId': currentUserId,
+                      'receiverId': receiverId,
+                      'timestamp': FieldValue.serverTimestamp(),
+                      'type': 'image',
+                      'read': false,
+                    };
+                    await FirebaseFirestore.instance
+                        .collection('chats')
+                        .doc(chatId)
+                        .collection('messages')
+                        .add(message);
+                  }
+                },
+                child: const Icon(Icons.image, color: Colors.black),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(right: 10),
+              child: GestureDetector(
+                onTap: () async {
+                  if (_isRecording) {
+                    final path = await _audioRecorder.stop();
+                    setState(() {
+                      _isRecording = false;
+                      _recordedFilePath = path;
+                      _showRecordingUI = false;
+                      _showPlaybackUI = true;
+                    });
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Recording stopped'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  } else {
+                    final micStatus = await Permission.microphone.request();
+                    if (!micStatus.isGranted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Microphone permission required'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                      return;
+                    }
+                    final path =
+                        '${Directory.systemTemp.path}/audio_${DateTime.now().millisecondsSinceEpoch}.m4a';
+                    await _audioRecorder.start(
+                      const RecordConfig(),
+                      path: path,
+                    );
+                    setState(() {
+                      _isRecording = true;
+                      _recordedFilePath = null;
+                      _showRecordingUI = true;
+                    });
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Recording started...'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                },
+                child: Icon(
+                  Icons.mic,
+                  color: _isRecording ? Colors.red : Colors.black,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
     return Scaffold(
       body: SafeArea(
         child: StreamBuilder<QuerySnapshot>(
@@ -181,30 +456,6 @@ class _ChatScreenState extends State<ChatScreen> {
                           ],
                         ),
                         const Spacer(),
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => VoiceCallScreen(
-                                  businessName: widget.chatPartnerName,
-                                  providerId: widget.providerId,
-                                  callerId: widget.employerId,
-                                ),
-                              ),
-                            );
-                          },
-                          child: Container(
-                            width: screenWidth * 0.12,
-                            height: screenWidth * 0.12,
-                            decoration: const BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(Icons.phone, color: Colors.black),
-                          ),
-                        ),
-                        SizedBox(width: screenWidth * 0.025),
                         StreamBuilder<DocumentSnapshot>(
                           stream: FirebaseFirestore.instance
                               .collection('serviceProviders')
@@ -293,15 +544,69 @@ class _ChatScreenState extends State<ChatScreen> {
                                 children: [
                                   msg['type'] == 'text'
                                       ? Text(
-                                          msg['text'],
+                                          msg['text'] ?? '',
                                           style: const TextStyle(
                                             color: Colors.black,
                                           ),
                                         )
-                                      : Image.network(
+                                      : msg['type'] == 'audio'
+                                      ? GestureDetector(
+                                          onTap: () {
+                                            if (msg['audioUrl'] != null) {
+                                              _playAudio(msg['audioUrl']);
+                                            }
+                                          },
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 12,
+                                              vertical: 8,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color:
+                                                  _currentlyPlayingAudioUrl ==
+                                                      msg['audioUrl']
+                                                  ? Colors.blue.withOpacity(0.2)
+                                                  : Colors.grey.withOpacity(
+                                                      0.1,
+                                                    ),
+                                              borderRadius:
+                                                  BorderRadius.circular(20),
+                                            ),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Icon(
+                                                  _currentlyPlayingAudioUrl ==
+                                                          msg['audioUrl']
+                                                      ? Icons.pause
+                                                      : Icons.play_arrow,
+                                                  color: Colors.black,
+                                                  size: 20,
+                                                ),
+                                                const SizedBox(width: 8),
+                                                Text(
+                                                  _currentlyPlayingAudioUrl ==
+                                                          msg['audioUrl']
+                                                      ? 'Playing...'
+                                                      : '🎵 Audio',
+                                                  style: const TextStyle(
+                                                    color: Colors.black,
+                                                    fontSize: 14,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        )
+                                      : msg['imageUrl'] != null
+                                      ? Image.network(
                                           msg['imageUrl'],
                                           width: 200,
                                           height: 200,
+                                        )
+                                      : const Text(
+                                          'Image not available',
+                                          style: TextStyle(color: Colors.grey),
                                         ),
                                   const SizedBox(height: 5),
                                   Text(
@@ -327,124 +632,69 @@ class _ChatScreenState extends State<ChatScreen> {
                     ),
                     child: Row(
                       children: [
-                        Expanded(
-                          child: Container(
-                            height: 50,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(30),
-                              border: Border.all(color: Colors.grey, width: 1),
-                            ),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(left: 20),
-                                    child: TextField(
-                                      controller: _controller,
-                                      decoration: const InputDecoration(
-                                        hintText: 'Message',
-                                        border: InputBorder.none,
-                                      ),
-                                      style: const TextStyle(
-                                        color: Colors.black,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.only(right: 10),
-                                  child: GestureDetector(
-                                    onTap: () async {
-                                      final ImagePicker picker = ImagePicker();
-                                      final List<XFile> images = await picker
-                                          .pickMultiImage();
-                                      for (var image in images) {
-                                        // Ensure the chat document exists
-                                        final chatDoc = FirebaseFirestore
-                                            .instance
-                                            .collection('chats')
-                                            .doc(chatId);
-                                        final docSnapshot = await chatDoc.get();
-                                        if (!docSnapshot.exists) {
-                                          await chatDoc.set({
-                                            'employerId': widget.employerId,
-                                            'providerId': widget.providerId,
-                                            'chatPartnerName':
-                                                widget.chatPartnerName,
-                                          });
-                                        }
-                                        final file = File(image.path);
-                                        final fileName =
-                                            '${DateTime.now().millisecondsSinceEpoch}_${image.name}';
-                                        final storageRef = FirebaseStorage
-                                            .instance
-                                            .ref()
-                                            .child('Chat Images')
-                                            .child(fileName);
-                                        final uploadTask = storageRef.putFile(
-                                          file,
-                                        );
-                                        final snapshot = await uploadTask
-                                            .whenComplete(() {});
-                                        final downloadUrl = await snapshot.ref
-                                            .getDownloadURL();
-                                        final currentUserId = FirebaseAuth
-                                            .instance
-                                            .currentUser!
-                                            .uid;
-                                        final receiverId =
-                                            currentUserId == widget.employerId
-                                            ? widget.providerId
-                                            : widget.employerId;
-                                        final message = {
-                                          'imageUrl': downloadUrl,
-                                          'senderId': currentUserId,
-                                          'receiverId': receiverId,
-                                          'timestamp':
-                                              FieldValue.serverTimestamp(),
-                                          'type': 'image',
-                                          'read': false,
-                                        };
-                                        await FirebaseFirestore.instance
-                                            .collection('chats')
-                                            .doc(chatId)
-                                            .collection('messages')
-                                            .add(message);
-                                      }
-                                    },
-                                    child: const Icon(
-                                      Icons.image,
-                                      color: Colors.black,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
+                        Expanded(child: inputWidget),
                         const SizedBox(width: 10),
                         GestureDetector(
                           onTap: () async {
-                            if (_controller.text.isNotEmpty) {
-                              // Ensure the chat document exists
-                              final chatDoc = FirebaseFirestore.instance
+                            // Ensure the chat document exists
+                            final chatDoc = FirebaseFirestore.instance
+                                .collection('chats')
+                                .doc(chatId);
+                            final docSnapshot = await chatDoc.get();
+                            if (!docSnapshot.exists) {
+                              await chatDoc.set({
+                                'employerId': widget.employerId,
+                                'providerId': widget.providerId,
+                                'chatPartnerName': widget.chatPartnerName,
+                              });
+                            }
+                            final currentUserId =
+                                FirebaseAuth.instance.currentUser!.uid;
+                            final receiverId =
+                                currentUserId == widget.employerId
+                                ? widget.providerId
+                                : widget.employerId;
+
+                            if (_recordedFilePath != null) {
+                              // Send audio message
+                              final file = File(_recordedFilePath!);
+                              final fileName =
+                                  'audio_${DateTime.now().millisecondsSinceEpoch}.m4a';
+                              final storageRef = FirebaseStorage.instance
+                                  .ref()
+                                  .child('Chat Audio')
+                                  .child(fileName);
+                              final uploadTask = storageRef.putFile(file);
+                              final snapshot = await uploadTask.whenComplete(
+                                () {},
+                              );
+                              final downloadUrl = await snapshot.ref
+                                  .getDownloadURL();
+                              final message = {
+                                'audioUrl': downloadUrl,
+                                'senderId': currentUserId,
+                                'receiverId': receiverId,
+                                'timestamp': FieldValue.serverTimestamp(),
+                                'type': 'audio',
+                                'read': false,
+                              };
+                              await FirebaseFirestore.instance
                                   .collection('chats')
-                                  .doc(chatId);
-                              final docSnapshot = await chatDoc.get();
-                              if (!docSnapshot.exists) {
-                                await chatDoc.set({
-                                  'employerId': widget.employerId,
-                                  'providerId': widget.providerId,
-                                  'chatPartnerName': widget.chatPartnerName,
-                                });
-                              }
-                              final currentUserId =
-                                  FirebaseAuth.instance.currentUser!.uid;
-                              final receiverId =
-                                  currentUserId == widget.employerId
-                                  ? widget.providerId
-                                  : widget.employerId;
+                                  .doc(chatId)
+                                  .collection('messages')
+                                  .add(message);
+                              setState(() {
+                                _recordedFilePath = null;
+                                _showPlaybackUI = false;
+                              });
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Voice message sent!'),
+                                  backgroundColor: Colors.green,
+                                ),
+                              );
+                            } else if (_controller.text.isNotEmpty) {
+                              // Send text message
                               final message = {
                                 'text': _controller.text,
                                 'senderId': currentUserId,
