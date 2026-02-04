@@ -598,6 +598,7 @@ class _WorkerSkillsJobDetailsScreenState
       setState(() {
         _jobCategoryId = selected['id']?.toString();
         _jobCategory = (selected['name'] ?? '').toString();
+        _jobCategoryCtrl.text = _jobCategory ?? '';
       });
       _recalcProgress();
     }
