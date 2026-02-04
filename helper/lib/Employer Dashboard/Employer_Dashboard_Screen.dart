@@ -351,7 +351,7 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
           context,
           MaterialPageRoute(
             builder: (context) =>
-              WorkerDetailsScreen(providerId: docId, data: d, workerId: ''),
+                WorkerDetailsScreen(providerId: docId, data: d, workerId: ''),
           ),
         );
       },
@@ -463,44 +463,77 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
       return;
     }
 
+    print('Current user UID: ${currentUser.uid}');
+
     // For employer dashboard, receiver is employer
     bool isEmployer = true;
 
     List<String> notifications = [];
     try {
       // Fetch unread messages
-      final snapshot = await FirebaseFirestore.instance
-          .collectionGroup('messages')
-          .where('receiverId', isEqualTo: currentUser.uid)
-          .get();
+      try {
+        final snapshot = await FirebaseFirestore.instance
+            .collectionGroup('messages')
+            .where('receiverId', isEqualTo: currentUser.uid)
+            .get();
 
-      for (var doc in snapshot.docs) {
-        final data = doc.data();
-        final read = data['read'] as bool? ?? false;
-        if (read) continue; // skip read messages
+        print('Unread messages docs: ${snapshot.docs.length}');
 
-        final senderId = data['senderId'] as String?;
-        if (senderId == null) continue;
+        for (var doc in snapshot.docs) {
+          final data = doc.data();
+          final read = data['read'] as bool? ?? false;
+          if (read) continue; // skip read messages
 
-        String name = '';
-        if (isEmployer) {
-          // Sender is worker, from Sign Up
-          final senderDoc = await FirebaseFirestore.instance
-              .collection('Sign Up')
-              .doc(senderId)
-              .get();
-          if (senderDoc.exists) {
-            final senderData = senderDoc.data();
-            name = senderData?['fullName'] ?? '';
+          final senderId = data['senderId'] as String?;
+          if (senderId == null) continue;
+
+          String name = '';
+          if (isEmployer) {
+            // Sender is worker, from Sign Up
+            final senderDoc = await FirebaseFirestore.instance
+                .collection('Sign Up')
+                .doc(senderId)
+                .get();
+            if (senderDoc.exists) {
+              final senderData = senderDoc.data();
+              name = senderData?['fullName'] ?? '';
+            }
+          }
+          if (name.isNotEmpty) {
+            notifications.add('You have a message from $name');
           }
         }
-        if (name.isNotEmpty) {
-          notifications.add('You have a message from $name');
+      } catch (e) {
+        print('Error fetching unread messages: $e');
+      }
+
+      // Fetch admin support messages
+      final supportSnapshot = await FirebaseFirestore.instance
+          .collection('Support Issues')
+          .where('userId', isEqualTo: currentUser.uid)
+          .get();
+
+      print('Support Issues docs: ${supportSnapshot.docs.length}');
+
+      for (var doc in supportSnapshot.docs) {
+        final data = doc.data();
+        print('Support doc data: $data');
+        final messages = data['messages'] as List<dynamic>? ?? [];
+        print('Messages in doc: $messages');
+        for (var msg in messages) {
+          if (msg is Map<String, dynamic> && msg['sender'] == 'admin') {
+            final message = msg['message'] as String? ?? '';
+            final status = msg['status'] as String? ?? '';
+            notifications.add('Support ($status): $message');
+            print('Added admin message: Support ($status): $message');
+          }
         }
       }
     } catch (e) {
       print('Error fetching notifications: $e');
     }
+
+    print('Total notifications: ${notifications.length}');
 
     if (!mounted) return;
 

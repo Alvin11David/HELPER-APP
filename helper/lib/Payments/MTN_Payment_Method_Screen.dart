@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'dart:convert';
+import 'package:helper/Document%20Upload/Select_Worker_Type_Screen.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -232,7 +233,7 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
           Future.delayed(const Duration(seconds: 2), () {
             Navigator.of(context).push(
               MaterialPageRoute(
-                builder: (context) => const RoleSelectionScreen(),
+                builder: (context) => const SelectWorkerTypeScreen(),
               ),
             );
           });
@@ -770,7 +771,7 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
                                     Navigator.of(context).push(
                                       MaterialPageRoute(
                                         builder: (context) =>
-                                            const RoleSelectionScreen(),
+                                            const SelectWorkerTypeScreen(),
                                       ),
                                     );
                                   }
@@ -792,7 +793,7 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
                                 children: [
                                   Text(
                                     _isPaymentSuccessful
-                                        ? 'Go To Role Selection'
+                                        ? 'Go To Worker Type Selection'
                                         : 'Waiting for Payment...',
                                     style: TextStyle(
                                       fontSize: screenWidth * 0.045,

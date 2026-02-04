@@ -96,6 +96,34 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
     }
   }
 
+  Future<bool> _hasWorkerData() async {
+    try {
+      User? user = FirebaseAuth.instance.currentUser;
+      if (user == null) return false;
+      DocumentSnapshot doc = await FirebaseFirestore.instance
+          .collection('serviceProviders')
+          .doc(user.uid)
+          .get();
+      return doc.exists;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<void> _switchRole(String newRole) async {
+    try {
+      User? user = FirebaseAuth.instance.currentUser;
+      if (user == null) return;
+      await FirebaseFirestore.instance
+          .collection('Sign Up')
+          .doc(user.uid)
+          .update({'role': newRole});
+      setState(() => _userRole = newRole);
+    } catch (e) {
+      print('Error switching role: $e');
+    }
+  }
+
   Future<bool?> _fetchVerifiedStatus() async {
     try {
       User? user = FirebaseAuth.instance.currentUser;
@@ -425,7 +453,84 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                             ),
                           ),
                           const SizedBox(height: 20),
-                          if (_userRole == 'worker')
+                          // Switch role row
+                          FutureBuilder<bool>(
+                            future: _hasWorkerData(),
+                            builder: (context, snapshot) {
+                              bool hasWorker = snapshot.data ?? false;
+                              if (_userRole == 'employer' && hasWorker) {
+                                return GestureDetector(
+                                  onTap: () async {
+                                    // Switch to worker
+                                    await _switchRole('worker');
+                                    toggleDrawer();
+                                    Navigator.pushReplacement(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => const WorkersDashboardScreen(),
+                                      ),
+                                    );
+                                  },
+                                  child: Padding(
+                                    padding: EdgeInsets.only(left: 8, right: 8),
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          Icons.swap_horiz,
+                                          color: Colors.black.withOpacity(0.6),
+                                        ),
+                                        SizedBox(width: 15),
+                                        Text(
+                                          "Switch to Worker",
+                                          style: TextStyle(
+                                            color: Colors.black,
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              } else if (_userRole == 'worker') {
+                                return GestureDetector(
+                                  onTap: () async {
+                                    // Switch to employer
+                                    await _switchRole('employer');
+                                    toggleDrawer();
+                                    Navigator.pushReplacement(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => const EmployerDashboardScreen(),
+                                      ),
+                                    );
+                                  },
+                                  child: Padding(
+                                    padding: EdgeInsets.only(left: 8, right: 8),
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          Icons.swap_horiz,
+                                          color: Colors.black.withOpacity(0.6),
+                                        ),
+                                        SizedBox(width: 15),
+                                        Text(
+                                          "Switch to Employer",
+                                          style: TextStyle(
+                                            color: Colors.black,
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              }
+                              return const SizedBox.shrink();
+                            },
+                          ),
+                          const SizedBox(height: 20),
                             GestureDetector(
                               onTap: () => setState(() => _selectedIndex = 1),
                               child: Padding(

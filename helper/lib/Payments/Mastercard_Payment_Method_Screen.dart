@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'dart:convert';
+import 'package:helper/Document%20Upload/Select_Worker_Type_Screen.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -251,7 +252,7 @@ class _MasterCardPaymentMethodScreenState
           Future.delayed(const Duration(seconds: 2), () {
             Navigator.of(context).push(
               MaterialPageRoute(
-                builder: (context) => const RoleSelectionScreen(),
+                builder: (context) => const SelectWorkerTypeScreen(),
               ),
             );
           });
@@ -1055,7 +1056,7 @@ class _MasterCardPaymentMethodScreenState
                                     Navigator.of(context).push(
                                       MaterialPageRoute(
                                         builder: (context) =>
-                                            const RoleSelectionScreen(),
+                                            const SelectWorkerTypeScreen(),
                                       ),
                                     );
                                   }
@@ -1079,7 +1080,7 @@ class _MasterCardPaymentMethodScreenState
                                 children: [
                                   Text(
                                     _isPaymentSuccessful
-                                        ? 'Go To Role Selection'
+                                        ? 'Go To Worker Type Selection'
                                         : 'Processing Payment...',
                                     style: TextStyle(
                                       fontSize: screenWidth * 0.045,

@@ -9,7 +9,7 @@
 
 import { setGlobalOptions } from "firebase-functions";
 import { onCall, onRequest } from "firebase-functions/v2/https";
-import { onDocumentCreated } from "firebase-functions/v2/firestore";
+import { onDocumentCreated, onDocumentUpdated } from "firebase-functions/v2/firestore";
 import * as logger from "firebase-functions/logger";
 import * as nodemailer from "nodemailer";
 import * as admin from "firebase-admin";

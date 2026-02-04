@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:helper/Document%20Upload/Select_Worker_Type_Screen.dart';
 import 'package:helper/Intro/Role_Selection_Screen.dart';
 
 class AirtelPaymentMethodScreen extends StatefulWidget {
@@ -200,7 +201,7 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
           Future.delayed(const Duration(seconds: 2), () {
             Navigator.of(context).push(
               MaterialPageRoute(
-                builder: (context) => const RoleSelectionScreen(),
+                builder: (context) => const SelectWorkerTypeScreen(),
               ),
             );
           });
@@ -754,12 +755,12 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
                                       Navigator.of(context).push(
                                         MaterialPageRoute(
                                           builder: (context) =>
-                                              const RoleSelectionScreen(),
+                                              const SelectWorkerTypeScreen(),
                                         ),
                                       );
                                     },
                                     child: Text(
-                                      'Go To Role Selection',
+                                      'Go To Worker Type Selection',
                                       style: TextStyle(
                                         fontSize: screenWidth * 0.045,
                                         fontWeight: FontWeight.bold,
