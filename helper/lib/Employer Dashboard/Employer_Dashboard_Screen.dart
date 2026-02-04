@@ -116,6 +116,8 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _processPendingRescheduleNotifications();
       _listenForRescheduleNotifications();
+      _processPendingJobCompletionNotifications();
+      _listenForJobCompletionNotifications();
     });
   }
 
@@ -149,6 +151,159 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
             }
           }
         });
+  }
+
+  void _listenForJobCompletionNotifications() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    FirebaseFirestore.instance
+        .collection('notifications')
+        .where('toUserId', isEqualTo: user.uid)
+        .where('read', isEqualTo: false)
+        .snapshots()
+        .listen((snap) {
+          for (final doc in snap.docs) {
+            final d = doc.data();
+            if (d['type'] == 'job_completed_request') {
+              _showJobCompletedPopup(
+                context,
+                notifId: doc.id,
+                bookingId: d['bookingId'],
+              );
+              break; // show one at a time
+            }
+          }
+        });
+  }
+
+  Future<void> _processPendingJobCompletionNotifications() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final snap = await FirebaseFirestore.instance
+        .collection('notifications')
+        .where('toUserId', isEqualTo: user.uid)
+        .where('read', isEqualTo: false)
+        .where('type', isEqualTo: 'job_completed_request')
+        .get();
+
+    if (snap.docs.isEmpty) return;
+
+    final doc = snap.docs.first;
+    final d = doc.data();
+    await _showJobCompletedPopup(
+      context,
+      notifId: doc.id,
+      bookingId: d['bookingId'],
+    );
+  }
+
+  Future<void> _showJobCompletedPopup(
+    BuildContext context, {
+    required String notifId,
+    required String bookingId,
+  }) async {
+    final bookingSnap = await FirebaseFirestore.instance
+        .collection('bookings')
+        .doc(bookingId)
+        .get();
+    final b = bookingSnap.data() ?? {};
+
+    final workerId = (b['serviceProviderId'] ?? '').toString();
+
+    if (!mounted) return;
+
+    await showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Job Completed'),
+        content: const Text(
+          'The worker marked this job as completed. Do you confirm completion?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () async {
+              final employerId = FirebaseAuth.instance.currentUser?.uid;
+
+              await FirebaseFirestore.instance
+                  .collection('bookings')
+                  .doc(bookingId)
+                  .update({
+                'completion.status': 'declined',
+                'completion.employerDecisionById': employerId,
+                'completion.decidedAt': FieldValue.serverTimestamp(),
+                'status': 'in_progress',
+                'updatedAt': FieldValue.serverTimestamp(),
+              });
+
+              await FirebaseFirestore.instance
+                  .collection('notifications')
+                  .doc(notifId)
+                  .update({'read': true});
+
+              if (workerId.isNotEmpty) {
+                await FirebaseFirestore.instance.collection('notifications').add({
+                  'type': 'job_completed_response',
+                  'decision': 'declined',
+                  'toUserId': workerId,
+                  'fromUserId': employerId,
+                  'bookingId': bookingId,
+                  'read': false,
+                  'createdAt': FieldValue.serverTimestamp(),
+                  'title': 'Completion declined',
+                  'message': 'Employer declined the job completion request',
+                });
+              }
+
+              if (!context.mounted) return;
+              Navigator.pop(context);
+            },
+            child: const Text('Decline'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final employerId = FirebaseAuth.instance.currentUser?.uid;
+
+              await FirebaseFirestore.instance
+                  .collection('bookings')
+                  .doc(bookingId)
+                  .update({
+                'completion.status': 'confirmed',
+                'completion.employerDecisionById': employerId,
+                'completion.decidedAt': FieldValue.serverTimestamp(),
+                'status': 'completed',
+                'completedAt': FieldValue.serverTimestamp(),
+                'updatedAt': FieldValue.serverTimestamp(),
+              });
+
+              await FirebaseFirestore.instance
+                  .collection('notifications')
+                  .doc(notifId)
+                  .update({'read': true});
+
+              if (workerId.isNotEmpty) {
+                await FirebaseFirestore.instance.collection('notifications').add({
+                  'type': 'job_completed_response',
+                  'decision': 'accepted',
+                  'toUserId': workerId,
+                  'fromUserId': employerId,
+                  'bookingId': bookingId,
+                  'read': false,
+                  'createdAt': FieldValue.serverTimestamp(),
+                  'title': 'Completion confirmed',
+                  'message': 'Employer confirmed job completion',
+                });
+              }
+
+              if (!context.mounted) return;
+              Navigator.pop(context);
+            },
+            child: const Text('Confirm'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _showReschedulePopup(

@@ -23,19 +23,25 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
 
   int _tab = 0; // 0 pending, 1 active, 2 completed, 3 cancelled
 
+  // Automatic job start timer
+  Timer? _autoStartTimer;
+
   // Conflict detection state
   int _conflictCount = 0;
   StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _conflictsSub;
 
   @override
+  @override
   void initState() {
     super.initState();
     _tab = widget.initialTab;
     _listenConflictsBadge();
+    _startAutoStartTimer(); // Start checking for jobs to auto-start
   }
 
   @override
   void dispose() {
+    _autoStartTimer?.cancel();
     _conflictsSub?.cancel();
     super.dispose();
   }
@@ -259,6 +265,35 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
   Future<void> _startJob(String bookingId) async {
     final workerId = widget.providerId;
     try {
+      // Fetch booking to check scheduled start time
+      final bookingSnap = await FirebaseFirestore.instance
+          .collection('bookings')
+          .doc(bookingId)
+          .get();
+
+      if (!bookingSnap.exists) {
+        _toast("Booking not found");
+        return;
+      }
+
+      final bookingData = bookingSnap.data();
+      final startDt = bookingData?['startDateTime'];
+
+      if (startDt != null) {
+        final startDateTime = (startDt is Timestamp)
+            ? startDt.toDate()
+            : (startDt as DateTime?);
+
+        if (startDateTime != null &&
+            DateTime.now().isBefore(startDateTime)) {
+          _toast(
+            "Scheduled date has not yet reached, please wait for ${_formatDateTime(startDateTime)}",
+          );
+          return;
+        }
+      }
+
+      // Proceed with starting the job
       await FirebaseFirestore.instance
           .collection('bookings')
           .doc(bookingId)
@@ -272,6 +307,70 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
     } catch (e) {
       _toast("Start job error: $e");
     }
+  }
+
+  String _formatDateTime(DateTime dt) {
+    final month = dt.month;
+    final day = dt.day;
+    final year = dt.year;
+    final hour = dt.hour;
+    final minute = dt.minute;
+    final ampm = hour >= 12 ? 'PM' : 'AM';
+    final displayHour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
+
+    return "${'Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec'.split(',')[month - 1]} $day, $year at $displayHour:${minute.toString().padLeft(2, '0')} $ampm";
+  }
+
+  /// Automatically start jobs when their scheduled start time is reached
+  Future<void> _checkAndAutoStartJobs() async {
+    final workerId = widget.providerId;
+    try {
+      // Query all pending jobs for this worker
+      final pendingSnap = await FirebaseFirestore.instance
+          .collection('bookings')
+          .where('serviceProviderId', isEqualTo: workerId)
+          .where('status', isEqualTo: 'pending')
+          .get();
+
+      final now = DateTime.now();
+
+      for (final doc in pendingSnap.docs) {
+        final data = doc.data();
+        final startDt = data['startDateTime'];
+
+        if (startDt != null) {
+          final startDateTime = (startDt is Timestamp)
+              ? startDt.toDate()
+              : (startDt as DateTime?);
+
+          // If scheduled start time has passed, auto-start the job
+          if (startDateTime != null && now.isAfter(startDateTime)) {
+            await FirebaseFirestore.instance
+                .collection('bookings')
+                .doc(doc.id)
+                .update({
+                  'status': 'in_progress',
+                  'updatedAt': FieldValue.serverTimestamp(),
+                  'startedAt': FieldValue.serverTimestamp(),
+                  'startedBy': workerId,
+                });
+            print('Auto-started job: ${doc.id}');
+          }
+        }
+      }
+    } catch (e) {
+      print('Error auto-starting jobs: $e');
+    }
+  }
+
+  /// Start periodic check for auto-starting jobs
+  void _startAutoStartTimer() {
+    _autoStartTimer?.cancel();
+    // Check every 30 seconds
+    _checkAndAutoStartJobs(); // Initial check
+    _autoStartTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      _checkAndAutoStartJobs();
+    });
   }
 
   // ---------------------- Streams / UI ----------------------
@@ -344,6 +443,96 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
               onDelete: () async => await _cancelBooking(bookingId),
               onResume: () => _toast('Resume (hook API later)'),
               onPause: () => _toast('Pause (hook API later)'),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _activeJobsStream(double w, double h) {
+    final workerId = widget.providerId;
+
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: FirebaseFirestore.instance
+          .collection('bookings')
+          .where('serviceProviderId', isEqualTo: workerId)
+          .where(
+            'status',
+            whereIn: const ['confirmed', 'in_progress', 'started', 'completed_pending'],
+          )
+          .orderBy('createdAt', descending: true)
+          .snapshots(),
+      builder: (context, snap) {
+        if (snap.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snap.hasError) {
+          return Center(
+            child: Text(
+              'Error: ${snap.error}',
+              style: const TextStyle(color: Colors.white),
+            ),
+          );
+        }
+
+        final docs = snap.data?.docs ?? [];
+        if (docs.isEmpty) {
+          return const Center(
+            child: Text(
+              'No active jobs',
+              style: TextStyle(color: Colors.white),
+            ),
+          );
+        }
+
+        return ListView.separated(
+          padding: EdgeInsets.only(bottom: h * 0.02),
+          itemCount: docs.length,
+          separatorBuilder: (_, __) => SizedBox(height: h * 0.012),
+          itemBuilder: (_, i) {
+            final d = docs[i].data();
+            final bookingId = docs[i].id;
+            final status = (d['status'] ?? 'confirmed').toString();
+
+            String statusLabel;
+            if (status == 'completed_pending') {
+              statusLabel = 'Completed (Awaiting Employer)';
+            } else if (status == 'in_progress') {
+              statusLabel = 'In Progress';
+            } else if (status == 'started') {
+              statusLabel = 'Started';
+            } else {
+              statusLabel = 'Confirmed';
+            }
+
+            final jobItem = _JobItem(
+              employerName: d['employerName'] ?? 'Employer',
+              jobDesc: d['jobDescription'] ?? '',
+              payment: "${d['amount'] ?? '0'}",
+              location: d['jobLocationText'] ?? 'Unknown',
+              category: 'Booking',
+              duration: d['pricingType'] ?? 'Fixed',
+              timeRemaining: statusLabel,
+              specialNotes: d['specialNotes'] ?? '',
+              pricingType: d['pricingType'] ?? 'Fixed',
+              paymentAmount: "${d['amount'] ?? '0'}",
+            );
+
+            return _JobCard(
+              w: w,
+              h: h,
+              tab: _tab,
+              job: jobItem,
+              onTap: () => _openBookingDetails(
+                bookingId: bookingId,
+                bookingData: d,
+                tab: _tab,
+              ),
+              onResume: () => _toast('Resume not implemented yet'),
+              onPause: () => _toast('Pause not implemented yet'),
+              onAccept: () async {},
+              onDelete: () async => await _cancelBooking(bookingId),
             );
           },
         );
@@ -528,7 +717,7 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
                 SizedBox(height: h * 0.014),
                 Expanded(child: () {
                   if (_tab == 0) return _pendingJobsStream(w, h);
-                  if (_tab == 1) return _jobsByStatusStream(w, h, 'confirmed');
+                  if (_tab == 1) return _activeJobsStream(w, h);
                   if (_tab == 2) return _jobsByStatusStream(w, h, 'completed');
                   if (_tab == 3) return _jobsByStatusStream(w, h, 'cancelled');
                   return _rescheduleStream(w, h);
