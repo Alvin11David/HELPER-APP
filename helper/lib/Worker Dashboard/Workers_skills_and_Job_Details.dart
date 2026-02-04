@@ -37,6 +37,7 @@ class _WorkerSkillsJobDetailsScreenState
   String? _jobCategory;
   final _businessNameCtrl = TextEditingController();
   final _skillsDescCtrl = TextEditingController();
+  final _jobCategoryCtrl = TextEditingController();
   String? _yearsExp; // required
   String? _pricingType; // required
   final _amountCtrl = TextEditingController();
