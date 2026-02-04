@@ -100,7 +100,7 @@ class _EmployerNotificationsState extends State<EmployerNotifications> {
                             senderName,
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
-                              fontSize: 16,
+                              fontSize: 12,
                             ),
                           ),
                           const Spacer(),
@@ -127,7 +127,7 @@ class _EmployerNotificationsState extends State<EmployerNotifications> {
                         ],
                       ),
                       const SizedBox(height: 8),
-                      Text(message, style: const TextStyle(fontSize: 14)),
+                      Text(message, style: const TextStyle(fontSize: 12)),
                       const SizedBox(height: 8),
                       Text(
                         formattedTime,
