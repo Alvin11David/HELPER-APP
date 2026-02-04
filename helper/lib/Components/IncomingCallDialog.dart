@@ -29,7 +29,7 @@ class _IncomingCallDialogState extends State<IncomingCallDialog> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            '📞 Incoming call dialog shown for: ${widget.callerName}',
+            '📞 Incoming LiveKit voice call from: ${widget.callerName}',
           ),
           backgroundColor: Colors.blue,
           duration: const Duration(seconds: 3),
@@ -71,7 +71,9 @@ class _IncomingCallDialogState extends State<IncomingCallDialog> {
   void _acceptCall() async {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('✅ Call accepted - connecting...'),
+        content: Text(
+          '✅ LiveKit call accepted - generating token and connecting...',
+        ),
         backgroundColor: Colors.green,
         duration: Duration(seconds: 2),
       ),
@@ -101,7 +103,7 @@ class _IncomingCallDialogState extends State<IncomingCallDialog> {
   void _declineCall() async {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('❌ Call declined'),
+        content: Text('❌ LiveKit call declined'),
         backgroundColor: Colors.red,
         duration: Duration(seconds: 2),
       ),

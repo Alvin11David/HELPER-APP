@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
+import 'package:intl/intl.dart';
 import 'package:helper/Components/User_Name.dart';
-import 'package:helper/Components/CallNowButton.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:helper/Employer%20Dashboard/job_detail_booking_screen.dart';
@@ -374,63 +374,62 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                     ),
                     Positioned(
                       top: h * 0.4 + 60,
-                      left: w * 0.04,
-                      child: Row(
-                        children: [
-                          CallNowButton(
-                            providerId:
-                                widget.data?['uid'] ?? widget.providerId,
-                            businessName: _businessName ?? 'Provider',
-                          ),
-                          const SizedBox(width: 10),
-                          GestureDetector(
-                            onTap: () {
-                              final businessName = _businessName ?? 'Provider';
-                              final providerId =
-                                  widget.data?['uid'] ?? widget.providerId;
-                              final employerId =
-                                  FirebaseAuth.instance.currentUser!.uid;
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => ChatScreen(
-                                    chatPartnerName: businessName,
-                                    providerId: providerId,
-                                    employerId: employerId,
-                                  ),
-                                ),
-                              );
-                            },
-                            child: Container(
-                              width: 148,
-                              height: 30,
-                              decoration: const BoxDecoration(
-                                color: Color(0xFFFFA10D),
-                                borderRadius: BorderRadius.all(
-                                  Radius.circular(20),
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.chat,
-                                    color: Colors.white,
-                                    size: 16,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  const Text(
-                                    'Message',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 12,
+                      right: w * 0.31,
+                      child: Center(
+                        child: Row(
+                          children: [
+                            GestureDetector(
+                              onTap: () {
+                                final businessName =
+                                    _businessName ?? 'Provider';
+                                final providerId =
+                                    widget.data?['uid'] ?? widget.providerId;
+                                final employerId =
+                                    FirebaseAuth.instance.currentUser!.uid;
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => ChatScreen(
+                                      chatPartnerName: businessName,
+                                      providerId: providerId,
+                                      employerId: employerId,
                                     ),
                                   ),
-                                ],
+                                );
+                              },
+                              child: Center(
+                                child: Container(
+                                  width: 148,
+                                  height: 30,
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFFFFA10D),
+                                    borderRadius: BorderRadius.all(
+                                      Radius.circular(20),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.chat,
+                                        color: Colors.white,
+                                        size: 16,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      const Text(
+                                        'Message',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                     Positioned(
@@ -611,14 +610,16 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                       child: RichText(
                         text: TextSpan(
                           text:
-                              '${_businessName ?? ''} prefers ${_pricingType ?? ''} which is\n',
+                              '${_businessName ?? ''} prefers ${_pricingType ?? ''} which\nis ',
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 14,
                           ),
                           children: [
                             TextSpan(
-                              text: _amount != null ? _amount.toString() : '',
+                              text: _amount != null
+                                  ? NumberFormat('#,##0').format(_amount)
+                                  : '',
                               style: const TextStyle(
                                 color: Colors.orange,
                                 fontSize: 18,
@@ -667,7 +668,15 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                       ),
                     ),
                     Positioned(
-                      top: h * 0.4 + 480,
+                      top: h * 0.4 + 470,
+                      left: w * 0.04,
+                      child: const Text(
+                        'Tap the orange underlined text to navigate to the worker\'s location',
+                        style: TextStyle(color: Colors.white70, fontSize: 10),
+                      ),
+                    ),
+                    Positioned(
+                      top: h * 0.4 + 485,
                       left: w * 0.04,
                       child: const Text(
                         'Reviews and Ratings',
@@ -679,7 +688,7 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                       ),
                     ),
                     Positioned(
-                      top: h * 0.4 + 510,
+                      top: h * 0.4 + 520,
                       left: w * 0.04,
                       child: const Text(
                         'Rate this service',
@@ -687,7 +696,7 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                       ),
                     ),
                     Positioned(
-                      top: h * 0.4 + 540,
+                      top: h * 0.4 + 550,
                       left: w * 0.04,
                       child: Row(
                         children: List.generate(
@@ -704,7 +713,7 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                       ),
                     ),
                     Positioned(
-                      top: h * 0.4 + 580,
+                      top: h * 0.4 + 590,
                       left: w * 0.04,
                       child: Container(
                         width: 320,
@@ -996,13 +1005,17 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Text(
-                              'Hire ${_businessName?.isNotEmpty ?? false ? _businessName : "Provider"}',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: w * 0.045,
-                                fontWeight: FontWeight.bold,
-                                fontFamily: "Poppins",
+                            Flexible(
+                              child: Text(
+                                'Hire ${_businessName?.isNotEmpty ?? false ? _businessName : "Provider"}',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: w * 0.045,
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: "Poppins",
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
                               ),
                             ),
                           ],

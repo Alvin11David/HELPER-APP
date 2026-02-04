@@ -37,6 +37,7 @@ class _WorkerSkillsJobDetailsScreenState
   String? _jobCategory;
   final _businessNameCtrl = TextEditingController();
   final _skillsDescCtrl = TextEditingController();
+  final _jobCategoryCtrl = TextEditingController();
   String? _yearsExp; // required
   String? _pricingType; // required
   final _amountCtrl = TextEditingController();
@@ -82,6 +83,7 @@ class _WorkerSkillsJobDetailsScreenState
     _businessNameCtrl.addListener(_recalcProgress);
     _skillsDescCtrl.addListener(_recalcProgress);
     _amountCtrl.addListener(_recalcProgress);
+    _jobCategoryCtrl.addListener(_recalcProgress);
     _workplaceCtrl.addListener(_recalcProgress);
     _recalcProgress();
     _loadCategories().then((_) {
@@ -99,6 +101,7 @@ class _WorkerSkillsJobDetailsScreenState
           } else {
             _jobCategoryId = null;
           }
+          _jobCategoryCtrl.text = _jobCategory ?? '';
         });
         _recalcProgress();
       }
@@ -113,6 +116,7 @@ class _WorkerSkillsJobDetailsScreenState
     _businessNameCtrl.dispose();
     _skillsDescCtrl.dispose();
     _amountCtrl.dispose();
+    _jobCategoryCtrl.dispose();
     _workplaceCtrl.dispose();
     _debounce?.cancel();
     super.dispose();
@@ -133,7 +137,7 @@ class _WorkerSkillsJobDetailsScreenState
     int done = 0;
 
     // Step 1 required (6)
-    if (_jobCategory != null) done++;
+    if (_jobCategoryCtrl.text.trim().isNotEmpty) done++;
     if (_businessNameCtrl.text.trim().isNotEmpty) done++;
     if (_skillsDescCtrl.text.trim().isNotEmpty) done++;
     if (_yearsExp != null) done++;
@@ -279,6 +283,7 @@ class _WorkerSkillsJobDetailsScreenState
                 } else {
                   _jobCategoryId = null; // Custom profession not in Firestore
                 }
+                _jobCategoryCtrl.text = _jobCategory ?? '';
               });
               _recalcProgress();
             }
@@ -597,6 +602,7 @@ class _WorkerSkillsJobDetailsScreenState
       setState(() {
         _jobCategoryId = selected['id']?.toString();
         _jobCategory = (selected['name'] ?? '').toString();
+        _jobCategoryCtrl.text = _jobCategory ?? '';
       });
       _recalcProgress();
     }
@@ -890,15 +896,17 @@ class _WorkerSkillsJobDetailsScreenState
         children: [
           _label('Job Category', w),
           SizedBox(height: h * 0.012),
-          _designPickerPill(
+          _pillTextFieldWithIcon(
             w: w,
             h: h,
-            text:
-                _jobCategory ??
-                (_loadingCategories
-                    ? 'Loading categories...'
-                    : 'Select Job Category'),
-            onTap: _loadingCategories ? () {} : () => _pickJobCategory(),
+            controller: _jobCategoryCtrl,
+            hint: 'Enter or select Your Job Category',
+            onIconTap: _loadingCategories ? () {} : () => _pickJobCategory(),
+            onChanged: (v) => setState(() => _jobCategory = v),
+            validator: (v) {
+              if ((v ?? '').trim().isEmpty) return 'Job category is required';
+              return null;
+            },
           ),
 
           SizedBox(height: h * 0.018),
@@ -1389,6 +1397,71 @@ class _WorkerSkillsJobDetailsScreenState
           border: InputBorder.none,
           isCollapsed: true,
           contentPadding: EdgeInsets.symmetric(vertical: fieldH * 0.22),
+        ),
+      ),
+    );
+  }
+
+  Widget _pillTextFieldWithIcon({
+    required double w,
+    required double h,
+    required TextEditingController controller,
+    required String hint,
+    required VoidCallback onIconTap,
+    TextInputType keyboardType = TextInputType.text,
+    List<TextInputFormatter>? inputFormatters,
+    String? Function(String?)? validator,
+    ValueChanged<String>? onChanged,
+  }) {
+    final fieldH = h * 0.065;
+    return Container(
+      height: fieldH,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(30),
+      ),
+      padding: EdgeInsets.symmetric(horizontal: w * 0.05),
+      alignment: Alignment.centerLeft,
+      child: TextFormField(
+        controller: controller,
+        keyboardType: keyboardType,
+        inputFormatters: inputFormatters,
+        validator: (v) {
+          final res = validator?.call(v);
+          WidgetsBinding.instance.addPostFrameCallback(
+            (_) => _recalcProgress(),
+          );
+          return res;
+        },
+        onChanged: (v) {
+          onChanged?.call(v);
+          _recalcProgress();
+        },
+        style: TextStyle(
+          color: Colors.black,
+          fontFamily: 'Inter',
+          fontWeight: FontWeight.w700,
+          fontSize: w * 0.038,
+        ),
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: TextStyle(
+            color: Colors.black.withOpacity(0.55),
+            fontFamily: 'Inter',
+            fontWeight: FontWeight.w700,
+            fontSize: w * 0.035,
+          ),
+          border: InputBorder.none,
+          isCollapsed: true,
+          contentPadding: EdgeInsets.symmetric(vertical: fieldH * 0.22),
+          suffixIcon: IconButton(
+            icon: Icon(
+              Icons.arrow_drop_down,
+              color: Colors.black,
+              size: w * 0.06,
+            ),
+            onPressed: onIconTap,
+          ),
         ),
       ),
     );

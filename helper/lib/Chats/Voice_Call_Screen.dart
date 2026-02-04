@@ -3,11 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:helper/Chats/overlays/incoming_call_overlay_service.dart';
 import 'package:helper/main.dart';
-import 'package:flutter_webrtc/flutter_webrtc.dart';
+import 'package:livekit_client/livekit_client.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:audio_session/audio_session.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 
 class VoiceCallScreen extends StatefulWidget {
   final String businessName;
@@ -31,16 +32,12 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
   bool _volumeClicked = false;
   bool _micClicked = true;
 
-  RTCPeerConnection? _peerConnection;
-  MediaStream? _localStream;
-  MediaStream? _remoteStream;
-  RTCVideoRenderer _remoteRenderer = RTCVideoRenderer();
+  late Room _room;
 
   late CollectionReference _callsRef;
   late DocumentReference _callDoc;
 
   StreamSubscription? _callSub;
-  StreamSubscription? _iceSub;
 
   String _callStatus = 'ringing';
 
@@ -57,7 +54,7 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
   @override
   void initState() {
     super.initState();
-    _remoteRenderer.initialize();
+    _room = Room();
     _callsRef = FirebaseFirestore.instance.collection('calls');
     _callDoc = _callsRef.doc(callId);
     _init();
@@ -66,10 +63,6 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
   Future<void> _init() async {
     await _configureAudioSession();
     await _startCall();
-  }
-
-  Future<void> _forceAudioToSpeaker() async {
-    await Helper.setSpeakerphoneOn(true);
   }
 
   Future<void> _configureAudioSession() async {
@@ -95,12 +88,11 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
         ),
       );
       await session.setActive(true);
-      await _forceAudioToSpeaker();
       print('Audio session configured and activated');
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('✅ Audio session configured for voice chat'),
+          content: Text('✅ Audio session configured for LiveKit voice chat'),
           backgroundColor: Colors.green,
           duration: Duration(seconds: 2),
         ),
@@ -121,11 +113,7 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
   void dispose() {
     _callTimer?.cancel();
     _callSub?.cancel();
-    _iceSub?.cancel();
-    _peerConnection?.close();
-    _localStream?.dispose();
-    _remoteStream?.dispose();
-    _remoteRenderer.dispose();
+    _room.disconnect();
     _deactivateAudioSession();
     super.dispose();
   }
@@ -158,183 +146,84 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('✅ Microphone permission granted'),
+        content: Text('✅ Microphone permission granted for LiveKit calls'),
         backgroundColor: Colors.green,
         duration: Duration(seconds: 2),
       ),
     );
 
-    _localStream = await navigator.mediaDevices.getUserMedia({
-      'audio': {
-        'echoCancellation': true,
-        'noiseSuppression': true,
-        'autoGainControl': true,
-        'sampleRate': 16000,
-        'channelCount': 1,
-      },
-      'video': false,
-    });
+    // Connect to LiveKit room
+    try {
+      // Get token from Cloud Function
+      final user = FirebaseAuth.instance.currentUser!;
+      final callable = FirebaseFunctions.instance.httpsCallable(
+        'generateLiveKitToken',
+      );
+      final result = await callable.call({
+        'roomName': callId,
+        'identity': user.uid,
+      });
+      final token = result.data['token'] as String;
 
-    print('Local stream obtained: ${_localStream?.id}');
-    print('Local audio tracks: ${_localStream?.getAudioTracks().length}');
-
-    if (_localStream?.getAudioTracks().isEmpty ?? true) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('❌ No audio tracks found in local stream'),
+          content: Text('✅ LiveKit token generated via Cloud Function'),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 2),
+        ),
+      );
+
+      // Replace with your LiveKit server URL
+      const serverUrl = 'wss://helpers-app-r1bkn34h.livekit.cloud';
+      await _room.connect(serverUrl, token);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('✅ Connected to LiveKit room successfully'),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 2),
+        ),
+      );
+
+      // Enable microphone for voice transmission
+      await _room.localParticipant?.setMicrophoneEnabled(true);
+      _room.events.listen((RoomEvent event) {
+        // Handle room events here if needed
+        if (event is RoomDisconnectedEvent) {
+          print('Room disconnected');
+          Navigator.of(context).pop();
+        }
+        // Add more event handling as needed
+      });
+      print('Connected to LiveKit room: $callId');
+    } catch (e) {
+      print('Error connecting to room: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '❌ Failed to generate token or connect to LiveKit room: $e',
+          ),
           backgroundColor: Colors.red,
           duration: Duration(seconds: 4),
         ),
       );
-    } else {
+      return;
+    }
+
+    await _setupSignaling();
+  }
+
+  void _onParticipantEvent(ParticipantEvent event) {
+    if (event is TrackSubscribedEvent && event.track.kind == TrackType.AUDIO) {
+      print('Remote audio track subscribed');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            '✅ Local audio stream ready (${_localStream!.getAudioTracks().length} track(s))',
-          ),
+        const SnackBar(
+          content: Text('✅ Remote audio connected via LiveKit'),
           backgroundColor: Colors.green,
           duration: Duration(seconds: 2),
         ),
       );
     }
-
-    // Ensure local audio tracks are enabled
-    _localStream?.getAudioTracks().forEach((track) {
-      print('Enabling local audio track: ${track.id}');
-      track.enabled = true;
-    });
-
-    await _createPeerConnection();
-    await _setupSignaling();
-  }
-
-  Future<void> _createPeerConnection() async {
-    final config = {
-      'iceServers': [
-        {'urls': 'stun:stun.l.google.com:19302'},
-        {'urls': 'stun:stun1.l.google.com:19302'},
-      ],
-    };
-
-    _peerConnection = await createPeerConnection(config);
-
-    _peerConnection!.onIceCandidate = (candidate) {
-      if (candidate.candidate != null) {
-        final collection = isCaller ? 'callerCandidates' : 'calleeCandidates';
-
-        _callDoc.collection(collection).add({
-          'candidate': candidate.candidate,
-          'sdpMid': candidate.sdpMid,
-          'sdpMLineIndex': candidate.sdpMLineIndex,
-        });
-      }
-    };
-
-    // Handle remote tracks when they arrive
-    _peerConnection!.onTrack = (event) {
-      print('Received remote track: ${event.track.kind}');
-      if (event.track.kind == 'audio') {
-        _forceAudioToSpeaker();
-        setState(() {
-          _remoteStream = event.streams[0];
-          _remoteRenderer.srcObject = _remoteStream;
-        });
-
-        // Enable all remote audio tracks
-        _remoteStream?.getAudioTracks().forEach((track) {
-          track.enabled = true;
-          print('Enabling remote audio track: ${track.id}');
-        });
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '✅ Remote audio stream received (${_remoteStream!.getAudioTracks().length} track(s))',
-            ),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 3),
-          ),
-        );
-      }
-    };
-
-    _peerConnection!.onConnectionState = (state) {
-      print('Peer connection state changed: $state');
-
-      String message;
-      Color bgColor;
-      switch (state) {
-        case RTCPeerConnectionState.RTCPeerConnectionStateConnected:
-          message = '✅ Peer connection established - voice should work now';
-          bgColor = Colors.green;
-          break;
-        case RTCPeerConnectionState.RTCPeerConnectionStateFailed:
-          message = '❌ Peer connection failed - cannot transmit voice';
-          bgColor = Colors.red;
-          break;
-        case RTCPeerConnectionState.RTCPeerConnectionStateDisconnected:
-          message = '⚠️ Peer connection lost - voice transmission interrupted';
-          bgColor = Colors.orange;
-          break;
-        default:
-          message = '🔄 Connection state: ${state.toString().split('.').last}';
-          bgColor = Colors.blue;
-      }
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(message),
-          backgroundColor: bgColor,
-          duration: Duration(
-            seconds:
-                state == RTCPeerConnectionState.RTCPeerConnectionStateConnected
-                ? 2
-                : 4,
-          ),
-        ),
-      );
-    };
-
-    _peerConnection!.onIceConnectionState = (state) {
-      print('ICE connection state changed: $state');
-
-      if (state == RTCIceConnectionState.RTCIceConnectionStateFailed) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              '❌ ICE connection failed - network issue preventing voice',
-            ),
-            backgroundColor: Colors.red,
-            duration: Duration(seconds: 4),
-          ),
-        );
-      } else if (state ==
-          RTCIceConnectionState.RTCIceConnectionStateConnected) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('✅ ICE connection established'),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 2),
-          ),
-        );
-      }
-    };
-
-    // Add local tracks to peer connection
-    for (var track in _localStream!.getTracks()) {
-      print('Adding local track: ${track.kind}');
-      await _peerConnection!.addTrack(track, _localStream!);
-    }
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          '🔄 Peer connection created - waiting for ${isCaller ? 'callee' : 'caller'} to connect',
-        ),
-        backgroundColor: Colors.blue,
-        duration: Duration(seconds: 3),
-      ),
-    );
   }
 
   Future<void> _setupSignaling() async {
@@ -342,7 +231,8 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
       if (!snapshot.exists) {
         if (isCaller && !_offerCreated) {
           _offerCreated = true;
-          await _createOffer();
+          // For LiveKit, call initiation can be done via Firestore
+          await _callDoc.set({'status': 'ringing'});
         }
         return;
       }
@@ -355,6 +245,11 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
       if (status != null && status != _callStatus) {
         setState(() => _callStatus = status);
 
+        if (status == 'ringing' && !isCaller) {
+          // Show incoming call overlay for the callee
+          _showIncomingCallOverlay();
+        }
+
         if (status == 'accepted') {
           _startCallTimer();
           print('Call accepted - starting timer');
@@ -362,22 +257,12 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text(
-                '📞 Call connected - voice transmission should work now',
+                '📞 Call connected via LiveKit - voice transmission active',
               ),
               backgroundColor: Colors.green,
               duration: Duration(seconds: 3),
             ),
           );
-
-          // Ensure remote audio tracks are enabled when call is accepted
-          Future.delayed(const Duration(milliseconds: 500), () {
-            _remoteStream?.getAudioTracks().forEach((track) {
-              if (!track.enabled) {
-                print('Re-enabling remote audio track: ${track.id}');
-                track.enabled = true;
-              }
-            });
-          });
         }
 
         if (status == 'declined' || status == 'ended') {
@@ -393,66 +278,7 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
           Navigator.of(context).pop();
         }
       }
-
-      if (!isCaller && data['offer'] != null) {
-        final desc = await _peerConnection!.getRemoteDescription();
-        if (desc == null) {
-          await _peerConnection!.setRemoteDescription(
-            RTCSessionDescription(data['offer']['sdp'], data['offer']['type']),
-          );
-          await _createAnswer();
-          await _callDoc.update({'status': 'accepted'});
-        }
-      }
-
-      if (isCaller && data['answer'] != null) {
-        final desc = await _peerConnection!.getRemoteDescription();
-        if (desc == null) {
-          await _peerConnection!.setRemoteDescription(
-            RTCSessionDescription(
-              data['answer']['sdp'],
-              data['answer']['type'],
-            ),
-          );
-        }
-      }
     });
-
-    final remoteCandidates = isCaller ? 'calleeCandidates' : 'callerCandidates';
-
-    _iceSub = _callDoc.collection(remoteCandidates).snapshots().listen((
-      snapshot,
-    ) async {
-      final desc = await _peerConnection!.getRemoteDescription();
-      if (desc == null) return;
-
-      for (var change in snapshot.docChanges) {
-        final data = change.doc.data();
-        if (data != null) {
-          await _peerConnection!.addCandidate(
-            RTCIceCandidate(
-              data['candidate'],
-              data['sdpMid'],
-              data['sdpMLineIndex'],
-            ),
-          );
-        }
-      }
-    });
-  }
-
-  Future<void> _createOffer() async {
-    final offer = await _peerConnection!.createOffer();
-    await _peerConnection!.setLocalDescription(offer);
-
-    await _callDoc.set({'offer': offer.toMap(), 'status': 'ringing'});
-  }
-
-  Future<void> _createAnswer() async {
-    final answer = await _peerConnection!.createAnswer();
-    await _peerConnection!.setLocalDescription(answer);
-
-    await _callDoc.update({'answer': answer.toMap()});
   }
 
   void _startCallTimer() {
@@ -468,8 +294,7 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
   }
 
   Future<void> _endCall() async {
-    await _peerConnection?.close();
-    await _localStream?.dispose();
+    await _room.disconnect();
     await _callDoc.update({'status': 'ended'});
     Navigator.of(context).pop();
   }
@@ -489,15 +314,6 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
           ),
           child: Stack(
             children: [
-              Positioned(
-                width: 0,
-                height: 0,
-                child: RTCVideoView(
-                  _remoteRenderer,
-                  objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
-                  mirror: false,
-                ),
-              ),
               Positioned(
                 top: 20,
                 left: 0,
@@ -592,17 +408,17 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
                         ),
                       ),
                       GestureDetector(
-                        onTap: () {
+                        onTap: () async {
                           setState(() => _micClicked = !_micClicked);
-                          _localStream?.getAudioTracks().forEach(
-                            (t) => t.enabled = _micClicked,
+                          await _room.localParticipant?.setMicrophoneEnabled(
+                            _micClicked,
                           );
 
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(
                                 _micClicked
-                                    ? '🎤 Microphone enabled - you can now speak'
+                                    ? '🎤 Microphone enabled for LiveKit transmission'
                                     : '🔇 Microphone muted - other person cannot hear you',
                               ),
                               backgroundColor: _micClicked
@@ -649,21 +465,41 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
       ),
     );
   }
+
+  void _showIncomingCallOverlay() {
+    final BuildContext? ctx = appNavKey.currentContext;
+    if (ctx != null) {
+      IncomingCallOverlayService.instance.show(
+        context: ctx,
+        businessName: widget.businessName,
+        subtitle: 'Incoming voice call',
+        timeText: '9:45AM',
+        avatarImage: widget.portfolioImageUrl != null
+            ? NetworkImage(widget.portfolioImageUrl!)
+            : const AssetImage('assets/images/person.png'),
+        onDecline: () async {
+          await _callDoc.update({'status': 'declined'});
+        },
+        onAnswer: () async {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('📞 Accepting call - updating status...'),
+              backgroundColor: Colors.blue,
+              duration: Duration(seconds: 2),
+            ),
+          );
+          await _callDoc.update({'status': 'accepted'});
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('✅ Status update sent to Firestore'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 2),
+            ),
+          );
+        },
+      );
+    }
+  }
 }
 
 // ===================================================================
-
-void _showIncomingCallOverlay() {
-  final BuildContext? ctx = appNavKey.currentContext;
-  if (ctx != null) {
-    IncomingCallOverlayService.instance.show(
-      context: ctx,
-      businessName: 'Business Name',
-      subtitle: 'Incoming voice call',
-      timeText: '9:45AM',
-      avatarImage: const AssetImage('assets/images/person.png'),
-      onDecline: () {},
-      onAnswer: () {},
-    );
-  }
-}

@@ -22,6 +22,29 @@ class _ChatListScreenState extends State<ChatListScreen> {
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
+
+    // Show current user info
+    User? currentUser = FirebaseAuth.instance.currentUser;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (currentUser != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '👤 Current User: ${currentUser.uid.substring(0, 15)}...',
+            ),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('❌ No user logged in!'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    });
+
     _fetchChats();
   }
 
@@ -35,9 +58,24 @@ class _ChatListScreenState extends State<ChatListScreen> {
     User? user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       print('No current user');
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('❌ No current user logged in')),
+        );
+      });
       return;
     }
     print('Fetching chats for user: ${user.uid}');
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '🔍 Fetching chats for: ${user.uid.substring(0, 10)}...',
+          ),
+        ),
+      );
+    });
 
     // Query chats where current user is employer or provider
     QuerySnapshot chatSnapshot = await FirebaseFirestore.instance
@@ -55,12 +93,39 @@ class _ChatListScreenState extends State<ChatListScreen> {
       ...providerChats.docs,
     ];
 
-    print('Found ${allChats.length} chat documents');
+    print('Employer chats found: ${chatSnapshot.docs.length}');
+    print('Provider chats found: ${providerChats.docs.length}');
+    print('Total chats found: ${allChats.length}');
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '📊 Found: ${chatSnapshot.docs.length} as employer, ${providerChats.docs.length} as provider',
+          ),
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    });
+
+    for (var doc in allChats) {
+      print('Chat document ID: ${doc.id}');
+      print('Chat data: ${doc.data()}');
+    }
 
     List<Map<String, dynamic>> fetchedChats = [];
     for (var doc in allChats) {
       String chatId = doc.id;
       print('Checking chat: $chatId');
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('💬 Checking chat: ${chatId.substring(0, 15)}...'),
+          ),
+        );
+      });
+
       // Check if there are messages in the subcollection
       QuerySnapshot messagesSnapshot = await FirebaseFirestore.instance
           .collection('chats')
@@ -71,6 +136,29 @@ class _ChatListScreenState extends State<ChatListScreen> {
           .get();
 
       print('Messages in $chatId: ${messagesSnapshot.docs.length}');
+      if (messagesSnapshot.docs.isNotEmpty) {
+        print('Last message data: ${messagesSnapshot.docs.first.data()}');
+
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                '✅ Found ${messagesSnapshot.docs.length} messages in chat',
+              ),
+              backgroundColor: Colors.green,
+            ),
+          );
+        });
+      } else {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('❌ No messages in chat ${chatId.substring(0, 15)}'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        });
+      }
       if (messagesSnapshot.docs.isNotEmpty) {
         var lastMessageDoc = messagesSnapshot.docs.first;
         String otherId = doc['employerId'] == user.uid
@@ -166,7 +254,36 @@ class _ChatListScreenState extends State<ChatListScreen> {
       chats = fetchedChats;
       hasMessages = chats.isNotEmpty;
     });
-    print('hasMessages: $hasMessages, chats count: ${chats.length}');
+    print(
+      'FINAL RESULT: hasMessages: $hasMessages, chats count: ${chats.length}',
+    );
+    for (var chat in chats) {
+      print(
+        'Chat in list: ${chat['displayName']}, lastMessage: ${chat['lastMessage']}',
+      );
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (hasMessages) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '🎉 Success! Found ${chats.length} chats with messages',
+            ),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('⚠️ No chats with messages found'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    });
   }
 
   Widget _getProfileImage(Map<String, dynamic> chat, double size) {

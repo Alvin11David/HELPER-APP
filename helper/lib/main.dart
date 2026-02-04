@@ -6,11 +6,16 @@ import 'firebase_options.dart';
 import 'package:helper/Components/IncomingCallDialog.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 final GlobalKey<NavigatorState> appNavKey = GlobalKey<NavigatorState>();
 
 // Global flag to prevent multiple call dialogs
 bool _isCallDialogShowing = false;
+
+// Local notifications plugin
+final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+    FlutterLocalNotificationsPlugin();
 
 // Background message handler
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -36,6 +41,14 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
+  // Initialize local notifications
+  const AndroidInitializationSettings initializationSettingsAndroid =
+      AndroidInitializationSettings('@mipmap/ic_launcher');
+  const InitializationSettings initializationSettings = InitializationSettings(
+    android: initializationSettingsAndroid,
+  );
+  await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+
   // Request notification permissions
   await FirebaseMessaging.instance.requestPermission(
     alert: true,
@@ -47,29 +60,14 @@ void main() async {
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
   // Set up global foreground FCM listener for incoming calls
-  FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+  FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
     print('=== GLOBAL FCM onMessage RECEIVED ===');
     print('Message data: ${message.data}');
     print(
       'Message notification: ${message.notification?.title} - ${message.notification?.body}',
     );
 
-    // Show snackbar for any FCM message received
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final context = appNavKey.currentContext;
-      if (context != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '📨 FCM Message: ${message.data['type'] ?? 'unknown'}',
-            ),
-            backgroundColor: Colors.purple,
-            duration: const Duration(seconds: 3),
-          ),
-        );
-      }
-    });
-
+    // Handle different message types
     if (message.data['type'] == 'call') {
       print(
         'Call notification detected globally! Call ID: ${message.data['callId']}, Caller: ${message.data['callerName']}',
@@ -81,9 +79,11 @@ void main() async {
         if (context != null) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('📞 Call from: ${message.data['callerName']}'),
-              backgroundColor: Colors.orange,
-              duration: const Duration(seconds: 4),
+              content: Text(
+                '📞 Incoming call from ${message.data['callerName'] ?? 'Unknown'}',
+              ),
+              backgroundColor: Colors.green,
+              duration: const Duration(seconds: 5),
             ),
           );
         }
@@ -93,17 +93,6 @@ void main() async {
       final context = appNavKey.currentContext;
       if (context != null && !_isCallDialogShowing) {
         _isCallDialogShowing = true;
-
-        // Show snackbar before showing dialog
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('🎯 Showing incoming call dialog...'),
-              backgroundColor: Colors.green,
-              duration: Duration(seconds: 2),
-            ),
-          );
-        });
 
         showDialog(
           context: context,
@@ -134,6 +123,49 @@ void main() async {
           }
         });
       }
+    } else if (message.data['type'] == 'support_reply') {
+      // Show local notification for support reply
+      const AndroidNotificationDetails androidPlatformChannelSpecifics =
+          AndroidNotificationDetails(
+            'default', // Use the default channel we created
+            'Default Notifications',
+            channelDescription: 'Default notification channel',
+            importance: Importance.max,
+            priority: Priority.high,
+            showWhen: false,
+          );
+      const NotificationDetails platformChannelSpecifics = NotificationDetails(
+        android: androidPlatformChannelSpecifics,
+      );
+
+      await flutterLocalNotificationsPlugin.show(
+        0, // Notification ID
+        message.notification?.title ?? 'Support Reply',
+        message.notification?.body ?? 'You have a new support reply',
+        platformChannelSpecifics,
+      );
+    } else {
+      // Show local notification for other types (e.g., general notifications)
+      const AndroidNotificationDetails androidPlatformChannelSpecifics =
+          AndroidNotificationDetails(
+            'default', // Use the default channel we created
+            'Default Notifications',
+            channelDescription: 'Default notification channel',
+            importance: Importance.max,
+            priority: Priority.high,
+            showWhen: false,
+          );
+      const NotificationDetails platformChannelSpecifics = NotificationDetails(
+        android: androidPlatformChannelSpecifics,
+      );
+
+      await flutterLocalNotificationsPlugin.show(
+        DateTime.now().millisecondsSinceEpoch ~/
+            1000, // Unique ID based on timestamp
+        message.notification?.title ?? 'Notification',
+        message.notification?.body ?? 'You have a new notification',
+        platformChannelSpecifics,
+      );
     }
   });
 
