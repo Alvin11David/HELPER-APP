@@ -994,13 +994,17 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Text(
-                              'Hire ${_businessName?.isNotEmpty ?? false ? _businessName : "Provider"}',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: w * 0.045,
-                                fontWeight: FontWeight.bold,
-                                fontFamily: "Poppins",
+                            Flexible(
+                              child: Text(
+                                'Hire ${_businessName?.isNotEmpty ?? false ? _businessName : "Provider"}',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: w * 0.045,
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: "Poppins",
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
                               ),
                             ),
                           ],
