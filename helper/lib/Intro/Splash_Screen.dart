@@ -37,7 +37,8 @@ class _SplashScreenState extends State<SplashScreen> {
             .doc(user.uid)
             .get();
         if (doc.exists && doc.data() != null) {
-          String status = (doc.data() as Map<String, dynamic>)['status'] ?? 'active';
+          String status =
+              (doc.data() as Map<String, dynamic>)['status'] ?? 'active';
           if (status == 'suspended') {
             // Show suspended dialog and navigate to login
             showDialog(
@@ -53,7 +54,33 @@ class _SplashScreenState extends State<SplashScreen> {
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const PhoneNumberEmailAddressScreen(),
+                          builder: (context) =>
+                              const PhoneNumberEmailAddressScreen(),
+                        ),
+                      );
+                    },
+                    child: Text('OK'),
+                  ),
+                ],
+              ),
+            );
+          } else if (status == 'banned') {
+            // Show banned dialog and navigate to login
+            showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (context) => AlertDialog(
+                title: Text('Account Banned'),
+                content: Text('Your account has been banned.'),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              const PhoneNumberEmailAddressScreen(),
                         ),
                       );
                     },
