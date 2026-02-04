@@ -610,7 +610,7 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                       child: RichText(
                         text: TextSpan(
                           text:
-                              '${_businessName ?? ''} prefers ${_pricingType ?? ''} which\nis',
+                              '${_businessName ?? ''} prefers ${_pricingType ?? ''} which\nis ',
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 14,
