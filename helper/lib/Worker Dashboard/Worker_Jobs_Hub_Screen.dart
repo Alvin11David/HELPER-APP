@@ -8,10 +8,6 @@ import 'Workers_Reschedule_screen.dart';
 import 'Active_Job_detail.dart';
 
 
-
-
-
-
 class WorkerJobsHubScreen extends StatefulWidget {
   final String providerId;
   final int initialTab;
@@ -85,7 +81,7 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
       case 3:
         return "Cancelled Jobs";
       default:
-        return "Cancelled Jobs";
+        return "Reschedule Requests";
     }
   }
 
@@ -100,7 +96,7 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
       case 3:
         return "View all cancelled Jobs here";
       default:
-        return "View all cancelled Jobs here";
+        return "View reschedule requests and their status";
     }
   }
 
@@ -151,7 +147,12 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
                 if (!context.mounted) return;
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const ActiveJobScreen()),
+                  MaterialPageRoute(
+                    builder: (_) => ActiveJobScreen(
+                      bookingId: bookingId,
+                      bookingData: bookingData,
+                    ),
+                  ),
                 );
               }
             : null,
@@ -286,24 +287,27 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
           .orderBy('createdAt', descending: true)
           .snapshots(),
       builder: (context, snap) {
-        if (snap.connectionState == ConnectionState.waiting)
+        if (snap.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
-        if (snap.hasError)
+        }
+        if (snap.hasError) {
           return Center(
             child: Text(
               'Error: ${snap.error}',
               style: const TextStyle(color: Colors.white),
             ),
           );
+        }
 
         final docs = snap.data?.docs ?? [];
-        if (docs.isEmpty)
+        if (docs.isEmpty) {
           return const Center(
             child: Text(
               'No pending jobs',
               style: TextStyle(color: Colors.white),
             ),
           );
+        }
 
         return ListView.separated(
           padding: EdgeInsets.only(bottom: h * 0.02),
@@ -358,24 +362,27 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
           .orderBy('createdAt', descending: true)
           .snapshots(),
       builder: (context, snap) {
-        if (snap.connectionState == ConnectionState.waiting)
+        if (snap.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
-        if (snap.hasError)
+        }
+        if (snap.hasError) {
           return Center(
             child: Text(
               'Error: ${snap.error}',
               style: const TextStyle(color: Colors.white),
             ),
           );
+        }
 
         final docs = snap.data?.docs ?? [];
-        if (docs.isEmpty)
+        if (docs.isEmpty) {
           return Center(
             child: Text(
               'No $status jobs',
               style: const TextStyle(color: Colors.white),
             ),
           );
+        }
 
         return ListView.separated(
           padding: EdgeInsets.only(bottom: h * 0.02),
@@ -507,7 +514,6 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
                     ),
                   ),
                 ),
-                SizedBox(height: h * 0.012),
                 Row(children: [
                   _TabChip(text: 'Pending', active: _tab == 0, bg: _tabChipColor(0), fg: _tabChipTextColor(0), badgeCount: _conflictCount, onTap: () => _setTab(0)),
                   SizedBox(width: w * 0.02),
@@ -516,19 +522,69 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
                   _TabChip(text: 'Completed', active: _tab == 2, bg: _tabChipColor(2), fg: _tabChipTextColor(2), onTap: () => _setTab(2)),
                   SizedBox(width: w * 0.02),
                   _TabChip(text: 'Cancelled', active: _tab == 3, bg: _tabChipColor(3), fg: _tabChipTextColor(3), onTap: () => _setTab(3)),
+                  SizedBox(width: w * 0.02),
+                  _TabChip(text: 'Reschedule', active: _tab == 4, bg: _tabChipColor(4), fg: _tabChipTextColor(4), onTap: () => _setTab(4)),
                 ]),
                 SizedBox(height: h * 0.014),
                 Expanded(child: () {
                   if (_tab == 0) return _pendingJobsStream(w, h);
                   if (_tab == 1) return _jobsByStatusStream(w, h, 'confirmed');
                   if (_tab == 2) return _jobsByStatusStream(w, h, 'completed');
-                  return _jobsByStatusStream(w, h, 'cancelled');
+                  if (_tab == 3) return _jobsByStatusStream(w, h, 'cancelled');
+                  return _rescheduleStream(w, h);
                 }()),
               ],
             ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _rescheduleStream(double w, double h) {
+    final workerId = widget.providerId;
+
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: FirebaseFirestore.instance
+          .collection('bookings')
+          .where('serviceProviderId', isEqualTo: workerId)
+          .where('status', whereIn: const ['reschedule_requested', 'confirmed', 'cancelled'])
+          .orderBy('updatedAt', descending: true)
+          .snapshots(),
+      builder: (context, snap) {
+        if (snap.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
+        if (snap.hasError) return Center(child: Text('Error: ${snap.error}', style: const TextStyle(color: Colors.white)));
+
+        final docs = (snap.data?.docs ?? []).where((d) => (d.data().containsKey('reschedule'))).toList();
+        if (docs.isEmpty) return const Center(child: Text('No reschedule requests', style: TextStyle(color: Colors.white)));
+
+        final pending = docs.where((d) => ((d.data()['reschedule'] ?? {})['employerDecision'] ?? 'pending') == 'pending').toList();
+        final accepted = docs.where((d) => ((d.data()['reschedule'] ?? {})['employerDecision'] ?? '') == 'accepted').toList();
+        final declined = docs.where((d) => ((d.data()['reschedule'] ?? {})['employerDecision'] ?? '') == 'declined').toList();
+
+        return ListView(
+          padding: EdgeInsets.only(bottom: h * 0.02),
+          children: [
+            if (pending.isNotEmpty) ...[
+              Padding(padding: EdgeInsets.symmetric(horizontal: w * 0.02), child: Text('Pending', style: TextStyle(color: Colors.white, fontFamily: 'Poppins', fontWeight: FontWeight.w900, fontSize: w * 0.04))),
+              SizedBox(height: h * 0.01),
+              for (final d in pending) _RescheduleCard(doc: d),
+              SizedBox(height: h * 0.02),
+            ],
+            if (accepted.isNotEmpty) ...[
+              Padding(padding: EdgeInsets.symmetric(horizontal: w * 0.02), child: Text('Accepted', style: TextStyle(color: Colors.white, fontFamily: 'Poppins', fontWeight: FontWeight.w900, fontSize: w * 0.04))),
+              SizedBox(height: h * 0.01),
+              for (final d in accepted) _RescheduleCard(doc: d),
+              SizedBox(height: h * 0.02),
+            ],
+            if (declined.isNotEmpty) ...[
+              Padding(padding: EdgeInsets.symmetric(horizontal: w * 0.02), child: Text('Declined', style: TextStyle(color: Colors.white, fontFamily: 'Poppins', fontWeight: FontWeight.w900, fontSize: w * 0.04))),
+              SizedBox(height: h * 0.01),
+              for (final d in declined) _RescheduleCard(doc: d),
+            ],
+          ],
+        );
+      },
     );
   }
 }
@@ -1253,7 +1309,52 @@ class _RescheduleCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(body: Center(child: Text('Reschedule screen (implement separately)')));
+    final w = MediaQuery.of(context).size.width;
+    final data = doc.data();
+    final res = (data['reschedule'] ?? {}) as Map<String, dynamic>;
+    final proposedStart = (res['proposedStart'] as Timestamp?)?.toDate();
+    final proposedEnd = (res['proposedEnd'] as Timestamp?)?.toDate();
+    final decision = (res['employerDecision'] ?? 'pending').toString();
+
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: w * 0.02, vertical: 8),
+      padding: EdgeInsets.all(w * 0.04),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(data['employerName'] ?? 'Employer', style: TextStyle(fontWeight: FontWeight.w900, fontSize: w * 0.036)),
+        SizedBox(height: 6),
+        Text('Proposed: ${proposedStart ?? '-'} → ${proposedEnd ?? '-'}', style: TextStyle(fontSize: w * 0.032)),
+        SizedBox(height: 8),
+        Row(children: [
+          Expanded(child: Text('Status: ${decision.toUpperCase()}', style: TextStyle(fontWeight: FontWeight.w900, color: decision == 'accepted' ? Colors.green : decision == 'declined' ? Colors.red : Colors.orange))),
+          if (decision == 'pending') ...[
+            ElevatedButton(onPressed: () => _openBooking(context), style: ElevatedButton.styleFrom(backgroundColor: Colors.orange), child: const Text('View'))
+          ] else ...[
+            TextButton(onPressed: () => _openBooking(context), child: const Text('View'))
+          ]
+        ])
+      ]),
+    );
+  }
+
+  void _openBooking(BuildContext context) {
+    final data = doc.data();
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (_) => _BookingDetailsSheet(
+        bookingId: doc.id,
+        bookingData: data,
+        tab: 4,
+        accent: const Color(0xFFFFA10D),
+        onViewLocation: () {},
+        onAcceptPending: null,
+        onDeletePending: null,
+        onStartJob: null,
+        onReschedule: null,
+      ),
+    );
   }
 }
 

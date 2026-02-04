@@ -22,6 +22,14 @@
           }
         },
         {
+          "client_id": "981126213346-ksknju5ml6smffl68t2niuv5kap5vj1f.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.helpersapp.mobile",
+            "certificate_hash": "a39e19a5e4a11da7e82885ab2e355f77257d0bc5"
+          }
+        },
+        {
           "client_id": "981126213346-ud6u50o7tp9jm10c100tmrusv1o288f9.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {

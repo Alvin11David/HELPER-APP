@@ -516,7 +516,7 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                               const SizedBox(width: 10),
                               GestureDetector(
                                 onTap: _showNotifications,
-                                child: Container(
+                                child: SizedBox(
                                   width: 50, // Increased to accommodate badge
                                   height: 50, // Increased to accommodate badge
                                   child: Stack(

@@ -1,10 +1,15 @@
 // ignore_for_file: depend_on_referenced_packages
 
+import 'dart:async';
 import 'dart:ui';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 class ActiveJobScreen extends StatefulWidget {
-  const ActiveJobScreen({super.key});
+  final String? bookingId;
+  final Map<String, dynamic>? bookingData;
+
+  const ActiveJobScreen({super.key, this.bookingId, this.bookingData});
 
   @override
   State<ActiveJobScreen> createState() => _ActiveJobScreenState();
@@ -15,20 +20,21 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
 
   int _phase = 0; // 0 = summary, 1 = time & payment
 
-  // ---- Fake data (hook to real data later) ----
-  final String status = "On Job";
-  final String jobId = "ID Number";
-  final String jobCountdown = "00:00:00";
+  // ---- Data (populated from bookingData when available) ----
+  late Map<String, dynamic> bookingData;
+  String status = "On Job";
+  String jobId = "ID Number";
+  String jobCountdown = "00:00:00";
 
-  final String employerName = "Name";
-  final String jobCategory = "Category";
-  final String jobLocation = "Location";
-  final String jobDescription = "Description";
+  String employerName = "Name";
+  String jobCategory = "Category";
+  String jobLocation = "Location";
+  String jobDescription = "Description";
 
-  final String type = "Hour/Fixed";
-  final String totalTime = "Time";
-  final String elapsedTime = "Time";
-  final String amount = "Amount";
+  String type = "Hour/Fixed";
+  String totalTime = "Time";
+  String elapsedTime = "Time";
+  String amount = "Amount";
 
   void _back() {
     if (_phase == 0) {
@@ -43,8 +49,43 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
     setState(() => _phase = v);
   }
 
+  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _bookingSub;
+
+  @override
+  void initState() {
+    super.initState();
+    bookingData = widget.bookingData ?? <String, dynamic>{};
+    // If a bookingId was provided, subscribe to its document for live updates
+    if (widget.bookingId != null && widget.bookingId!.isNotEmpty) {
+      final docRef = FirebaseFirestore.instance.collection('bookings').doc(widget.bookingId);
+      _bookingSub = docRef.snapshots().listen((snap) {
+        if (snap.exists) {
+          final data = snap.data();
+          if (data != null) {
+            setState(() {
+              bookingData.addAll(data);
+            });
+          }
+        }
+      });
+    }
+  }
+
+
+  @override
+  void dispose() {
+    _bookingSub?.cancel();
+    super.dispose();
+  }
   @override
   Widget build(BuildContext context) {
+    // Populate display fields from bookingData if provided
+    final b = bookingData;
+    employerName = (b['employerName'] ?? employerName).toString();
+    jobCategory = (b['pricingType'] ?? jobCategory).toString();
+    jobLocation = (b['jobLocationText'] ?? jobLocation).toString();
+    jobDescription = (b['jobDescription'] ?? jobDescription).toString();
+    amount = (b['amount'] != null) ? b['amount'].toString() : amount;
     final w = MediaQuery.of(context).size.width;
     final h = MediaQuery.of(context).size.height;
 

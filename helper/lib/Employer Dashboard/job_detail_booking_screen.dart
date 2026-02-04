@@ -74,6 +74,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
   // ===================== PHASE 2 (Workers & Pricing) =====================
   String? _workingDays;
   String? _workingHours; // only for Per Hour
+  String? _workingDaysPerJob; // for Per Job (display only, not used in calculations)
   final _amountCtrl = TextEditingController();
 
   // ===================== PHASE 3 (Schedule / Calendar) =====================
@@ -1306,6 +1307,22 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
             onChanged: (v) {
               setState(() => _workingHours = v);
               _recalcAmount();
+            },
+          ),
+          SizedBox(height: h * 0.016),
+        ],
+
+        if (_isPerJob) ...[
+          _label("Number of Working Days", w),
+          SizedBox(height: h * 0.010),
+          _pillDropdown(
+            w: w,
+            h: h,
+            hint: "Select the number of working days",
+            value: _workingDaysPerJob,
+            items: List.generate(30, (i) => "${i + 1}"),
+            onChanged: (v) {
+              setState(() => _workingDaysPerJob = v);
             },
           ),
           SizedBox(height: h * 0.016),
