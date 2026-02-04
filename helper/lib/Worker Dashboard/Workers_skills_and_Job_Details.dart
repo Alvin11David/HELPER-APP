@@ -891,15 +891,17 @@ class _WorkerSkillsJobDetailsScreenState
         children: [
           _label('Job Category', w),
           SizedBox(height: h * 0.012),
-          _designPickerPill(
+          _pillTextFieldWithIcon(
             w: w,
             h: h,
-            text:
-                _jobCategory ??
-                (_loadingCategories
-                    ? 'Loading categories...'
-                    : 'Select Job Category'),
-            onTap: _loadingCategories ? () {} : () => _pickJobCategory(),
+            controller: _jobCategoryCtrl,
+            hint: 'Enter or select Your Job Category',
+            onIconTap: _loadingCategories ? () {} : () => _pickJobCategory(),
+            onChanged: (v) => setState(() => _jobCategory = v),
+            validator: (v) {
+              if ((v ?? '').trim().isEmpty) return 'Job category is required';
+              return null;
+            },
           ),
 
           SizedBox(height: h * 0.018),
@@ -1404,6 +1406,7 @@ class _WorkerSkillsJobDetailsScreenState
     TextInputType keyboardType = TextInputType.text,
     List<TextInputFormatter>? inputFormatters,
     String? Function(String?)? validator,
+    ValueChanged<String>? onChanged,
   }) {
     final fieldH = h * 0.065;
     return Container(
@@ -1425,7 +1428,10 @@ class _WorkerSkillsJobDetailsScreenState
           );
           return res;
         },
-        onChanged: (_) => _recalcProgress(),
+        onChanged: (v) {
+          onChanged?.call(v);
+          _recalcProgress();
+        },
         style: TextStyle(
           color: Colors.black,
           fontFamily: 'Inter',
