@@ -30,30 +30,58 @@ class _SplashScreenState extends State<SplashScreen> {
   Future<void> _checkAuthAndNavigate() async {
     User? user = FirebaseAuth.instance.currentUser;
     if (user != null) {
-      // User is signed in, fetch role
+      // User is signed in, fetch status and role
       try {
         DocumentSnapshot doc = await FirebaseFirestore.instance
             .collection('Sign Up')
             .doc(user.uid)
             .get();
         if (doc.exists && doc.data() != null) {
-          String role = (doc.data() as Map<String, dynamic>)['role'] ?? '';
-          Widget nextScreen;
-          if (role == 'employer') {
-            nextScreen = const EmployerDashboardScreen();
-          } else if (role == 'worker') {
-            nextScreen = const WorkersDashboardScreen();
-          } else {
-            nextScreen = const PhoneNumberEmailAddressScreen();
-          }
-          Timer(const Duration(seconds: 5), () {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => nextScreen),
+          String status = (doc.data() as Map<String, dynamic>)['status'] ?? 'active';
+          if (status == 'suspended') {
+            // Show suspended dialog and navigate to login
+            showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (context) => AlertDialog(
+                title: Text('Account Suspended'),
+                content: Text('Your account has been suspended.'),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const PhoneNumberEmailAddressScreen(),
+                        ),
+                      );
+                    },
+                    child: Text('OK'),
+                  ),
+                ],
+              ),
             );
-          });
+          } else {
+            // Status is active, proceed with role-based navigation
+            String role = (doc.data() as Map<String, dynamic>)['role'] ?? '';
+            Widget nextScreen;
+            if (role == 'employer') {
+              nextScreen = const EmployerDashboardScreen();
+            } else if (role == 'worker') {
+              nextScreen = const WorkersDashboardScreen();
+            } else {
+              nextScreen = const PhoneNumberEmailAddressScreen();
+            }
+            Timer(const Duration(seconds: 5), () {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => nextScreen),
+              );
+            });
+          }
         } else {
-          // No role data, go to login
+          // No user data, go to login after 5 seconds
           Timer(const Duration(seconds: 5), () {
             Navigator.pushReplacement(
               context,
@@ -64,7 +92,7 @@ class _SplashScreenState extends State<SplashScreen> {
           });
         }
       } catch (e) {
-        // Error fetching, go to login
+        // Error fetching, go to login after 5 seconds
         Timer(const Duration(seconds: 5), () {
           Navigator.pushReplacement(
             context,
@@ -75,7 +103,7 @@ class _SplashScreenState extends State<SplashScreen> {
         });
       }
     } else {
-      // Not signed in, go to login
+      // Not signed in, go to login after 5 seconds
       Timer(const Duration(seconds: 5), () {
         Navigator.pushReplacement(
           context,
