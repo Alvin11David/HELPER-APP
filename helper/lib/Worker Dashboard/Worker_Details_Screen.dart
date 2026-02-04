@@ -610,14 +610,16 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                       child: RichText(
                         text: TextSpan(
                           text:
-                              '${_businessName ?? ''} prefers ${_pricingType ?? ''} which is\n',
+                              '${_businessName ?? ''} prefers ${_pricingType ?? ''} which\nis',
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 14,
                           ),
                           children: [
                             TextSpan(
-                              text: _amount != null ? NumberFormat('#,##0').format(_amount) : '',
+                              text: _amount != null
+                                  ? NumberFormat('#,##0').format(_amount)
+                                  : '',
                               style: const TextStyle(
                                 color: Colors.orange,
                                 fontSize: 18,
