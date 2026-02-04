@@ -1395,6 +1395,63 @@ class _WorkerSkillsJobDetailsScreenState
     );
   }
 
+  Widget _pillTextFieldWithIcon({
+    required double w,
+    required double h,
+    required TextEditingController controller,
+    required String hint,
+    required VoidCallback onIconTap,
+    TextInputType keyboardType = TextInputType.text,
+    List<TextInputFormatter>? inputFormatters,
+    String? Function(String?)? validator,
+  }) {
+    final fieldH = h * 0.065;
+    return Container(
+      height: fieldH,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(30),
+      ),
+      padding: EdgeInsets.symmetric(horizontal: w * 0.05),
+      alignment: Alignment.centerLeft,
+      child: TextFormField(
+        controller: controller,
+        keyboardType: keyboardType,
+        inputFormatters: inputFormatters,
+        validator: (v) {
+          final res = validator?.call(v);
+          WidgetsBinding.instance.addPostFrameCallback(
+            (_) => _recalcProgress(),
+          );
+          return res;
+        },
+        onChanged: (_) => _recalcProgress(),
+        style: TextStyle(
+          color: Colors.black,
+          fontFamily: 'Inter',
+          fontWeight: FontWeight.w700,
+          fontSize: w * 0.038,
+        ),
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: TextStyle(
+            color: Colors.black.withOpacity(0.55),
+            fontFamily: 'Inter',
+            fontWeight: FontWeight.w700,
+            fontSize: w * 0.035,
+          ),
+          border: InputBorder.none,
+          isCollapsed: true,
+          contentPadding: EdgeInsets.symmetric(vertical: fieldH * 0.22),
+          suffixIcon: IconButton(
+            icon: Icon(Icons.arrow_drop_down, color: Colors.black, size: w * 0.06),
+            onPressed: onIconTap,
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _pillSearchField({
     required double w,
     required double h,
