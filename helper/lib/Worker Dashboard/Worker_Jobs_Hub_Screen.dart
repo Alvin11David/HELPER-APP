@@ -36,7 +36,8 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
     super.initState();
     _tab = widget.initialTab;
     _listenConflictsBadge();
-    _startAutoStartTimer(); // Start checking for jobs to auto-start
+    // Auto-start disabled: job should only start when scheduled time is reached
+    // and worker explicitly starts it.
   }
 
   @override
@@ -149,8 +150,9 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
         onStartJob: tab == 1
             ? () async {
                 Navigator.pop(context);
-                await _startJob(bookingId);
+                final started = await _startJob(bookingId);
                 if (!context.mounted) return;
+                if (!started) return;
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -262,7 +264,7 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
     }
   }
 
-  Future<void> _startJob(String bookingId) async {
+  Future<bool> _startJob(String bookingId) async {
     final workerId = widget.providerId;
     try {
       // Fetch booking to check scheduled start time
@@ -273,7 +275,7 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
 
       if (!bookingSnap.exists) {
         _toast("Booking not found");
-        return;
+        return false;
       }
 
       final bookingData = bookingSnap.data();
@@ -289,7 +291,7 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
           _toast(
             "Scheduled date has not yet reached, please wait for ${_formatDateTime(startDateTime)}",
           );
-          return;
+          return false;
         }
       }
 
@@ -304,8 +306,10 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
             'startedBy': workerId,
           });
       _toast("Job started!");
+      return true;
     } catch (e) {
       _toast("Start job error: $e");
+      return false;
     }
   }
 

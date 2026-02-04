@@ -194,6 +194,9 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
   bool get _isPerJob => (_pricingType ?? '').trim() == 'Per Job';
   bool get _isPerDay => (_pricingType ?? '').trim() == 'Per Day';
   bool get _isPerHour => (_pricingType ?? '').trim() == 'Per Hour';
+  bool get _isPerWeek => (_pricingType ?? '').trim() == 'Per Week';
+  bool get _isPerMonth => (_pricingType ?? '').trim() == 'Per Month';
+  bool get _isPerYear => (_pricingType ?? '').trim() == 'Per Year';
 
   int _computeTotal() {
     final base = _baseAmount;
@@ -218,6 +221,15 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
     if (_isPerHour) {
       return "$baseFmt per hour × $_hoursSelected hour(s) = ($totalFmt)";
     }
+    if (_isPerWeek) {
+      return "$baseFmt per week = ($totalFmt)";
+    }
+    if (_isPerMonth) {
+      return "$baseFmt per month = ($totalFmt)";
+    }
+    if (_isPerYear) {
+      return "$baseFmt per year = ($totalFmt)";
+    }
 
     return "Total = ($totalFmt)";
   }
@@ -236,6 +248,9 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
       total = base * days;
     } else if (type == "Per Hour") {
       total = base * hours;
+    } else if (type == "Per Week" || type == "Per Month" || type == "Per Year") {
+      // For Per Week, Per Month, Per Year: just use base amount (no multiplier)
+      total = base;
     } else {
       total = base;
     }
@@ -256,6 +271,11 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
     // Per Hour needs days + hours
     if (_isPerHour) {
       return _workingDays != null && _workingHours != null && _computeTotal() > 0;
+    }
+
+    // Per Week, Per Month, Per Year: no additional requirements
+    if (_isPerWeek || _isPerMonth || _isPerYear) {
+      return _computeTotal() > 0;
     }
 
     return _computeTotal() > 0;

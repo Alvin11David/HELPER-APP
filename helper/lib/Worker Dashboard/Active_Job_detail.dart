@@ -36,13 +36,13 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
   LatLng? _userPosition;
   LatLng? _employerPosition;
   Set<Marker> _mapMarkers = {};
-  Set<Polyline> _polylines = {};
-  bool _loadingLocation = false;
+  final Set<Polyline> _polylines = {};
+  final bool _loadingLocation = false;
   StreamSubscription<Position>? _positionStream;
 
   // ---- Data (populated from bookingData when available) ----
   late Map<String, dynamic> bookingData;
-  String status = "On Job";
+  String status = "Available";
   String jobId = "ID Number";
   String jobCountdown = "00:00:00";
   String elapsedTime = "00:00:00";
@@ -55,6 +55,8 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
 
   String type = "Hour/Fixed";
   String amount = "Amount";
+
+  bool _hasActiveJob = false;
 
   /// Get current user position
   Future<LatLng?> _getCurrentLocation() async {
@@ -482,9 +484,27 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
   void initState() {
     super.initState();
     bookingData = widget.bookingData ?? <String, dynamic>{};
+
+    final statusValue = (bookingData['status'] ?? '').toString();
+    final startReached = _isScheduleTimeReached();
+
+    if (!startReached) {
+      bookingData = <String, dynamic>{};
+    }
+
+    if ((statusValue == 'in_progress' || statusValue == 'started') && startReached) {
+      _hasActiveJob = true;
+      status = 'On Job';
+    } else if (statusValue == 'completed_pending') {
+      status = 'Completed (Awaiting Employer)';
+    } else if (statusValue == 'completed') {
+      status = 'Completed';
+    } else {
+      status = 'Available';
+    }
     
     // Extract employer location from booking
-    if (widget.bookingId != null && widget.bookingId!.isNotEmpty) {
+    if (_hasActiveJob && widget.bookingId != null && widget.bookingId!.isNotEmpty) {
       final docRef = FirebaseFirestore.instance.collection('bookings').doc(widget.bookingId);
       _bookingSub = docRef.snapshots().listen((snap) {
         if (snap.exists) {
@@ -494,6 +514,16 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
               bookingData.addAll(data);
               // Update type from pricingType
               type = data['pricingType'] ?? 'Unknown';
+              final liveStatus = (data['status'] ?? '').toString();
+              if (liveStatus == 'in_progress' || liveStatus == 'started') {
+                status = 'On Job';
+              } else if (liveStatus == 'completed_pending') {
+                status = 'Completed (Awaiting Employer)';
+              } else if (liveStatus == 'completed') {
+                status = 'Completed';
+              } else {
+                status = 'Available';
+              }
               
               // Extract employer location
               final jobLatLng = data['jobLatLng'] as GeoPoint?;
@@ -514,22 +544,30 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
         }
       });
     } else if (widget.bookingData != null && widget.bookingData!.isNotEmpty) {
-      type = bookingData['pricingType'] ?? 'Unknown';
+      if (_hasActiveJob) {
+        type = bookingData['pricingType'] ?? 'Unknown';
+      }
       
       // Extract employer location from initial booking data
-      final jobLatLng = bookingData['jobLatLng'] as GeoPoint?;
-      if (jobLatLng != null) {
-        _employerPosition = LatLng(jobLatLng.latitude, jobLatLng.longitude);
+      if (_hasActiveJob) {
+        final jobLatLng = bookingData['jobLatLng'] as GeoPoint?;
+        if (jobLatLng != null) {
+          _employerPosition = LatLng(jobLatLng.latitude, jobLatLng.longitude);
+        }
       }
       
       final statusValue = (bookingData['status'] ?? '').toString();
       if (statusValue != 'completed_pending' && statusValue != 'completed') {
-        _startCountdownTimer();
+        if (_hasActiveJob) {
+          _startCountdownTimer();
+        }
       }
     }
     
     // Get user's current location
-    _getCurrentLocation();
+    if (_hasActiveJob) {
+      _getCurrentLocation();
+    }
   }
 
 
@@ -545,11 +583,13 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
   Widget build(BuildContext context) {
     // Populate display fields from bookingData if provided
     final b = bookingData;
-    employerName = (b['employerName'] ?? employerName).toString();
-    jobLocation = (b['jobLocationText'] ?? jobLocation).toString();
-    jobDescription = (b['jobDescription'] ?? jobDescription).toString();
-    amount = (b['amount'] != null) ? b['amount'].toString() : amount;
-    type = (b['pricingType'] ?? type).toString();
+    if (_hasActiveJob && b.isNotEmpty) {
+      employerName = (b['employerName'] ?? employerName).toString();
+      jobLocation = (b['jobLocationText'] ?? jobLocation).toString();
+      jobDescription = (b['jobDescription'] ?? jobDescription).toString();
+      amount = (b['amount'] != null) ? b['amount'].toString() : amount;
+      type = (b['pricingType'] ?? type).toString();
+    }
     final w = MediaQuery.of(context).size.width;
     final h = MediaQuery.of(context).size.height;
 
@@ -669,6 +709,45 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (!_hasActiveJob)
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.symmetric(
+                horizontal: w * 0.04,
+                vertical: h * 0.018,
+              ),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.white24, width: 1),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'No active job currently',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: w * 0.04,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Inter',
+                    ),
+                  ),
+                  SizedBox(height: h * 0.006),
+                  Text(
+                    'Job details will appear here when the job day starts.',
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.8),
+                      fontSize: w * 0.032,
+                      fontFamily: 'Inter',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+          if (!_hasActiveJob) SizedBox(height: h * 0.018),
+
           _sectionTitle('Job Status', w),
           SizedBox(height: h * 0.012),
           _WhiteCard(
@@ -688,7 +767,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
           SizedBox(height: h * 0.018),
 
           // Show warning if job hasn't started yet
-          if (!_isScheduleTimeReached())
+          if (_hasActiveJob && !_isScheduleTimeReached())
             Container(
               padding: EdgeInsets.symmetric(horizontal: w * 0.04, vertical: h * 0.015),
               decoration: BoxDecoration(
@@ -730,7 +809,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
               ),
             ),
 
-          if (!_isScheduleTimeReached()) SizedBox(height: h * 0.018),
+          if (_hasActiveJob && !_isScheduleTimeReached()) SizedBox(height: h * 0.018),
 
           _sectionTitle('Employer & Job Summary', w),
           SizedBox(height: h * 0.012),

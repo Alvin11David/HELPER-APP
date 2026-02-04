@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -26,6 +27,11 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
   String workerStatus = 'Available'; // Can be 'Available', 'On Job', 'Not Available'
   bool _isCallDialogShowing = false;
   Map<String, dynamic>? activeJobData; // Store active job details for display
+  
+  // Next job countdown
+  Timer? _nextJobTimer;
+  String _nextJobCountdown = '00:00:00';
+  bool _nextJobStarted = false;
 
   @override
   void initState() {
@@ -99,6 +105,9 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
     }
 
     print('Setting up FCM listeners...');
+    
+    // Start next job countdown timer
+    _startNextJobCountdownTimer();
 
     // Set up FCM listener for incoming calls
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
@@ -272,6 +281,7 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
 
   @override
   void dispose() {
+    _nextJobTimer?.cancel();
     // Set offline status
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid != null) {
@@ -281,6 +291,83 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
       });
     }
     super.dispose();
+  }
+  
+  void _startNextJobCountdownTimer() {
+    _nextJobTimer?.cancel();
+    _nextJobTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      _updateNextJobCountdown();
+    });
+  }
+  
+  void _updateNextJobCountdown() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    
+    try {
+      // If there is an active job, do not count down
+      final activeSnap = await FirebaseFirestore.instance
+          .collection('bookings')
+          .where('serviceProviderId', isEqualTo: uid)
+          .where('status', whereIn: const ['in_progress', 'started'])
+          .limit(1)
+          .get();
+      if (activeSnap.docs.isNotEmpty) {
+        setState(() {
+          _nextJobCountdown = '00:00:00';
+          _nextJobStarted = false;
+        });
+        return;
+      }
+
+      final snap = await FirebaseFirestore.instance
+          .collection('bookings')
+          .where('serviceProviderId', isEqualTo: uid)
+          .where('status', whereIn: const ['confirmed', 'in_progress', 'started'])
+          .orderBy('startDateTime')
+          .limit(1)
+          .get();
+      
+      if (snap.docs.isEmpty) {
+        setState(() {
+          _nextJobCountdown = '00:00:00';
+          _nextJobStarted = false;
+        });
+        return;
+      }
+      
+      final nextJob = snap.docs.first.data();
+      final startDt = nextJob['startDateTime'];
+      
+      if (startDt == null) return;
+      
+      final startDateTime = (startDt is Timestamp) ? startDt.toDate() : (startDt as DateTime?);
+      if (startDateTime == null) return;
+      
+      final now = DateTime.now();
+      
+      if (now.isAfter(startDateTime)) {
+        // Job has started
+        setState(() {
+          _nextJobCountdown = '00:00:00';
+          _nextJobStarted = true;
+        });
+      } else {
+        // Still counting down
+        final remaining = startDateTime.difference(now);
+        final hours = remaining.inHours;
+        final minutes = (remaining.inMinutes % 60);
+        final seconds = (remaining.inSeconds % 60);
+        final formattedTime = '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+        
+        setState(() {
+          _nextJobCountdown = formattedTime;
+          _nextJobStarted = false;
+        });
+      }
+    } catch (e) {
+      print('Error updating next job countdown: $e');
+    }
   }
 
   Future<void> _acceptPendingBooking(String bookingId) async {
@@ -1014,6 +1101,43 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                             ),
                           ),
                           SizedBox(height: 20),
+                          // Next Job Countdown Card
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: w * 0.05),
+                            child: Container(
+                              height: 100,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      _nextJobStarted ? '🚀 Job has began!' : 'Time to Next Job',
+                                      style: const TextStyle(
+                                        color: Colors.black,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      _nextJobCountdown,
+                                      style: TextStyle(
+                                        color: _nextJobStarted ? Colors.green : Colors.black,
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.bold,
+                                        fontFamily: 'Courier',
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: 20),
                           // Active Job
                           Padding(
                             padding: EdgeInsets.symmetric(horizontal: w * 0.05),
@@ -1055,9 +1179,10 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                                           ),
                                         );
                                       } else {
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          const SnackBar(
-                                            content: Text('No active job found'),
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) => const ActiveJobScreen(),
                                           ),
                                         );
                                       }
@@ -1090,238 +1215,189 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(25),
                               ),
-                              child: Padding(
-                                padding: const EdgeInsets.all(10),
-                                child: Column(
-                                  children: [
-                                    Row(
-                                      children: [
-                                        const Text(
-                                          'Employer Name:',
-                                          style: TextStyle(
-                                            color: Colors.black,
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        const Spacer(),
-                                        Expanded(
-                                          child: StreamBuilder<QuerySnapshot>(
-                                            stream: FirebaseFirestore.instance
-                                                .collection('bookings')
-                                                .where('serviceProviderId',
-                                                    isEqualTo: FirebaseAuth.instance.currentUser?.uid)
-                                                .where('status',
-                                                    whereIn: ['in_progress', 'started'])
-                                                .limit(1)
-                                                .snapshots(),
-                                            builder: (ctx, snap) {
-                                              if (snap.hasData && snap.data!.docs.isNotEmpty) {
-                                                final data = snap.data!.docs.first.data() as Map<String, dynamic>;
-                                                return Text(
-                                                  data['employerName'] ?? 'Unknown',
-                                                  style: const TextStyle(
-                                                    color: Color(0xFFFFA10D),
-                                                    fontSize: 13,
-                                                    fontWeight: FontWeight.w300,
-                                                  ),
-                                                  overflow: TextOverflow.ellipsis,
-                                                  textAlign: TextAlign.right,
-                                                );
-                                              }
-                                              return Text(
-                                                'None',
-                                                style: TextStyle(
-                                                  color: Color(0xFFFFA10D),
-                                                  fontSize: 13,
-                                                  fontWeight: FontWeight.w300,
-                                                ),
-                                              );
-                                            },
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 5),
-                                    Row(
-                                      children: [
-                                        const Text(
-                                          'Job Type:',
-                                          style: TextStyle(
-                                            color: Colors.black,
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        const Spacer(),
-                                        Expanded(
-                                          child: StreamBuilder<QuerySnapshot>(
-                                            stream: FirebaseFirestore.instance
-                                                .collection('bookings')
-                                                .where('serviceProviderId',
-                                                    isEqualTo: FirebaseAuth.instance.currentUser?.uid)
-                                                .where('status',
-                                                    whereIn: ['in_progress', 'started'])
-                                                .limit(1)
-                                                .snapshots(),
-                                            builder: (ctx, snap) {
-                                              if (snap.hasData && snap.data!.docs.isNotEmpty) {
-                                                final data = snap.data!.docs.first.data() as Map<String, dynamic>;
-                                                return Text(
-                                                  data['pricingType'] ?? 'Unknown',
-                                                  style: const TextStyle(
-                                                    color: Color(0xFFFFA10D),
-                                                    fontSize: 13,
-                                                    fontWeight: FontWeight.w300,
-                                                  ),
-                                                  overflow: TextOverflow.ellipsis,
-                                                  textAlign: TextAlign.right,
-                                                );
-                                              }
-                                              return Text(
-                                                'None',
-                                                style: TextStyle(
-                                                  color: Color(0xFFFFA10D),
-                                                  fontSize: 13,
-                                                  fontWeight: FontWeight.w300,
-                                                ),
-                                              );
-                                            },
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 5),
-                                    Row(
-                                      children: [
-                                        const Text(
-                                          'Job Location:',
-                                          style: TextStyle(
-                                            color: Colors.black,
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        const Spacer(),
-                                        Expanded(
-                                          child: StreamBuilder<QuerySnapshot>(
-                                            stream: FirebaseFirestore.instance
-                                                .collection('bookings')
-                                                .where('serviceProviderId',
-                                                    isEqualTo: FirebaseAuth.instance.currentUser?.uid)
-                                                .where('status',
-                                                    whereIn: ['in_progress', 'started'])
-                                                .limit(1)
-                                                .snapshots(),
-                                            builder: (ctx, snap) {
-                                              if (snap.hasData && snap.data!.docs.isNotEmpty) {
-                                                final data = snap.data!.docs.first.data() as Map<String, dynamic>;
-                                                return Text(
-                                                  data['jobLocationText'] ?? 'Unknown',
-                                                  style: const TextStyle(
-                                                    color: Color(0xFFFFA10D),
-                                                    fontSize: 13,
-                                                    fontWeight: FontWeight.w300,
-                                                  ),
-                                                  overflow: TextOverflow.ellipsis,
-                                                  textAlign: TextAlign.right,
-                                                );
-                                              }
-                                              return Text(
-                                                'None',
-                                                style: TextStyle(
-                                                  color: Color(0xFFFFA10D),
-                                                  fontSize: 13,
-                                                  fontWeight: FontWeight.w300,
-                                                ),
-                                              );
-                                            },
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 5),
-                                    Row(
-                                      children: [
-                                        const Text(
-                                          'Time Remaining:',
-                                          style: TextStyle(
-                                            color: Colors.black,
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        const Spacer(),
-                                        StreamBuilder<QuerySnapshot>(
-                                          stream: FirebaseFirestore.instance
-                                              .collection('bookings')
-                                              .where('serviceProviderId',
-                                                  isEqualTo: FirebaseAuth.instance.currentUser?.uid)
-                                              .where('status',
-                                                  whereIn: ['in_progress', 'started'])
-                                              .limit(1)
-                                              .snapshots(),
-                                          builder: (ctx, snap) {
-                                            if (snap.hasData && snap.data!.docs.isNotEmpty) {
-                                              final data = snap.data!.docs.first.data() as Map<String, dynamic>;
-                                              return Text(
-                                                _computeRemainingTime(data),
-                                                style: const TextStyle(
-                                                  color: Color(0xFFFFA10D),
-                                                  fontSize: 13,
-                                                  fontWeight: FontWeight.w300,
-                                                ),
-                                              );
-                                            }
-                                            return const Text(
-                                              '00:00:00',
+                              child: StreamBuilder<QuerySnapshot>(
+                                stream: FirebaseFirestore.instance
+                                    .collection('bookings')
+                                    .where('serviceProviderId',
+                                        isEqualTo: FirebaseAuth.instance.currentUser?.uid)
+                                    .where('status', whereIn: ['in_progress', 'started'])
+                                    .limit(1)
+                                    .snapshots(),
+                                builder: (ctx, snap) {
+                                  if (!snap.hasData || snap.data!.docs.isEmpty) {
+                                    return Padding(
+                                      padding: const EdgeInsets.all(14),
+                                      child: Center(
+                                        child: Column(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: const [
+                                            Text(
+                                              'No active job currently',
                                               style: TextStyle(
-                                                color: Color(0xFFFFA10D),
-                                                fontSize: 13,
-                                                fontWeight: FontWeight.w300,
-                                              ),
-                                            );
-                                          },
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 10),
-                                    Center(
-                                      child: Container(
-                                        width: screenWidth * 0.4,
-                                        padding: const EdgeInsets.symmetric(
-                                          vertical: 10,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xFFFFA10D),
-                                          borderRadius: BorderRadius.circular(
-                                            20,
-                                          ),
-                                        ),
-                                        child: Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                          children: [
-                                            const Icon(
-                                              Icons.phone,
-                                              color: Colors.white,
-                                              size: 20,
-                                            ),
-                                            const SizedBox(width: 8),
-                                            const Text(
-                                              'Call Now',
-                                              style: TextStyle(
-                                                color: Colors.white,
+                                                color: Colors.black,
                                                 fontSize: 14,
                                                 fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            SizedBox(height: 6),
+                                            Text(
+                                              'Job details will appear here when the job day starts.',
+                                              textAlign: TextAlign.center,
+                                              style: TextStyle(
+                                                color: Colors.black54,
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w400,
                                               ),
                                             ),
                                           ],
                                         ),
                                       ),
+                                    );
+                                  }
+
+                                  final data = snap.data!.docs.first.data() as Map<String, dynamic>;
+                                  return Padding(
+                                    padding: const EdgeInsets.all(10),
+                                    child: Column(
+                                      children: [
+                                        Row(
+                                          children: [
+                                            const Text(
+                                              'Employer Name:',
+                                              style: TextStyle(
+                                                color: Colors.black,
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            const Spacer(),
+                                            Expanded(
+                                              child: Text(
+                                                data['employerName'] ?? 'Unknown',
+                                                style: const TextStyle(
+                                                  color: Color(0xFFFFA10D),
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.w300,
+                                                ),
+                                                overflow: TextOverflow.ellipsis,
+                                                textAlign: TextAlign.right,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 5),
+                                        Row(
+                                          children: [
+                                            const Text(
+                                              'Job Type:',
+                                              style: TextStyle(
+                                                color: Colors.black,
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            const Spacer(),
+                                            Expanded(
+                                              child: Text(
+                                                data['pricingType'] ?? 'Unknown',
+                                                style: const TextStyle(
+                                                  color: Color(0xFFFFA10D),
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.w300,
+                                                ),
+                                                overflow: TextOverflow.ellipsis,
+                                                textAlign: TextAlign.right,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 5),
+                                        Row(
+                                          children: [
+                                            const Text(
+                                              'Job Location:',
+                                              style: TextStyle(
+                                                color: Colors.black,
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            const Spacer(),
+                                            Expanded(
+                                              child: Text(
+                                                data['jobLocationText'] ?? 'Unknown',
+                                                style: const TextStyle(
+                                                  color: Color(0xFFFFA10D),
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.w300,
+                                                ),
+                                                overflow: TextOverflow.ellipsis,
+                                                textAlign: TextAlign.right,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 5),
+                                        Row(
+                                          children: [
+                                            const Text(
+                                              'Time Remaining:',
+                                              style: TextStyle(
+                                                color: Colors.black,
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            const Spacer(),
+                                            Text(
+                                              _computeRemainingTime(data),
+                                              style: const TextStyle(
+                                                color: Color(0xFFFFA10D),
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.w300,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 10),
+                                        Center(
+                                          child: Container(
+                                            width: screenWidth * 0.4,
+                                            padding: const EdgeInsets.symmetric(
+                                              vertical: 10,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFFFFA10D),
+                                              borderRadius: BorderRadius.circular(
+                                                20,
+                                              ),
+                                            ),
+                                            child: Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              children: [
+                                                const Icon(
+                                                  Icons.phone,
+                                                  color: Colors.white,
+                                                  size: 20,
+                                                ),
+                                                const SizedBox(width: 8),
+                                                const Text(
+                                                  'Call Now',
+                                                  style: TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 14,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                  ],
-                                ),
+                                  );
+                                },
                               ),
                             ),
                           ),
