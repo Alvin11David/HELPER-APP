@@ -7,7 +7,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
 import 'package:helper/Components/User_Name.dart';
 import 'package:helper/Components/Side_Bar.dart';
-import 'package:helper/Components/UnreadMessagesBadge.dart';
+import 'package:helper/Components/EmployerNotificationsBadge.dart';
 import 'package:helper/Employer%20Dashboard/Category_Providers_Screen.dart';
 import 'package:helper/Worker%20Dashboard/Worker_Details_Screen.dart';
 import '../Components/Bottom_Nav_Bar.dart';
@@ -524,8 +524,16 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
           if (msg is Map<String, dynamic> && msg['sender'] == 'admin') {
             final message = msg['message'] as String? ?? '';
             final status = msg['status'] as String? ?? '';
-            notifications.add('Support ($status): $message');
-            print('Added admin message: Support ($status): $message');
+            final timestamp = msg['timestamp'] as Timestamp?;
+            String timeStr = '';
+            if (timestamp != null) {
+              final dateTime = timestamp.toDate();
+              timeStr = DateFormat('MMM d, h:mm a').format(dateTime);
+            }
+            final notificationText =
+                'Support ($status): $message${timeStr.isNotEmpty ? " at $timeStr" : ""}';
+            notifications.add(notificationText);
+            print('Added admin message: $notificationText');
           }
         }
       }
@@ -770,7 +778,7 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                               Positioned(
                                 right: 0,
                                 top: 0,
-                                child: UnreadMessagesBadge(),
+                                child: EmployerNotificationsBadge(),
                               ),
                             ],
                           ),
