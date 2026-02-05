@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:helper/Components/User_Name.dart';
 import 'package:helper/Components/Side_Bar.dart';
+import 'package:helper/Components/User_Avatar_Circle.dart';
 
 class CategoryProvidersScreen extends StatefulWidget {
   final String categoryName;
@@ -21,6 +22,7 @@ class _CategoryProvidersScreenState extends State<CategoryProvidersScreen> {
   late FocusNode _focusNode;
   late TextEditingController _controller;
   bool _showFilters = false;
+  late Widget _avatarWidget;
 
   @override
   void initState() {
