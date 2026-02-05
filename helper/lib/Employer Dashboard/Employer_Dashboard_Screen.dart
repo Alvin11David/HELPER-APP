@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:helper/Components/User_Name.dart';
 import 'package:helper/Components/Side_Bar.dart';
 import 'package:helper/Components/EmployerNotificationsBadge.dart';
+import 'package:helper/Components/User_Avatar_Circle.dart'; // Add this import
 import 'package:helper/Employer%20Dashboard/Category_Providers_Screen.dart';
 import 'package:helper/Worker%20Dashboard/Worker_Details_Screen.dart';
 import '../Components/Bottom_Nav_Bar.dart';
@@ -230,12 +231,12 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                   .collection('bookings')
                   .doc(bookingId)
                   .update({
-                'completion.status': 'declined',
-                'completion.employerDecisionById': employerId,
-                'completion.decidedAt': FieldValue.serverTimestamp(),
-                'status': 'in_progress',
-                'updatedAt': FieldValue.serverTimestamp(),
-              });
+                    'completion.status': 'declined',
+                    'completion.employerDecisionById': employerId,
+                    'completion.decidedAt': FieldValue.serverTimestamp(),
+                    'status': 'in_progress',
+                    'updatedAt': FieldValue.serverTimestamp(),
+                  });
 
               await FirebaseFirestore.instance
                   .collection('notifications')
@@ -243,17 +244,19 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                   .update({'read': true});
 
               if (workerId.isNotEmpty) {
-                await FirebaseFirestore.instance.collection('notifications').add({
-                  'type': 'job_completed_response',
-                  'decision': 'declined',
-                  'toUserId': workerId,
-                  'fromUserId': employerId,
-                  'bookingId': bookingId,
-                  'read': false,
-                  'createdAt': FieldValue.serverTimestamp(),
-                  'title': 'Completion declined',
-                  'message': 'Employer declined the job completion request',
-                });
+                await FirebaseFirestore.instance
+                    .collection('notifications')
+                    .add({
+                      'type': 'job_completed_response',
+                      'decision': 'declined',
+                      'toUserId': workerId,
+                      'fromUserId': employerId,
+                      'bookingId': bookingId,
+                      'read': false,
+                      'createdAt': FieldValue.serverTimestamp(),
+                      'title': 'Completion declined',
+                      'message': 'Employer declined the job completion request',
+                    });
               }
 
               if (!context.mounted) return;
@@ -269,13 +272,13 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                   .collection('bookings')
                   .doc(bookingId)
                   .update({
-                'completion.status': 'confirmed',
-                'completion.employerDecisionById': employerId,
-                'completion.decidedAt': FieldValue.serverTimestamp(),
-                'status': 'completed',
-                'completedAt': FieldValue.serverTimestamp(),
-                'updatedAt': FieldValue.serverTimestamp(),
-              });
+                    'completion.status': 'confirmed',
+                    'completion.employerDecisionById': employerId,
+                    'completion.decidedAt': FieldValue.serverTimestamp(),
+                    'status': 'completed',
+                    'completedAt': FieldValue.serverTimestamp(),
+                    'updatedAt': FieldValue.serverTimestamp(),
+                  });
 
               await FirebaseFirestore.instance
                   .collection('notifications')
@@ -283,17 +286,19 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                   .update({'read': true});
 
               if (workerId.isNotEmpty) {
-                await FirebaseFirestore.instance.collection('notifications').add({
-                  'type': 'job_completed_response',
-                  'decision': 'accepted',
-                  'toUserId': workerId,
-                  'fromUserId': employerId,
-                  'bookingId': bookingId,
-                  'read': false,
-                  'createdAt': FieldValue.serverTimestamp(),
-                  'title': 'Completion confirmed',
-                  'message': 'Employer confirmed job completion',
-                });
+                await FirebaseFirestore.instance
+                    .collection('notifications')
+                    .add({
+                      'type': 'job_completed_response',
+                      'decision': 'accepted',
+                      'toUserId': workerId,
+                      'fromUserId': employerId,
+                      'bookingId': bookingId,
+                      'read': false,
+                      'createdAt': FieldValue.serverTimestamp(),
+                      'title': 'Completion confirmed',
+                      'message': 'Employer confirmed job completion',
+                    });
               }
 
               if (!context.mounted) return;
@@ -334,18 +339,20 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
               // decline -> mark reschedule as declined, keep booking confirmed
               final employerId = FirebaseAuth.instance.currentUser?.uid;
               // determine worker id from reschedule.requestedById or serviceProviderId
-              final workerId = (res['requestedById'] ?? b['serviceProviderId'] ?? '').toString();
+              final workerId =
+                  (res['requestedById'] ?? b['serviceProviderId'] ?? '')
+                      .toString();
 
               await FirebaseFirestore.instance
                   .collection('bookings')
                   .doc(bookingId)
                   .update({
-                'reschedule.state': 'declined',
-                'reschedule.employerDecisionById': employerId,
-                'reschedule.decidedAt': FieldValue.serverTimestamp(),
-                'status': 'confirmed',
-                'updatedAt': FieldValue.serverTimestamp(),
-              });
+                    'reschedule.state': 'declined',
+                    'reschedule.employerDecisionById': employerId,
+                    'reschedule.decidedAt': FieldValue.serverTimestamp(),
+                    'status': 'confirmed',
+                    'updatedAt': FieldValue.serverTimestamp(),
+                  });
 
               // mark the incoming notification as read
               await FirebaseFirestore.instance
@@ -355,17 +362,19 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
 
               // notify worker about the decline
               if (workerId.isNotEmpty) {
-                await FirebaseFirestore.instance.collection('notifications').add({
-                  'type': 'reschedule_response',
-                  'decision': 'declined',
-                  'toUserId': workerId,
-                  'fromUserId': employerId,
-                  'bookingId': bookingId,
-                  'read': false,
-                  'createdAt': FieldValue.serverTimestamp(),
-                  'title': 'Reschedule declined',
-                  'message': 'Employer declined your reschedule request',
-                });
+                await FirebaseFirestore.instance
+                    .collection('notifications')
+                    .add({
+                      'type': 'reschedule_response',
+                      'decision': 'declined',
+                      'toUserId': workerId,
+                      'fromUserId': employerId,
+                      'bookingId': bookingId,
+                      'read': false,
+                      'createdAt': FieldValue.serverTimestamp(),
+                      'title': 'Reschedule declined',
+                      'message': 'Employer declined your reschedule request',
+                    });
               }
 
               if (!context.mounted) return;
@@ -377,20 +386,22 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
             onPressed: () async {
               // accept -> replace booking times with proposed and notify worker
               final employerId = FirebaseAuth.instance.currentUser?.uid;
-              final workerId = (res['requestedById'] ?? b['serviceProviderId'] ?? '').toString();
+              final workerId =
+                  (res['requestedById'] ?? b['serviceProviderId'] ?? '')
+                      .toString();
 
               await FirebaseFirestore.instance
                   .collection('bookings')
                   .doc(bookingId)
                   .update({
-                'startDateTime': Timestamp.fromDate(proposedStart),
-                'endDateTime': Timestamp.fromDate(proposedEnd),
-                'reschedule.state': 'accepted',
-                'reschedule.employerDecisionById': employerId,
-                'reschedule.decidedAt': FieldValue.serverTimestamp(),
-                'status': 'confirmed',
-                'updatedAt': FieldValue.serverTimestamp(),
-              });
+                    'startDateTime': Timestamp.fromDate(proposedStart),
+                    'endDateTime': Timestamp.fromDate(proposedEnd),
+                    'reschedule.state': 'accepted',
+                    'reschedule.employerDecisionById': employerId,
+                    'reschedule.decidedAt': FieldValue.serverTimestamp(),
+                    'status': 'confirmed',
+                    'updatedAt': FieldValue.serverTimestamp(),
+                  });
 
               // mark incoming notification read
               await FirebaseFirestore.instance
@@ -400,19 +411,21 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
 
               // notify worker about the acceptance
               if (workerId.isNotEmpty) {
-                await FirebaseFirestore.instance.collection('notifications').add({
-                  'type': 'reschedule_response',
-                  'decision': 'accepted',
-                  'toUserId': workerId,
-                  'fromUserId': employerId,
-                  'bookingId': bookingId,
-                  'proposedStart': Timestamp.fromDate(proposedStart),
-                  'proposedEnd': Timestamp.fromDate(proposedEnd),
-                  'read': false,
-                  'createdAt': FieldValue.serverTimestamp(),
-                  'title': 'Reschedule accepted',
-                  'message': 'Employer accepted your reschedule request',
-                });
+                await FirebaseFirestore.instance
+                    .collection('notifications')
+                    .add({
+                      'type': 'reschedule_response',
+                      'decision': 'accepted',
+                      'toUserId': workerId,
+                      'fromUserId': employerId,
+                      'bookingId': bookingId,
+                      'proposedStart': Timestamp.fromDate(proposedStart),
+                      'proposedEnd': Timestamp.fromDate(proposedEnd),
+                      'read': false,
+                      'createdAt': FieldValue.serverTimestamp(),
+                      'title': 'Reschedule accepted',
+                      'message': 'Employer accepted your reschedule request',
+                    });
               }
 
               if (!context.mounted) return;
@@ -440,7 +453,11 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
       final data = doc.data();
       final bookingId = (data['bookingId'] ?? '').toString();
       if (bookingId.isEmpty) continue;
-      await _showReschedulePopup(context, notifId: doc.id, bookingId: bookingId);
+      await _showReschedulePopup(
+        context,
+        notifId: doc.id,
+        bookingId: bookingId,
+      );
     }
   }
 
@@ -983,7 +1000,7 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                             color: Colors.white,
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.person, color: Colors.black),
+                          child: UserAvatarCircle(),
                         ),
                         const SizedBox(width: 10),
                         GestureDetector(
