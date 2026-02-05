@@ -917,6 +917,7 @@ class _MapScreenState extends State<MapScreen> {
   @override
   void initState() {
     super.initState();
+    _avatarWidget = UserAvatarCircle();
     _controller = TextEditingController();
     _focusNode = FocusNode();
     _controller.addListener(_onSearchChanged);
