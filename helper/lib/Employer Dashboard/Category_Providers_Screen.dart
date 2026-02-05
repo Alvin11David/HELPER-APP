@@ -27,6 +27,7 @@ class _CategoryProvidersScreenState extends State<CategoryProvidersScreen> {
   @override
   void initState() {
     super.initState();
+    _avatarWidget = UserAvatarCircle();
     _greeting = _getGreeting();
     _focusNode = FocusNode();
     _controller = TextEditingController();
