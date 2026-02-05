@@ -1002,7 +1002,7 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                             color: Colors.white,
                             shape: BoxShape.circle,
                           ),
-                          child: UserAvatarCircle(),
+                          child: _avatarWidget,
                         ),
                         const SizedBox(width: 10),
                         GestureDetector(
