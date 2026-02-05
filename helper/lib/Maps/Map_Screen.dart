@@ -10,6 +10,7 @@ import 'dart:async';
 import '../Components/Bottom_Nav_Bar.dart';
 import '../Components/User_Name.dart'; // Add this import
 import '../Components/Side_Bar.dart'; // Add this import
+import '../Components/User_Avatar_Circle.dart'; // Add this import
 // Add this import
 import '../Employer Dashboard/job_detail_booking_screen.dart';
 
