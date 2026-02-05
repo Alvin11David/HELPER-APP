@@ -1,7 +1,6 @@
 // ignore_for_file: depend_on_referenced_packages
 
 import 'dart:async';
-import 'dart:ui';
 import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -133,15 +132,17 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
           .where('employerId', isEqualTo: user.uid)
           .snapshots(),
       builder: (context, snap) {
-        if (snap.connectionState == ConnectionState.waiting)
+        if (snap.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
-        if (snap.hasError)
+        }
+        if (snap.hasError) {
           return Center(
             child: Text(
               'Error: ${snap.error}',
               style: const TextStyle(color: Colors.white),
             ),
           );
+        }
 
         // Filter by status client-side and sort by createdAt descending
         final filteredDocs =
@@ -158,13 +159,14 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
           return bTime.compareTo(aTime);
         });
 
-        if (filteredDocs.isEmpty)
+        if (filteredDocs.isEmpty) {
           return Center(
             child: Text(
               'No pending bookings',
               style: const TextStyle(color: Colors.white),
             ),
           );
+        }
 
         return ListView.separated(
           padding: EdgeInsets.only(bottom: h * 0.02),
@@ -221,15 +223,17 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
           .where('employerId', isEqualTo: user.uid)
           .snapshots(),
       builder: (context, snap) {
-        if (snap.connectionState == ConnectionState.waiting)
+        if (snap.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
-        if (snap.hasError)
+        }
+        if (snap.hasError) {
           return Center(
             child: Text(
               'Error: ${snap.error}',
               style: const TextStyle(color: Colors.white),
             ),
           );
+        }
 
         // Filter by status client-side and sort by createdAt descending
         final filteredDocs =
@@ -246,13 +250,14 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
           return bTime.compareTo(aTime);
         });
 
-        if (filteredDocs.isEmpty)
+        if (filteredDocs.isEmpty) {
           return Center(
             child: Text(
               'No $status bookings',
               style: const TextStyle(color: Colors.white),
             ),
           );
+        }
 
         return ListView.separated(
           padding: EdgeInsets.only(bottom: h * 0.02),
@@ -418,10 +423,12 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                 Expanded(
                   child: () {
                     if (_tab == 0) return _pendingBookingsStream(w, h);
-                    if (_tab == 1)
+                    if (_tab == 1) {
                       return _bookingsByStatusStream(w, h, 'confirmed');
-                    if (_tab == 2)
+                    }
+                    if (_tab == 2) {
                       return _bookingsByStatusStream(w, h, 'completed');
+                    }
                     return _bookingsByStatusStream(w, h, 'cancelled');
                   }(),
                 ),

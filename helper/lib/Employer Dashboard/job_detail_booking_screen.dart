@@ -74,6 +74,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
   // ===================== PHASE 2 (Workers & Pricing) =====================
   String? _workingDays;
   String? _workingHours; // only for Per Hour
+  String? _workingDaysPerJob; // for Per Job (display only, not used in calculations)
   final _amountCtrl = TextEditingController();
 
   // ===================== PHASE 3 (Schedule / Calendar) =====================
@@ -193,6 +194,9 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
   bool get _isPerJob => (_pricingType ?? '').trim() == 'Per Job';
   bool get _isPerDay => (_pricingType ?? '').trim() == 'Per Day';
   bool get _isPerHour => (_pricingType ?? '').trim() == 'Per Hour';
+  bool get _isPerWeek => (_pricingType ?? '').trim() == 'Per Week';
+  bool get _isPerMonth => (_pricingType ?? '').trim() == 'Per Month';
+  bool get _isPerYear => (_pricingType ?? '').trim() == 'Per Year';
 
   int _computeTotal() {
     final base = _baseAmount;
@@ -217,6 +221,15 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
     if (_isPerHour) {
       return "$baseFmt per hour × $_hoursSelected hour(s) = ($totalFmt)";
     }
+    if (_isPerWeek) {
+      return "$baseFmt per week = ($totalFmt)";
+    }
+    if (_isPerMonth) {
+      return "$baseFmt per month = ($totalFmt)";
+    }
+    if (_isPerYear) {
+      return "$baseFmt per year = ($totalFmt)";
+    }
 
     return "Total = ($totalFmt)";
   }
@@ -235,6 +248,9 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
       total = base * days;
     } else if (type == "Per Hour") {
       total = base * hours;
+    } else if (type == "Per Week" || type == "Per Month" || type == "Per Year") {
+      // For Per Week, Per Month, Per Year: just use base amount (no multiplier)
+      total = base;
     } else {
       total = base;
     }
@@ -255,6 +271,11 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
     // Per Hour needs days + hours
     if (_isPerHour) {
       return _workingDays != null && _workingHours != null && _computeTotal() > 0;
+    }
+
+    // Per Week, Per Month, Per Year: no additional requirements
+    if (_isPerWeek || _isPerMonth || _isPerYear) {
+      return _computeTotal() > 0;
     }
 
     return _computeTotal() > 0;
@@ -1306,6 +1327,22 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
             onChanged: (v) {
               setState(() => _workingHours = v);
               _recalcAmount();
+            },
+          ),
+          SizedBox(height: h * 0.016),
+        ],
+
+        if (_isPerJob) ...[
+          _label("Number of Working Days", w),
+          SizedBox(height: h * 0.010),
+          _pillDropdown(
+            w: w,
+            h: h,
+            hint: "Select the number of working days",
+            value: _workingDaysPerJob,
+            items: List.generate(30, (i) => "${i + 1}"),
+            onChanged: (v) {
+              setState(() => _workingDaysPerJob = v);
             },
           ),
           SizedBox(height: h * 0.016),
