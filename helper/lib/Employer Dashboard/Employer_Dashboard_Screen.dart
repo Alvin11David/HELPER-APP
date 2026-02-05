@@ -64,12 +64,14 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
   Map<String, double> categoryRatings = {};
   Map<String, double> providerRatings = {};
   bool _ratingsLoaded = false;
+  late Widget _avatarWidget;
 
   bool get _hasQuery => _controller.text.trim().length >= 2;
 
   @override
   void initState() {
     super.initState();
+    _avatarWidget = UserAvatarCircle();
     _focusNode = FocusNode();
     _controller = TextEditingController();
     _focusNode.addListener(() {
