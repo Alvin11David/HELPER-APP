@@ -131,7 +131,7 @@ class _CategoryProvidersScreenState extends State<CategoryProvidersScreen> {
                       color: Colors.white,
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.person, color: Colors.black),
+                    child: _avatarWidget,
                   ),
                   const SizedBox(width: 10),
                   StreamBuilder<QuerySnapshot>(
