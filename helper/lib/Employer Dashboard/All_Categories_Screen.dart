@@ -482,6 +482,7 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
   @override
   void initState() {
     super.initState();
+    _avatarWidget = UserAvatarCircle();
     _greeting = _getGreeting();
     _focusNode = FocusNode();
     _controller = TextEditingController();
@@ -597,7 +598,7 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                         color: Colors.white,
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.person, color: Colors.black),
+                      child: _avatarWidget,
                     ),
                     const SizedBox(width: 10),
                     StreamBuilder<QuerySnapshot>(
