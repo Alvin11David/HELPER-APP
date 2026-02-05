@@ -375,28 +375,6 @@ class _ChatListScreenState extends State<ChatListScreen> {
                         ),
                       ],
                     ),
-                    SizedBox(width: screenWidth * 0.025),
-                    Stack(
-                      children: [
-                        Container(
-                          width: screenWidth * 0.12,
-                          height: screenWidth * 0.12,
-                          decoration: const BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.notifications,
-                            color: Colors.black,
-                          ),
-                        ),
-                        Positioned(
-                          top: 0,
-                          right: 0,
-                          child: UnreadMessagesBadge(),
-                        ),
-                      ],
-                    ),
                   ],
                 ),
               ),
