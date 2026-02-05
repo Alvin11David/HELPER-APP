@@ -981,7 +981,7 @@ class _MapScreenState extends State<MapScreen> {
                         ),
                       ],
                     ),
-                    child: const Icon(Icons.person, color: Colors.black),
+                    child: _avatarWidget,
                   ),
                   const SizedBox(width: 10),
                   Stack(children: [
