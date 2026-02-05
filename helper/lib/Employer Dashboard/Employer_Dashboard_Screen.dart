@@ -111,6 +111,14 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
         _ratingsLoaded = true;
       });
     });
+
+    // On entry, process any pending reschedule requests and block dashboard
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _processPendingRescheduleNotifications();
+      _listenForRescheduleNotifications();
+      _processPendingJobCompletionNotifications();
+      _listenForJobCompletionNotifications();
+    });
   }
 
   @override
@@ -145,6 +153,159 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
         });
   }
 
+  void _listenForJobCompletionNotifications() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    FirebaseFirestore.instance
+        .collection('notifications')
+        .where('toUserId', isEqualTo: user.uid)
+        .where('read', isEqualTo: false)
+        .snapshots()
+        .listen((snap) {
+          for (final doc in snap.docs) {
+            final d = doc.data();
+            if (d['type'] == 'job_completed_request') {
+              _showJobCompletedPopup(
+                context,
+                notifId: doc.id,
+                bookingId: d['bookingId'],
+              );
+              break; // show one at a time
+            }
+          }
+        });
+  }
+
+  Future<void> _processPendingJobCompletionNotifications() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final snap = await FirebaseFirestore.instance
+        .collection('notifications')
+        .where('toUserId', isEqualTo: user.uid)
+        .where('read', isEqualTo: false)
+        .where('type', isEqualTo: 'job_completed_request')
+        .get();
+
+    if (snap.docs.isEmpty) return;
+
+    final doc = snap.docs.first;
+    final d = doc.data();
+    await _showJobCompletedPopup(
+      context,
+      notifId: doc.id,
+      bookingId: d['bookingId'],
+    );
+  }
+
+  Future<void> _showJobCompletedPopup(
+    BuildContext context, {
+    required String notifId,
+    required String bookingId,
+  }) async {
+    final bookingSnap = await FirebaseFirestore.instance
+        .collection('bookings')
+        .doc(bookingId)
+        .get();
+    final b = bookingSnap.data() ?? {};
+
+    final workerId = (b['serviceProviderId'] ?? '').toString();
+
+    if (!mounted) return;
+
+    await showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Job Completed'),
+        content: const Text(
+          'The worker marked this job as completed. Do you confirm completion?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () async {
+              final employerId = FirebaseAuth.instance.currentUser?.uid;
+
+              await FirebaseFirestore.instance
+                  .collection('bookings')
+                  .doc(bookingId)
+                  .update({
+                'completion.status': 'declined',
+                'completion.employerDecisionById': employerId,
+                'completion.decidedAt': FieldValue.serverTimestamp(),
+                'status': 'in_progress',
+                'updatedAt': FieldValue.serverTimestamp(),
+              });
+
+              await FirebaseFirestore.instance
+                  .collection('notifications')
+                  .doc(notifId)
+                  .update({'read': true});
+
+              if (workerId.isNotEmpty) {
+                await FirebaseFirestore.instance.collection('notifications').add({
+                  'type': 'job_completed_response',
+                  'decision': 'declined',
+                  'toUserId': workerId,
+                  'fromUserId': employerId,
+                  'bookingId': bookingId,
+                  'read': false,
+                  'createdAt': FieldValue.serverTimestamp(),
+                  'title': 'Completion declined',
+                  'message': 'Employer declined the job completion request',
+                });
+              }
+
+              if (!context.mounted) return;
+              Navigator.pop(context);
+            },
+            child: const Text('Decline'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final employerId = FirebaseAuth.instance.currentUser?.uid;
+
+              await FirebaseFirestore.instance
+                  .collection('bookings')
+                  .doc(bookingId)
+                  .update({
+                'completion.status': 'confirmed',
+                'completion.employerDecisionById': employerId,
+                'completion.decidedAt': FieldValue.serverTimestamp(),
+                'status': 'completed',
+                'completedAt': FieldValue.serverTimestamp(),
+                'updatedAt': FieldValue.serverTimestamp(),
+              });
+
+              await FirebaseFirestore.instance
+                  .collection('notifications')
+                  .doc(notifId)
+                  .update({'read': true});
+
+              if (workerId.isNotEmpty) {
+                await FirebaseFirestore.instance.collection('notifications').add({
+                  'type': 'job_completed_response',
+                  'decision': 'accepted',
+                  'toUserId': workerId,
+                  'fromUserId': employerId,
+                  'bookingId': bookingId,
+                  'read': false,
+                  'createdAt': FieldValue.serverTimestamp(),
+                  'title': 'Completion confirmed',
+                  'message': 'Employer confirmed job completion',
+                });
+              }
+
+              if (!context.mounted) return;
+              Navigator.pop(context);
+            },
+            child: const Text('Confirm'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _showReschedulePopup(
     BuildContext context, {
     required String notifId,
@@ -162,7 +323,7 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
 
     if (!mounted) return;
 
-    showDialog(
+    await showDialog(
       context: context,
       builder: (_) => AlertDialog(
         title: const Text("Reschedule Request"),
@@ -170,20 +331,43 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
         actions: [
           TextButton(
             onPressed: () async {
-              // decline
+              // decline -> mark reschedule as declined, keep booking confirmed
+              final employerId = FirebaseAuth.instance.currentUser?.uid;
+              // determine worker id from reschedule.requestedById or serviceProviderId
+              final workerId = (res['requestedById'] ?? b['serviceProviderId'] ?? '').toString();
+
               await FirebaseFirestore.instance
                   .collection('bookings')
                   .doc(bookingId)
                   .update({
-                    'reschedule.employerDecision': 'declined',
-                    'reschedule.decidedAt': FieldValue.serverTimestamp(),
-                    'status': 'confirmed', // revert back
-                    'updatedAt': FieldValue.serverTimestamp(),
-                  });
+                'reschedule.state': 'declined',
+                'reschedule.employerDecisionById': employerId,
+                'reschedule.decidedAt': FieldValue.serverTimestamp(),
+                'status': 'confirmed',
+                'updatedAt': FieldValue.serverTimestamp(),
+              });
+
+              // mark the incoming notification as read
               await FirebaseFirestore.instance
                   .collection('notifications')
                   .doc(notifId)
                   .update({'read': true});
+
+              // notify worker about the decline
+              if (workerId.isNotEmpty) {
+                await FirebaseFirestore.instance.collection('notifications').add({
+                  'type': 'reschedule_response',
+                  'decision': 'declined',
+                  'toUserId': workerId,
+                  'fromUserId': employerId,
+                  'bookingId': bookingId,
+                  'read': false,
+                  'createdAt': FieldValue.serverTimestamp(),
+                  'title': 'Reschedule declined',
+                  'message': 'Employer declined your reschedule request',
+                });
+              }
+
               if (!context.mounted) return;
               Navigator.pop(context);
             },
@@ -191,22 +375,46 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
           ),
           ElevatedButton(
             onPressed: () async {
-              // accept -> replace booking times with proposed
+              // accept -> replace booking times with proposed and notify worker
+              final employerId = FirebaseAuth.instance.currentUser?.uid;
+              final workerId = (res['requestedById'] ?? b['serviceProviderId'] ?? '').toString();
+
               await FirebaseFirestore.instance
                   .collection('bookings')
                   .doc(bookingId)
                   .update({
-                    'startDateTime': Timestamp.fromDate(proposedStart),
-                    'endDateTime': Timestamp.fromDate(proposedEnd),
-                    'reschedule.employerDecision': 'accepted',
-                    'reschedule.decidedAt': FieldValue.serverTimestamp(),
-                    'status': 'confirmed',
-                    'updatedAt': FieldValue.serverTimestamp(),
-                  });
+                'startDateTime': Timestamp.fromDate(proposedStart),
+                'endDateTime': Timestamp.fromDate(proposedEnd),
+                'reschedule.state': 'accepted',
+                'reschedule.employerDecisionById': employerId,
+                'reschedule.decidedAt': FieldValue.serverTimestamp(),
+                'status': 'confirmed',
+                'updatedAt': FieldValue.serverTimestamp(),
+              });
+
+              // mark incoming notification read
               await FirebaseFirestore.instance
                   .collection('notifications')
                   .doc(notifId)
                   .update({'read': true});
+
+              // notify worker about the acceptance
+              if (workerId.isNotEmpty) {
+                await FirebaseFirestore.instance.collection('notifications').add({
+                  'type': 'reschedule_response',
+                  'decision': 'accepted',
+                  'toUserId': workerId,
+                  'fromUserId': employerId,
+                  'bookingId': bookingId,
+                  'proposedStart': Timestamp.fromDate(proposedStart),
+                  'proposedEnd': Timestamp.fromDate(proposedEnd),
+                  'read': false,
+                  'createdAt': FieldValue.serverTimestamp(),
+                  'title': 'Reschedule accepted',
+                  'message': 'Employer accepted your reschedule request',
+                });
+              }
+
               if (!context.mounted) return;
               Navigator.pop(context);
             },
@@ -215,6 +423,25 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _processPendingRescheduleNotifications() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final snap = await FirebaseFirestore.instance
+        .collection('notifications')
+        .where('toUserId', isEqualTo: user.uid)
+        .where('read', isEqualTo: false)
+        .where('type', isEqualTo: 'reschedule_request')
+        .get();
+
+    for (final doc in snap.docs) {
+      final data = doc.data();
+      final bookingId = (data['bookingId'] ?? '').toString();
+      if (bookingId.isEmpty) continue;
+      await _showReschedulePopup(context, notifId: doc.id, bookingId: bookingId);
+    }
   }
 
   Future<void> _initLocation() async {
