@@ -10,6 +10,7 @@ import 'dart:async';
 import '../Components/Bottom_Nav_Bar.dart';
 import '../Components/User_Name.dart'; // Add this import
 import '../Components/Side_Bar.dart'; // Add this import
+import '../Components/User_Avatar_Circle.dart'; // Add this import
 // Add this import
 import '../Employer Dashboard/job_detail_booking_screen.dart';
 
@@ -29,6 +30,8 @@ class _MapScreenState extends State<MapScreen> {
   Position? userPosition;
   List<String> topRatedCategories = [];
   Map<String, double> categoryRatings = {};
+
+  late Widget _avatarWidget;
 
   late GoogleMapController mapController;
 
@@ -916,6 +919,7 @@ class _MapScreenState extends State<MapScreen> {
   @override
   void initState() {
     super.initState();
+    _avatarWidget = UserAvatarCircle();
     _controller = TextEditingController();
     _focusNode = FocusNode();
     _controller.addListener(_onSearchChanged);
@@ -977,7 +981,7 @@ class _MapScreenState extends State<MapScreen> {
                         ),
                       ],
                     ),
-                    child: const Icon(Icons.person, color: Colors.black),
+                    child: _avatarWidget,
                   ),
                   const SizedBox(width: 10),
                   Stack(children: [

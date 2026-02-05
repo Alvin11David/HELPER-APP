@@ -4,6 +4,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:helper/Components/User_Name.dart';
 import 'package:helper/Components/Side_Bar.dart';
+import 'package:intl/intl.dart';
+import '../Components/User_Avatar_Circle.dart';
+import '../Components/EmployerNotificationsBadge.dart';
 import 'package:helper/Employer%20Dashboard/Category_Providers_Screen.dart';
 import '../Components/Bottom_Nav_Bar.dart';
 
@@ -16,6 +19,7 @@ class AllCategoriesScreen extends StatefulWidget {
 
 class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
   final GlobalKey<SideBarState> _sidebarKey = GlobalKey();
+  late Widget _avatarWidget;
   String _getGreeting() {
     final hour = DateTime.now().hour;
     if (hour < 12) return 'Good Morning';
@@ -193,6 +197,142 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
       print('Error getting category ratings: $e');
       return {};
     }
+  }
+
+  Future<void> _showNotifications() async {
+    print('Notifications tapped');
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please log in to view notifications')),
+      );
+      return;
+    }
+
+    print('Current user UID: ${currentUser.uid}');
+
+    // For employer dashboard, receiver is employer
+    bool isEmployer = true;
+
+    List<String> notifications = [];
+    try {
+      // Fetch unread messages
+      try {
+        final snapshot = await FirebaseFirestore.instance
+            .collectionGroup('messages')
+            .where('receiverId', isEqualTo: currentUser.uid)
+            .get();
+
+        print('Unread messages docs: ${snapshot.docs.length}');
+
+        for (var doc in snapshot.docs) {
+          final data = doc.data();
+          final read = data['read'] as bool? ?? false;
+          if (read) continue; // skip read messages
+
+          final senderId = data['senderId'] as String?;
+          if (senderId == null) continue;
+
+          String name = '';
+          if (isEmployer) {
+            // Sender is worker, from Sign Up
+            final senderDoc = await FirebaseFirestore.instance
+                .collection('Sign Up')
+                .doc(senderId)
+                .get();
+            if (senderDoc.exists) {
+              final senderData = senderDoc.data();
+              name = senderData?['fullName'] ?? '';
+            }
+          }
+          if (name.isNotEmpty) {
+            notifications.add('You have a message from $name');
+          }
+        }
+      } catch (e) {
+        print('Error fetching unread messages: $e');
+      }
+
+      // Fetch admin support messages
+      final supportSnapshot = await FirebaseFirestore.instance
+          .collection('Support Issues')
+          .where('userId', isEqualTo: currentUser.uid)
+          .get();
+
+      print('Support Issues docs: ${supportSnapshot.docs.length}');
+
+      for (var doc in supportSnapshot.docs) {
+        final data = doc.data();
+        print('Support doc data: $data');
+        final messages = data['messages'] as List<dynamic>? ?? [];
+        print('Messages in doc: $messages');
+        for (var msg in messages) {
+          if (msg is Map<String, dynamic> && msg['sender'] == 'admin') {
+            final message = msg['message'] as String? ?? '';
+            final status = msg['status'] as String? ?? '';
+            final timestamp = msg['timestamp'] as Timestamp?;
+            String timeStr = '';
+            if (timestamp != null) {
+              final dateTime = timestamp.toDate();
+              timeStr = DateFormat('MMM d, h:mm a').format(dateTime);
+            }
+            final notificationText =
+                'Support ($status): $message${timeStr.isNotEmpty ? " at $timeStr" : ""}';
+            notifications.add(notificationText);
+            print('Added admin message: $notificationText');
+          }
+        }
+      }
+    } catch (e) {
+      print('Error fetching notifications: $e');
+    }
+
+    print('Total notifications: ${notifications.length}');
+
+    if (!mounted) return;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.5,
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(30),
+              topRight: Radius.circular(30),
+            ),
+          ),
+          child: Column(
+            children: [
+              const Padding(
+                padding: EdgeInsets.all(16.0),
+                child: Text(
+                  'Notifications',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+              ),
+              Expanded(
+                child: notifications.isEmpty
+                    ? const Center(child: Text('No new notifications'))
+                    : ListView.builder(
+                        itemCount: notifications.length,
+                        itemBuilder: (context, index) {
+                          return ListTile(title: Text(notifications[index]));
+                        },
+                      ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   List<String> professions = [
@@ -480,6 +620,7 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
   @override
   void initState() {
     super.initState();
+    _avatarWidget = UserAvatarCircle();
     _greeting = _getGreeting();
     _focusNode = FocusNode();
     _controller = TextEditingController();
@@ -595,66 +736,32 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                         color: Colors.white,
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.person, color: Colors.black),
+                      child: _avatarWidget,
                     ),
                     const SizedBox(width: 10),
-                    StreamBuilder<QuerySnapshot>(
-                      stream: FirebaseFirestore.instance
-                          .collectionGroup('messages')
-                          .where(
-                            'receiverId',
-                            isEqualTo: FirebaseAuth.instance.currentUser!.uid,
-                          )
-                          .snapshots(),
-                      builder: (context, snapshot) {
-                        int unreadCount = 0;
-                        if (snapshot.hasData) {
-                          unreadCount = snapshot.data!.docs.length;
-                        }
-                        return Stack(
-                          children: [
-                            Container(
-                              width: 40,
-                              height: 40,
-                              decoration: const BoxDecoration(
-                                color: Colors.white,
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.notifications,
-                                color: Colors.black,
-                              ),
+                    GestureDetector(
+                      onTap: _showNotifications,
+                      child: Stack(
+                        children: [
+                          Container(
+                            width: 40,
+                            height: 40,
+                            decoration: const BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
                             ),
-                            if (unreadCount > 0)
-                              Positioned(
-                                right: 0,
-                                top: 0,
-                                child: Container(
-                                  padding: const EdgeInsets.all(2),
-                                  decoration: const BoxDecoration(
-                                    color: Colors.red,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  constraints: const BoxConstraints(
-                                    minWidth: 16,
-                                    minHeight: 16,
-                                  ),
-                                  child: Text(
-                                    unreadCount > 99
-                                        ? '99+'
-                                        : unreadCount.toString(),
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ),
-                              ),
-                          ],
-                        );
-                      },
+                            child: const Icon(
+                              Icons.notifications,
+                              color: Colors.black,
+                            ),
+                          ),
+                          Positioned(
+                            right: 0,
+                            top: 0,
+                            child: EmployerNotificationsBadge(),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),

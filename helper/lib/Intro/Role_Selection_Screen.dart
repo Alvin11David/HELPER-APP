@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:flutter/gestures.dart';
 import '../Auth/Sign_In_Screen.dart';
-import '../Document Upload/Select_Worker_Type_Screen.dart';
+import 'package:helper/Payments/Registration_Payment_Screen.dart';
 import '../Employer Dashboard/Employer_Dashboard_Screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -152,7 +152,8 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                       }
                       Navigator.of(context).push(
                         MaterialPageRoute(
-                          builder: (context) => const SelectWorkerTypeScreen(),
+                          builder: (context) =>
+                              const RegistrationPaymentScreen(),
                         ),
                       );
                     },

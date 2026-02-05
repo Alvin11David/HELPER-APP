@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:helper/Components/User_Name.dart';
 import 'package:helper/Components/Side_Bar.dart';
+import '../Components/User_Avatar_Circle.dart';
 import 'package:helper/Worker%20Dashboard/Worker_Details_Screen.dart';
 import '../Components/Bottom_Nav_Bar.dart';
 
@@ -23,10 +24,12 @@ class _ForYouProvidersScreenState extends State<ForYouProvidersScreen> {
   Timer? _debounce;
   bool _searching = false;
   List<QueryDocumentSnapshot<Map<String, dynamic>>> _searchResults = [];
+  late Widget _avatarWidget;
 
   @override
   void initState() {
     super.initState();
+    _avatarWidget = UserAvatarCircle();
     _focusNode = FocusNode();
     _controller = TextEditingController();
     _focusNode.addListener(() {

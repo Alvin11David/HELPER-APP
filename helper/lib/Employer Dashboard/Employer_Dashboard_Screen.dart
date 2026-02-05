@@ -7,7 +7,8 @@ import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
 import 'package:helper/Components/User_Name.dart';
 import 'package:helper/Components/Side_Bar.dart';
-import 'package:helper/Components/UnreadMessagesBadge.dart';
+import 'package:helper/Components/EmployerNotificationsBadge.dart';
+import 'package:helper/Components/User_Avatar_Circle.dart'; // Add this import
 import 'package:helper/Employer%20Dashboard/Category_Providers_Screen.dart';
 import 'package:helper/Worker%20Dashboard/Worker_Details_Screen.dart';
 import '../Components/Bottom_Nav_Bar.dart';
@@ -63,12 +64,14 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
   Map<String, double> categoryRatings = {};
   Map<String, double> providerRatings = {};
   bool _ratingsLoaded = false;
+  late Widget _avatarWidget;
 
   bool get _hasQuery => _controller.text.trim().length >= 2;
 
   @override
   void initState() {
     super.initState();
+    _avatarWidget = UserAvatarCircle();
     _focusNode = FocusNode();
     _controller = TextEditingController();
     _focusNode.addListener(() {
@@ -230,12 +233,12 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                   .collection('bookings')
                   .doc(bookingId)
                   .update({
-                'completion.status': 'declined',
-                'completion.employerDecisionById': employerId,
-                'completion.decidedAt': FieldValue.serverTimestamp(),
-                'status': 'in_progress',
-                'updatedAt': FieldValue.serverTimestamp(),
-              });
+                    'completion.status': 'declined',
+                    'completion.employerDecisionById': employerId,
+                    'completion.decidedAt': FieldValue.serverTimestamp(),
+                    'status': 'in_progress',
+                    'updatedAt': FieldValue.serverTimestamp(),
+                  });
 
               await FirebaseFirestore.instance
                   .collection('notifications')
@@ -243,17 +246,19 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                   .update({'read': true});
 
               if (workerId.isNotEmpty) {
-                await FirebaseFirestore.instance.collection('notifications').add({
-                  'type': 'job_completed_response',
-                  'decision': 'declined',
-                  'toUserId': workerId,
-                  'fromUserId': employerId,
-                  'bookingId': bookingId,
-                  'read': false,
-                  'createdAt': FieldValue.serverTimestamp(),
-                  'title': 'Completion declined',
-                  'message': 'Employer declined the job completion request',
-                });
+                await FirebaseFirestore.instance
+                    .collection('notifications')
+                    .add({
+                      'type': 'job_completed_response',
+                      'decision': 'declined',
+                      'toUserId': workerId,
+                      'fromUserId': employerId,
+                      'bookingId': bookingId,
+                      'read': false,
+                      'createdAt': FieldValue.serverTimestamp(),
+                      'title': 'Completion declined',
+                      'message': 'Employer declined the job completion request',
+                    });
               }
 
               if (!context.mounted) return;
@@ -269,13 +274,13 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                   .collection('bookings')
                   .doc(bookingId)
                   .update({
-                'completion.status': 'confirmed',
-                'completion.employerDecisionById': employerId,
-                'completion.decidedAt': FieldValue.serverTimestamp(),
-                'status': 'completed',
-                'completedAt': FieldValue.serverTimestamp(),
-                'updatedAt': FieldValue.serverTimestamp(),
-              });
+                    'completion.status': 'confirmed',
+                    'completion.employerDecisionById': employerId,
+                    'completion.decidedAt': FieldValue.serverTimestamp(),
+                    'status': 'completed',
+                    'completedAt': FieldValue.serverTimestamp(),
+                    'updatedAt': FieldValue.serverTimestamp(),
+                  });
 
               await FirebaseFirestore.instance
                   .collection('notifications')
@@ -283,17 +288,19 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                   .update({'read': true});
 
               if (workerId.isNotEmpty) {
-                await FirebaseFirestore.instance.collection('notifications').add({
-                  'type': 'job_completed_response',
-                  'decision': 'accepted',
-                  'toUserId': workerId,
-                  'fromUserId': employerId,
-                  'bookingId': bookingId,
-                  'read': false,
-                  'createdAt': FieldValue.serverTimestamp(),
-                  'title': 'Completion confirmed',
-                  'message': 'Employer confirmed job completion',
-                });
+                await FirebaseFirestore.instance
+                    .collection('notifications')
+                    .add({
+                      'type': 'job_completed_response',
+                      'decision': 'accepted',
+                      'toUserId': workerId,
+                      'fromUserId': employerId,
+                      'bookingId': bookingId,
+                      'read': false,
+                      'createdAt': FieldValue.serverTimestamp(),
+                      'title': 'Completion confirmed',
+                      'message': 'Employer confirmed job completion',
+                    });
               }
 
               if (!context.mounted) return;
@@ -334,18 +341,20 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
               // decline -> mark reschedule as declined, keep booking confirmed
               final employerId = FirebaseAuth.instance.currentUser?.uid;
               // determine worker id from reschedule.requestedById or serviceProviderId
-              final workerId = (res['requestedById'] ?? b['serviceProviderId'] ?? '').toString();
+              final workerId =
+                  (res['requestedById'] ?? b['serviceProviderId'] ?? '')
+                      .toString();
 
               await FirebaseFirestore.instance
                   .collection('bookings')
                   .doc(bookingId)
                   .update({
-                'reschedule.state': 'declined',
-                'reschedule.employerDecisionById': employerId,
-                'reschedule.decidedAt': FieldValue.serverTimestamp(),
-                'status': 'confirmed',
-                'updatedAt': FieldValue.serverTimestamp(),
-              });
+                    'reschedule.state': 'declined',
+                    'reschedule.employerDecisionById': employerId,
+                    'reschedule.decidedAt': FieldValue.serverTimestamp(),
+                    'status': 'confirmed',
+                    'updatedAt': FieldValue.serverTimestamp(),
+                  });
 
               // mark the incoming notification as read
               await FirebaseFirestore.instance
@@ -355,17 +364,19 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
 
               // notify worker about the decline
               if (workerId.isNotEmpty) {
-                await FirebaseFirestore.instance.collection('notifications').add({
-                  'type': 'reschedule_response',
-                  'decision': 'declined',
-                  'toUserId': workerId,
-                  'fromUserId': employerId,
-                  'bookingId': bookingId,
-                  'read': false,
-                  'createdAt': FieldValue.serverTimestamp(),
-                  'title': 'Reschedule declined',
-                  'message': 'Employer declined your reschedule request',
-                });
+                await FirebaseFirestore.instance
+                    .collection('notifications')
+                    .add({
+                      'type': 'reschedule_response',
+                      'decision': 'declined',
+                      'toUserId': workerId,
+                      'fromUserId': employerId,
+                      'bookingId': bookingId,
+                      'read': false,
+                      'createdAt': FieldValue.serverTimestamp(),
+                      'title': 'Reschedule declined',
+                      'message': 'Employer declined your reschedule request',
+                    });
               }
 
               if (!context.mounted) return;
@@ -377,20 +388,22 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
             onPressed: () async {
               // accept -> replace booking times with proposed and notify worker
               final employerId = FirebaseAuth.instance.currentUser?.uid;
-              final workerId = (res['requestedById'] ?? b['serviceProviderId'] ?? '').toString();
+              final workerId =
+                  (res['requestedById'] ?? b['serviceProviderId'] ?? '')
+                      .toString();
 
               await FirebaseFirestore.instance
                   .collection('bookings')
                   .doc(bookingId)
                   .update({
-                'startDateTime': Timestamp.fromDate(proposedStart),
-                'endDateTime': Timestamp.fromDate(proposedEnd),
-                'reschedule.state': 'accepted',
-                'reschedule.employerDecisionById': employerId,
-                'reschedule.decidedAt': FieldValue.serverTimestamp(),
-                'status': 'confirmed',
-                'updatedAt': FieldValue.serverTimestamp(),
-              });
+                    'startDateTime': Timestamp.fromDate(proposedStart),
+                    'endDateTime': Timestamp.fromDate(proposedEnd),
+                    'reschedule.state': 'accepted',
+                    'reschedule.employerDecisionById': employerId,
+                    'reschedule.decidedAt': FieldValue.serverTimestamp(),
+                    'status': 'confirmed',
+                    'updatedAt': FieldValue.serverTimestamp(),
+                  });
 
               // mark incoming notification read
               await FirebaseFirestore.instance
@@ -400,19 +413,21 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
 
               // notify worker about the acceptance
               if (workerId.isNotEmpty) {
-                await FirebaseFirestore.instance.collection('notifications').add({
-                  'type': 'reschedule_response',
-                  'decision': 'accepted',
-                  'toUserId': workerId,
-                  'fromUserId': employerId,
-                  'bookingId': bookingId,
-                  'proposedStart': Timestamp.fromDate(proposedStart),
-                  'proposedEnd': Timestamp.fromDate(proposedEnd),
-                  'read': false,
-                  'createdAt': FieldValue.serverTimestamp(),
-                  'title': 'Reschedule accepted',
-                  'message': 'Employer accepted your reschedule request',
-                });
+                await FirebaseFirestore.instance
+                    .collection('notifications')
+                    .add({
+                      'type': 'reschedule_response',
+                      'decision': 'accepted',
+                      'toUserId': workerId,
+                      'fromUserId': employerId,
+                      'bookingId': bookingId,
+                      'proposedStart': Timestamp.fromDate(proposedStart),
+                      'proposedEnd': Timestamp.fromDate(proposedEnd),
+                      'read': false,
+                      'createdAt': FieldValue.serverTimestamp(),
+                      'title': 'Reschedule accepted',
+                      'message': 'Employer accepted your reschedule request',
+                    });
               }
 
               if (!context.mounted) return;
@@ -440,7 +455,11 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
       final data = doc.data();
       final bookingId = (data['bookingId'] ?? '').toString();
       if (bookingId.isEmpty) continue;
-      await _showReschedulePopup(context, notifId: doc.id, bookingId: bookingId);
+      await _showReschedulePopup(
+        context,
+        notifId: doc.id,
+        bookingId: bookingId,
+      );
     }
   }
 
@@ -578,7 +597,7 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
           context,
           MaterialPageRoute(
             builder: (context) =>
-              WorkerDetailsScreen(providerId: docId, data: d, workerId: ''),
+                WorkerDetailsScreen(providerId: docId, data: d, workerId: ''),
           ),
         );
       },
@@ -690,44 +709,85 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
       return;
     }
 
+    print('Current user UID: ${currentUser.uid}');
+
     // For employer dashboard, receiver is employer
     bool isEmployer = true;
 
     List<String> notifications = [];
     try {
       // Fetch unread messages
-      final snapshot = await FirebaseFirestore.instance
-          .collectionGroup('messages')
-          .where('receiverId', isEqualTo: currentUser.uid)
-          .get();
+      try {
+        final snapshot = await FirebaseFirestore.instance
+            .collectionGroup('messages')
+            .where('receiverId', isEqualTo: currentUser.uid)
+            .get();
 
-      for (var doc in snapshot.docs) {
-        final data = doc.data();
-        final read = data['read'] as bool? ?? false;
-        if (read) continue; // skip read messages
+        print('Unread messages docs: ${snapshot.docs.length}');
 
-        final senderId = data['senderId'] as String?;
-        if (senderId == null) continue;
+        for (var doc in snapshot.docs) {
+          final data = doc.data();
+          final read = data['read'] as bool? ?? false;
+          if (read) continue; // skip read messages
 
-        String name = '';
-        if (isEmployer) {
-          // Sender is worker, from Sign Up
-          final senderDoc = await FirebaseFirestore.instance
-              .collection('Sign Up')
-              .doc(senderId)
-              .get();
-          if (senderDoc.exists) {
-            final senderData = senderDoc.data();
-            name = senderData?['fullName'] ?? '';
+          final senderId = data['senderId'] as String?;
+          if (senderId == null) continue;
+
+          String name = '';
+          if (isEmployer) {
+            // Sender is worker, from Sign Up
+            final senderDoc = await FirebaseFirestore.instance
+                .collection('Sign Up')
+                .doc(senderId)
+                .get();
+            if (senderDoc.exists) {
+              final senderData = senderDoc.data();
+              name = senderData?['fullName'] ?? '';
+            }
+          }
+          if (name.isNotEmpty) {
+            notifications.add('You have a message from $name');
           }
         }
-        if (name.isNotEmpty) {
-          notifications.add('You have a message from $name');
+      } catch (e) {
+        print('Error fetching unread messages: $e');
+      }
+
+      // Fetch admin support messages
+      final supportSnapshot = await FirebaseFirestore.instance
+          .collection('Support Issues')
+          .where('userId', isEqualTo: currentUser.uid)
+          .get();
+
+      print('Support Issues docs: ${supportSnapshot.docs.length}');
+
+      for (var doc in supportSnapshot.docs) {
+        final data = doc.data();
+        print('Support doc data: $data');
+        final messages = data['messages'] as List<dynamic>? ?? [];
+        print('Messages in doc: $messages');
+        for (var msg in messages) {
+          if (msg is Map<String, dynamic> && msg['sender'] == 'admin') {
+            final message = msg['message'] as String? ?? '';
+            final status = msg['status'] as String? ?? '';
+            final timestamp = msg['timestamp'] as Timestamp?;
+            String timeStr = '';
+            if (timestamp != null) {
+              final dateTime = timestamp.toDate();
+              timeStr = DateFormat('MMM d, h:mm a').format(dateTime);
+            }
+            final notificationText =
+                'Support ($status): $message${timeStr.isNotEmpty ? " at $timeStr" : ""}';
+            notifications.add(notificationText);
+            print('Added admin message: $notificationText');
+          }
         }
       }
     } catch (e) {
       print('Error fetching notifications: $e');
     }
+
+    print('Total notifications: ${notifications.length}');
 
     if (!mounted) return;
 
@@ -942,7 +1002,7 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                             color: Colors.white,
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.person, color: Colors.black),
+                          child: _avatarWidget,
                         ),
                         const SizedBox(width: 10),
                         GestureDetector(
@@ -964,7 +1024,7 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                               Positioned(
                                 right: 0,
                                 top: 0,
-                                child: UnreadMessagesBadge(),
+                                child: EmployerNotificationsBadge(),
                               ),
                             ],
                           ),
