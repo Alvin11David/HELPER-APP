@@ -17,6 +17,7 @@ class AllCategoriesScreen extends StatefulWidget {
 
 class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
   final GlobalKey<SideBarState> _sidebarKey = GlobalKey();
+  late Widget _avatarWidget;
   String _getGreeting() {
     final hour = DateTime.now().hour;
     if (hour < 12) return 'Good Morning';
