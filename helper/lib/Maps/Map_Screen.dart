@@ -31,6 +31,8 @@ class _MapScreenState extends State<MapScreen> {
   List<String> topRatedCategories = [];
   Map<String, double> categoryRatings = {};
 
+  late Widget _avatarWidget;
+
   late GoogleMapController mapController;
 
   final LatLng _center = const LatLng(
