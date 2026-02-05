@@ -427,7 +427,8 @@ class _CategoryProvidersScreenState extends State<CategoryProvidersScreen> {
                                     MaterialPageRoute(
                                       builder: (context) => WorkerDetailsScreen(
                                         providerId: providerId,
-                                        data: data, workerId: '',
+                                        data: data,
+                                        workerId: '',
                                       ),
                                     ),
                                   );
