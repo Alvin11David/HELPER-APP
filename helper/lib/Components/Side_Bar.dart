@@ -316,7 +316,7 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                               ),
                             ),
                           if (_userRole == 'employer')
-                            const SizedBox(height: 20),
+                            const SizedBox(height: 40),
                           if (_userRole != 'employer') ...[
                             GestureDetector(
                               onTap: () async {
