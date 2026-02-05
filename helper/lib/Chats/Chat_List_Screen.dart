@@ -23,6 +23,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
   @override
   void initState() {
     super.initState();
+    _avatarWidget = UserAvatarCircle();
     _scrollController.addListener(_onScroll);
 
     // Show current user info
@@ -370,7 +371,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                             color: Colors.white,
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.person, color: Colors.black),
+                          child: _avatarWidget,
                         ),
                       ],
                     ),
