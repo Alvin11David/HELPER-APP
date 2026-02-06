@@ -84,6 +84,13 @@ class _ForYouProvidersScreenState extends State<ForYouProvidersScreen> {
             workplaceLocationText.contains(q);
       }).toList();
 
+      filtered.sort((a, b) {
+        bool aProm = a.data()['promoted'] ?? false;
+        bool bProm = b.data()['promoted'] ?? false;
+        if (aProm != bProm) return aProm ? -1 : 1;
+        return 0;
+      });
+
       setState(() => _searchResults = filtered.take(10).toList());
     } catch (e) {
       print("Search error: $e");
