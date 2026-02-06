@@ -794,7 +794,7 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                                                         FieldValue.serverTimestamp(),
                                                     'read': false,
                                                     'status': 'info',
-                                                  }
+                                                  },
                                                 ],
                                                 'status': 'info',
                                               });
@@ -812,8 +812,28 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                                             _rating = 0;
                                             _commentController.clear();
                                           });
+
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                'Review sent successfully!',
+                                              ),
+                                              backgroundColor: Colors.green,
+                                            ),
+                                          );
                                         } catch (e) {
-                                          // Handle error, maybe show snackbar
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                'Failed to send review: $e',
+                                              ),
+                                              backgroundColor: Colors.red,
+                                            ),
+                                          );
                                         }
                                       }
                                     : null,
