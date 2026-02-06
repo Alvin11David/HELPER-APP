@@ -47,7 +47,7 @@ class _EmployerNotificationsState extends State<EmployerNotifications> {
 
     // Mark notifications as read
     final notifQuery = await FirebaseFirestore.instance
-        .collection('notifications')
+        .collection('Notifications')
         .where('audience', whereIn: ['all', 'employers'])
         .get();
 
@@ -115,13 +115,13 @@ class _EmployerNotificationsState extends State<EmployerNotifications> {
                 for (var doc in notifSnapshot.data!.docs) {
                   final data = doc.data() as Map<String, dynamic>;
                   allMessages.add({
-                    'message': data['message'] ?? '',
-                    'sender': data['sender'] ?? 'system',
-                    'senderId': data['senderId'] ?? 'system',
-                    'senderName': data['senderName'] ?? 'Notification',
-                    'timestamp': data['timestamp'],
+                    'message': data['title'] != null ? '${data['title']}: ${data['message'] ?? ''}' : data['message'] ?? '',
+                    'sender': 'system',
+                    'senderId': data['sentBy'] ?? 'system',
+                    'senderName': 'Push Notification',
+                    'timestamp': data['sentAt'],
                     'read': data['read'] ?? false,
-                    'status': data['status'] ?? 'info',
+                    'status': 'info',
                   });
                 }
               }
@@ -227,6 +227,4 @@ class _EmployerNotificationsState extends State<EmployerNotifications> {
           );
         },
       ),
-    );
-  }
-}
+   

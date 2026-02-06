@@ -114,7 +114,7 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
 
     // Mark notifications as read
     final notifQuery = await FirebaseFirestore.instance
-        .collection('notifications')
+        .collection('Notifications')
         .where('audience', whereIn: ['all', 'employers'])
         .get();
 
@@ -968,7 +968,7 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                               }
                               return StreamBuilder<QuerySnapshot>(
                                 stream: FirebaseFirestore.instance
-                                    .collection('notifications')
+                                    .collection('Notifications')
                                     .where(
                                       'audience',
                                       whereIn: ['all', 'employers'],
