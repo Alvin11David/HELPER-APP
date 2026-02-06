@@ -403,6 +403,14 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
+  Future<ui.Image> _loadImage(Uint8List bytes) async {
+    final Completer<ui.Image> completer = Completer();
+    ui.decodeImageFromList(bytes, (ui.Image img) {
+      return completer.complete(img);
+    });
+    return completer.future;
+  }
+
   Future<Marker> _createMarkerFromImage(
     String url,
     LatLng position,
@@ -774,9 +782,27 @@ class _MapScreenState extends State<MapScreen> {
                       children: [
                         Icon(Icons.star, color: Colors.black),
                         const SizedBox(width: 4),
-                        const Text('4.6'),
-                        const SizedBox(width: 4),
-                        const Text('(200)'),
+                        FutureBuilder<Map<String, dynamic>>(
+                          future: _getWorkerRating(worker['uid'] ?? ''),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState == ConnectionState.waiting) {
+                              return const Text('Loading...');
+                            }
+                            if (snapshot.hasError) {
+                              return const Text('N/A');
+                            }
+                            final data = snapshot.data!;
+                            final average = data['average'] as double;
+                            final count = data['count'] as int;
+                            return Row(
+                              children: [
+                                Text(average.toStringAsFixed(1)),
+                                const SizedBox(width: 4),
+                                Text('($count)'),
+                              ],
+                            );
+                          },
+                        ),
                       ],
                     ),
                     Row(
