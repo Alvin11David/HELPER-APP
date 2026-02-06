@@ -78,6 +78,37 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
     }
   }
 
+  Future<void> _markMessagesAsRead() async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) return;
+
+    final query = await FirebaseFirestore.instance
+        .collection('Support Issues')
+        .where('userId', isEqualTo: currentUser.uid)
+        .get();
+
+    final batch = FirebaseFirestore.instance.batch();
+
+    for (var doc in query.docs) {
+      final data = doc.data() as Map<String, dynamic>;
+      final messages = List<Map<String, dynamic>>.from(data['messages'] ?? []);
+      bool updated = false;
+      for (int i = 0; i < messages.length; i++) {
+        if ((messages[i]['sender'] == 'admin' ||
+                messages[i]['sender'] == 'system') &&
+            messages[i]['read'] != true) {
+          messages[i]['read'] = true;
+          updated = true;
+        }
+      }
+      if (updated) {
+        batch.update(doc.reference, {'messages': messages});
+      }
+    }
+
+    await batch.commit();
+  }
+
   void _setData(Map<String, dynamic> data) {
     setState(() {
       _businessName = (data['businessName'] ?? '').toString();
