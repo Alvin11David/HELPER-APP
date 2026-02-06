@@ -533,36 +533,37 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                             },
                           ),
                           const SizedBox(height: 20),
-                          GestureDetector(
-                            onTap: () => setState(() => _selectedIndex = 1),
-                            child: Padding(
-                              padding: EdgeInsets.only(left: 8, right: 8),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    Icons.receipt_long,
-                                    color: _selectedIndex == 1
-                                        ? Colors.orange
-                                        : Colors.black.withOpacity(0.6),
-                                  ),
-                                  SizedBox(width: 15),
-                                  Text(
-                                    "My Jobs",
-                                    style: TextStyle(
+                          if (_userRole == 'worker') ...[
+                            GestureDetector(
+                              onTap: () => setState(() => _selectedIndex = 1),
+                              child: Padding(
+                                padding: EdgeInsets.only(left: 8, right: 8),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.receipt_long,
                                       color: _selectedIndex == 1
                                           ? Colors.orange
-                                          : Colors.black,
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w600,
+                                          : Colors.black.withOpacity(0.6),
                                     ),
-                                  ),
-                                ],
+                                    SizedBox(width: 15),
+                                    Text(
+                                      "My Jobs",
+                                      style: TextStyle(
+                                        color: _selectedIndex == 1
+                                            ? Colors.orange
+                                            : Colors.black,
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
-                          const SizedBox(height: 20),
-                          if (_userRole == 'worker') 
-                          const SizedBox(height: 40),
+                            const SizedBox(height: 20),
+                          ],
+                          if (_userRole == 'worker') const SizedBox(height: 40),
                           if (_userRole == 'worker')
                             GestureDetector(
                               onTap: () => setState(() => _selectedIndex = 2),

@@ -433,7 +433,7 @@ class _ChatScreenState extends State<ChatScreen> {
                             ),
                             StreamBuilder<DocumentSnapshot>(
                               stream: FirebaseFirestore.instance
-                                  .collection('serviceProviders')
+                                  .collection('users')
                                   .doc(widget.providerId)
                                   .snapshots(),
                               builder: (context, snapshot) {
