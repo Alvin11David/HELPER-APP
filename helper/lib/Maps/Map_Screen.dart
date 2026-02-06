@@ -346,6 +346,7 @@ class _MapScreenState extends State<MapScreen> {
     final worker = widget.worker!;
     final uid = worker['uid'] as String?;
     if (uid != null) {
+      // Fetch isOnline from users
       final userDoc = await FirebaseFirestore.instance
           .collection('users')
           .doc(uid)
@@ -353,8 +354,15 @@ class _MapScreenState extends State<MapScreen> {
       if (userDoc.exists) {
         final userData = userDoc.data();
         worker['isOnline'] = userData?['isOnline'] ?? false;
-        worker['status'] = userData?['status'] ?? 'Not Available';
       }
+      // Fetch status from bookings
+      final activeBookings = await FirebaseFirestore.instance
+          .collection('bookings')
+          .where('serviceProviderId', isEqualTo: uid)
+          .where('status', whereIn: ['in_progress', 'started'])
+          .limit(1)
+          .get();
+      worker['status'] = activeBookings.docs.isNotEmpty ? 'On Job' : 'Available';
     }
 
     final latLng = worker['workplaceLatLng'] as GeoPoint?;
