@@ -337,8 +337,7 @@ class _ForYouProvidersScreenState extends State<ForYouProvidersScreen> {
                                   itemCount: _searchResults.length,
                                   itemBuilder: (context, index) {
                                     final doc = _searchResults[index];
-                                    final data =
-                                        doc.data();
+                                    final data = doc.data();
                                     final businessName =
                                         data['businessName'] ?? 'Unknown';
                                     final jobCategory =
@@ -512,6 +511,20 @@ class _ForYouProvidersScreenState extends State<ForYouProvidersScreen> {
                               }
 
                               final docs = snapshot.data!.docs;
+
+                              docs.sort((a, b) {
+                                final aData = a.data() as Map<String, dynamic>?;
+                                final bData = b.data() as Map<String, dynamic>?;
+                                bool aProm = aData?['promoted'] ?? false;
+                                bool bProm = bData?['promoted'] ?? false;
+                                if (aProm != bProm) return aProm ? -1 : 1;
+                                Timestamp? aTime = aData?['updatedAt'];
+                                Timestamp? bTime = bData?['updatedAt'];
+                                if (aTime == null && bTime == null) return 0;
+                                if (aTime == null) return 1;
+                                if (bTime == null) return -1;
+                                return bTime.compareTo(aTime);
+                              });
 
                               if (docs.isEmpty) {
                                 return const Center(
