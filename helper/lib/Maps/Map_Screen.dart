@@ -785,7 +785,8 @@ class _MapScreenState extends State<MapScreen> {
                         FutureBuilder<Map<String, dynamic>>(
                           future: _getWorkerRating(worker['uid'] ?? ''),
                           builder: (context, snapshot) {
-                            if (snapshot.connectionState == ConnectionState.waiting) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
                               return const Text('Loading...');
                             }
                             if (snapshot.hasError) {
