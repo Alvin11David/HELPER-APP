@@ -717,23 +717,6 @@ class _MapScreenState extends State<MapScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Container(
-                        width: screenWidth * 0.35,
-                        padding: EdgeInsets.symmetric(
-                          horizontal: screenWidth * 0.03,
-                          vertical: screenWidth * 0.02,
-                        ),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.orange),
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                        child: const Text(
-                          'Schedule',
-                          style: TextStyle(color: Colors.orange),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                      SizedBox(width: screenWidth * 0.07),
                       GestureDetector(
                         onTap: () {
                           Navigator.push(
