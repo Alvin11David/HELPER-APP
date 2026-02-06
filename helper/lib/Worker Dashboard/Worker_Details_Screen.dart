@@ -969,12 +969,16 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                               return StreamBuilder<QuerySnapshot>(
                                 stream: FirebaseFirestore.instance
                                     .collection('notifications')
-                                    .where('audience', whereIn: ['all', 'employers'])
+                                    .where(
+                                      'audience',
+                                      whereIn: ['all', 'employers'],
+                                    )
                                     .snapshots(),
                                 builder: (context, notifSnapshot) {
                                   if (notifSnapshot.hasData) {
                                     for (var doc in notifSnapshot.data!.docs) {
-                                      final data = doc.data() as Map<String, dynamic>;
+                                      final data =
+                                          doc.data() as Map<String, dynamic>;
                                       if (data['read'] != true) {
                                         unreadCount++;
                                       }
