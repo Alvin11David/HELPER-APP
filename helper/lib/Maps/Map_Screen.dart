@@ -302,6 +302,7 @@ class _MapScreenState extends State<MapScreen> {
     for (var i = 0; i < _workers.length; i++) {
       final uid = _workers[i]['uid'] as String?;
       if (uid != null) {
+        // Fetch isOnline from users
         final userDoc = await FirebaseFirestore.instance
             .collection('users')
             .doc(uid)
@@ -309,8 +310,17 @@ class _MapScreenState extends State<MapScreen> {
         if (userDoc.exists) {
           final userData = userDoc.data();
           _workers[i]['isOnline'] = userData?['isOnline'] ?? false;
-          _workers[i]['status'] = userData?['status'] ?? 'Not Available';
         }
+        // Fetch status from bookings
+        final activeBookings = await FirebaseFirestore.instance
+            .collection('bookings')
+            .where('serviceProviderId', isEqualTo: uid)
+            .where('status', whereIn: ['in_progress', 'started'])
+            .limit(1)
+            .get();
+        _workers[i]['status'] = activeBookings.docs.isNotEmpty
+            ? 'On Job'
+            : 'Available';
       }
     }
 
@@ -338,6 +348,7 @@ class _MapScreenState extends State<MapScreen> {
     final worker = widget.worker!;
     final uid = worker['uid'] as String?;
     if (uid != null) {
+      // Fetch isOnline from users
       final userDoc = await FirebaseFirestore.instance
           .collection('users')
           .doc(uid)
@@ -345,8 +356,17 @@ class _MapScreenState extends State<MapScreen> {
       if (userDoc.exists) {
         final userData = userDoc.data();
         worker['isOnline'] = userData?['isOnline'] ?? false;
-        worker['status'] = userData?['status'] ?? 'Not Available';
       }
+      // Fetch status from bookings
+      final activeBookings = await FirebaseFirestore.instance
+          .collection('bookings')
+          .where('serviceProviderId', isEqualTo: uid)
+          .where('status', whereIn: ['in_progress', 'started'])
+          .limit(1)
+          .get();
+      worker['status'] = activeBookings.docs.isNotEmpty
+          ? 'On Job'
+          : 'Available';
     }
 
     final latLng = worker['workplaceLatLng'] as GeoPoint?;
@@ -383,6 +403,14 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
+  Future<ui.Image> _loadImage(Uint8List bytes) async {
+    final Completer<ui.Image> completer = Completer();
+    ui.decodeImageFromList(bytes, (ui.Image img) {
+      return completer.complete(img);
+    });
+    return completer.future;
+  }
+
   Future<Marker> _createMarkerFromImage(
     String url,
     LatLng position,
@@ -403,14 +431,10 @@ class _MapScreenState extends State<MapScreen> {
     Color strokeColor;
     final status = worker['status'] as String? ?? 'Not Available';
     final isOnline = worker['isOnline'] as bool? ?? false;
-    if (isOnline) {
-      if (status == 'Available') {
-        strokeColor = Colors.green;
-      } else if (status == 'On Job') {
-        strokeColor = Colors.orange;
-      } else {
-        strokeColor = Colors.red;
-      }
+    if (status == 'Available') {
+      strokeColor = Colors.green;
+    } else if (status == 'On Job') {
+      strokeColor = Colors.orange;
     } else {
       strokeColor = Colors.red;
     }
@@ -444,12 +468,20 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
-  Future<ui.Image> _loadImage(Uint8List bytes) async {
-    final Completer<ui.Image> completer = Completer();
-    ui.decodeImageFromList(bytes, (ui.Image img) {
-      completer.complete(img);
-    });
-    return completer.future;
+  Future<Map<String, dynamic>> _getWorkerRating(String providerId) async {
+    final reviewsSnapshot = await FirebaseFirestore.instance
+        .collection('serviceProviders')
+        .doc(providerId)
+        .collection('reviews')
+        .get();
+    double total = 0;
+    int count = reviewsSnapshot.docs.length;
+    for (var doc in reviewsSnapshot.docs) {
+      final rating = doc['rating'] as num?;
+      if (rating != null) total += rating.toDouble();
+    }
+    double average = count > 0 ? total / count : 0.0;
+    return {'average': average, 'count': count};
   }
 
   void _onSearchChanged() {
@@ -542,20 +574,35 @@ class _MapScreenState extends State<MapScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: screenWidth * 0.04,
-                            vertical: screenWidth * 0.02,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.green,
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                          child: const Text(
-                            'Available',
-                            style: TextStyle(color: Colors.black),
-                          ),
-                        ),
+                        worker['status'] == 'On Job'
+                            ? Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: screenWidth * 0.04,
+                                  vertical: screenWidth * 0.02,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.orange,
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
+                                child: const Text(
+                                  'On Job',
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                              )
+                            : Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: screenWidth * 0.04,
+                                  vertical: screenWidth * 0.02,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.green,
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
+                                child: const Text(
+                                  'Available',
+                                  style: TextStyle(color: Colors.black),
+                                ),
+                              ),
                         GestureDetector(
                           onTap: () => _showDirections(worker),
                           child: Container(
@@ -649,23 +696,6 @@ class _MapScreenState extends State<MapScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Container(
-                        width: screenWidth * 0.35,
-                        padding: EdgeInsets.symmetric(
-                          horizontal: screenWidth * 0.03,
-                          vertical: screenWidth * 0.02,
-                        ),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.orange),
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                        child: const Text(
-                          'Schedule',
-                          style: TextStyle(color: Colors.orange),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                      SizedBox(width: screenWidth * 0.07),
                       GestureDetector(
                         onTap: () {
                           Navigator.push(
@@ -686,8 +716,8 @@ class _MapScreenState extends State<MapScreen> {
                         child: Container(
                           width: screenWidth * 0.35,
                           padding: EdgeInsets.symmetric(
-                            horizontal: screenWidth * 0.03,
-                            vertical: screenWidth * 0.02,
+                            horizontal: screenWidth * 0.05,
+                            vertical: screenWidth * 0.04,
                           ),
                           decoration: BoxDecoration(
                             color: Colors.orange,
@@ -714,9 +744,28 @@ class _MapScreenState extends State<MapScreen> {
                       children: [
                         Icon(Icons.star, color: Colors.black),
                         const SizedBox(width: 4),
-                        const Text('4.6'),
-                        const SizedBox(width: 4),
-                        const Text('(200)'),
+                        FutureBuilder<Map<String, dynamic>>(
+                          future: _getWorkerRating(worker['uid'] ?? ''),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return const Text('Loading...');
+                            }
+                            if (snapshot.hasError) {
+                              return const Text('N/A');
+                            }
+                            final data = snapshot.data!;
+                            final average = data['average'] as double;
+                            final count = data['count'] as int;
+                            return Row(
+                              children: [
+                                Text(average.toStringAsFixed(1)),
+                                const SizedBox(width: 4),
+                                Text('($count)'),
+                              ],
+                            );
+                          },
+                        ),
                       ],
                     ),
                     Row(
@@ -1069,7 +1118,7 @@ class _MapScreenState extends State<MapScreen> {
                                       Icon(
                                         Icons.star,
                                         color: Colors.orange,
-                                        size: 16,
+                                        size: 14,
                                       ),
                                       const SizedBox(width: 4),
                                       const Text(

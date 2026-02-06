@@ -1527,6 +1527,9 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                                   );
                                 }
                                 scored.sort((a, b) {
+                                  bool aProm = a['promoted'] ?? false;
+                                  bool bProm = b['promoted'] ?? false;
+                                  if (aProm != bProm) return aProm ? -1 : 1;
                                   final ak = (a['_distanceKm'] as num)
                                       .toDouble();
                                   final bk = (b['_distanceKm'] as num)
@@ -1546,6 +1549,24 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                                       )
                                       .toList();
                                 }
+                                filteredDocs.sort((a, b) {
+                                  bool aProm = a.data()['promoted'] ?? false;
+                                  bool bProm = b.data()['promoted'] ?? false;
+                                  if (aProm != bProm) return aProm ? -1 : 1;
+                                  if (selectedFilter == 'Top Rated') {
+                                    double aRat = providerRatings[a.id] ?? 0;
+                                    double bRat = providerRatings[b.id] ?? 0;
+                                    return bRat.compareTo(aRat);
+                                  } else {
+                                    Timestamp? aTime = a.data()['updatedAt'];
+                                    Timestamp? bTime = b.data()['updatedAt'];
+                                    if (aTime == null && bTime == null)
+                                      return 0;
+                                    if (aTime == null) return 1;
+                                    if (bTime == null) return -1;
+                                    return bTime.compareTo(aTime);
+                                  }
+                                });
                                 show = filteredDocs
                                     .take(10)
                                     .map(
