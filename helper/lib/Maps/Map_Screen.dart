@@ -318,7 +318,9 @@ class _MapScreenState extends State<MapScreen> {
             .where('status', whereIn: ['in_progress', 'started'])
             .limit(1)
             .get();
-        _workers[i]['status'] = activeBookings.docs.isNotEmpty ? 'On Job' : 'Available';
+        _workers[i]['status'] = activeBookings.docs.isNotEmpty
+            ? 'On Job'
+            : 'Available';
       }
     }
 
@@ -362,7 +364,9 @@ class _MapScreenState extends State<MapScreen> {
           .where('status', whereIn: ['in_progress', 'started'])
           .limit(1)
           .get();
-      worker['status'] = activeBookings.docs.isNotEmpty ? 'On Job' : 'Available';
+      worker['status'] = activeBookings.docs.isNotEmpty
+          ? 'On Job'
+          : 'Available';
     }
 
     final latLng = worker['workplaceLatLng'] as GeoPoint?;
@@ -460,12 +464,20 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
-  Future<ui.Image> _loadImage(Uint8List bytes) async {
-    final Completer<ui.Image> completer = Completer();
-    ui.decodeImageFromList(bytes, (ui.Image img) {
-      completer.complete(img);
-    });
-    return completer.future;
+  Future<Map<String, dynamic>> _getWorkerRating(String providerId) async {
+    final reviewsSnapshot = await FirebaseFirestore.instance
+        .collection('serviceProviders')
+        .doc(providerId)
+        .collection('reviews')
+        .get();
+    double total = 0;
+    int count = reviewsSnapshot.docs.length;
+    for (var doc in reviewsSnapshot.docs) {
+      final rating = doc['rating'] as num?;
+      if (rating != null) total += rating.toDouble();
+    }
+    double average = count > 0 ? total / count : 0.0;
+    return {'average': average, 'count': count};
   }
 
   void _onSearchChanged() {
