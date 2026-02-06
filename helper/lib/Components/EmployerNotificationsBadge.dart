@@ -42,8 +42,22 @@ class _EmployerNotificationsBadgeState
           }
         }
 
-        _unreadCount = supportCount;
-        return _buildBadge();
+        return StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance
+              .collectionGroup('messages')
+              .where('receiverId', isEqualTo: currentUser.uid)
+              .where('read', isEqualTo: false)
+              .snapshots(),
+          builder: (context, messagesSnapshot) {
+            int messagesCount = 0;
+            if (messagesSnapshot.hasData) {
+              messagesCount = messagesSnapshot.data!.docs.length;
+            }
+
+            _unreadCount = supportCount + messagesCount;
+            return _buildBadge();
+          },
+        );
       },
     );
   }

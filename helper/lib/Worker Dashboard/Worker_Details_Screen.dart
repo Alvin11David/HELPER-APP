@@ -6,9 +6,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:helper/Employer%20Dashboard/job_detail_booking_screen.dart';
 import 'package:helper/Employer%20Dashboard/Employer_Dashboard_Screen.dart';
+import 'package:helper/Employer%20Dashboard/Employer_Notifications.dart';
 import 'package:helper/Maps/Map_Screen.dart';
 import 'package:helper/Chats/Chat_Screen.dart';
 import '../Components/Side_Bar.dart';
+import '../Components/user_avatar_circle.dart';
 
 class Review {
   final String reviewerName;
@@ -47,9 +49,13 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
 
   final GlobalKey<SideBarState> _sidebarKey = GlobalKey();
 
+  late Widget _avatarWidget;
+
   late String _greeting;
 
   String? _businessName;
+
+  
   String? _jobCategoryName;
   int? _yearsExperience;
   String? _skillsDescription;
@@ -70,12 +76,44 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
   void initState() {
     super.initState();
     _greeting = _getGreeting();
+    _avatarWidget = UserAvatarCircle();
     if (widget.data != null) {
       _setData(widget.data!);
       _loadReviews();
     } else {
       _loadProvider();
     }
+  }
+
+  Future<void> _markMessagesAsRead() async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) return;
+
+    final query = await FirebaseFirestore.instance
+        .collection('Support Issues')
+        .where('userId', isEqualTo: currentUser.uid)
+        .get();
+
+    final batch = FirebaseFirestore.instance.batch();
+
+    for (var doc in query.docs) {
+      final data = doc.data() as Map<String, dynamic>;
+      final messages = List<Map<String, dynamic>>.from(data['messages'] ?? []);
+      bool updated = false;
+      for (int i = 0; i < messages.length; i++) {
+        if ((messages[i]['sender'] == 'admin' ||
+                messages[i]['sender'] == 'system') &&
+            messages[i]['read'] != true) {
+          messages[i]['read'] = true;
+          updated = true;
+        }
+      }
+      if (updated) {
+        batch.update(doc.reference, {'messages': messages});
+      }
+    }
+
+    await batch.commit();
   }
 
   void _setData(Map<String, dynamic> data) {
@@ -778,6 +816,29 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                                                     FieldValue.serverTimestamp(),
                                               });
 
+                                          // Add notification to Support Issues
+                                          await FirebaseFirestore.instance
+                                              .collection('Support Issues')
+                                              .add({
+                                                'userId': reviewerId,
+                                                'messages': [
+                                                  {
+                                                    'sender': 'system',
+                                                    'senderId': 'system',
+                                                    'senderName': 'System',
+                                                    'message':
+                                                        'Your review has been successfully sent for $providerName.',
+                                                    'timestamp':
+                                                        Timestamp.fromDate(
+                                                          DateTime.now(),
+                                                        ),
+                                                    'read': false,
+                                                    'status': 'info',
+                                                  },
+                                                ],
+                                                'status': 'info',
+                                              });
+
                                           setState(() {
                                             _reviews.insert(
                                               0,
@@ -791,8 +852,28 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                                             _rating = 0;
                                             _commentController.clear();
                                           });
+
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                'Review sent successfully!',
+                                              ),
+                                              backgroundColor: Colors.green,
+                                            ),
+                                          );
                                         } catch (e) {
-                                          // Handle error, maybe show snackbar
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                'Failed to send review: $e',
+                                              ),
+                                              backgroundColor: Colors.red,
+                                            ),
+                                          );
                                         }
                                       }
                                     : null,
@@ -844,24 +925,13 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Container(
-                            width: 40,
-                            height: 40,
-                            decoration: const BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.person,
-                              color: Colors.black,
-                            ),
-                          ),
+                          _avatarWidget,
                           const SizedBox(width: 10),
                           StreamBuilder<QuerySnapshot>(
                             stream: FirebaseFirestore.instance
-                                .collectionGroup('messages')
+                                .collection('Support Issues')
                                 .where(
-                                  'receiverId',
+                                  'userId',
                                   isEqualTo:
                                       FirebaseAuth.instance.currentUser!.uid,
                                 )
@@ -869,50 +939,75 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                             builder: (context, snapshot) {
                               int unreadCount = 0;
                               if (snapshot.hasData) {
-                                unreadCount = snapshot.data!.docs.length;
+                                for (var doc in snapshot.data!.docs) {
+                                  final data =
+                                      doc.data() as Map<String, dynamic>;
+                                  final messages =
+                                      data['messages'] as List<dynamic>? ?? [];
+                                  for (var msg in messages) {
+                                    if (msg is Map<String, dynamic> &&
+                                        (msg['sender'] == 'admin' ||
+                                            msg['sender'] == 'system') &&
+                                        msg['read'] != true) {
+                                      unreadCount++;
+                                    }
+                                  }
+                                }
                               }
-                              return Stack(
-                                children: [
-                                  Container(
-                                    width: 40,
-                                    height: 40,
-                                    decoration: const BoxDecoration(
-                                      color: Colors.white,
-                                      shape: BoxShape.circle,
+                              return GestureDetector(
+                                onTap: () async {
+                                  await _markMessagesAsRead();
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const EmployerNotifications(),
                                     ),
-                                    child: const Icon(
-                                      Icons.notifications,
-                                      color: Colors.black,
-                                    ),
-                                  ),
-                                  if (unreadCount > 0)
-                                    Positioned(
-                                      right: 0,
-                                      top: 0,
-                                      child: Container(
-                                        padding: const EdgeInsets.all(2),
-                                        decoration: const BoxDecoration(
-                                          color: Colors.red,
-                                          shape: BoxShape.circle,
-                                        ),
-                                        constraints: const BoxConstraints(
-                                          minWidth: 16,
-                                          minHeight: 16,
-                                        ),
-                                        child: Text(
-                                          unreadCount > 99
-                                              ? '99+'
-                                              : unreadCount.toString(),
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 10,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                          textAlign: TextAlign.center,
-                                        ),
+                                  );
+                                },
+                                child: Stack(
+                                  children: [
+                                    Container(
+                                      width: 40,
+                                      height: 40,
+                                      decoration: const BoxDecoration(
+                                        color: Colors.white,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(
+                                        Icons.notifications,
+                                        color: Colors.black,
                                       ),
                                     ),
-                                ],
+                                    if (unreadCount > 0)
+                                      Positioned(
+                                        right: 0,
+                                        top: 0,
+                                        child: Container(
+                                          padding: const EdgeInsets.all(2),
+                                          decoration: const BoxDecoration(
+                                            color: Colors.red,
+                                            shape: BoxShape.circle,
+                                          ),
+                                          constraints: const BoxConstraints(
+                                            minWidth: 16,
+                                            minHeight: 16,
+                                          ),
+                                          child: Text(
+                                            unreadCount > 99
+                                                ? '99+'
+                                                : unreadCount.toString(),
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                ),
                               );
                             },
                           ),

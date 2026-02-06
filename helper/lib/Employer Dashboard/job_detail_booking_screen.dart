@@ -2417,7 +2417,7 @@ class _StepIndicator extends StatelessWidget {
                   color: Colors.white.withOpacity(isActive ? 1 : 0.65),
                   fontFamily: 'Inter',
                   fontWeight: FontWeight.w900,
-                  fontSize: width * 0.028,
+                  fontSize: width * 0.026,
                 ),
               ),
             ],

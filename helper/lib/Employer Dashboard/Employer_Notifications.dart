@@ -33,13 +33,28 @@ class _EmployerNotificationsState extends State<EmployerNotifications> {
       final messages = List<Map<String, dynamic>>.from(data['messages'] ?? []);
       bool updated = false;
       for (int i = 0; i < messages.length; i++) {
-        if (messages[i]['sender'] == 'admin' && messages[i]['read'] != true) {
+        if ((messages[i]['sender'] == 'admin' ||
+                messages[i]['sender'] == 'system') &&
+            messages[i]['read'] != true) {
           messages[i]['read'] = true;
           updated = true;
         }
       }
       if (updated) {
         batch.update(doc.reference, {'messages': messages});
+      }
+    }
+
+    // Mark notifications as read
+    final notifQuery = await FirebaseFirestore.instance
+        .collection('Notifications')
+        .where('audience', whereIn: ['all', 'employers'])
+        .get();
+
+    for (var doc in notifQuery.docs) {
+      final data = doc.data() as Map<String, dynamic>;
+      if (data['read'] != true) {
+        batch.update(doc.reference, {'read': true});
       }
     }
 
@@ -55,7 +70,7 @@ class _EmployerNotificationsState extends State<EmployerNotifications> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Support Messages'),
+        title: const Text('Notifications'),
         backgroundColor: const Color(0xFFFFA10D),
       ),
       body: StreamBuilder<QuerySnapshot>(
@@ -73,104 +88,140 @@ class _EmployerNotificationsState extends State<EmployerNotifications> {
           }
 
           final docs = snapshot.data!.docs;
-          List<Map<String, dynamic>> allMessages = [];
 
-          for (var doc in docs) {
-            final data = doc.data() as Map<String, dynamic>?;
-            final messages =
-                (data != null ? data['messages'] : null) as List<dynamic>? ??
-                [];
-            for (var msg in messages) {
-              if (msg is Map<String, dynamic> && msg['sender'] == 'admin') {
-                allMessages.add(msg);
-              }
-            }
-          }
+          return StreamBuilder<QuerySnapshot>(
+            stream: FirebaseFirestore.instance
+                .collection('Notifications')
+                .where('audience', whereIn: ['all', 'employers'])
+                .snapshots(),
+            builder: (context, notifSnapshot) {
+              List<Map<String, dynamic>> allMessages = [];
 
-          allMessages.sort((a, b) {
-            final aTime = a['timestamp'] as Timestamp?;
-            final bTime = b['timestamp'] as Timestamp?;
-            if (aTime == null || bTime == null) return 0;
-            return bTime.compareTo(aTime); // descending
-          });
-
-          if (allMessages.isEmpty) {
-            return const Center(child: Text('No messages from admin'));
-          }
-
-          return ListView.builder(
-            itemCount: allMessages.length,
-            itemBuilder: (context, index) {
-              final messageData = allMessages[index];
-              final message = messageData['message'] ?? '';
-              final sender = messageData['sender'] ?? '';
-              final senderId = messageData['senderId'] ?? '';
-              final senderName = messageData['senderName'] ?? '';
-              final timestamp = messageData['timestamp'];
-              final status = messageData['status'] ?? '';
-
-              String formattedTime = '';
-              if (timestamp != null && timestamp is Timestamp) {
-                final dateTime = timestamp.toDate();
-                formattedTime = DateFormat(
-                  'MMMM d, yyyy \'at\' h:mm:ss a \'UTC\'z',
-                ).format(dateTime);
+              for (var doc in docs) {
+                final data = doc.data() as Map<String, dynamic>?;
+                final messages =
+                    (data != null ? data['messages'] : null)
+                        as List<dynamic>? ??
+                    [];
+                for (var msg in messages) {
+                  if (msg is Map<String, dynamic> &&
+                      (msg['sender'] == 'admin' || msg['sender'] == 'system')) {
+                    allMessages.add(msg);
+                  }
+                }
               }
 
-              return Card(
-                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
+              if (notifSnapshot.hasData) {
+                for (var doc in notifSnapshot.data!.docs) {
+                  final data = doc.data() as Map<String, dynamic>;
+                  allMessages.add({
+                    'message': data['title'] != null ? '${data['title']}: ${data['message'] ?? ''}' : data['message'] ?? '',
+                    'sender': 'system',
+                    'senderId': data['sentBy'] ?? 'system',
+                    'senderName': 'Push Notification',
+                    'timestamp': data['sentAt'],
+                    'read': data['read'] ?? false,
+                    'status': 'info',
+                  });
+                }
+              }
+
+              allMessages.sort((a, b) {
+                final aTime = a['timestamp'] as Timestamp?;
+                final bTime = b['timestamp'] as Timestamp?;
+                if (aTime == null || bTime == null) return 0;
+                return bTime.compareTo(aTime); // descending
+              });
+
+              if (allMessages.isEmpty) {
+                return const Center(child: Text('No notifications'));
+              }
+
+              return ListView.builder(
+                itemCount: allMessages.length,
+                itemBuilder: (context, index) {
+                  final messageData = allMessages[index];
+                  final message = messageData['message'] ?? '';
+                  final sender = messageData['sender'] ?? '';
+                  final senderId = messageData['senderId'] ?? '';
+                  final senderName = messageData['senderName'] ?? '';
+                  final timestamp = messageData['timestamp'];
+                  final status = messageData['status'] ?? '';
+
+                  String formattedTime = '';
+                  if (timestamp != null && timestamp is Timestamp) {
+                    final dateTime = timestamp.toDate();
+                    formattedTime = DateFormat(
+                      'MMMM d, yyyy \'at\' h:mm:ss a \'UTC\'z',
+                    ).format(dateTime);
+                  }
+
+                  return Card(
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(
-                            Icons.admin_panel_settings,
-                            color: Color(0xFFFFA10D),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            senderName,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
-                            ),
-                          ),
-                          const Spacer(),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: status == 'resolved'
-                                  ? Colors.green
-                                  : Colors.orange,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              status.toUpperCase(),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
+                          Row(
+                            children: [
+                              Icon(
+                                sender == 'admin'
+                                    ? Icons.admin_panel_settings
+                                    : Icons.info,
+                                color: const Color(0xFFFFA10D),
                               ),
+                              const SizedBox(width: 8),
+                              Text(
+                                senderName,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                ),
+                              ),
+                              const Spacer(),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: status == 'resolved'
+                                      ? Colors.green
+                                      : status == 'info'
+                                      ? Colors.blue
+                                      : Colors.orange,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  status.toUpperCase(),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(message, style: const TextStyle(fontSize: 12)),
+                          const SizedBox(height: 8),
+                          Text(
+                            formattedTime,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[600],
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 8),
-                      Text(message, style: const TextStyle(fontSize: 12)),
-                      const SizedBox(height: 8),
-                      Text(
-                        formattedTime,
-                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                      ),
-                    ],
-                  ),
-                ),
+                    ),
+                  );
+                },
               );
             },
           );
