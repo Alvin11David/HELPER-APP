@@ -968,7 +968,7 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                               }
                               return StreamBuilder<QuerySnapshot>(
                                 stream: FirebaseFirestore.instance
-                                    .collection('Notifications')
+                                    .collection('notifications')
                                     .where(
                                       'audience',
                                       whereIn: ['all', 'employers'],
