@@ -10,6 +10,7 @@ import 'package:helper/Employer%20Dashboard/Employer_Notifications.dart';
 import 'package:helper/Maps/Map_Screen.dart';
 import 'package:helper/Chats/Chat_Screen.dart';
 import '../Components/Side_Bar.dart';
+import '../Components/user_avatar_circle.dart';
 
 class Review {
   final String reviewerName;
@@ -935,16 +936,25 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                           StreamBuilder<QuerySnapshot>(
                             stream: FirebaseFirestore.instance
                                 .collection('Support Issues')
-                                .where('userId', isEqualTo: FirebaseAuth.instance.currentUser!.uid)
+                                .where(
+                                  'userId',
+                                  isEqualTo:
+                                      FirebaseAuth.instance.currentUser!.uid,
+                                )
                                 .snapshots(),
                             builder: (context, snapshot) {
                               int unreadCount = 0;
                               if (snapshot.hasData) {
                                 for (var doc in snapshot.data!.docs) {
-                                  final data = doc.data() as Map<String, dynamic>;
-                                  final messages = data['messages'] as List<dynamic>? ?? [];
+                                  final data =
+                                      doc.data() as Map<String, dynamic>;
+                                  final messages =
+                                      data['messages'] as List<dynamic>? ?? [];
                                   for (var msg in messages) {
-                                    if (msg is Map<String, dynamic> && (msg['sender'] == 'admin' || msg['sender'] == 'system') && msg['read'] != true) {
+                                    if (msg is Map<String, dynamic> &&
+                                        (msg['sender'] == 'admin' ||
+                                            msg['sender'] == 'system') &&
+                                        msg['read'] != true) {
                                       unreadCount++;
                                     }
                                   }
@@ -956,7 +966,8 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) => const EmployerNotifications(),
+                                      builder: (context) =>
+                                          const EmployerNotifications(),
                                     ),
                                   );
                                 },
