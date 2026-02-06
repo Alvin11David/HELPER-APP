@@ -302,6 +302,7 @@ class _MapScreenState extends State<MapScreen> {
     for (var i = 0; i < _workers.length; i++) {
       final uid = _workers[i]['uid'] as String?;
       if (uid != null) {
+        // Fetch isOnline from users
         final userDoc = await FirebaseFirestore.instance
             .collection('users')
             .doc(uid)
@@ -309,8 +310,15 @@ class _MapScreenState extends State<MapScreen> {
         if (userDoc.exists) {
           final userData = userDoc.data();
           _workers[i]['isOnline'] = userData?['isOnline'] ?? false;
-          _workers[i]['status'] = userData?['status'] ?? 'Not Available';
         }
+        // Fetch status from bookings
+        final activeBookings = await FirebaseFirestore.instance
+            .collection('bookings')
+            .where('serviceProviderId', isEqualTo: uid)
+            .where('status', whereIn: ['in_progress', 'started'])
+            .limit(1)
+            .get();
+        _workers[i]['status'] = activeBookings.docs.isNotEmpty ? 'On Job' : 'Available';
       }
     }
 
@@ -542,19 +550,51 @@ class _MapScreenState extends State<MapScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: screenWidth * 0.04,
-                            vertical: screenWidth * 0.02,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.green,
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                          child: const Text(
-                            'Available',
-                            style: TextStyle(color: Colors.black),
-                          ),
+                        StreamBuilder<QuerySnapshot>(
+                          stream: FirebaseFirestore.instance
+                              .collection('bookings')
+                              .where(
+                                'serviceProviderId',
+                                isEqualTo: worker['uid'],
+                              )
+                              .where(
+                                'status',
+                                whereIn: ['in_progress', 'started'],
+                              )
+                              .limit(1)
+                              .snapshots(),
+                          builder: (ctx, snap) {
+                            if (snap.hasData && snap.data!.docs.isNotEmpty) {
+                              return Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: screenWidth * 0.04,
+                                  vertical: screenWidth * 0.02,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.red,
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
+                                child: const Text(
+                                  'On Job',
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                              );
+                            }
+                            return Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: screenWidth * 0.04,
+                                vertical: screenWidth * 0.02,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.green,
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                              child: const Text(
+                                'Available',
+                                style: TextStyle(color: Colors.black),
+                              ),
+                            );
+                          },
                         ),
                         GestureDetector(
                           onTap: () => _showDirections(worker),
@@ -1069,7 +1109,7 @@ class _MapScreenState extends State<MapScreen> {
                                       Icon(
                                         Icons.star,
                                         color: Colors.orange,
-                                        size: 16,
+                                        size: 14,
                                       ),
                                       const SizedBox(width: 4),
                                       const Text(
