@@ -778,6 +778,27 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                                                     FieldValue.serverTimestamp(),
                                               });
 
+                                          // Add notification to Support Issues
+                                          await FirebaseFirestore.instance
+                                              .collection('Support Issues')
+                                              .add({
+                                                'userId': reviewerId,
+                                                'messages': [
+                                                  {
+                                                    'sender': 'system',
+                                                    'senderId': 'system',
+                                                    'senderName': 'System',
+                                                    'message':
+                                                        'Your review has been successfully sent for $providerName.',
+                                                    'timestamp':
+                                                        FieldValue.serverTimestamp(),
+                                                    'read': false,
+                                                    'status': 'info',
+                                                  }
+                                                ],
+                                                'status': 'info',
+                                              });
+
                                           setState(() {
                                             _reviews.insert(
                                               0,

@@ -33,7 +33,9 @@ class _EmployerNotificationsState extends State<EmployerNotifications> {
       final messages = List<Map<String, dynamic>>.from(data['messages'] ?? []);
       bool updated = false;
       for (int i = 0; i < messages.length; i++) {
-        if (messages[i]['sender'] == 'admin' && messages[i]['read'] != true) {
+        if ((messages[i]['sender'] == 'admin' ||
+                messages[i]['sender'] == 'system') &&
+            messages[i]['read'] != true) {
           messages[i]['read'] = true;
           updated = true;
         }
@@ -55,7 +57,7 @@ class _EmployerNotificationsState extends State<EmployerNotifications> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Support Messages'),
+        title: const Text('Notifications'),
         backgroundColor: const Color(0xFFFFA10D),
       ),
       body: StreamBuilder<QuerySnapshot>(
@@ -81,7 +83,8 @@ class _EmployerNotificationsState extends State<EmployerNotifications> {
                 (data != null ? data['messages'] : null) as List<dynamic>? ??
                 [];
             for (var msg in messages) {
-              if (msg is Map<String, dynamic> && msg['sender'] == 'admin') {
+              if (msg is Map<String, dynamic> &&
+                  (msg['sender'] == 'admin' || msg['sender'] == 'system')) {
                 allMessages.add(msg);
               }
             }
@@ -95,7 +98,7 @@ class _EmployerNotificationsState extends State<EmployerNotifications> {
           });
 
           if (allMessages.isEmpty) {
-            return const Center(child: Text('No messages from admin'));
+            return const Center(child: Text('No notifications'));
           }
 
           return ListView.builder(
@@ -126,9 +129,11 @@ class _EmployerNotificationsState extends State<EmployerNotifications> {
                     children: [
                       Row(
                         children: [
-                          const Icon(
-                            Icons.admin_panel_settings,
-                            color: Color(0xFFFFA10D),
+                          Icon(
+                            sender == 'admin'
+                                ? Icons.admin_panel_settings
+                                : Icons.info,
+                            color: const Color(0xFFFFA10D),
                           ),
                           const SizedBox(width: 8),
                           Text(
@@ -147,6 +152,8 @@ class _EmployerNotificationsState extends State<EmployerNotifications> {
                             decoration: BoxDecoration(
                               color: status == 'resolved'
                                   ? Colors.green
+                                  : status == 'info'
+                                  ? Colors.blue
                                   : Colors.orange,
                               borderRadius: BorderRadius.circular(12),
                             ),
