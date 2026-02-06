@@ -76,6 +76,7 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
   void initState() {
     super.initState();
     _greeting = _getGreeting();
+    _avatarWidget = UserAvatarCircle();
     if (widget.data != null) {
       _setData(widget.data!);
       _loadReviews();
@@ -924,18 +925,7 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Container(
-                            width: 40,
-                            height: 40,
-                            decoration: const BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.person,
-                              color: Colors.black,
-                            ),
-                          ),
+                          _avatarWidget,
                           const SizedBox(width: 10),
                           StreamBuilder<QuerySnapshot>(
                             stream: FirebaseFirestore.instance
