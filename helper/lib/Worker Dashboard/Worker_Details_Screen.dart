@@ -49,7 +49,11 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
 
   final GlobalKey<SideBarState> _sidebarKey = GlobalKey();
 
+  late Widget _avatarWidget;
+
   late String _greeting;
+
+  String? _businessName;
 
   String? _businessName;
   String? _jobCategoryName;
