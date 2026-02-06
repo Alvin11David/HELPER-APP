@@ -22,6 +22,9 @@ class _EmployerNotificationsState extends State<EmployerNotifications> {
   void initState() {
     super.initState();
     _loadMessages();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _markMessagesAsRead();
+    });
   }
 
   void _loadMessages() {
