@@ -112,6 +112,19 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
       }
     }
 
+    // Mark notifications as read
+    final notifQuery = await FirebaseFirestore.instance
+        .collection('notifications')
+        .where('audience', whereIn: ['all', 'employers'])
+        .get();
+
+    for (var doc in notifQuery.docs) {
+      final data = doc.data() as Map<String, dynamic>;
+      if (data['read'] != true) {
+        batch.update(doc.reference, {'read': true});
+      }
+    }
+
     await batch.commit();
   }
 
@@ -953,60 +966,76 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                                   }
                                 }
                               }
-                              return GestureDetector(
-                                onTap: () async {
-                                  await _markMessagesAsRead();
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          const EmployerNotifications(),
+                              return StreamBuilder<QuerySnapshot>(
+                                stream: FirebaseFirestore.instance
+                                    .collection('notifications')
+                                    .where('audience', whereIn: ['all', 'employers'])
+                                    .snapshots(),
+                                builder: (context, notifSnapshot) {
+                                  if (notifSnapshot.hasData) {
+                                    for (var doc in notifSnapshot.data!.docs) {
+                                      final data = doc.data() as Map<String, dynamic>;
+                                      if (data['read'] != true) {
+                                        unreadCount++;
+                                      }
+                                    }
+                                  }
+                                  return GestureDetector(
+                                    onTap: () async {
+                                      await _markMessagesAsRead();
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              const EmployerNotifications(),
+                                        ),
+                                      );
+                                    },
+                                    child: Stack(
+                                      children: [
+                                        Container(
+                                          width: 40,
+                                          height: 40,
+                                          decoration: const BoxDecoration(
+                                            color: Colors.white,
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: const Icon(
+                                            Icons.notifications,
+                                            color: Colors.black,
+                                          ),
+                                        ),
+                                        if (unreadCount > 0)
+                                          Positioned(
+                                            right: 0,
+                                            top: 0,
+                                            child: Container(
+                                              padding: const EdgeInsets.all(2),
+                                              decoration: const BoxDecoration(
+                                                color: Colors.red,
+                                                shape: BoxShape.circle,
+                                              ),
+                                              constraints: const BoxConstraints(
+                                                minWidth: 16,
+                                                minHeight: 16,
+                                              ),
+                                              child: Text(
+                                                unreadCount > 99
+                                                    ? '99+'
+                                                    : unreadCount.toString(),
+                                                style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 10,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                                textAlign: TextAlign.center,
+                                              ),
+                                            ),
+                                          ),
+                                      ],
                                     ),
                                   );
                                 },
-                                child: Stack(
-                                  children: [
-                                    Container(
-                                      width: 40,
-                                      height: 40,
-                                      decoration: const BoxDecoration(
-                                        color: Colors.white,
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: const Icon(
-                                        Icons.notifications,
-                                        color: Colors.black,
-                                      ),
-                                    ),
-                                    if (unreadCount > 0)
-                                      Positioned(
-                                        right: 0,
-                                        top: 0,
-                                        child: Container(
-                                          padding: const EdgeInsets.all(2),
-                                          decoration: const BoxDecoration(
-                                            color: Colors.red,
-                                            shape: BoxShape.circle,
-                                          ),
-                                          constraints: const BoxConstraints(
-                                            minWidth: 16,
-                                            minHeight: 16,
-                                          ),
-                                          child: Text(
-                                            unreadCount > 99
-                                                ? '99+'
-                                                : unreadCount.toString(),
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 10,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                            textAlign: TextAlign.center,
-                                          ),
-                                        ),
-                                      ),
-                                  ],
-                                ),
                               );
                             },
                           ),

@@ -45,6 +45,19 @@ class _EmployerNotificationsState extends State<EmployerNotifications> {
       }
     }
 
+    // Mark notifications as read
+    final notifQuery = await FirebaseFirestore.instance
+        .collection('notifications')
+        .where('audience', whereIn: ['all', 'employers'])
+        .get();
+
+    for (var doc in notifQuery.docs) {
+      final data = doc.data() as Map<String, dynamic>;
+      if (data['read'] != true) {
+        batch.update(doc.reference, {'read': true});
+      }
+    }
+
     await batch.commit();
   }
 
@@ -75,36 +88,58 @@ class _EmployerNotificationsState extends State<EmployerNotifications> {
           }
 
           final docs = snapshot.data!.docs;
-          List<Map<String, dynamic>> allMessages = [];
 
-          for (var doc in docs) {
-            final data = doc.data() as Map<String, dynamic>?;
-            final messages =
-                (data != null ? data['messages'] : null) as List<dynamic>? ??
-                [];
-            for (var msg in messages) {
-              if (msg is Map<String, dynamic> &&
-                  (msg['sender'] == 'admin' || msg['sender'] == 'system')) {
-                allMessages.add(msg);
+          return StreamBuilder<QuerySnapshot>(
+            stream: FirebaseFirestore.instance
+                .collection('notifications')
+                .where('audience', whereIn: ['all', 'employers'])
+                .snapshots(),
+            builder: (context, notifSnapshot) {
+              List<Map<String, dynamic>> allMessages = [];
+
+              for (var doc in docs) {
+                final data = doc.data() as Map<String, dynamic>?;
+                final messages =
+                    (data != null ? data['messages'] : null) as List<dynamic>? ??
+                    [];
+                for (var msg in messages) {
+                  if (msg is Map<String, dynamic> &&
+                      (msg['sender'] == 'admin' || msg['sender'] == 'system')) {
+                    allMessages.add(msg);
+                  }
+                }
               }
-            }
-          }
 
-          allMessages.sort((a, b) {
-            final aTime = a['timestamp'] as Timestamp?;
-            final bTime = b['timestamp'] as Timestamp?;
-            if (aTime == null || bTime == null) return 0;
-            return bTime.compareTo(aTime); // descending
-          });
+              if (notifSnapshot.hasData) {
+                for (var doc in notifSnapshot.data!.docs) {
+                  final data = doc.data() as Map<String, dynamic>;
+                  allMessages.add({
+                    'message': data['message'] ?? '',
+                    'sender': data['sender'] ?? 'system',
+                    'senderId': data['senderId'] ?? 'system',
+                    'senderName': data['senderName'] ?? 'Notification',
+                    'timestamp': data['timestamp'],
+                    'read': data['read'] ?? false,
+                    'status': data['status'] ?? 'info',
+                  });
+                }
+              }
 
-          if (allMessages.isEmpty) {
-            return const Center(child: Text('No notifications'));
-          }
+              allMessages.sort((a, b) {
+                final aTime = a['timestamp'] as Timestamp?;
+                final bTime = b['timestamp'] as Timestamp?;
+                if (aTime == null || bTime == null) return 0;
+                return bTime.compareTo(aTime); // descending
+              });
 
-          return ListView.builder(
-            itemCount: allMessages.length,
-            itemBuilder: (context, index) {
-              final messageData = allMessages[index];
+              if (allMessages.isEmpty) {
+                return const Center(child: Text('No notifications'));
+              }
+
+              return ListView.builder(
+                itemCount: allMessages.length,
+                itemBuilder: (context, index) {
+                  final messageData = allMessages[index];
               final message = messageData['message'] ?? '';
               final sender = messageData['sender'] ?? '';
               final senderId = messageData['senderId'] ?? '';
@@ -181,6 +216,8 @@ class _EmployerNotificationsState extends State<EmployerNotifications> {
               );
             },
           );
+        },
+      );
         },
       ),
     );
