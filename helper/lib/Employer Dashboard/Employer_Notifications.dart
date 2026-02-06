@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -11,10 +13,89 @@ class EmployerNotifications extends StatefulWidget {
 }
 
 class _EmployerNotificationsState extends State<EmployerNotifications> {
+  List<Map<String, dynamic>> _allMessages = [];
+  StreamSubscription? _supportSubscription;
+  StreamSubscription? _notifSubscription;
+
   @override
   void initState() {
     super.initState();
-    _markMessagesAsRead();
+    _loadMessages();
+  }
+
+  void _loadMessages() {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) return;
+
+    _supportSubscription = FirebaseFirestore.instance
+        .collection('Support Issues')
+        .where('userId', isEqualTo: currentUser.uid)
+        .snapshots()
+        .listen((snapshot) {
+      _updateMessages();
+    });
+
+    _notifSubscription = FirebaseFirestore.instance
+        .collection('notifications')
+        .where('audience', whereIn: ['all', 'employers'])
+        .snapshots()
+        .listen((snapshot) {
+      _updateMessages();
+    });
+  }
+
+  Future<void> _updateMessages() async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) return;
+
+    List<Map<String, dynamic>> messages = [];
+
+    // Add support messages
+    final supportSnap = await FirebaseFirestore.instance
+        .collection('Support Issues')
+        .where('userId', isEqualTo: currentUser.uid)
+        .get();
+    for (var doc in supportSnap.docs) {
+      final data = doc.data() as Map<String, dynamic>;
+      final msgs = data['messages'] as List<dynamic>? ?? [];
+      for (var msg in msgs) {
+        if (msg is Map<String, dynamic> &&
+            (msg['sender'] == 'admin' || msg['sender'] == 'system')) {
+          messages.add(msg as Map<String, dynamic>);
+        }
+      }
+    }
+
+    // Add notifications
+    final notifSnap = await FirebaseFirestore.instance
+        .collection('notifications')
+        .where('audience', whereIn: ['all', 'employers'])
+        .get();
+    for (var doc in notifSnap.docs) {
+      final data = doc.data() as Map<String, dynamic>;
+      messages.add({
+        'message': data['title'] != null
+            ? '${data['title']}: ${data['message'] ?? ''}'
+            : data['message'] ?? '',
+        'sender': 'system',
+        'senderId': data['sentBy'] ?? 'system',
+        'senderName': 'Push Notification',
+        'timestamp': data['sentAt'],
+        'read': data['read'] ?? false,
+        'status': 'info',
+      });
+    }
+
+    messages.sort((a, b) {
+      final aTime = a['timestamp'] as Timestamp?;
+      final bTime = b['timestamp'] as Timestamp?;
+      if (aTime == null || bTime == null) return 0;
+      return bTime.compareTo(aTime);
+    });
+
+    setState(() {
+      _allMessages = messages;
+    });
   }
 
   Future<void> _markMessagesAsRead() async {
@@ -71,9 +152,10 @@ class _EmployerNotificationsState extends State<EmployerNotifications> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Notifications'),
-        backgroundColor: const Color(0xFFFFA10D),
       ),
-      body: StreamBuilder<QuerySnapshot>(
+      body: _allMessages.isEmpty
+          ? const Center(child: Text('No notifications'))
+          : StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
             .collection('Support Issues')
             .where('userId', isEqualTo: currentUser.uid)
@@ -115,7 +197,9 @@ class _EmployerNotificationsState extends State<EmployerNotifications> {
                 for (var doc in notifSnapshot.data!.docs) {
                   final data = doc.data() as Map<String, dynamic>;
                   allMessages.add({
-                    'message': data['title'] != null ? '${data['title']}: ${data['message'] ?? ''}' : data['message'] ?? '',
+                    'message': data['title'] != null
+                        ? '${data['title']}: ${data['message'] ?? ''}'
+                        : data['message'] ?? '',
                     'sender': 'system',
                     'senderId': data['sentBy'] ?? 'system',
                     'senderName': 'Push Notification',
@@ -228,5 +312,12 @@ class _EmployerNotificationsState extends State<EmployerNotifications> {
         },
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _supportSubscription?.cancel();
+    _notifSubscription?.cancel();
+    super.dispose();
   }
 }
