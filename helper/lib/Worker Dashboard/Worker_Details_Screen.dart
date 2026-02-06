@@ -791,7 +791,9 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                                                     'message':
                                                         'Your review has been successfully sent for $providerName.',
                                                     'timestamp':
-                                                        FieldValue.serverTimestamp(),
+                                                        Timestamp.fromDate(
+                                                          DateTime.now(),
+                                                        ),
                                                     'read': false,
                                                     'status': 'info',
                                                   },
