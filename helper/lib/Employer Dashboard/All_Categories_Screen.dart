@@ -742,12 +742,11 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                     const SizedBox(width: 10),
                     GestureDetector(
                       onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  const EmployerNotifications(),
-                            ),
-                          ),
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const EmployerNotifications(),
+                        ),
+                      ),
                       child: Stack(
                         children: [
                           Container(
