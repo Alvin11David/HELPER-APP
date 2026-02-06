@@ -91,7 +91,7 @@ class _EmployerNotificationsState extends State<EmployerNotifications> {
 
           return StreamBuilder<QuerySnapshot>(
             stream: FirebaseFirestore.instance
-                .collection('Notifications')
+                .collection('notifications')
                 .where('audience', whereIn: ['all', 'employers'])
                 .snapshots(),
             builder: (context, notifSnapshot) {
@@ -227,4 +227,6 @@ class _EmployerNotificationsState extends State<EmployerNotifications> {
           );
         },
       ),
-   
+    );
+  }
+}
