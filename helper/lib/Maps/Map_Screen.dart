@@ -431,14 +431,10 @@ class _MapScreenState extends State<MapScreen> {
     Color strokeColor;
     final status = worker['status'] as String? ?? 'Not Available';
     final isOnline = worker['isOnline'] as bool? ?? false;
-    if (isOnline) {
-      if (status == 'Available') {
-        strokeColor = Colors.green;
-      } else if (status == 'On Job') {
-        strokeColor = Colors.orange;
-      } else {
-        strokeColor = Colors.red;
-      }
+    if (status == 'Available') {
+      strokeColor = Colors.green;
+    } else if (status == 'On Job') {
+      strokeColor = Colors.orange;
     } else {
       strokeColor = Colors.red;
     }
@@ -578,52 +574,35 @@ class _MapScreenState extends State<MapScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        StreamBuilder<QuerySnapshot>(
-                          stream: FirebaseFirestore.instance
-                              .collection('bookings')
-                              .where(
-                                'serviceProviderId',
-                                isEqualTo: worker['uid'],
-                              )
-                              .where(
-                                'status',
-                                whereIn: ['in_progress', 'started'],
-                              )
-                              .limit(1)
-                              .snapshots(),
-                          builder: (ctx, snap) {
-                            if (snap.hasData && snap.data!.docs.isNotEmpty) {
-                              return Container(
+                        worker['status'] == 'On Job'
+                            ? Container(
                                 padding: EdgeInsets.symmetric(
                                   horizontal: screenWidth * 0.04,
                                   vertical: screenWidth * 0.02,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: Colors.red,
+                                  color: Colors.orange,
                                   borderRadius: BorderRadius.circular(30),
                                 ),
                                 child: const Text(
                                   'On Job',
                                   style: TextStyle(color: Colors.white),
                                 ),
-                              );
-                            }
-                            return Container(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: screenWidth * 0.04,
-                                vertical: screenWidth * 0.02,
+                              )
+                            : Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: screenWidth * 0.04,
+                                  vertical: screenWidth * 0.02,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.green,
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
+                                child: const Text(
+                                  'Available',
+                                  style: TextStyle(color: Colors.black),
+                                ),
                               ),
-                              decoration: BoxDecoration(
-                                color: Colors.green,
-                                borderRadius: BorderRadius.circular(30),
-                              ),
-                              child: const Text(
-                                'Available',
-                                style: TextStyle(color: Colors.black),
-                              ),
-                            );
-                          },
-                        ),
                         GestureDetector(
                           onTap: () => _showDirections(worker),
                           child: Container(
@@ -737,8 +716,8 @@ class _MapScreenState extends State<MapScreen> {
                         child: Container(
                           width: screenWidth * 0.35,
                           padding: EdgeInsets.symmetric(
-                            horizontal: screenWidth * 0.03,
-                            vertical: screenWidth * 0.02,
+                            horizontal: screenWidth * 0.05,
+                            vertical: screenWidth * 0.04,
                           ),
                           decoration: BoxDecoration(
                             color: Colors.orange,
