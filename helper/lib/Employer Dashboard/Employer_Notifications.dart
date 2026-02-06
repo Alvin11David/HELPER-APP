@@ -16,6 +16,7 @@ class _EmployerNotificationsState extends State<EmployerNotifications> {
   List<Map<String, dynamic>> _allMessages = [];
   StreamSubscription? _supportSubscription;
   StreamSubscription? _notifSubscription;
+  StreamSubscription? _messagesSubscription;
 
   @override
   void initState() {
@@ -38,6 +39,15 @@ class _EmployerNotificationsState extends State<EmployerNotifications> {
     _notifSubscription = FirebaseFirestore.instance
         .collection('notifications')
         .where('audience', whereIn: ['all', 'employers'])
+        .snapshots()
+        .listen((snapshot) {
+      _updateMessages();
+    });
+
+    _messagesSubscription = FirebaseFirestore.instance
+        .collectionGroup('messages')
+        .where('receiverId', isEqualTo: currentUser.uid)
+        .where('read', isEqualTo: false)
         .snapshots()
         .listen((snapshot) {
       _updateMessages();
@@ -86,6 +96,36 @@ class _EmployerNotificationsState extends State<EmployerNotifications> {
       });
     }
 
+    // Add unread messages
+    final messagesSnap = await FirebaseFirestore.instance
+        .collectionGroup('messages')
+        .where('receiverId', isEqualTo: currentUser.uid)
+        .where('read', isEqualTo: false)
+        .get();
+    for (var doc in messagesSnap.docs) {
+      final data = doc.data() as Map<String, dynamic>;
+      final senderId = data['senderId'] as String?;
+      String senderName = 'Unknown';
+      if (senderId != null) {
+        final senderDoc = await FirebaseFirestore.instance
+            .collection('Sign Up')
+            .doc(senderId)
+            .get();
+        if (senderDoc.exists) {
+          senderName = senderDoc.data()?['fullName'] ?? 'Unknown';
+        }
+      }
+      messages.add({
+        'message': data['message'] ?? '',
+        'sender': 'user',
+        'senderId': senderId,
+        'senderName': senderName,
+        'timestamp': data['timestamp'],
+        'read': data['read'] ?? false,
+        'status': 'message',
+      });
+    }
+
     messages.sort((a, b) {
       final aTime = a['timestamp'] as Timestamp?;
       final bTime = b['timestamp'] as Timestamp?;
@@ -128,7 +168,7 @@ class _EmployerNotificationsState extends State<EmployerNotifications> {
 
     // Mark notifications as read
     final notifQuery = await FirebaseFirestore.instance
-        .collection('Notifications')
+        .collection('notifications')
         .where('audience', whereIn: ['all', 'employers'])
         .get();
 
@@ -137,6 +177,17 @@ class _EmployerNotificationsState extends State<EmployerNotifications> {
       if (data['read'] != true) {
         batch.update(doc.reference, {'read': true});
       }
+    }
+
+    // Mark messages as read
+    final messagesQuery = await FirebaseFirestore.instance
+        .collectionGroup('messages')
+        .where('receiverId', isEqualTo: currentUser.uid)
+        .where('read', isEqualTo: false)
+        .get();
+
+    for (var doc in messagesQuery.docs) {
+      batch.update(doc.reference, {'read': true});
     }
 
     await batch.commit();
