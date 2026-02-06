@@ -772,8 +772,32 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                                 ],
                               ),
                             ),
-                          ),
-                        ],
+                          ),                          if (_userRole != 'employer')
+                            FutureBuilder<bool?>(
+                              future: _fetchVerifiedStatus(),
+                              builder: (context, snapshot) {
+                                if (snapshot.connectionState ==
+                                    ConnectionState.waiting) {
+                                  return const SizedBox.shrink();
+                                }
+                                bool isVerified = snapshot.data ?? false;
+                                if (!isVerified) {
+                                  return Padding(
+                                    padding: const EdgeInsets.only(left: 8, right: 8),
+                                    child: Text(
+                                      "Tap the Verified Row to Re upload the valid documents",
+                                      style: TextStyle(
+                                        color: Colors.red,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w400,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  );
+                                }
+                                return const SizedBox.shrink();
+                              },
+                            ),                        ],
                       ),
                     ],
                   ),
