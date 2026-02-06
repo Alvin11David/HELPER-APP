@@ -36,164 +36,205 @@ class _EmployerNotificationsState extends State<EmployerNotifications> {
         .where('userId', isEqualTo: currentUser.uid)
         .snapshots()
         .listen((snapshot) {
-      _updateMessages();
-    });
+          _updateMessages();
+        });
 
     _notifSubscription = FirebaseFirestore.instance
         .collection('notifications')
         .where('audience', whereIn: ['all', 'employers'])
         .snapshots()
         .listen((snapshot) {
-      _updateMessages();
-    });
+          _updateMessages();
+        });
 
     _messagesSubscription = FirebaseFirestore.instance
         .collectionGroup('messages')
         .where('receiverId', isEqualTo: currentUser.uid)
-        .where('read', isEqualTo: false)
         .snapshots()
         .listen((snapshot) {
-      _updateMessages();
-    });
+          _updateMessages();
+        });
   }
 
   Future<void> _updateMessages() async {
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) return;
 
-    List<Map<String, dynamic>> messages = [];
+    try {
+      List<Map<String, dynamic>> messages = [];
 
-    // Add support messages
-    final supportSnap = await FirebaseFirestore.instance
-        .collection('Support Issues')
-        .where('userId', isEqualTo: currentUser.uid)
-        .get();
-    for (var doc in supportSnap.docs) {
-      final data = doc.data() as Map<String, dynamic>;
-      final msgs = data['messages'] as List<dynamic>? ?? [];
-      for (var msg in msgs) {
-        if (msg is Map<String, dynamic> &&
-            (msg['sender'] == 'admin' || msg['sender'] == 'system')) {
-          messages.add(msg as Map<String, dynamic>);
+      // Add support messages
+      final supportSnap = await FirebaseFirestore.instance
+          .collection('Support Issues')
+          .where('userId', isEqualTo: currentUser.uid)
+          .get();
+      int supportCount = 0;
+      for (var doc in supportSnap.docs) {
+        final data = doc.data() as Map<String, dynamic>;
+        final msgs = data['messages'] as List<dynamic>? ?? [];
+        for (var msg in msgs) {
+          if (msg is Map<String, dynamic> &&
+              (msg['sender'] == 'admin' || msg['sender'] == 'system')) {
+            messages.add(msg as Map<String, dynamic>);
+            supportCount++;
+          }
         }
       }
-    }
 
-    // Add notifications
-    final notifSnap = await FirebaseFirestore.instance
-        .collection('notifications')
-        .where('audience', whereIn: ['all', 'employers'])
-        .get();
-    for (var doc in notifSnap.docs) {
-      final data = doc.data() as Map<String, dynamic>;
-      messages.add({
-        'message': data['title'] != null
-            ? '${data['title']}: ${data['message'] ?? ''}'
-            : data['message'] ?? '',
-        'sender': 'system',
-        'senderId': data['sentBy'] ?? 'system',
-        'senderName': 'Push Notification',
-        'timestamp': data['sentAt'],
-        'read': data['read'] ?? false,
-        'status': 'info',
-      });
-    }
+      // Add notifications
+      final notifSnap = await FirebaseFirestore.instance
+          .collection('notifications')
+          .where('audience', whereIn: ['all', 'employers'])
+          .get();
+      int notifCount = notifSnap.docs.length;
+      for (var doc in notifSnap.docs) {
+        final data = doc.data() as Map<String, dynamic>;
+        messages.add({
+          'message': data['title'] != null
+              ? '${data['title']}: ${data['message'] ?? ''}'
+              : data['message'] ?? '',
+          'sender': 'system',
+          'senderId': data['sentBy'] ?? 'system',
+          'senderName': 'Push Notification',
+          'timestamp': data['sentAt'],
+          'read': data['read'] ?? false,
+          'status': 'info',
+        });
+      }
 
-    // Add unread messages
-    final messagesSnap = await FirebaseFirestore.instance
-        .collectionGroup('messages')
-        .where('receiverId', isEqualTo: currentUser.uid)
-        .where('read', isEqualTo: false)
-        .get();
-    for (var doc in messagesSnap.docs) {
-      final data = doc.data() as Map<String, dynamic>;
-      final senderId = data['senderId'] as String?;
-      String senderName = 'Unknown';
-      if (senderId != null) {
-        final senderDoc = await FirebaseFirestore.instance
-            .collection('Sign Up')
-            .doc(senderId)
-            .get();
-        if (senderDoc.exists) {
-          senderName = senderDoc.data()?['fullName'] ?? 'Unknown';
+      // Add unread messages
+      final messagesSnap = await FirebaseFirestore.instance
+          .collectionGroup('messages')
+          .where('receiverId', isEqualTo: currentUser.uid)
+          .get();
+      int messageCount = 0;
+      for (var doc in messagesSnap.docs) {
+        final data = doc.data() as Map<String, dynamic>;
+        if (data['read'] == false) {
+          final senderId = data['senderId'] as String?;
+          String senderName = 'Unknown';
+          if (senderId != null) {
+            final senderDoc = await FirebaseFirestore.instance
+                .collection('Sign Up')
+                .doc(senderId)
+                .get();
+            if (senderDoc.exists) {
+              senderName = senderDoc.data()?['fullName'] ?? 'Unknown';
+            }
+          }
+          messages.add({
+            'message': data['message'] ?? '',
+            'sender': 'user',
+            'senderId': senderId,
+            'senderName': senderName,
+            'timestamp': data['timestamp'],
+            'read': data['read'] ?? false,
+            'status': 'message',
+          });
+          messageCount++;
         }
       }
-      messages.add({
-        'message': data['message'] ?? '',
-        'sender': 'user',
-        'senderId': senderId,
-        'senderName': senderName,
-        'timestamp': data['timestamp'],
-        'read': data['read'] ?? false,
-        'status': 'message',
+
+      messages.sort((a, b) {
+        final aTime = a['timestamp'] as Timestamp?;
+        final bTime = b['timestamp'] as Timestamp?;
+        if (aTime == null || bTime == null) return 0;
+        return bTime.compareTo(aTime);
       });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Support: $supportCount, Notifications: $notifCount, Messages: $messageCount, Total: ${messages.length}',
+            ),
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
+      setState(() {
+        _allMessages = messages;
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error loading messages: $e'),
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
     }
-
-    messages.sort((a, b) {
-      final aTime = a['timestamp'] as Timestamp?;
-      final bTime = b['timestamp'] as Timestamp?;
-      if (aTime == null || bTime == null) return 0;
-      return bTime.compareTo(aTime);
-    });
-
-    setState(() {
-      _allMessages = messages;
-    });
   }
 
   Future<void> _markMessagesAsRead() async {
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) return;
 
-    final query = await FirebaseFirestore.instance
-        .collection('Support Issues')
-        .where('userId', isEqualTo: currentUser.uid)
-        .get();
+    try {
+      final query = await FirebaseFirestore.instance
+          .collection('Support Issues')
+          .where('userId', isEqualTo: currentUser.uid)
+          .get();
 
-    final batch = FirebaseFirestore.instance.batch();
+      final batch = FirebaseFirestore.instance.batch();
 
-    for (var doc in query.docs) {
-      final data = doc.data() as Map<String, dynamic>;
-      final messages = List<Map<String, dynamic>>.from(data['messages'] ?? []);
-      bool updated = false;
-      for (int i = 0; i < messages.length; i++) {
-        if ((messages[i]['sender'] == 'admin' ||
-                messages[i]['sender'] == 'system') &&
-            messages[i]['read'] != true) {
-          messages[i]['read'] = true;
-          updated = true;
+      for (var doc in query.docs) {
+        final data = doc.data() as Map<String, dynamic>;
+        final messages = List<Map<String, dynamic>>.from(
+          data['messages'] ?? [],
+        );
+        bool updated = false;
+        for (int i = 0; i < messages.length; i++) {
+          if ((messages[i]['sender'] == 'admin' ||
+                  messages[i]['sender'] == 'system') &&
+              messages[i]['read'] != true) {
+            messages[i]['read'] = true;
+            updated = true;
+          }
+        }
+        if (updated) {
+          batch.update(doc.reference, {'messages': messages});
         }
       }
-      if (updated) {
-        batch.update(doc.reference, {'messages': messages});
+
+      // Mark notifications as read
+      final notifQuery = await FirebaseFirestore.instance
+          .collection('notifications')
+          .where('audience', whereIn: ['all', 'employers'])
+          .get();
+
+      for (var doc in notifQuery.docs) {
+        final data = doc.data() as Map<String, dynamic>;
+        if (data['read'] != true) {
+          batch.update(doc.reference, {'read': true});
+        }
+      }
+
+      // Mark messages as read
+      final messagesQuery = await FirebaseFirestore.instance
+          .collectionGroup('messages')
+          .where('receiverId', isEqualTo: currentUser.uid)
+          .get();
+
+      for (var doc in messagesQuery.docs) {
+        final data = doc.data() as Map<String, dynamic>;
+        if (data['read'] == false) {
+          batch.update(doc.reference, {'read': true});
+        }
+      }
+
+      await batch.commit();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error marking messages as read: $e'),
+            duration: const Duration(seconds: 5),
+          ),
+        );
       }
     }
-
-    // Mark notifications as read
-    final notifQuery = await FirebaseFirestore.instance
-        .collection('notifications')
-        .where('audience', whereIn: ['all', 'employers'])
-        .get();
-
-    for (var doc in notifQuery.docs) {
-      final data = doc.data() as Map<String, dynamic>;
-      if (data['read'] != true) {
-        batch.update(doc.reference, {'read': true});
-      }
-    }
-
-    // Mark messages as read
-    final messagesQuery = await FirebaseFirestore.instance
-        .collectionGroup('messages')
-        .where('receiverId', isEqualTo: currentUser.uid)
-        .where('read', isEqualTo: false)
-        .get();
-
-    for (var doc in messagesQuery.docs) {
-      batch.update(doc.reference, {'read': true});
-    }
-
-    await batch.commit();
   }
 
   @override
@@ -204,9 +245,7 @@ class _EmployerNotificationsState extends State<EmployerNotifications> {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Notifications'),
-      ),
+      appBar: AppBar(title: const Text('Notifications')),
       body: _allMessages.isEmpty
           ? const Center(child: Text('No notifications'))
           : ListView.builder(
@@ -244,8 +283,8 @@ class _EmployerNotificationsState extends State<EmployerNotifications> {
                               sender == 'admin'
                                   ? Icons.admin_panel_settings
                                   : sender == 'user'
-                                      ? Icons.person
-                                      : Icons.info,
+                                  ? Icons.person
+                                  : Icons.info,
                               color: const Color(0xFFFFA10D),
                             ),
                             const SizedBox(width: 8),
@@ -266,10 +305,10 @@ class _EmployerNotificationsState extends State<EmployerNotifications> {
                                 color: status == 'resolved'
                                     ? Colors.green
                                     : status == 'message'
-                                        ? Colors.blue
-                                        : status == 'info'
-                                            ? Colors.blue
-                                            : Colors.orange,
+                                    ? Colors.blue
+                                    : status == 'info'
+                                    ? Colors.blue
+                                    : Colors.orange,
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
