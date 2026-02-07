@@ -161,9 +161,9 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
         ),
       );
 
-      final validateCallable = FirebaseFunctions.instanceFor(region: 'us-central1').httpsCallable(
-        'validateMobileNumber',
-      );
+      final validateCallable = FirebaseFunctions.instanceFor(
+        region: 'us-central1',
+      ).httpsCallable('validateMobileNumber');
 
       // Format phone number for international format
       String formattedPhone = cleanPhone;
@@ -177,6 +177,7 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
 
       final validateResult = await validateCallable.call({
         'msisdn': formattedPhone,
+        'userId': currentUser.uid,
       });
 
       final validateData = validateResult.data as Map<String, dynamic>;
@@ -214,9 +215,9 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
         ),
       );
 
-      final paymentCallable = FirebaseFunctions.instanceFor(region: 'us-central1').httpsCallable(
-        'requestPayment',
-      );
+      final paymentCallable = FirebaseFunctions.instanceFor(
+        region: 'us-central1',
+      ).httpsCallable('requestPayment');
 
       final reference =
           'reg_fee_${DateTime.now().millisecondsSinceEpoch}_${currentUser.uid}';

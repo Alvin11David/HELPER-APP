@@ -744,136 +744,160 @@ export const generateLiveKitToken = onCall(async (request) => {
 });
 
 // Function to validate mobile number
-export const validateMobileNumber = onCall(async (request) => {
-  // Check authentication
-  if (!request.auth) {
-    throw new Error("Authentication required");
-  }
+export const validateMobileNumber = onCall(
+  {
+    invoker: "public", // Allow unauthenticated calls
+  },
+  async (request) => {
+    try {
+      const { msisdn, userId } = request.data;
 
-  try {
-    const { msisdn } = request.data;
+      if (!msisdn || !userId) {
+        throw new Error("MSISDN and userId are required");
+      }
 
-    if (!msisdn) {
-      throw new Error("MSISDN is required");
-    }
+      // Check if user exists in Sign Up collection
+      const userDoc = await admin
+        .firestore()
+        .collection("Sign Up")
+        .doc(userId)
+        .get();
 
-    const response = await axios.post(
-      `${process.env.RELWORX_BASE_URL}/mobile-money/validate`,
-      { msisdn },
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/vnd.relworx.v2",
-          Authorization: `Bearer ${process.env.RELWORX_API_KEY}`,
+      if (!userDoc.exists) {
+        throw new Error("User not found in Sign Up collection");
+      }
+
+      const response = await axios.post(
+        `${process.env.RELWORX_BASE_URL}/mobile-money/validate`,
+        { msisdn },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/vnd.relworx.v2",
+            Authorization: `Bearer ${process.env.RELWORX_API_KEY}`,
+          },
         },
-      },
-    );
+      );
 
-    logger.info(`Mobile number validation successful for ${msisdn}`);
-    return response.data;
-  } catch (error) {
-    logger.error("Error validating mobile number:", error);
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
-    throw new Error(`Failed to validate mobile number: ${errorMessage}`);
-  }
-});
+      logger.info(`Mobile number validation successful for ${msisdn}`);
+      return response.data;
+    } catch (error) {
+      logger.error("Error validating mobile number:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
+      throw new Error(`Failed to validate mobile number: ${errorMessage}`);
+    }
+  },
+);
 
 // Function to request payment
-export const requestPayment = onCall(async (request) => {
-  // Check authentication
-  if (!request.auth) {
-    throw new Error("Authentication required");
-  }
+export const requestPayment = onCall(
+  {
+    invoker: "public", // Allow unauthenticated calls
+  },
+  async (request) => {
+    try {
+      const {
+        account_no,
+        reference,
+        msisdn,
+        currency,
+        amount,
+        description,
+        webhook_url,
+        saveCard,
+        userId,
+        originalPhoneNumber,
+      } = request.data;
 
-  try {
-    const {
-      account_no,
-      reference,
-      msisdn,
-      currency,
-      amount,
-      description,
-      webhook_url,
-      saveCard,
-      originalPhoneNumber,
-    } = request.data;
+      if (!userId) {
+        throw new Error("userId is required");
+      }
 
-    // Use authenticated user's UID instead of userId from data
-    const userId = request.auth.uid;
-
-    if (
-      !account_no ||
-      !reference ||
-      !msisdn ||
-      !currency ||
-      !amount ||
-      !description
-    ) {
-      throw new Error("All payment request fields are required");
-    }
-
-    const requestData: any = {
-      account_no,
-      reference,
-      msisdn,
-      currency,
-      amount,
-      description,
-    };
-
-    // Add webhook_url if provided
-    if (webhook_url) {
-      requestData.webhook_url = webhook_url;
-    }
-
-    const response = await axios.post(
-      `${process.env.RELWORX_BASE_URL}/mobile-money/request-payment`,
-      requestData,
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/vnd.relworx.v2",
-          Authorization: `Bearer ${process.env.RELWORX_API_KEY}`,
-        },
-      },
-    );
-
-    const responseData = response.data as {
-      success: boolean;
-      message?: string;
-      [key: string]: any;
-    };
-
-    // If this is for Airtel payment with saveCard option, save the phone number
-    if (saveCard && userId && originalPhoneNumber) {
-      const userRef = admin
+      // Check if user exists in Sign Up collection
+      const userDoc = await admin
         .firestore()
-        .collection("Saved Payment Methods")
+        .collection("Sign Up")
         .doc(userId)
-        .collection("Airtel Numbers")
-        .doc("latest");
+        .get();
 
-      await userRef.set({
-        phoneNumber: originalPhoneNumber,
-        savedAt: admin.firestore.FieldValue.serverTimestamp(),
-        isActive: true,
-      });
+      if (!userDoc.exists) {
+        throw new Error("User not found in Sign Up collection");
+      }
 
-      logger.info(`Phone number saved for user ${userId}`);
+      if (
+        !account_no ||
+        !reference ||
+        !msisdn ||
+        !currency ||
+        !amount ||
+        !description
+      ) {
+        throw new Error("All payment request fields are required");
+      }
+
+      const requestData: any = {
+        account_no,
+        reference,
+        msisdn,
+        currency,
+        amount,
+        description,
+      };
+
+      // Add webhook_url if provided
+      if (webhook_url) {
+        requestData.webhook_url = webhook_url;
+      }
+
+      const response = await axios.post(
+        `${process.env.RELWORX_BASE_URL}/mobile-money/request-payment`,
+        requestData,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/vnd.relworx.v2",
+            Authorization: `Bearer ${process.env.RELWORX_API_KEY}`,
+          },
+        },
+      );
+
+      const responseData = response.data as {
+        success: boolean;
+        message?: string;
+        [key: string]: any;
+      };
+
+      // If this is for Airtel payment with saveCard option, save the phone number
+      if (saveCard && userId && originalPhoneNumber) {
+        const userRef = admin
+          .firestore()
+          .collection("Saved Payment Methods")
+          .doc(userId)
+          .collection("Airtel Numbers")
+          .doc("latest");
+
+        await userRef.set({
+          phoneNumber: originalPhoneNumber,
+          savedAt: admin.firestore.FieldValue.serverTimestamp(),
+          isActive: true,
+        });
+
+        logger.info(`Phone number saved for user ${userId}`);
+      }
+
+      logger.info(
+        `Payment request successful for ${msisdn}, amount: ${amount} ${currency}`,
+      );
+      return responseData;
+    } catch (error) {
+      logger.error("Error requesting payment:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
+      throw new Error(`Failed to request payment: ${errorMessage}`);
     }
-
-    logger.info(
-      `Payment request successful for ${msisdn}, amount: ${amount} ${currency}`,
-    );
-    return responseData;
-  } catch (error) {
-    logger.error("Error requesting payment:", error);
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
-    throw new Error(`Failed to request payment: ${errorMessage}`);
-  }
-});
+  },
+);
 
 // Function to send review notification to worker (manual)
 export const sendReviewNotificationManually = onCall(async (request) => {
