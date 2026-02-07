@@ -96,17 +96,17 @@ export const sendOTPEmail = onCall(async (request) => {
 
 // Function to send Forgot Password OTP email
 export const sendForgotPasswordOTPEmail = onCall(async (request) => {
-  console.log("sendForgotPasswordOTPEmail called with request:", request);
+  logger.info("sendForgotPasswordOTPEmail called with request:", request);
   try {
     const { email, otpCode } = request.data;
-    console.log("Extracted email:", email, "otpCode:", otpCode);
+    logger.info("Extracted email:", email, "otpCode:", otpCode);
 
     if (!email || !otpCode) {
-      console.log("Missing email or otpCode");
+      logger.info("Missing email or otpCode");
       throw new Error("Email and OTP code are required");
     }
 
-    console.log("Creating mail options...");
+    logger.info("Creating mail options...");
     const mailOptions = {
       from: "alvin69david@gmail.com", // 🔴 REPLACE WITH YOUR GMAIL ADDRESS
       to: email,
@@ -136,12 +136,12 @@ export const sendForgotPasswordOTPEmail = onCall(async (request) => {
       `,
     };
 
-    console.log("About to send email to:", email);
-    console.log("Mail options created successfully");
+    logger.info("About to send email to:", email);
+    logger.info("Mail options created successfully");
 
     await transporter.sendMail(mailOptions);
 
-    console.log("Email sent successfully");
+    logger.info("Email sent successfully");
     logger.info(`Forgot Password OTP email sent successfully to ${email}`);
     return {
       success: true,
@@ -364,7 +364,7 @@ export const initiateAirtelPayment = onCall(async (request) => {
       process.env.RELWORX_BASE_URL || "https://payments.relworx.com/api";
     const accountNo = process.env.RELWORX_ACCOUNT_NO || "REL4E261389F7";
 
-    console.log(
+    logger.info(
       "API key loaded:",
       !!apiKey,
       "Base URL:",
@@ -404,7 +404,7 @@ export const initiateAirtelPayment = onCall(async (request) => {
       [key: string]: any;
     };
 
-    console.log("RELWORX response:", response.status, responseData);
+    logger.info("RELWORX response:", response.status, responseData);
 
     if (response.status === 200 && responseData.success === true) {
       // Save phone number if requested
@@ -500,27 +500,27 @@ export const resetPasswordAfterOTP = onCall(async (request) => {
 export const sendCallNotification = onDocumentCreated(
   "calls/{callId}",
   async (event) => {
-    console.log("=== CLOUD FUNCTION sendCallNotification TRIGGERED ===");
-    console.log("Call ID:", event.params.callId);
+    logger.info("=== CLOUD FUNCTION sendCallNotification TRIGGERED ===");
+    logger.info("Call ID:", event.params.callId);
 
     const call = event.data?.data();
     if (!call) {
-      console.log("ERROR: Call data is null");
+      logger.info("ERROR: Call data is null");
       return;
     }
 
-    console.log("Call data:", call);
+    logger.info("Call data:", call);
 
     const receiverId = call.receiverId;
     if (!receiverId) {
-      console.log("ERROR: Receiver ID is null");
+      logger.info("ERROR: Receiver ID is null");
       return;
     }
 
-    console.log("Receiver ID:", receiverId);
+    logger.info("Receiver ID:", receiverId);
 
     try {
-      console.log("Fetching receiver document from Firestore...");
+      logger.info("Fetching receiver document from Firestore...");
       const receiverDoc = await admin
         .firestore()
         .collection("users")
@@ -528,23 +528,23 @@ export const sendCallNotification = onDocumentCreated(
         .get();
 
       if (!receiverDoc.exists) {
-        console.log("ERROR: Receiver document does not exist");
+        logger.info("ERROR: Receiver document does not exist");
         return;
       }
 
       const fcmToken = receiverDoc.data()?.fcmToken;
       if (!fcmToken) {
-        console.log("ERROR: No FCM token found for user", receiverId);
+        logger.info("ERROR: No FCM token found for user", receiverId);
         return;
       }
 
-      console.log("FCM token found for receiver:", receiverId);
-      console.log("FCM token preview:", fcmToken.substring(0, 50) + "...");
+      logger.info("FCM token found for receiver:", receiverId);
+      logger.info("FCM token preview:", fcmToken.substring(0, 50) + "...");
 
       const callerName = call.callerName || "Unknown Caller";
-      console.log("Caller name:", callerName);
+      logger.info("Caller name:", callerName);
 
-      console.log("Sending FCM notification...");
+      logger.info("Sending FCM notification...");
 
       await admin.messaging().send({
         token: fcmToken,
@@ -575,9 +575,9 @@ export const sendCallNotification = onDocumentCreated(
         },
       });
 
-      console.log("SUCCESS: Call notification sent to", receiverId);
+      logger.info("SUCCESS: Call notification sent to", receiverId);
     } catch (error) {
-      console.log("ERROR sending call notification:", error);
+      logger.info("ERROR sending call notification:", error);
     }
   },
 );
@@ -586,27 +586,27 @@ export const sendCallNotification = onDocumentCreated(
 export const sendReviewNotification = onDocumentCreated(
   "Reviews/{reviewId}",
   async (event) => {
-    console.log("=== CLOUD FUNCTION sendReviewNotification TRIGGERED ===");
-    console.log("Review ID:", event.params.reviewId);
+    logger.info("=== CLOUD FUNCTION sendReviewNotification TRIGGERED ===");
+    logger.info("Review ID:", event.params.reviewId);
 
     const review = event.data?.data();
     if (!review) {
-      console.log("ERROR: Review data is null");
+      logger.info("ERROR: Review data is null");
       return;
     }
 
-    console.log("Review data:", review);
+    logger.info("Review data:", review);
 
     const providerId = review.providerId;
     if (!providerId) {
-      console.log("ERROR: Provider ID is null");
+      logger.info("ERROR: Provider ID is null");
       return;
     }
 
-    console.log("Provider ID:", providerId);
+    logger.info("Provider ID:", providerId);
 
     try {
-      console.log("Fetching provider document from Firestore...");
+      logger.info("Fetching provider document from Firestore...");
       const providerDoc = await admin
         .firestore()
         .collection("users")
@@ -614,28 +614,28 @@ export const sendReviewNotification = onDocumentCreated(
         .get();
 
       if (!providerDoc.exists) {
-        console.log("ERROR: Provider document does not exist");
+        logger.info("ERROR: Provider document does not exist");
         return;
       }
 
       const fcmToken = providerDoc.data()?.fcmToken;
       if (!fcmToken) {
-        console.log("ERROR: No FCM token found for user", providerId);
+        logger.info("ERROR: No FCM token found for user", providerId);
         return;
       }
 
-      console.log("FCM token found for provider:", providerId);
-      console.log("FCM token preview:", fcmToken.substring(0, 50) + "...");
+      logger.info("FCM token found for provider:", providerId);
+      logger.info("FCM token preview:", fcmToken.substring(0, 50) + "...");
 
       const reviewerName = review.reviewerName || "A customer";
       const rating = review.rating || 0;
       const reviewText = review.reviewText || "";
 
-      console.log("Reviewer name:", reviewerName);
-      console.log("Rating:", rating);
-      console.log("Review text:", reviewText);
+      logger.info("Reviewer name:", reviewerName);
+      logger.info("Rating:", rating);
+      logger.info("Review text:", reviewText);
 
-      console.log("Sending FCM notification...");
+      logger.info("Sending FCM notification...");
 
       await admin.messaging().send({
         token: fcmToken,
@@ -669,7 +669,7 @@ export const sendReviewNotification = onDocumentCreated(
       });
 
       // Create notification document for the worker
-      console.log(
+      logger.info(
         "Creating notification document in workerNotifications collection...",
       );
       await admin
@@ -688,11 +688,11 @@ export const sendReviewNotification = onDocumentCreated(
           timestamp: admin.firestore.FieldValue.serverTimestamp(),
         });
 
-      console.log("Notification document created successfully");
+      logger.info("Notification document created successfully");
 
-      console.log("SUCCESS: Review notification sent to", providerId);
+      logger.info("SUCCESS: Review notification sent to", providerId);
     } catch (error) {
-      console.log("ERROR sending review notification:", error);
+      logger.info("ERROR sending review notification:", error);
     }
   },
 );
@@ -700,8 +700,8 @@ export const sendReviewNotification = onDocumentCreated(
 // Test function to verify Cloud Functions are working
 // Function to test call notification (callable function)
 export const testCallNotification = onCall(async (request) => {
-  console.log("=== TEST CALL NOTIFICATION FUNCTION CALLED ===");
-  console.log("Request data:", request.data);
+  logger.info("=== TEST CALL NOTIFICATION FUNCTION CALLED ===");
+  logger.info("Request data:", request.data);
 
   return {
     success: true,
@@ -743,52 +743,89 @@ export const generateLiveKitToken = onCall(async (request) => {
   }
 });
 
-// Function to validate mobile number
-export const validateMobileNumber = onCall(
+// Function to validate an Airtel Uganda mobile number via Relworx
+export const validateMobileNumber = onRequest(
   {
-    invoker: "public", // Allow unauthenticated calls
+    cors: true,
+    maxInstances: 10,
   },
-  async (request) => {
+  async (req, res) => {
+    logger.info("DEBUG: Validation request received", { body: req.body });
+
     try {
-      const { msisdn, userId } = request.data;
+      const { msisdn, userId } = req.body;
 
       if (!msisdn || !userId) {
-        throw new Error("MSISDN and userId are required");
+        res.status(400).json({ success: false, message: "Missing msisdn or userId" });
+        return;
       }
 
-      // Check if user exists in Sign Up collection
-      const userDoc = await admin
-        .firestore()
-        .collection("Sign Up")
-        .doc(userId)
-        .get();
+      // 1. Normalize the phone number to +256XXXXXXXXX format
+      let normalizedMsisdn = msisdn.replace(/\D/g, ""); // remove non-digits
+      if (normalizedMsisdn.startsWith("0")) {
+        normalizedMsisdn = "+256" + normalizedMsisdn.slice(1);
+      } else if (normalizedMsisdn.startsWith("256")) {
+        normalizedMsisdn = "+256" + normalizedMsisdn.slice(3);
+      } else if (!normalizedMsisdn.startsWith("+256")) {
+        normalizedMsisdn = "+256" + normalizedMsisdn;
+      }
 
+      // 2. Local Regex for Airtel Uganda prefixes (70, 74, 75)
+      const airtelRegex = /^\+256(70|74|75)\d{7}$/;
+      if (!airtelRegex.test(normalizedMsisdn)) {
+        logger.info("DEBUG: Failed Airtel prefix check", { msisdn: normalizedMsisdn });
+        res.json({ success: false, message: "Please enter a valid Airtel Uganda number" });
+        return;
+      }
+
+      // 3. Verify the user exists in your "Sign Up" collection
+      const userDoc = await admin.firestore().collection("Sign Up").doc(userId).get();
       if (!userDoc.exists) {
-        throw new Error("User not found in Sign Up collection");
+        logger.warn("DEBUG: User not found", { userId });
+        res.status(403).json({ success: false, message: "User not registered" });
+        return;
       }
+
+      // 4. Call Relworx API
+      const apiUrl = `${process.env.RELWORX_BASE_URL}/mobile-money/validate`;
+      const apiKey = process.env.RELWORX_API_KEY;
 
       const response = await axios.post(
-        `${process.env.RELWORX_BASE_URL}/mobile-money/validate`,
-        { msisdn },
+        apiUrl,
+        { msisdn: normalizedMsisdn },
         {
           headers: {
             "Content-Type": "application/json",
-            Accept: "application/vnd.relworx.v2",
-            Authorization: `Bearer ${process.env.RELWORX_API_KEY}`,
+            "Accept": "application/vnd.relworx.v2",
+            "Authorization": `Bearer ${apiKey}`, // ✅ FIXED: Must be Bearer
           },
-        },
+        }
       );
 
-      logger.info(`Mobile number validation successful for ${msisdn}`);
-      return response.data;
-    } catch (error) {
-      logger.error("Error validating mobile number:", error);
-      const errorMessage =
-        error instanceof Error ? error.message : "Unknown error";
-      throw new Error(`Failed to validate mobile number: ${errorMessage}`);
+      logger.info("DEBUG: Relworx Response", response.data);
+
+      const responseData = response.data as { customer_name?: string };
+
+      if (responseData.customer_name) {
+        res.json({
+          success: true,
+          customer_name: responseData.customer_name,
+        });
+      } else {
+        res.json({ success: false, message: "Mobile number is invalid or not registered" });
+      }
+    } catch (error: any) {
+      logger.error("DEBUG: Main Error", {
+        msg: error.message,
+        relworxMsg: error.response?.data
+      });
+
+      const errorMessage = error.response?.data?.message || "Validation service currently unavailable";
+      res.status(200).json({ success: false, message: errorMessage });
     }
-  },
+  }
 );
+
 
 // Function to request payment
 export const requestPayment = onCall(

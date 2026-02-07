@@ -1,8 +1,10 @@
 import 'dart:ui';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:http/http.dart' as http;
 import 'package:helper/Document%20Upload/Select_Worker_Type_Screen.dart';
 import 'package:helper/Intro/Role_Selection_Screen.dart';
 
@@ -98,6 +100,7 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
     final String phoneNumber = _cardNumberController.text.trim();
 
     // Basic validation - Airtel Uganda prefixes: 075, 070, 074(0-2)
+    // Allow formats: +256..., 256..., 0..., or just the number
     final String cleanPhone = phoneNumber
         .replaceAll(' ', '')
         .replaceAll('+', '');
@@ -105,7 +108,7 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
       r'^(256(75|70|74[0-2])\d{7}|0(75|70|74[0-2])\d{7}|(75|70|74[0-2])\d{7})$',
     );
     if (phoneNumber.isEmpty || !airtelRegex.hasMatch(cleanPhone)) {
-      print('Phone validation failed: $phoneNumber');
+      print('Phone validation failed: $phoneNumber (cleaned: $cleanPhone)');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please enter a valid Airtel Uganda phone number'),
@@ -115,7 +118,7 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
       return;
     }
 
-    print('Phone number validated: $phoneNumber');
+    print('Phone number validated: $phoneNumber (cleaned: $cleanPhone)');
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Phone number validated: $phoneNumber'),
@@ -171,26 +174,33 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
         ),
       );
 
-      final validateCallable = FirebaseFunctions.instanceFor(
-        region: 'us-central1',
-      ).httpsCallable('validateMobileNumber');
+      // Use REST API call instead of httpsCallable for public functions
+      final functionsUrl =
+          'https://us-central1-helperapp-46849.cloudfunctions.net/validateMobileNumber';
 
-      // Format phone number for international format
-      String formattedPhone = cleanPhone;
-      if (formattedPhone.startsWith('0')) {
-        formattedPhone = '256' + formattedPhone.substring(1);
-      } else if (!formattedPhone.startsWith('256')) {
-        formattedPhone = '256' + formattedPhone;
+      // Format phone number for API - send digits only, let Cloud Function normalize
+      String cleanDigits = cleanPhone;
+
+      // Debug: log the exact number being sent
+      print('DEBUG: Original input: $phoneNumber');
+      print('DEBUG: Cleaned digits: $cleanDigits');
+
+      print('Calling validateMobileNumber with: { msisdn: $cleanDigits }');
+
+      final response = await http.post(
+        Uri.parse(functionsUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'msisdn': cleanDigits, 'userId': currentUser.uid}),
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception(
+          'Failed to validate mobile number: ${response.statusCode} ${response.body}',
+        );
       }
 
-      print('Calling validateMobileNumber with: { msisdn: $formattedPhone }');
-
-      final validateResult = await validateCallable.call({
-        'msisdn': formattedPhone,
-        'userId': currentUser.uid,
-      });
-
-      final validateData = validateResult.data as Map<String, dynamic>;
+      final responseData = jsonDecode(response.body);
+      final validateData = responseData as Map<String, dynamic>;
       print('validateMobileNumber response: $validateData');
 
       if (validateData['success'] != true) {
@@ -216,7 +226,7 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
         ),
       );
 
-      // Step 2: Request payment
+      // Step 2: Request payment using REST API
       print('Initiating payment request...');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -225,27 +235,38 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
         ),
       );
 
-      final paymentCallable = FirebaseFunctions.instanceFor(
-        region: 'us-central1',
-      ).httpsCallable('requestPayment');
+      final paymentUrl =
+          'https://us-central1-helperapp-46849.cloudfunctions.net/requestPayment';
 
       final reference =
           'reg_fee_${DateTime.now().millisecondsSinceEpoch}_${currentUser.uid}';
 
-      final paymentResult = await paymentCallable.call({
-        'account_no': 'REL4E261389F7', // From environment
-        'reference': reference,
-        'msisdn': formattedPhone,
-        'currency': 'UGX',
-        'amount': 25000.0,
-        'description': 'Registration Fee Payment',
-        'webhook_url':
-            'https://us-central1-helperapp-46849.cloudfunctions.net/relworxWebhook',
-        'saveCard': isChecked,
-        'originalPhoneNumber': phoneNumber,
-      });
+      final paymentResponse = await http.post(
+        Uri.parse(paymentUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'account_no': 'REL4E261389F7', // From environment
+          'reference': reference,
+          'msisdn': cleanDigits,
+          'currency': 'UGX',
+          'amount': 25000.0,
+          'description': 'Registration Fee Payment',
+          'webhook_url':
+              'https://us-central1-helperapp-46849.cloudfunctions.net/relworxWebhook',
+          'saveCard': isChecked,
+          'userId': currentUser.uid,
+          'originalPhoneNumber': phoneNumber,
+        }),
+      );
 
-      final paymentData = paymentResult.data as Map<String, dynamic>;
+      if (paymentResponse.statusCode != 200) {
+        throw Exception(
+          'Failed to request payment: ${paymentResponse.statusCode} ${paymentResponse.body}',
+        );
+      }
+
+      final paymentResponseData = jsonDecode(paymentResponse.body);
+      final paymentData = paymentResponseData as Map<String, dynamic>;
 
       print('Payment request response: $paymentData');
 
