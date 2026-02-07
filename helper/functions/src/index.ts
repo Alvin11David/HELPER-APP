@@ -745,6 +745,11 @@ export const generateLiveKitToken = onCall(async (request) => {
 
 // Function to validate mobile number
 export const validateMobileNumber = onCall(async (request) => {
+  // Check authentication
+  if (!request.auth) {
+    throw new Error("Authentication required");
+  }
+
   try {
     const { msisdn } = request.data;
 
@@ -776,6 +781,11 @@ export const validateMobileNumber = onCall(async (request) => {
 
 // Function to request payment
 export const requestPayment = onCall(async (request) => {
+  // Check authentication
+  if (!request.auth) {
+    throw new Error("Authentication required");
+  }
+
   try {
     const {
       account_no,
@@ -786,9 +796,11 @@ export const requestPayment = onCall(async (request) => {
       description,
       webhook_url,
       saveCard,
-      userId,
       originalPhoneNumber,
     } = request.data;
+
+    // Use authenticated user's UID instead of userId from data
+    const userId = request.auth.uid;
 
     if (
       !account_no ||

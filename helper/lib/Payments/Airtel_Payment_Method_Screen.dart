@@ -161,7 +161,7 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
         ),
       );
 
-      final validateCallable = FirebaseFunctions.instance.httpsCallable(
+      final validateCallable = FirebaseFunctions.instanceFor(region: 'us-central1').httpsCallable(
         'validateMobileNumber',
       );
 
@@ -214,7 +214,7 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
         ),
       );
 
-      final paymentCallable = FirebaseFunctions.instance.httpsCallable(
+      final paymentCallable = FirebaseFunctions.instanceFor(region: 'us-central1').httpsCallable(
         'requestPayment',
       );
 
@@ -231,7 +231,6 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
         'webhook_url':
             'https://us-central1-helperapp-46849.cloudfunctions.net/relworxWebhook',
         'saveCard': isChecked,
-        'userId': currentUser.uid,
         'originalPhoneNumber': phoneNumber,
       });
 
