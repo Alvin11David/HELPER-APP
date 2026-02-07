@@ -756,7 +756,9 @@ export const validateMobileNumber = onRequest(
       const { msisdn, userId } = req.body;
 
       if (!msisdn || !userId) {
-        res.status(400).json({ success: false, message: "Missing msisdn or userId" });
+        res
+          .status(400)
+          .json({ success: false, message: "Missing msisdn or userId" });
         return;
       }
 
@@ -773,16 +775,27 @@ export const validateMobileNumber = onRequest(
       // 2. Local Regex for Airtel Uganda prefixes (70, 74, 75)
       const airtelRegex = /^\+256(70|74|75)\d{7}$/;
       if (!airtelRegex.test(normalizedMsisdn)) {
-        logger.info("DEBUG: Failed Airtel prefix check", { msisdn: normalizedMsisdn });
-        res.json({ success: false, message: "Please enter a valid Airtel Uganda number" });
+        logger.info("DEBUG: Failed Airtel prefix check", {
+          msisdn: normalizedMsisdn,
+        });
+        res.json({
+          success: false,
+          message: "Please enter a valid Airtel Uganda number",
+        });
         return;
       }
 
       // 3. Verify the user exists in your "Sign Up" collection
-      const userDoc = await admin.firestore().collection("Sign Up").doc(userId).get();
+      const userDoc = await admin
+        .firestore()
+        .collection("Sign Up")
+        .doc(userId)
+        .get();
       if (!userDoc.exists) {
         logger.warn("DEBUG: User not found", { userId });
-        res.status(403).json({ success: false, message: "User not registered" });
+        res
+          .status(403)
+          .json({ success: false, message: "User not registered" });
         return;
       }
 
@@ -796,10 +809,10 @@ export const validateMobileNumber = onRequest(
         {
           headers: {
             "Content-Type": "application/json",
-            "Accept": "application/vnd.relworx.v2",
-            "Authorization": `Bearer ${apiKey}`, // ✅ FIXED: Must be Bearer
+            Accept: "application/vnd.relworx.v2",
+            Authorization: `Bearer ${apiKey}`, // ✅ FIXED: Must be Bearer
           },
-        }
+        },
       );
 
       logger.info("DEBUG: Relworx Response", response.data);
@@ -812,20 +825,125 @@ export const validateMobileNumber = onRequest(
           customer_name: responseData.customer_name,
         });
       } else {
-        res.json({ success: false, message: "Mobile number is invalid or not registered" });
+        res.json({
+          success: false,
+          message: "Mobile number is invalid or not registered",
+        });
       }
     } catch (error: any) {
       logger.error("DEBUG: Main Error", {
         msg: error.message,
-        relworxMsg: error.response?.data
+        relworxMsg: error.response?.data,
       });
 
-      const errorMessage = error.response?.data?.message || "Validation service currently unavailable";
+      const errorMessage =
+        error.response?.data?.message ||
+        "Validation service currently unavailable";
       res.status(200).json({ success: false, message: errorMessage });
     }
-  }
+  },
 );
 
+// Function to validate an MTN Uganda mobile number via Relworx
+export const validateMtnMobileNumber = onRequest(
+  {
+    cors: true,
+    maxInstances: 10,
+  },
+  async (req, res) => {
+    logger.info("DEBUG: MTN Validation request received", { body: req.body });
+
+    try {
+      const { msisdn, userId } = req.body;
+
+      if (!msisdn || !userId) {
+        res
+          .status(400)
+          .json({ success: false, message: "Missing msisdn or userId" });
+        return;
+      }
+
+      // 1. Normalize the phone number to +256XXXXXXXXX format
+      let normalizedMsisdn = msisdn.replace(/\D/g, ""); // remove non-digits
+      if (normalizedMsisdn.startsWith("0")) {
+        normalizedMsisdn = "+256" + normalizedMsisdn.slice(1);
+      } else if (normalizedMsisdn.startsWith("256")) {
+        normalizedMsisdn = "+256" + normalizedMsisdn.slice(3);
+      } else if (!normalizedMsisdn.startsWith("+256")) {
+        normalizedMsisdn = "+256" + normalizedMsisdn;
+      }
+
+      // 2. Local Regex for MTN Uganda prefixes (77, 78, 76, 79, 31, 39)
+      const mtnRegex = /^\+256(77|78|76|79|31|39)\d{7}$/;
+      if (!mtnRegex.test(normalizedMsisdn)) {
+        logger.info("DEBUG: Failed MTN prefix check", {
+          msisdn: normalizedMsisdn,
+        });
+        res.json({
+          success: false,
+          message: "Please enter a valid MTN Uganda number",
+        });
+        return;
+      }
+
+      // 3. Verify the user exists in your "Sign Up" collection
+      const userDoc = await admin
+        .firestore()
+        .collection("Sign Up")
+        .doc(userId)
+        .get();
+      if (!userDoc.exists) {
+        logger.warn("DEBUG: User not found", { userId });
+        res
+          .status(403)
+          .json({ success: false, message: "User not registered" });
+        return;
+      }
+
+      // 4. Call Relworx API
+      const apiUrl = `${process.env.RELWORX_BASE_URL}/mobile-money/validate`;
+      const apiKey = process.env.RELWORX_API_KEY;
+
+      const response = await axios.post(
+        apiUrl,
+        { msisdn: normalizedMsisdn },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/vnd.relworx.v2",
+            Authorization: `Bearer ${apiKey}`, // ✅ FIXED: Must be Bearer
+          },
+        },
+      );
+
+      logger.info("DEBUG: Relworx Response", response.data);
+
+      const responseData = response.data as { customer_name?: string };
+
+      if (responseData.customer_name) {
+        res.json({
+          success: true,
+          customer_name: responseData.customer_name,
+        });
+      } else {
+        res.json({
+          success: false,
+          message: "Mobile number is invalid or not registered",
+        });
+      }
+    } catch (error: any) {
+      logger.error("DEBUG: Main Error", {
+        msg: error.message,
+        relworxMsg: error.response?.data,
+      });
+
+      const errorMessage =
+        error.response?.data?.message ||
+        "Validation service currently unavailable";
+      res.status(200).json({ success: false, message: errorMessage });
+    }
+  },
+);
 
 // Function to request payment
 export const requestPayment = onCall(
