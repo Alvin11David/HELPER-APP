@@ -30,7 +30,10 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
     _loadSavedPhoneNumber();
     _phoneNumberFocusNode.addListener(() {
       if (!_phoneNumberFocusNode.hasFocus) {
-        _savePhoneNumber();
+        final phoneNumber = _cardNumberController.text.trim();
+        if (phoneNumber.isNotEmpty) {
+          _savePhoneNumber(phoneNumber);
+        }
       }
     });
   }
