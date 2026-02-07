@@ -1,8 +1,10 @@
 import 'dart:ui';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:http/http.dart' as http;
 import 'package:helper/Document%20Upload/Select_Worker_Type_Screen.dart';
 import 'package:helper/Intro/Role_Selection_Screen.dart';
 
@@ -16,6 +18,7 @@ class AirtelPaymentMethodScreen extends StatefulWidget {
 
 class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
   final TextEditingController _cardNumberController = TextEditingController();
+  final FocusNode _phoneNumberFocusNode = FocusNode();
   bool isChecked = false;
   bool _isDimming = false; // State to track if the screen should dim
   bool _showOverlay = false; // State to control the overlay visibility
@@ -27,11 +30,20 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
   void initState() {
     super.initState();
     _loadSavedPhoneNumber();
+    _phoneNumberFocusNode.addListener(() {
+      if (!_phoneNumberFocusNode.hasFocus) {
+        final phoneNumber = _cardNumberController.text.trim();
+        if (phoneNumber.isNotEmpty) {
+          _savePhoneNumber(phoneNumber);
+        }
+      }
+    });
   }
 
   @override
   void dispose() {
     _cardNumberController.dispose();
+    _phoneNumberFocusNode.dispose();
     super.dispose();
   }
 
@@ -84,9 +96,11 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
   }
 
   Future<void> _processPayment() async {
+    print('Starting payment process');
     final String phoneNumber = _cardNumberController.text.trim();
 
     // Basic validation - Airtel Uganda prefixes: 075, 070, 074(0-2)
+    // Allow formats: +256..., 256..., 0..., or just the number
     final String cleanPhone = phoneNumber
         .replaceAll(' ', '')
         .replaceAll('+', '');
@@ -94,6 +108,7 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
       r'^(256(75|70|74[0-2])\d{7}|0(75|70|74[0-2])\d{7}|(75|70|74[0-2])\d{7})$',
     );
     if (phoneNumber.isEmpty || !airtelRegex.hasMatch(cleanPhone)) {
+      print('Phone validation failed: $phoneNumber (cleaned: $cleanPhone)');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please enter a valid Airtel Uganda phone number'),
@@ -103,9 +118,18 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
       return;
     }
 
-    // Get current user
+    print('Phone number validated: $phoneNumber (cleaned: $cleanPhone)');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Phone number validated: $phoneNumber'),
+        backgroundColor: Colors.green,
+      ),
+    );
+
+    // Get current user and verify authentication
     final User? currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) {
+      print('User not authenticated');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('User not authenticated'),
@@ -115,8 +139,95 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
       return;
     }
 
+    // Force refresh the user's token to ensure it's valid
     try {
-      // Show loading indicator
+      await currentUser.getIdToken(true);
+      print('User token refreshed successfully');
+    } catch (tokenError) {
+      print('Error refreshing token: $tokenError');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Authentication error. Please sign in again.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    print(
+      'User authenticated: ${currentUser.uid}, email: ${currentUser.email}',
+    );
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('User authenticated: ${currentUser.uid}'),
+        backgroundColor: Colors.green,
+      ),
+    );
+
+    try {
+      // Step 1: Validate mobile number with Relworx API
+      print('Validating mobile number with Relworx...');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Validating mobile number...'),
+          backgroundColor: Colors.blue,
+        ),
+      );
+
+      // Use REST API call instead of httpsCallable for public functions
+      final functionsUrl =
+          'https://us-central1-helperapp-46849.cloudfunctions.net/validateMobileNumber';
+
+      // Format phone number for API - send digits only, let Cloud Function normalize
+      String cleanDigits = cleanPhone;
+
+      // Debug: log the exact number being sent
+      print('DEBUG: Original input: $phoneNumber');
+      print('DEBUG: Cleaned digits: $cleanDigits');
+
+      print('Calling validateMobileNumber with: { msisdn: $cleanDigits }');
+
+      final response = await http.post(
+        Uri.parse(functionsUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'msisdn': cleanDigits, 'userId': currentUser.uid}),
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception(
+          'Failed to validate mobile number: ${response.statusCode} ${response.body}',
+        );
+      }
+
+      final responseData = jsonDecode(response.body);
+      final validateData = responseData as Map<String, dynamic>;
+      print('validateMobileNumber response: $validateData');
+
+      if (validateData['success'] != true) {
+        print('Mobile number validation failed: ${validateData['message']}');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Validation failed: ${validateData['message'] ?? 'Invalid mobile number'}',
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      print('Mobile number validation successful');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Validated: ${validateData['customer_name'] ?? 'Customer found'}',
+          ),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+      // Step 2: Request payment using REST API
+      print('Initiating payment request...');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Initiating payment request...'),
@@ -124,19 +235,42 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
         ),
       );
 
-      // Call Firebase function
-      final HttpsCallable callable = FirebaseFunctions.instance.httpsCallable(
-        'initiateAirtelPayment',
+      final paymentUrl =
+          'https://us-central1-helperapp-46849.cloudfunctions.net/requestPayment';
+
+      final reference =
+          'reg_fee_${DateTime.now().millisecondsSinceEpoch}_${currentUser.uid}';
+
+      final paymentResponse = await http.post(
+        Uri.parse(paymentUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'account_no': 'REL4E261389F7', // From environment
+          'reference': reference,
+          'msisdn': cleanDigits,
+          'currency': 'UGX',
+          'amount': 25000.0,
+          'description': 'Registration Fee Payment',
+          'webhook_url':
+              'https://us-central1-helperapp-46849.cloudfunctions.net/relworxWebhook',
+          'saveCard': isChecked,
+          'userId': currentUser.uid,
+          'originalPhoneNumber': phoneNumber,
+        }),
       );
-      final result = await callable.call({
-        'phoneNumber': phoneNumber,
-        'saveCard': isChecked,
-        'userId': currentUser.uid,
-      });
 
-      final responseData = result.data as Map<String, dynamic>;
+      if (paymentResponse.statusCode != 200) {
+        throw Exception(
+          'Failed to request payment: ${paymentResponse.statusCode} ${paymentResponse.body}',
+        );
+      }
 
-      if (responseData['success'] == true) {
+      final paymentResponseData = jsonDecode(paymentResponse.body);
+      final paymentData = paymentResponseData as Map<String, dynamic>;
+
+      print('Payment request response: $paymentData');
+
+      if (paymentData['success'] == true) {
         // Payment request successful - show pending status
         setState(() {
           _isPaymentSuccessful = false; // Wait for webhook confirmation
@@ -147,7 +281,7 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              responseData['message'] ??
+              paymentData['message'] ??
                   'Payment request sent successfully! Please complete the payment on your phone.',
             ),
             backgroundColor: Colors.blue,
@@ -155,22 +289,23 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
         );
 
         // Start listening for payment status updates
-        _listenForPaymentStatus(responseData['reference']);
+        _listenForPaymentStatus(reference);
       } else {
         // Payment request failed
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Payment request failed: ${responseData['message'] ?? 'Unknown error'}',
+              'Payment request failed: ${paymentData['message'] ?? 'Unknown error'}',
             ),
             backgroundColor: Colors.red,
           ),
         );
       }
     } catch (e) {
+      print('Payment error details: ${e.runtimeType}: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Payment error: ${e.toString()}'),
+          content: Text('Payment error: ${e.runtimeType}: ${e.toString()}'),
           backgroundColor: Colors.red,
         ),
       );
@@ -439,6 +574,7 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
                               Expanded(
                                 child: TextField(
                                   controller: _cardNumberController,
+                                  focusNode: _phoneNumberFocusNode,
                                   keyboardType: TextInputType.number,
                                   style: TextStyle(
                                     color: Colors.black,
