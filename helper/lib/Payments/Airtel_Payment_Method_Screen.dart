@@ -28,6 +28,11 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
   void initState() {
     super.initState();
     _loadSavedPhoneNumber();
+    _phoneNumberFocusNode.addListener(() {
+      if (!_phoneNumberFocusNode.hasFocus) {
+        _savePhoneNumber();
+      }
+    });
   }
 
   @override
