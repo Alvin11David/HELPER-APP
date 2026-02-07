@@ -9,7 +9,7 @@
 
 import { setGlobalOptions } from "firebase-functions";
 import { onCall, onRequest } from "firebase-functions/v2/https";
-import { onDocumentCreated, onDocumentUpdated } from "firebase-functions/v2/firestore";
+import { onDocumentCreated } from "firebase-functions/v2/firestore";
 import * as logger from "firebase-functions/logger";
 import * as nodemailer from "nodemailer";
 import * as admin from "firebase-admin";
@@ -356,9 +356,22 @@ export const initiateAirtelPayment = onCall(async (request) => {
     }
 
     // RELWORX API configuration
-    const apiKey = "2902144e65b9a7.v3wxxu9iseWHI-dQzOh7Gg";
-    const baseUrl = "https://payments.relworx.com/api";
-    const accountNo = "REL4E261389F7";
+    const apiKey = process.env.RELWORX_API_KEY;
+    if (!apiKey) {
+      throw new Error("RELWORX_API_KEY not set in environment variables");
+    }
+    const baseUrl =
+      process.env.RELWORX_BASE_URL || "https://payments.relworx.com/api";
+    const accountNo = process.env.RELWORX_ACCOUNT_NO || "REL4E261389F7";
+
+    console.log(
+      "API key loaded:",
+      !!apiKey,
+      "Base URL:",
+      baseUrl,
+      "Account:",
+      accountNo,
+    );
     const reference = `reg_fee_${Date.now()}_${userId}`;
     const amount = 25000.0;
     const currency = "UGX";
@@ -390,6 +403,8 @@ export const initiateAirtelPayment = onCall(async (request) => {
       message?: string;
       [key: string]: any;
     };
+
+    console.log("RELWORX response:", response.status, responseData);
 
     if (response.status === 200 && responseData.success === true) {
       // Save phone number if requested
@@ -725,5 +740,279 @@ export const generateLiveKitToken = onCall(async (request) => {
   } catch (error) {
     logger.error("Error generating LiveKit token:", error);
     throw new Error("Failed to generate token");
+  }
+});
+
+// Function to validate mobile number
+export const validateMobileNumber = onCall(async (request) => {
+  try {
+    const { msisdn } = request.data;
+
+    if (!msisdn) {
+      throw new Error("MSISDN is required");
+    }
+
+    const response = await axios.post(
+      `${process.env.RELWORX_BASE_URL}/mobile-money/validate`,
+      { msisdn },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/vnd.relworx.v2",
+          Authorization: `Bearer ${process.env.RELWORX_API_KEY}`,
+        },
+      },
+    );
+
+    logger.info(`Mobile number validation successful for ${msisdn}`);
+    return response.data;
+  } catch (error) {
+    logger.error("Error validating mobile number:", error);
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+    throw new Error(`Failed to validate mobile number: ${errorMessage}`);
+  }
+});
+
+// Function to request payment
+export const requestPayment = onCall(async (request) => {
+  try {
+    const {
+      account_no,
+      reference,
+      msisdn,
+      currency,
+      amount,
+      description,
+      webhook_url,
+      saveCard,
+      userId,
+      originalPhoneNumber,
+    } = request.data;
+
+    if (
+      !account_no ||
+      !reference ||
+      !msisdn ||
+      !currency ||
+      !amount ||
+      !description
+    ) {
+      throw new Error("All payment request fields are required");
+    }
+
+    const requestData: any = {
+      account_no,
+      reference,
+      msisdn,
+      currency,
+      amount,
+      description,
+    };
+
+    // Add webhook_url if provided
+    if (webhook_url) {
+      requestData.webhook_url = webhook_url;
+    }
+
+    const response = await axios.post(
+      `${process.env.RELWORX_BASE_URL}/mobile-money/request-payment`,
+      requestData,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/vnd.relworx.v2",
+          Authorization: `Bearer ${process.env.RELWORX_API_KEY}`,
+        },
+      },
+    );
+
+    const responseData = response.data as {
+      success: boolean;
+      message?: string;
+      [key: string]: any;
+    };
+
+    // If this is for Airtel payment with saveCard option, save the phone number
+    if (saveCard && userId && originalPhoneNumber) {
+      const userRef = admin
+        .firestore()
+        .collection("Saved Payment Methods")
+        .doc(userId)
+        .collection("Airtel Numbers")
+        .doc("latest");
+
+      await userRef.set({
+        phoneNumber: originalPhoneNumber,
+        savedAt: admin.firestore.FieldValue.serverTimestamp(),
+        isActive: true,
+      });
+
+      logger.info(`Phone number saved for user ${userId}`);
+    }
+
+    logger.info(
+      `Payment request successful for ${msisdn}, amount: ${amount} ${currency}`,
+    );
+    return responseData;
+  } catch (error) {
+    logger.error("Error requesting payment:", error);
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+    throw new Error(`Failed to request payment: ${errorMessage}`);
+  }
+});
+
+// Function to send review notification to worker (manual)
+export const sendReviewNotificationManually = onCall(async (request) => {
+  try {
+    const { workerId, employerId, rating, reviewText } = request.data;
+
+    if (!workerId || !employerId || rating == null) {
+      throw new Error("workerId, employerId, and rating are required");
+    }
+
+    // Get worker's FCM token
+    const workerDoc = await admin
+      .firestore()
+      .collection("users")
+      .doc(workerId)
+      .get();
+
+    if (!workerDoc.exists) {
+      throw new Error("Worker not found");
+    }
+
+    const workerData = workerDoc.data();
+    const fcmToken = workerData?.fcmToken;
+
+    if (!fcmToken) {
+      logger.warn(`No FCM token found for worker ${workerId}`);
+      return { success: false, message: "Worker has no FCM token" };
+    }
+
+    // Get employer name
+    const employerDoc = await admin
+      .firestore()
+      .collection("users")
+      .doc(employerId)
+      .get();
+
+    const employerName = employerDoc.exists
+      ? employerDoc.data()?.name || "Employer"
+      : "Employer";
+
+    // Prepare notification message
+    const title = "New Review Received";
+    const body = `${employerName} gave you ${rating} star${rating !== 1 ? "s" : ""}${reviewText ? ": " + reviewText : ""}`;
+
+    // Send FCM notification
+    const message = {
+      token: fcmToken,
+      notification: {
+        title: title,
+        body: body,
+      },
+      data: {
+        type: "review",
+        workerId: workerId,
+        employerId: employerId,
+        rating: rating.toString(),
+        reviewText: reviewText || "",
+      },
+    };
+
+    const response = await admin.messaging().send(message);
+
+    logger.info(`Review notification sent to worker ${workerId}: ${response}`);
+
+    return { success: true, message: "Notification sent successfully" };
+  } catch (error) {
+    logger.error("Error sending review notification:", error);
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+    throw new Error(`Failed to send review notification: ${errorMessage}`);
+  }
+});
+
+// Webhook handler for payment status updates
+export const paymentWebhook = onRequest(async (req, res) => {
+  try {
+    // Only accept POST requests
+    if (req.method !== "POST") {
+      res.status(405).send("Method not allowed");
+      return;
+    }
+
+    // Parse the webhook payload
+    const webhookData = req.body;
+
+    // Validate required fields
+    const {
+      status,
+      message,
+      customer_reference,
+      internal_reference,
+      msisdn,
+      amount,
+      currency,
+      provider,
+      charge,
+      completed_at,
+    } = webhookData;
+
+    if (!status || !customer_reference || !internal_reference) {
+      logger.error(
+        "Invalid webhook payload: missing required fields",
+        webhookData,
+      );
+      res.status(400).send("Invalid payload");
+      return;
+    }
+
+    logger.info(
+      `Payment webhook received: ${status} for ${customer_reference}`,
+    );
+
+    // Store the payment status in Firestore
+    const paymentRef = admin
+      .firestore()
+      .collection("payments")
+      .doc(customer_reference);
+    await paymentRef.set(
+      {
+        status,
+        message,
+        customer_reference,
+        internal_reference,
+        msisdn,
+        amount,
+        currency,
+        provider,
+        charge,
+        completed_at: completed_at ? new Date(completed_at) : null,
+        updated_at: admin.firestore.FieldValue.serverTimestamp(),
+      },
+      { merge: true },
+    );
+
+    // If payment is successful, you might want to trigger additional actions
+    // For example, update user balance, send notifications, etc.
+    if (status === "success") {
+      // TODO: Implement success handling logic
+      logger.info(
+        `Payment successful: ${customer_reference} - ${amount} ${currency}`,
+      );
+    } else if (status === "failed") {
+      // TODO: Implement failure handling logic
+      logger.warn(`Payment failed: ${customer_reference} - ${message}`);
+    }
+
+    // Acknowledge the webhook with 200 OK
+    res.status(200).send("OK");
+  } catch (error) {
+    logger.error("Error processing payment webhook:", error);
+    // Still return 200 to acknowledge receipt, but log the error
+    res.status(200).send("OK");
   }
 });
