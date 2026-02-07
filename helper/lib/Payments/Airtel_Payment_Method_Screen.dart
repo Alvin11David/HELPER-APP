@@ -16,6 +16,7 @@ class AirtelPaymentMethodScreen extends StatefulWidget {
 
 class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
   final TextEditingController _cardNumberController = TextEditingController();
+  final FocusNode _phoneNumberFocusNode = FocusNode();
   bool isChecked = false;
   bool _isDimming = false; // State to track if the screen should dim
   bool _showOverlay = false; // State to control the overlay visibility
