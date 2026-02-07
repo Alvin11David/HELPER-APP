@@ -38,6 +38,7 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
   @override
   void dispose() {
     _cardNumberController.dispose();
+    _phoneNumberFocusNode.dispose();
     super.dispose();
   }
 
@@ -549,6 +550,7 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
                               Expanded(
                                 child: TextField(
                                   controller: _cardNumberController,
+                                  focusNode: _phoneNumberFocusNode,
                                   keyboardType: TextInputType.number,
                                   style: TextStyle(
                                     color: Colors.black,
