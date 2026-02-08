@@ -94,6 +94,44 @@ export const sendOTPEmail = onCall(async (request) => {
   }
 });
 
+// Function to send OTP push notification
+export const sendOTPPhone = onCall(async (request) => {
+  try {
+    const { phoneNumber, otpCode, fcmToken } = request.data;
+
+    if (!phoneNumber || !otpCode || !fcmToken) {
+      throw new Error("Phone number, OTP code, and FCM token are required");
+    }
+
+    // Send push notification using Firebase Admin
+    const message = {
+      token: fcmToken,
+      notification: {
+        title: "Helper App Verification",
+        body: `Your verification code is: ${otpCode}`,
+      },
+      data: {
+        type: "otp",
+        otpCode: otpCode,
+        phoneNumber: phoneNumber,
+      },
+    };
+
+    await admin.messaging().send(message);
+
+    logger.info(`OTP push notification sent successfully to ${phoneNumber}`);
+    return {
+      success: true,
+      message: "OTP push notification sent successfully",
+    };
+  } catch (error) {
+    logger.error("Error sending OTP push notification:", error);
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+    throw new Error(`Failed to send OTP push notification: ${errorMessage}`);
+  }
+});
+
 // Function to send Forgot Password OTP email
 export const sendForgotPasswordOTPEmail = onCall(async (request) => {
   logger.info("sendForgotPasswordOTPEmail called with request:", request);

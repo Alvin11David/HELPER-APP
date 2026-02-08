@@ -311,64 +311,40 @@ class _SignInScreenState extends State<SignInScreen> {
       return;
     }
 
-    await FirebaseAuth.instance.verifyPhoneNumber(
-      phoneNumber: phone,
-      timeout: const Duration(seconds: 60),
+    // Check if phone exists in Sign Up collection
+    final snap = await FirebaseFirestore.instance
+        .collection('Sign Up')
+        .where('phoneNumber', isEqualTo: phone)
+        .where('verified', isEqualTo: true)
+        .limit(1)
+        .get();
 
-      // If Android auto-verifies, sign in and go dashboard
-      verificationCompleted: (PhoneAuthCredential credential) async {
-        try {
-          final cred = await FirebaseAuth.instance.signInWithCredential(
-            credential,
-          );
-          final user = cred.user;
-          if (user != null) {
-            await _ensureUserDocExists(user, provider: 'phone');
-            if (mounted) {
-              setState(() => _loading = false);
-            }
-            await _goToDashboard();
-          }
-        } catch (e) {
-          _toast('Auto-verification failed: $e');
-        }
-      },
+    if (snap.docs.isEmpty) {
+      _toast('Phone number not registered. Please sign up.');
+      setState(() => _loading = false);
+      return;
+    }
 
-      verificationFailed: (FirebaseAuthException e) {
-        if (!mounted) return;
-        _toast('SMS verification failed: ${e.message ?? e.code}');
+    // Sign in with email auth
+    final email = phone.replaceAll('+', '').replaceAll(' ', '') + '@helper.com';
+    try {
+      final userCred = await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: email,
+        password: 'phoneauth',
+      );
+      final user = userCred.user;
+      if (user != null) {
+        await _ensureUserDocExists(user, provider: 'phone');
         setState(() => _loading = false);
-      },
-
-      codeSent: (String verificationId, int? resendToken) async {
-        _verificationId = verificationId;
-
-        if (!mounted) return;
-        _toast('OTP sent to your phone!');
-
-        // ✅ IMPORTANT:
-        // OTP screen is the ONLY place that "finishes" auth (signInWithCredential + save doc)
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => OTPVerificationScreen(
-              isPhoneVerification: true,
-              emailOrPhone: phone,
-              verificationId: verificationId,
-              fullName: '', // sign-in doesn't need it
-              password: '',
-              referralCode: '',
-            ),
-          ),
-        ).then((_) {
-          if (mounted) setState(() => _loading = false);
-        });
-      },
-
-      codeAutoRetrievalTimeout: (String verificationId) {
-        _verificationId = verificationId;
-      },
-    );
+        await _goToDashboard();
+      } else {
+        _toast('Sign in failed.');
+        setState(() => _loading = false);
+      }
+    } catch (e) {
+      _toast('Sign in error: $e');
+      setState(() => _loading = false);
+    }
   }
 
   Future<void> _onContinue() async {

@@ -55,7 +55,6 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
 
   String? _businessName;
 
-  
   String? _jobCategoryName;
   int? _yearsExperience;
   String? _skillsDescription;
