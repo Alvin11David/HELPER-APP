@@ -983,7 +983,7 @@ export const validateMtnMobileNumber = onRequest(
   },
 );
 
-// Function to request payment (Callable Version)
+// Function to request payment (Fixed Version)
 export const requestPayment = onCall(async (request) => {
   logger.info("DEBUG: Payment request started", { data: request.data });
 
@@ -1032,8 +1032,6 @@ export const requestPayment = onCall(async (request) => {
       .doc(userId)
       .get();
 
-    logger.info("DEBUG: User document check", { exists: userDoc.exists });
-
     if (!userDoc.exists) {
       logger.info("DEBUG: User not found in Sign Up collection", { userId });
       throw new HttpsError(
@@ -1044,14 +1042,21 @@ export const requestPayment = onCall(async (request) => {
 
     logger.info("DEBUG: User verification passed");
 
-    // 4. Prepare Relworx API call
+    // 4. Prepare Relworx API call & FIX REFERENCE LENGTH
     const apiUrl = `${process.env.RELWORX_BASE_URL}/mobile-money/request-payment`;
     const apiKey = process.env.RELWORX_API_KEY;
     const accountNo = process.env.RELWORX_ACCOUNT_NO;
 
+    // FIX: Relworx requires reference to be 8-36 chars.
+    // We prefix and pad if it's too short (e.g., "123" becomes "REF-TXN-123")
+    const finalReference =
+      reference.toString().length < 8
+        ? `REF-TXN-${reference}`.padEnd(10, "0")
+        : reference.toString();
+
     const requestData = {
       account_no: accountNo,
-      reference: reference,
+      reference: finalReference,
       msisdn: msisdn, // Ensure this is +256 format
       currency: "UGX",
       amount: amount,
@@ -1059,12 +1064,14 @@ export const requestPayment = onCall(async (request) => {
       webhook_url: process.env.RELWORX_WEBHOOK_URL,
     };
 
+    logger.info("DEBUG: Sending request to Relworx", { finalReference });
+
     // 5. Execute Relworx Request
     const response = await axios.post(apiUrl, requestData, {
       headers: {
         "Content-Type": "application/json",
         Accept: "application/vnd.relworx.v2",
-        Authorization: `Bearer ${apiKey}`, // Correct Bearer Auth
+        Authorization: `Bearer ${apiKey}`,
       },
     });
 
@@ -1075,7 +1082,7 @@ export const requestPayment = onCall(async (request) => {
       userId: userId,
       msisdn: msisdn,
       amount: amount,
-      reference: reference,
+      reference: finalReference, // Save the actual reference sent to Relworx
       description: description || "Service Payment",
       status: "PENDING_USER_CONFIRMATION",
       relworx_internal_ref: responseData.internal_reference || null,
@@ -1108,10 +1115,9 @@ export const requestPayment = onCall(async (request) => {
       relworx_data: responseData,
     };
   } catch (error: any) {
-    logger.error(
-      "Payment Request Error:",
-      error.response?.data || error.message,
-    );
+    // Better error logging to see exactly what Relworx says
+    const errorDetails = error.response?.data || error.message;
+    logger.error("Payment Request Error:", errorDetails);
 
     const errorMessage = error.response?.data?.message || error.message;
     throw new HttpsError("internal", `Payment Failed: ${errorMessage}`);
@@ -1190,84 +1196,68 @@ export const sendReviewNotificationManually = onCall(async (request) => {
   }
 });
 
-// Webhook handler for payment status updates
 export const paymentWebhook = onRequest(async (req, res) => {
   try {
-    // Only accept POST requests
     if (req.method !== "POST") {
-      res.status(405).send("Method not allowed");
+      res.status(405).send("Method Not Allowed");
       return;
     }
 
-    // Parse the webhook payload
-    const webhookData = req.body;
-
-    // Validate required fields
     const {
-      status,
+      status, // Relworx uses 'success', 'failed', or 'cancelled'
       message,
-      customer_reference,
-      internal_reference,
-      msisdn,
-      amount,
-      currency,
-      provider,
-      charge,
+      internal_reference, // THIS IS OUR PRIMARY KEY
       completed_at,
-    } = webhookData;
+    } = req.body;
 
-    if (!status || !customer_reference || !internal_reference) {
-      logger.error(
-        "Invalid webhook payload: missing required fields",
-        webhookData,
-      );
-      res.status(400).send("Invalid payload");
+    if (!internal_reference) {
+      logger.error("Webhook Error: No internal_reference found in payload");
+      res.status(400).send("Missing reference");
       return;
     }
 
     logger.info(
-      `Payment webhook received: ${status} for ${customer_reference}`,
+      `Processing Webhook for Ref: ${internal_reference} | Status: ${status}`,
     );
 
-    // Store the payment status in Firestore
-    const paymentRef = admin
+    // 1. Point to the CORRECT collection and the CORRECT ID
+    const paymentDocRef = admin
       .firestore()
-      .collection("payments")
-      .doc(customer_reference);
-    await paymentRef.set(
-      {
-        status,
-        message,
-        customer_reference,
-        internal_reference,
-        msisdn,
-        amount,
-        currency,
-        provider,
-        charge,
-        completed_at: completed_at ? new Date(completed_at) : null,
-        updated_at: admin.firestore.FieldValue.serverTimestamp(),
-      },
-      { merge: true },
-    );
+      .collection("Payment Data") // Must match your requestPayment collection
+      .doc(internal_reference); // Must match the ID we set earlier
 
-    // If payment is successful, you might want to trigger additional actions
-    // For example, update user balance, send notifications, etc.
-    if (status === "success") {
-      // TODO: Implement success handling logic
-      logger.info(
-        `Payment successful: ${customer_reference} - ${amount} ${currency}`,
+    // 2. Check if this transaction exists in our records
+    const doc = await paymentDocRef.get();
+    if (!doc.exists) {
+      logger.warn(
+        `Webhook received for unknown transaction: ${internal_reference}`,
       );
-    } else if (status === "failed") {
-      // TODO: Implement failure handling logic
-      logger.warn(`Payment failed: ${customer_reference} - ${message}`);
+      // We return 200 so Relworx stops retrying, but we log the warning
+      res.status(200).send("Transaction not found in our records");
+      return;
     }
 
-    // Acknowledge the webhook with 200 OK
+    // 3. Update the existing document
+    await paymentDocRef.update({
+      status: status.toUpperCase(), // Store as SUCCESS or FAILED
+      relworx_final_message: message,
+      completedAt: completed_at
+        ? admin.firestore.Timestamp.fromDate(new Date(completed_at))
+        : null,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      raw_webhook_payload: req.body, // Good for debugging later
+    });
+
+    // 4. Handle logical success (e.g. giving the user their credits/items)
+    if (status === "success") {
+      const paymentData = doc.data();
+      logger.info(`Finalizing value for User: ${paymentData?.userId}`);
+      // TODO: Add your logic here to credit the user's account
+    }
+
     res.status(200).send("OK");
   } catch (error) {
-    logger.error("Error processing payment webhook:", error);
-    // Still return 200 to acknowledge receipt, but log the error
-    res.status(200).send("OK");
+    logger.error("Webhook processing failed:", error);
+    res.status(500).send("Internal Server Error");
   }
 });
