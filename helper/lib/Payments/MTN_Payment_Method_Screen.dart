@@ -125,7 +125,9 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
 
     // Validate MTN number
     final validateResponse = await http.post(
-      Uri.parse('https://us-central1-helperapp-46849.cloudfunctions.net/validateMtnMobileNumber'),
+      Uri.parse(
+        'https://us-central1-helperapp-46849.cloudfunctions.net/validateMtnMobileNumber',
+      ),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'msisdn': formattedPhone, 'userId': currentUser.uid}),
     );
@@ -133,7 +135,10 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
     final validateData = jsonDecode(validateResponse.body);
     if (validateData['success'] != true) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(validateData['message'] ?? 'Invalid MTN number'), backgroundColor: Colors.red),
+        SnackBar(
+          content: Text(validateData['message'] ?? 'Invalid MTN number'),
+          backgroundColor: Colors.red,
+        ),
       );
       return;
     }

@@ -8,7 +8,7 @@
  */
 
 import { setGlobalOptions } from "firebase-functions";
-import { onCall, onRequest } from "firebase-functions/v2/https";
+import { HttpsError, onCall, onRequest } from "firebase-functions/v2/https";
 import { onDocumentCreated } from "firebase-functions/v2/firestore";
 import * as logger from "firebase-functions/logger";
 import * as nodemailer from "nodemailer";
@@ -945,114 +945,140 @@ export const validateMtnMobileNumber = onRequest(
   },
 );
 
-// Function to request payment
-export const requestPayment = onCall(
-  {
-    invoker: "public", // Allow unauthenticated calls
-  },
-  async (request) => {
-    try {
-      const {
-        account_no,
-        reference,
-        msisdn,
-        currency,
-        amount,
-        description,
-        webhook_url,
-        saveCard,
-        userId,
-        originalPhoneNumber,
-      } = request.data;
+// Function to request payment (Callable Version)
+export const requestPayment = onCall(async (request) => {
+  logger.info("DEBUG: Payment request started", { data: request.data });
 
-      if (!userId) {
-        throw new Error("userId is required");
-      }
+  try {
+    // 1. Extract data from request.data
+    const {
+      userId,
+      msisdn,
+      amount,
+      reference,
+      description,
+      originalPhoneNumber,
+      saveCard,
+    } = request.data;
 
-      // Check if user exists in Sign Up collection
-      const userDoc = await admin
-        .firestore()
-        .collection("Sign Up")
-        .doc(userId)
-        .get();
+    logger.info("DEBUG: Extracted data", {
+      userId,
+      msisdn,
+      amount,
+      reference,
+      description,
+      saveCard,
+    });
 
-      if (!userDoc.exists) {
-        throw new Error("User not found in Sign Up collection");
-      }
-
-      if (
-        !account_no ||
-        !reference ||
-        !msisdn ||
-        !currency ||
-        !amount ||
-        !description
-      ) {
-        throw new Error("All payment request fields are required");
-      }
-
-      const requestData: any = {
-        account_no,
-        reference,
-        msisdn,
-        currency,
-        amount,
-        description,
-      };
-
-      // Add webhook_url if provided
-      if (webhook_url) {
-        requestData.webhook_url = webhook_url;
-      }
-
-      const response = await axios.post(
-        `${process.env.RELWORX_BASE_URL}/mobile-money/request-payment`,
-        requestData,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/vnd.relworx.v2",
-            Authorization: `Bearer ${process.env.RELWORX_API_KEY}`,
-          },
-        },
+    // 2. Basic Validation
+    if (!userId || !msisdn || !amount || !reference) {
+      logger.info("DEBUG: Missing required fields", {
+        userId: !!userId,
+        msisdn: !!msisdn,
+        amount: !!amount,
+        reference: !!reference,
+      });
+      throw new HttpsError(
+        "invalid-argument",
+        "Missing required fields: userId, msisdn, amount, or reference",
       );
+    }
 
-      const responseData = response.data as {
-        success: boolean;
-        message?: string;
-        [key: string]: any;
-      };
+    logger.info("DEBUG: Basic validation passed");
 
-      // If this is for Airtel payment with saveCard option, save the phone number
-      if (saveCard && userId && originalPhoneNumber) {
-        const userRef = admin
-          .firestore()
-          .collection("Saved Payment Methods")
-          .doc(userId)
-          .collection("Airtel Numbers")
-          .doc("latest");
+    // 3. Verify user in "Sign Up" collection
+    logger.info("DEBUG: Checking user in Sign Up collection", { userId });
+    const userDoc = await admin
+      .firestore()
+      .collection("Sign Up")
+      .doc(userId)
+      .get();
 
-        await userRef.set({
+    logger.info("DEBUG: User document check", { exists: userDoc.exists });
+
+    if (!userDoc.exists) {
+      logger.info("DEBUG: User not found in Sign Up collection", { userId });
+      throw new HttpsError(
+        "permission-denied",
+        "User not registered in Sign Up records",
+      );
+    }
+
+    logger.info("DEBUG: User verification passed");
+
+    // 4. Prepare Relworx API call
+    const apiUrl = `${process.env.RELWORX_BASE_URL}/mobile-money/request-payment`;
+    const apiKey = process.env.RELWORX_API_KEY;
+    const accountNo = process.env.RELWORX_ACCOUNT_NO;
+
+    const requestData = {
+      account_no: accountNo,
+      reference: reference,
+      msisdn: msisdn, // Ensure this is +256 format
+      currency: "UGX",
+      amount: amount,
+      description: description || "Service Payment",
+      webhook_url: process.env.RELWORX_WEBHOOK_URL,
+    };
+
+    // 5. Execute Relworx Request
+    const response = await axios.post(apiUrl, requestData, {
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/vnd.relworx.v2",
+        Authorization: `Bearer ${apiKey}`, // Correct Bearer Auth
+      },
+    });
+
+    const responseData = response.data as { internal_reference?: string };
+
+    // 6. Save Record to "Payment Data" collection
+    const paymentRecord = {
+      userId: userId,
+      msisdn: msisdn,
+      amount: amount,
+      reference: reference,
+      description: description || "Service Payment",
+      status: "PENDING_USER_CONFIRMATION",
+      relworx_internal_ref: responseData.internal_reference || null,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    };
+
+    await admin.firestore().collection("Payment Data").add(paymentRecord);
+
+    // 7. Save Number if requested
+    if (saveCard && originalPhoneNumber) {
+      await admin
+        .firestore()
+        .collection("Saved Payment Methods")
+        .doc(userId)
+        .collection("Airtel Numbers")
+        .doc("latest")
+        .set({
           phoneNumber: originalPhoneNumber,
           savedAt: admin.firestore.FieldValue.serverTimestamp(),
           isActive: true,
         });
-
-        logger.info(`Phone number saved for user ${userId}`);
-      }
-
-      logger.info(
-        `Payment request successful for ${msisdn}, amount: ${amount} ${currency}`,
-      );
-      return responseData;
-    } catch (error) {
-      logger.error("Error requesting payment:", error);
-      const errorMessage =
-        error instanceof Error ? error.message : "Unknown error";
-      throw new Error(`Failed to request payment: ${errorMessage}`);
     }
-  },
-);
+
+    logger.info(`Payment prompt sent successfully for ${userId}`);
+
+    // Return success response
+    return {
+      success: true,
+      message: "Payment prompt sent to phone",
+      relworx_data: responseData,
+    };
+  } catch (error: any) {
+    logger.error(
+      "Payment Request Error:",
+      error.response?.data || error.message,
+    );
+
+    const errorMessage = error.response?.data?.message || error.message;
+    throw new HttpsError("internal", `Payment Failed: ${errorMessage}`);
+  }
+});
 
 // Function to send review notification to worker (manual)
 export const sendReviewNotificationManually = onCall(async (request) => {

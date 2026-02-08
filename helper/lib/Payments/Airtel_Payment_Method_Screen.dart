@@ -243,19 +243,20 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
 
       final paymentResponse = await http.post(
         Uri.parse(paymentUrl),
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${await currentUser.getIdToken()}',
+        },
         body: jsonEncode({
-          'account_no': 'REL4E261389F7', // From environment
-          'reference': reference,
-          'msisdn': cleanDigits,
-          'currency': 'UGX',
-          'amount': 25000.0,
-          'description': 'Registration Fee Payment',
-          'webhook_url':
-              'https://us-central1-helperapp-46849.cloudfunctions.net/relworxWebhook',
-          'saveCard': isChecked,
-          'userId': currentUser.uid,
-          'originalPhoneNumber': phoneNumber,
+          "data": {
+            'userId': currentUser.uid,
+            'msisdn': cleanDigits,
+            'amount': 25000,
+            'reference': reference,
+            'description': 'Registration Fee Payment',
+            'originalPhoneNumber': phoneNumber,
+            'saveCard': isChecked,
+          }
         }),
       );
 
@@ -266,7 +267,7 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
       }
 
       final paymentResponseData = jsonDecode(paymentResponse.body);
-      final paymentData = paymentResponseData as Map<String, dynamic>;
+      final paymentData = paymentResponseData['data'] as Map<String, dynamic>;
 
       print('Payment request response: $paymentData');
 

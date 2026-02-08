@@ -71,6 +71,8 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
   int _rating = 0;
   final TextEditingController _commentController = TextEditingController();
   List<Review> _reviews = [];
+  double _averageRating = 0.0;
+  int _totalReviews = 0;
 
   @override
   void initState() {
@@ -177,6 +179,23 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
           .get();
 
       final docs = snap.docs;
+
+      // Calculate average rating and total reviews
+      _totalReviews = docs.length;
+      if (_totalReviews > 0) {
+        double sum = 0.0;
+        for (var doc in docs) {
+          final d = doc.data();
+          final rating = d['rating'];
+          if (rating is int) {
+            sum += rating.toDouble();
+          }
+        }
+        _averageRating = sum / _totalReviews;
+      } else {
+        _averageRating = 0.0;
+      }
+
       docs.sort((a, b) {
         final ta = a.data()['timestamp'] as Timestamp?;
         final tb = b.data()['timestamp'] as Timestamp?;
@@ -907,13 +926,13 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                         children: [
                           Icon(Icons.star, color: Colors.white, size: 16),
                           const SizedBox(width: 4),
-                          const Text(
-                            '4.6',
+                          Text(
+                            _averageRating.toStringAsFixed(1),
                             style: TextStyle(color: Colors.white, fontSize: 14),
                           ),
                           const SizedBox(width: 8),
-                          const Text(
-                            '(200)',
+                          Text(
+                            '(${_totalReviews})',
                             style: TextStyle(color: Colors.white, fontSize: 14),
                           ),
                         ],
