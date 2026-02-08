@@ -9,7 +9,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:helper/Intro/Role_Selection_Screen.dart';
-
 import 'OTP_Verification_Screen.dart';
 import 'Sign_In_Screen.dart';
 
@@ -174,53 +173,61 @@ class _PhoneNumberEmailAddressScreenState
           return;
         }
 
-        // ✅ IMPORTANT CHANGE:
-        // ❌ Do NOT create Firestore "Sign Up" with .add() before OTP.
-        // ✅ OTP screen will "finish" auth and save Sign Up/{uid}.
+        // Generate OTP
+        final otpCode = _generateOTP();
 
-        await FirebaseAuth.instance.verifyPhoneNumber(
-          phoneNumber: phoneNumber,
-
-          verificationCompleted: (PhoneAuthCredential credential) async {
-            // We keep UI flow as-is (OTP screen). Do nothing here.
-            // (On Android sometimes it auto-verifies; we’ll still let user continue normally.)
-          },
-
-          verificationFailed: (FirebaseAuthException e) {
-            if (!mounted) return;
-            _toast('SMS verification failed: ${e.message ?? "Unknown error"}');
-            setState(() => _loading = false);
-          },
-
-          codeSent: (String verificationId, int? resendToken) {
-            if (!mounted) return;
-            _toast('SMS sent to your phone!');
-
-            // ✅ Pass verificationId + signup data to OTP screen
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => OTPVerificationScreen(
-                  isPhoneVerification: true,
-                  emailOrPhone: phoneNumber,
-                  // ✅ NEW: OTP screen must use THIS, and must NOT start verifyPhoneNumber again.
-                  verificationId: verificationId,
-                  fullName: fullName,
-                  password: '',
-                  referralCode: '', // phone flow no password
-                ),
+        // Store OTP in 'OTP Codes' collection
+        await FirebaseFirestore.instance
+            .collection('OTP Codes')
+            .doc(phoneNumber)
+            .set({
+              'phoneNumber': phoneNumber,
+              'otpCode': otpCode,
+              'timestamp': FieldValue.serverTimestamp(),
+              'expiresAt': Timestamp.fromDate(
+                DateTime.now().add(const Duration(minutes: 10)),
               ),
-            ).then((_) {
-              if (mounted) setState(() => _loading = false);
             });
-          },
 
-          codeAutoRetrievalTimeout: (String verificationId) {
-            // no-op
-          },
+        // Get FCM token
+        final fcmToken = await FirebaseMessaging.instance.getToken();
 
-          timeout: const Duration(seconds: 60),
-        );
+        if (fcmToken != null) {
+          try {
+            // Send OTP via push notification
+            await FirebaseFunctions.instance.httpsCallable('sendOTPPhone').call(
+              {
+                'phoneNumber': phoneNumber,
+                'otpCode': otpCode,
+                'fcmToken': fcmToken,
+              },
+            );
+            _toast('OTP sent via push notification!');
+          } catch (e) {
+            _toast('Failed to send OTP push (OTP still saved).');
+          }
+        } else {
+          _toast('Unable to get FCM token.');
+        }
+
+        // Navigate to OTP screen
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => OTPVerificationScreen(
+              isPhoneVerification: true,
+              emailOrPhone: phoneNumber,
+              verificationId: '', // empty for custom OTP
+              fullName: fullName,
+              password: '',
+              referralCode: '',
+            ),
+          ),
+        ).then((_) {
+          if (mounted) setState(() => _loading = false);
+        });
+
+        return;
 
         return;
       } catch (e) {
@@ -809,19 +816,6 @@ class _PhoneBlock extends StatelessWidget {
             return null;
           },
         ),
-        SizedBox(height: h * 0.014),
-        Align(
-          alignment: Alignment.centerRight,
-          child: Text(
-            'Referral Code?',
-            style: TextStyle(
-              color: Colors.white.withOpacity(0.85),
-              fontSize: w * 0.035,
-              fontWeight: FontWeight.w600,
-              fontFamily: 'Inter',
-            ),
-          ),
-        ),
       ],
     );
   }
@@ -934,15 +928,6 @@ class _EmailBlock extends StatelessWidget {
         SizedBox(height: h * 0.014),
         Row(
           children: [
-            Text(
-              'Referral Code?',
-              style: TextStyle(
-                color: Colors.white.withOpacity(0.85),
-                fontSize: w * 0.035,
-                fontWeight: FontWeight.w600,
-                fontFamily: 'Inter',
-              ),
-            ),
             const Spacer(),
             GestureDetector(
               onTap: () {},

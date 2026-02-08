@@ -128,7 +128,6 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
     return 'UG$digits1$letters$digits2';
   }
 
-  // ✅ PHONE RESEND: use FirebaseAuth.verifyPhoneNumber (do NOT use "OTP Codes" or sendSMSOTP)
   Future<void> _resendPhoneOTP() async {
     final phone = widget.emailOrPhone;
     if (phone == null || phone.trim().isEmpty) {
@@ -139,27 +138,37 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
     setState(() => _isLoading = true);
 
     try {
-      await FirebaseAuth.instance.verifyPhoneNumber(
-        phoneNumber: phone,
-        timeout: const Duration(seconds: 60),
-        verificationCompleted: (PhoneAuthCredential credential) async {
-          // Keep user flow manual
-        },
-        verificationFailed: (FirebaseAuthException e) {
-          _snack('Resend failed: ${e.message ?? e.code}');
-        },
-        codeSent: (String verificationId, int? resendToken) {
-          setState(() {
-            _verificationId = verificationId;
+      final otpCode = _generateOTP();
+
+      await FirebaseFirestore.instance.collection('OTP Codes').doc(phone).set({
+        'phoneNumber': phone,
+        'otpCode': otpCode,
+        'timestamp': FieldValue.serverTimestamp(),
+        'expiresAt': Timestamp.fromDate(
+          DateTime.now().add(const Duration(minutes: 10)),
+        ),
+      });
+
+      final fcmToken = await FirebaseMessaging.instance.getToken();
+
+      if (fcmToken != null) {
+        try {
+          await FirebaseFunctions.instance.httpsCallable('sendOTPPhone').call({
+            'phoneNumber': phone,
+            'otpCode': otpCode,
+            'fcmToken': fcmToken,
           });
-          _snack('OTP resent to your phone.');
-        },
-        codeAutoRetrievalTimeout: (String verificationId) {
-          setState(() {
-            _verificationId = verificationId;
-          });
-        },
-      );
+          _snack('OTP resent via push notification!');
+        } catch (e) {
+          _snack('Failed to send OTP push (OTP still saved).');
+        }
+      } else {
+        _snack('Unable to get FCM token.');
+      }
+
+      setState(() {
+        _verificationId = ''; // for custom OTP
+      });
 
       _startCountdown();
       for (final c in _controllers) {
@@ -307,58 +316,150 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
     try {
       if (widget.isPhoneVerification) {
         // =========================
-        // PHONE: Firebase Auth OTP
+        // PHONE: Check if custom OTP or Firebase Auth
         // =========================
-        final vid = _verificationId;
-        if (vid == null || vid.isEmpty) {
-          _snack('No verification ID. Please resend OTP.');
+        if (_verificationId == null || _verificationId!.isEmpty) {
+          // Custom OTP from Firestore
+          final otpDoc = await FirebaseFirestore.instance
+              .collection('OTP Codes')
+              .doc(key)
+              .get();
+
+          if (!otpDoc.exists) {
+            _snack('OTP not found. Please request a new one.');
+            return;
+          }
+
+          final storedOTP = (otpDoc.data()?['otpCode'] ?? '').toString();
+          final expiresAt = otpDoc.data()?['expiresAt'];
+
+          if (expiresAt is Timestamp) {
+            if (expiresAt.toDate().isBefore(DateTime.now())) {
+              _snack('OTP has expired. Please request a new one.');
+              return;
+            }
+          }
+
+          if (code != storedOTP) {
+            _snack('Invalid OTP. Please try again.');
+            return;
+          }
+
+          // Generate email for auth
+          final email =
+              key.replaceAll('+', '').replaceAll(' ', '') + '@helper.com';
+          final password = 'phoneauth';
+
+          UserCredential userCred;
+          final fullName = widget.fullName.trim();
+
+          if (fullName.isNotEmpty) {
+            // Sign up
+            try {
+              userCred = await FirebaseAuth.instance
+                  .createUserWithEmailAndPassword(
+                    email: email,
+                    password: password,
+                  );
+            } on FirebaseAuthException catch (e) {
+              if (e.code == 'email-already-in-use') {
+                userCred = await FirebaseAuth.instance
+                    .signInWithEmailAndPassword(
+                      email: email,
+                      password: password,
+                    );
+              } else {
+                rethrow;
+              }
+            }
+          } else {
+            // Sign in (though sign-in doesn't use this path now)
+            userCred = await FirebaseAuth.instance.signInWithEmailAndPassword(
+              email: email,
+              password: password,
+            );
+          }
+
+          final user = userCred.user;
+          if (user == null) throw Exception('Auth failed (no user).');
+
+          if (fullName.isNotEmpty) {
+            await user.updateDisplayName(fullName);
+          }
+
+          final referralCode = widget.referralCode.isNotEmpty
+              ? widget.referralCode
+              : _generateReferralCode();
+
+          await _writeUserProfileDoc(
+            user: user,
+            provider: 'phone',
+            fullName: fullName.isNotEmpty ? fullName : (user.displayName ?? ''),
+            phoneNumber: key,
+            email: email,
+            photoUrl: user.photoURL ?? '',
+            referralCode: referralCode,
+            password: fullName.isNotEmpty ? password : '',
+          );
+
+          await _cleanupOTPDoc(key);
+
+          if (!mounted) return;
+          _snack('Phone number verified successfully!');
+
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => const RoleSelectionScreen(),
+            ),
+          );
+          return;
+        } else {
+          // Original Firebase Auth
+          final vid = _verificationId!;
+          final credential = PhoneAuthProvider.credential(
+            verificationId: vid,
+            smsCode: code,
+          );
+
+          final userCred = await FirebaseAuth.instance.signInWithCredential(
+            credential,
+          );
+          final user = userCred.user;
+
+          if (user == null) {
+            throw Exception('Phone sign-in failed (no user).');
+          }
+
+          final fullName = widget.fullName.trim();
+          if (fullName.isNotEmpty) {
+            await user.updateDisplayName(fullName);
+          }
+
+          final referralCode = widget.referralCode.isNotEmpty
+              ? widget.referralCode
+              : _generateReferralCode();
+
+          await _writeUserProfileDoc(
+            user: user,
+            provider: 'phone',
+            fullName: fullName.isNotEmpty ? fullName : (user.displayName ?? ''),
+            phoneNumber: key,
+            email: user.email ?? '',
+            photoUrl: user.photoURL ?? '',
+            referralCode: referralCode,
+            password: '',
+          );
+
+          if (!mounted) return;
+          _snack('Phone number verified successfully!');
+
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => const RoleSelectionScreen(),
+            ),
+          );
           return;
         }
-
-        final credential = PhoneAuthProvider.credential(
-          verificationId: vid,
-          smsCode: code,
-        );
-
-        final userCred = await FirebaseAuth.instance.signInWithCredential(
-          credential,
-        );
-        final user = userCred.user;
-
-        if (user == null) {
-          throw Exception('Phone sign-in failed (no user).');
-        }
-
-        final fullName = widget.fullName.trim();
-        if (fullName.isNotEmpty) {
-          // optional (nice for profile)
-          await user.updateDisplayName(fullName);
-        }
-
-        final referralCode = widget.referralCode.isNotEmpty
-            ? widget.referralCode
-            : _generateReferralCode(); // <-- Generate if empty
-
-        await _writeUserProfileDoc(
-          user: user,
-          provider: 'phone',
-          fullName: fullName.isNotEmpty ? fullName : (user.displayName ?? ''),
-          phoneNumber: key,
-          email: user.email ?? '',
-          photoUrl: user.photoURL ?? '',
-          referralCode: referralCode,
-          password: '',
-        );
-
-        if (!mounted) return;
-        _snack('Phone number verified successfully!');
-
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => const RoleSelectionScreen(),
-          ),
-        );
-        return;
       }
 
       // =========================

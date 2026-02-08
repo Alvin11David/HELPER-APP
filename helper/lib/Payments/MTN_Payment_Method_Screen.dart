@@ -123,6 +123,26 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
       return;
     }
 
+    // Validate MTN number
+    final validateResponse = await http.post(
+      Uri.parse(
+        'https://us-central1-helperapp-46849.cloudfunctions.net/validateMtnMobileNumber',
+      ),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'msisdn': formattedPhone, 'userId': currentUser.uid}),
+    );
+
+    final validateData = jsonDecode(validateResponse.body);
+    if (validateData['success'] != true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(validateData['message'] ?? 'Invalid MTN number'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     // RELWORX API configuration
     const String apiKey = "2902144e65b9a7.v3wxxu9iseWHI-dQzOh7Gg";
     const String baseUrl = "https://payments.relworx.com/api";
