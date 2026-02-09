@@ -32,6 +32,7 @@ class _WalletFlowScreenState extends State<WalletFlowScreen> {
   void initState() {
     super.initState();
     _setupPaymentListener();
+    _checkExistingSuccessPayments();
   }
 
   @override
@@ -49,20 +50,49 @@ class _WalletFlowScreenState extends State<WalletFlowScreen> {
           .snapshots()
           .listen((querySnapshot) {
             for (var change in querySnapshot.docChanges) {
-              if (change.type == DocumentChangeType.modified) {
+              if (change.type == DocumentChangeType.added ||
+                  change.type == DocumentChangeType.modified) {
                 final data = change.doc.data() as Map<String, dynamic>?;
-                if (data != null && data['status'] == 'SUCCESS') {
+                if (data != null &&
+                    data['status'] == 'SUCCESS' &&
+                    !data.containsKey('balanceUpdated')) {
                   final amount = data['amount'] as int?;
                   if (amount != null) {
                     FirebaseFirestore.instance
                         .collection('Sign Up')
                         .doc(user.uid)
                         .update({'amount': FieldValue.increment(amount)});
+                    // Mark as updated
+                    change.doc.reference.update({'balanceUpdated': true});
                   }
                 }
               }
             }
           });
+    }
+  }
+
+  Future<void> _checkExistingSuccessPayments() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('Payment Data')
+          .where('userId', isEqualTo: user.uid)
+          .where('status', isEqualTo: 'SUCCESS')
+          .get();
+      for (var doc in snapshot.docs) {
+        final data = doc.data();
+        if (!data.containsKey('balanceUpdated')) {
+          final amount = data['amount'] as int?;
+          if (amount != null) {
+            await FirebaseFirestore.instance
+                .collection('Sign Up')
+                .doc(user.uid)
+                .update({'amount': FieldValue.increment(amount)});
+            await doc.reference.update({'balanceUpdated': true});
+          }
+        }
+      }
     }
   }
 
