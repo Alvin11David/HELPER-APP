@@ -23,6 +23,7 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
   bool _isDimming = false; // State to track if the screen should dim
   bool _showOverlay = false; // State to control the overlay visibility
   bool _isPaymentSuccessful = false; // State to track payment status
+  bool _isLoading = false; // State to track loading during payment
   final Duration _overlayAnimDuration = Duration(milliseconds: 300);
   String? _savedPhoneNumber;
 
@@ -96,6 +97,9 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
   }
 
  Future<void> _processPayment() async {
+    setState(() {
+      _isLoading = true;
+    });
     print('Starting payment process');
     final String phoneNumber = _cardNumberController.text.trim();
 
@@ -162,8 +166,12 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
       );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
     }
-}
+  }
 
 
 
@@ -503,33 +511,39 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
                         ),
                         SizedBox(height: screenHeight * 0.05),
                         GestureDetector(
-                          onTap: _processPayment,
+                          onTap: _isLoading ? null : _processPayment,
                           child: Container(
                             width: screenWidth * 0.93,
                             height: screenHeight * 0.07,
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: _isLoading ? Colors.grey : Colors.white,
                               borderRadius: BorderRadius.circular(30),
                             ),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  'Pay',
-                                  style: TextStyle(
-                                    color: Colors.black,
-                                    fontSize: screenWidth * 0.06,
-                                    fontWeight: FontWeight.bold,
-                                    fontFamily: 'PlayfairDisplay',
-                                  ),
-                                ),
-                                SizedBox(width: screenWidth * 0.02),
-                                Icon(
-                                  Icons.account_balance_wallet,
-                                  color: Colors.black,
-                                  size: screenWidth * 0.06,
-                                ),
-                              ],
+                              children: _isLoading
+                                  ? [
+                                      CircularProgressIndicator(
+                                        valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
+                                      ),
+                                    ]
+                                  : [
+                                      Text(
+                                        'Pay',
+                                        style: TextStyle(
+                                          color: Colors.black,
+                                          fontSize: screenWidth * 0.06,
+                                          fontWeight: FontWeight.bold,
+                                          fontFamily: 'PlayfairDisplay',
+                                        ),
+                                      ),
+                                      SizedBox(width: screenWidth * 0.02),
+                                      Icon(
+                                        Icons.account_balance_wallet,
+                                        color: Colors.black,
+                                        size: screenWidth * 0.06,
+                                      ),
+                                    ],
                             ),
                           ),
                         ),
