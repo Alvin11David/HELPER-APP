@@ -388,7 +388,8 @@ class _WalletFlowScreenState extends State<WalletFlowScreen> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => const WalletWithdrawScreen(),
+                                  builder: (context) =>
+                                      const WalletWithdrawScreen(),
                                 ),
                               );
                             } else {

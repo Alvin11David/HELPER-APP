@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../Wallet/Wallet_Cancelled_screen.dart';
 
 class MtnAirtelDepositScreen extends StatefulWidget {
   final String amount;
@@ -234,18 +235,6 @@ class _MtnAirtelDepositScreenState extends State<MtnAirtelDepositScreen> {
               setState(() {
                 _isPaymentSuccessful = true;
               });
-              // Update user's balance in Sign Up collection
-              final User? currentUser = FirebaseAuth.instance.currentUser;
-              if (currentUser != null) {
-                final int depositAmount = int.parse(widget.amount);
-                FirebaseFirestore.instance
-                    .collection('Sign Up')
-                    .doc(currentUser.uid)
-                    .update({'amount': FieldValue.increment(depositAmount)})
-                    .catchError((error) {
-                      print('Error updating balance: $error');
-                    });
-              }
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('Payment completed successfully!'),
@@ -809,7 +798,12 @@ class _MtnAirtelDepositScreenState extends State<MtnAirtelDepositScreen> {
                           child: ElevatedButton(
                             onPressed: _isPaymentSuccessful
                                 ? () {
-                                    // TODO: Navigate to wallet
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => const WalletFlowScreen(),
+                                      ),
+                                    );
                                   }
                                 : null,
                             style: ElevatedButton.styleFrom(

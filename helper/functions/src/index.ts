@@ -246,8 +246,6 @@ export const relworxWebhook = onRequest(
 
       // Create payment record
       const paymentData = {
-        reference: customer_reference,
-        userId: userId, // Add userId to payment record
         internalReference: internal_reference,
         phoneNumber: msisdn,
         amount: amount,
@@ -260,17 +258,16 @@ export const relworxWebhook = onRequest(
           ? admin.firestore.Timestamp.fromDate(new Date(completed_at))
           : null,
         webhookReceivedAt: admin.firestore.FieldValue.serverTimestamp(),
-        paymentType: "registration_fee",
       };
 
       const paymentRef = admin
         .firestore()
-        .collection("Payments")
+        .collection("Payment Data")
         .doc(customer_reference);
       await paymentRef.set(paymentData);
 
       // If payment is successful and we have userId, update user status
-      if (status === "success" && userId) {
+      if (status.toLowerCase() === "success" && userId) {
         const userRef = admin.firestore().collection("users").doc(userId);
         const userDoc = await userRef.get();
 
@@ -286,7 +283,7 @@ export const relworxWebhook = onRequest(
         } else {
           logger.warn(`User document not found for userId: ${userId}`);
         }
-      } else if (status === "success" && !userId) {
+      } else if (status.toLowerCase() === "success" && !userId) {
         // Fallback: Try to find user by phone number
         const usersRef = admin.firestore().collection("users");
         const userQuery = await usersRef
@@ -1257,7 +1254,21 @@ export const paymentWebhook = onRequest(async (req, res) => {
     if (status === "success") {
       const paymentData = doc.data();
       logger.info(`Finalizing value for User: ${paymentData?.userId}`);
-      // TODO: Add your logic here to credit the user's account
+
+      // Update user's balance in Sign Up collection
+      if (paymentData?.userId && paymentData?.amount) {
+        const depositAmount = parseInt(paymentData.amount);
+        await admin
+          .firestore()
+          .collection("Sign Up")
+          .doc(paymentData.userId)
+          .update({
+            amount: admin.firestore.FieldValue.increment(depositAmount),
+          });
+        logger.info(
+          `Updated balance for user ${paymentData.userId} by ${depositAmount}`,
+        );
+      }
     }
 
     res.status(200).send("OK");
