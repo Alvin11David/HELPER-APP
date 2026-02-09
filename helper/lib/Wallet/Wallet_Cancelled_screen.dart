@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:helper/Chats/overlays/incoming_call_overlay_service.dart';
 import 'Wallet_Deposit_Payment_Method_Screen.dart';
+import 'Wallet_Withdraw_Payment_Method_Screen.dart';
 
 class WalletFlowScreen extends StatefulWidget {
   const WalletFlowScreen({super.key});
@@ -379,7 +380,18 @@ class _WalletFlowScreenState extends State<WalletFlowScreen> {
                                 MaterialPageRoute(
                                   builder: (context) =>
                                       const WalletDepositPaymentMethodScreen(
-                                          amount: "0"),
+                                        amount: "0",
+                                      ),
+                                ),
+                              );
+                            } else if (m == _ActionMode.withdraw) {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const WalletWithdrawPaymentMethodScreen(
+                                        amount: "0",
+                                      ),
                                 ),
                               );
                             } else {
