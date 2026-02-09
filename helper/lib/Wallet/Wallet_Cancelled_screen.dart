@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:helper/Chats/overlays/incoming_call_overlay_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
 import 'Wallet_Deposit_Payment_Method_Screen.dart';
 import 'Wallet_Withdraw_Payment_Method_Screen.dart';
 import 'Wallet_TopUp_Screen.dart';
@@ -568,67 +571,86 @@ class _BalanceCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final cardH = h * 0.24;
 
-    return Container(
-      height: cardH,
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-      ),
-      padding: EdgeInsets.symmetric(horizontal: w * 0.06, vertical: h * 0.018),
-      child: Column(
-        children: [
-          Text(
-            'Balance',
-            style: TextStyle(
-              color: Colors.black.withOpacity(0.85),
-              fontFamily: 'Inter',
-              fontWeight: FontWeight.w800,
-              fontSize: w * 0.040,
-            ),
+    return StreamBuilder<DocumentSnapshot>(
+      stream: FirebaseAuth.instance.currentUser != null
+          ? FirebaseFirestore.instance
+                .collection('Sign Up')
+                .doc(FirebaseAuth.instance.currentUser!.uid)
+                .snapshots()
+          : null,
+      builder: (context, snapshot) {
+        int balance = 0;
+        if (snapshot.hasData && snapshot.data!.exists) {
+          final data = snapshot.data!.data() as Map<String, dynamic>?;
+          balance = data?['amount'] ?? 0;
+        }
+
+        return Container(
+          height: cardH,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(22),
           ),
-          SizedBox(height: h * 0.006),
-          Text(
-            'UGX/DOLLARS',
-            style: TextStyle(
-              color: Colors.black,
-              fontFamily: 'AbrilFatface',
-              fontSize: w * 0.050,
-            ),
+          padding: EdgeInsets.symmetric(
+            horizontal: w * 0.06,
+            vertical: h * 0.018,
           ),
-          SizedBox(height: h * 0.014),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+          child: Column(
             children: [
-              _RoundAction(
-                w: w,
-                label: 'Deposit',
-                icon: Icons.arrow_upward_rounded,
-                active: actionMode == _ActionMode.deposit,
-                brandOrange: brandOrange,
-                onTap: () => onActionChange(
-                  actionMode == _ActionMode.deposit
-                      ? _ActionMode.none
-                      : _ActionMode.deposit,
+              Text(
+                'Balance: UGX ${NumberFormat('#,###').format(balance)}',
+                style: TextStyle(
+                  color: Colors.black.withOpacity(0.85),
+                  fontFamily: 'Inter',
+                  fontWeight: FontWeight.w800,
+                  fontSize: w * 0.040,
                 ),
               ),
-              SizedBox(width: w * 0.12),
-              _RoundAction(
-                w: w,
-                label: 'Withdraw',
-                icon: Icons.arrow_downward_rounded,
-                active: actionMode == _ActionMode.withdraw,
-                brandOrange: brandOrange,
-                onTap: () => onActionChange(
-                  actionMode == _ActionMode.withdraw
-                      ? _ActionMode.none
-                      : _ActionMode.withdraw,
+              SizedBox(height: h * 0.006),
+              Text(
+                'DOLLARS',
+                style: TextStyle(
+                  color: Colors.black,
+                  fontFamily: 'AbrilFatface',
+                  fontSize: w * 0.050,
                 ),
+              ),
+              SizedBox(height: h * 0.014),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _RoundAction(
+                    w: w,
+                    label: 'Deposit',
+                    icon: Icons.arrow_upward_rounded,
+                    active: actionMode == _ActionMode.deposit,
+                    brandOrange: brandOrange,
+                    onTap: () => onActionChange(
+                      actionMode == _ActionMode.deposit
+                          ? _ActionMode.none
+                          : _ActionMode.deposit,
+                    ),
+                  ),
+                  SizedBox(width: w * 0.12),
+                  _RoundAction(
+                    w: w,
+                    label: 'Withdraw',
+                    icon: Icons.arrow_downward_rounded,
+                    active: actionMode == _ActionMode.withdraw,
+                    brandOrange: brandOrange,
+                    onTap: () => onActionChange(
+                      actionMode == _ActionMode.withdraw
+                          ? _ActionMode.none
+                          : _ActionMode.withdraw,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

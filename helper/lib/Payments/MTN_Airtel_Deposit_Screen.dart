@@ -801,7 +801,8 @@ class _MtnAirtelDepositScreenState extends State<MtnAirtelDepositScreen> {
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (context) => const WalletFlowScreen(),
+                                        builder: (context) =>
+                                            const WalletFlowScreen(),
                                       ),
                                     );
                                   }
