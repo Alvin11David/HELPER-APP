@@ -99,14 +99,31 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
     print('Starting payment process');
     final String phoneNumber = _cardNumberController.text.trim();
 
-    // Basic validation - Airtel Uganda prefixes: 075, 070, 074(0-2)
-    // Allow formats: +256..., 256..., 0..., or just the number
-    final String cleanPhone = phoneNumber
-        .replaceAll(' ', '')
-        .replaceAll('+', '');
+    // 1. MSISDN Normalization (Force +256 format for Relworx)
+    String digits = phoneNumber.replaceAll(RegExp(r'\D'), ''); 
+    if (digits.startsWith('0')) {
+      digits = '256' + digits.substring(1);
+    }
+    if (!digits.startsWith('256')) {
+      digits = '256' + digits;
+    }
+    final String finalMsisdn = '+' + digits; 
+    
+    print('DEBUG: Original input: $phoneNumber');
+    print('DEBUG: Normalized MSISDN: $finalMsisdn');
+
+    // 2. Reference Sanitization (Strictly Max 36 Characters)
+    final String timestamp = DateTime.now().millisecondsSinceEpoch.toString();
+    // Using a shorter prefix so the final string doesn't exceed 36 chars
+    final String finalReference = 'REG_$timestamp'.substring(0, 25);
+    print('DEBUG: Generated short reference: $finalReference');
+
+    // Basic validation logic
+    final String cleanPhone = phoneNumber.replaceAll(' ', '').replaceAll('+', '');
     final RegExp airtelRegex = RegExp(
       r'^(256(75|70|74[0-2])\d{7}|0(75|70|74[0-2])\d{7}|(75|70|74[0-2])\d{7})$',
     );
+    
     if (phoneNumber.isEmpty || !airtelRegex.hasMatch(cleanPhone)) {
       print('Phone validation failed: $phoneNumber (cleaned: $cleanPhone)');
       ScaffoldMessenger.of(context).showSnackBar(
@@ -120,126 +137,46 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
 
     print('Phone number validated: $phoneNumber (cleaned: $cleanPhone)');
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Phone number validated: $phoneNumber'),
-        backgroundColor: Colors.green,
-      ),
+      const SnackBar(content: Text('Phone number validated'), backgroundColor: Colors.green),
     );
 
-    // Get current user and verify authentication
     final User? currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) {
       print('User not authenticated');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('User not authenticated'),
-          backgroundColor: Colors.red,
-        ),
-      );
       return;
     }
 
-    // Force refresh the user's token to ensure it's valid
     try {
       await currentUser.getIdToken(true);
       print('User token refreshed successfully');
-    } catch (tokenError) {
-      print('Error refreshing token: $tokenError');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Authentication error. Please sign in again.'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
 
-    print(
-      'User authenticated: ${currentUser.uid}, email: ${currentUser.email}',
-    );
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('User authenticated: ${currentUser.uid}'),
-        backgroundColor: Colors.green,
-      ),
-    );
-
-    try {
       // Step 1: Validate mobile number with Relworx API
       print('Validating mobile number with Relworx...');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Validating mobile number...'),
-          backgroundColor: Colors.blue,
-        ),
-      );
-
-      // Use REST API call instead of httpsCallable for public functions
-      final functionsUrl =
-          'https://us-central1-helperapp-46849.cloudfunctions.net/validateMobileNumber';
-
-      // Format phone number for API - send digits only, let Cloud Function normalize
-      String cleanDigits = cleanPhone;
-
-      // Debug: log the exact number being sent
-      print('DEBUG: Original input: $phoneNumber');
-      print('DEBUG: Cleaned digits: $cleanDigits');
-
-      print('Calling validateMobileNumber with: { msisdn: $cleanDigits }');
+      final validateUrl = 'https://us-central1-helperapp-46849.cloudfunctions.net/validateMobileNumber';
 
       final response = await http.post(
-        Uri.parse(functionsUrl),
+        Uri.parse(validateUrl),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'msisdn': cleanDigits, 'userId': currentUser.uid}),
+        body: jsonEncode({'msisdn': finalMsisdn, 'userId': currentUser.uid}),
       );
 
+      print('Calling validateMobileNumber with status: ${response.statusCode}');
+
       if (response.statusCode != 200) {
-        throw Exception(
-          'Failed to validate mobile number: ${response.statusCode} ${response.body}',
-        );
+        throw Exception('Failed validation: ${response.body}');
       }
 
-      final responseData = jsonDecode(response.body);
-      final validateData = responseData as Map<String, dynamic>;
-      print('validateMobileNumber response: $validateData');
+      final validateData = jsonDecode(response.body);
+      print('validateMobileNumber response body: $validateData');
 
       if (validateData['success'] != true) {
         print('Mobile number validation failed: ${validateData['message']}');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Validation failed: ${validateData['message'] ?? 'Invalid mobile number'}',
-            ),
-            backgroundColor: Colors.red,
-          ),
-        );
         return;
       }
 
-      print('Mobile number validation successful');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Validated: ${validateData['customer_name'] ?? 'Customer found'}',
-          ),
-          backgroundColor: Colors.green,
-        ),
-      );
-
       // Step 2: Request payment using REST API
-      print('Initiating payment request...');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Initiating payment request...'),
-          backgroundColor: Colors.blue,
-        ),
-      );
-
-      final paymentUrl =
-          'https://us-central1-helperapp-46849.cloudfunctions.net/requestPayment';
-
-      final reference =
-          'reg_fee_${DateTime.now().millisecondsSinceEpoch}_${currentUser.uid}';
+      print('Initiating payment request to Cloud Function...');
+      final paymentUrl = 'https://us-central1-helperapp-46849.cloudfunctions.net/requestPayment';
 
       final paymentResponse = await http.post(
         Uri.parse(paymentUrl),
@@ -250,9 +187,9 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
         body: jsonEncode({
           "data": {
             'userId': currentUser.uid,
-            'msisdn': cleanDigits,
+            'msisdn': finalMsisdn, // Fixed format
             'amount': 25000,
-            'reference': reference,
+            'reference': finalReference, // Fixed length
             'description': 'Registration Fee Payment',
             'originalPhoneNumber': phoneNumber,
             'saveCard': isChecked,
@@ -260,58 +197,47 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
         }),
       );
 
+      print('Payment request HTTP status: ${paymentResponse.statusCode}');
+
       if (paymentResponse.statusCode != 200) {
-        throw Exception(
-          'Failed to request payment: ${paymentResponse.statusCode} ${paymentResponse.body}',
-        );
+        throw Exception('RequestPayment failed with status ${paymentResponse.statusCode}');
       }
 
-      final paymentResponseData = jsonDecode(paymentResponse.body);
-      final paymentData = paymentResponseData['data'] as Map<String, dynamic>;
+      final fullResponseBody = jsonDecode(paymentResponse.body);
+      print('DEBUG: Full Payment Response Body: $fullResponseBody');
 
-      print('Payment request response: $paymentData');
+      // Handle both onRequest and onCall response formats
+      final paymentData = fullResponseBody['result'] ?? fullResponseBody;
+      print('Extracted Payment Data: $paymentData');
 
       if (paymentData['success'] == true) {
-        // Payment request successful - show pending status
+        print('Payment successfully initiated for reference: $finalReference');
+        
         setState(() {
-          _isPaymentSuccessful = false; // Wait for webhook confirmation
+          _isPaymentSuccessful = false;
           _isDimming = true;
           _showOverlay = true;
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              paymentData['message'] ??
-                  'Payment request sent successfully! Please complete the payment on your phone.',
-            ),
+          const SnackBar(
+            content: Text('Payment request sent! Check your phone for the PIN prompt.'),
             backgroundColor: Colors.blue,
           ),
         );
 
-        // Start listening for payment status updates
-        _listenForPaymentStatus(reference);
+        _listenForPaymentStatus(finalReference);
       } else {
-        // Payment request failed
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Payment request failed: ${paymentData['message'] ?? 'Unknown error'}',
-            ),
-            backgroundColor: Colors.red,
-          ),
-        );
+        print('Payment request rejected by Relworx: ${paymentData['message']}');
       }
     } catch (e) {
-      print('Payment error details: ${e.runtimeType}: $e');
+      print('CRITICAL PAYMENT ERROR: ${e.runtimeType}: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Payment error: ${e.runtimeType}: ${e.toString()}'),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text('Payment error: $e'), backgroundColor: Colors.red),
       );
     }
-  }
+}
+
 
   void _listenForPaymentStatus(String reference) {
     final paymentRef = FirebaseFirestore.instance
