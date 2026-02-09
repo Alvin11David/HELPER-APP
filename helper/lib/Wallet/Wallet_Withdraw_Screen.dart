@@ -243,7 +243,8 @@ class _WalletWithdrawScreenState extends State<WalletWithdrawScreen> {
                       : null,
                   builder: (context, snapshot) {
                     if (snapshot.hasData && snapshot.data!.exists) {
-                      final data = snapshot.data!.data() as Map<String, dynamic>?;
+                      final data =
+                          snapshot.data!.data() as Map<String, dynamic>?;
                       _balance = data?['amount'] ?? 0;
                     } else {
                       _balance = 0;
@@ -471,7 +472,9 @@ class _WalletWithdrawScreenState extends State<WalletWithdrawScreen> {
                   width: screenWidth * 0.9,
                   height: screenHeight * 0.062,
                   child: ElevatedButton(
-                    onPressed: loading || _getCurrentAmount() > _balance ? null : onContinue,
+                    onPressed: loading || _getCurrentAmount() > _balance
+                        ? null
+                        : onContinue,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0XFFFBBC04),
                       disabledBackgroundColor: const Color(

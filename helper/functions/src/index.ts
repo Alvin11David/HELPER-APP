@@ -1121,6 +1121,114 @@ export const requestPayment = onCall(async (request) => {
   }
 });
 
+// Function to handle Withdrawals (Payouts)
+export const requestWithdrawal = onCall(async (request) => {
+  logger.info("DEBUG: Withdrawal request started", { data: request.data });
+
+  try {
+    const { userId, msisdn, amount, reference, description } = request.data;
+
+    // 1. Basic Validation
+    if (!userId || !msisdn || !amount || !reference) {
+      throw new HttpsError("invalid-argument", "Missing required fields.");
+    }
+
+    // 2. Security Check: Verify User 'amount' in Firestore
+    const userRef = admin.firestore().collection("Sign Up").doc(userId);
+    const userDoc = await userRef.get();
+
+    if (!userDoc.exists) {
+      throw new HttpsError("not-found", "User not found.");
+    }
+
+    const userData = userDoc.data();
+    // CHANGED: Use 'amount' instead of 'balance'
+    const currentUserFunds = userData?.amount || 0; 
+
+    if (currentUserFunds < amount) {
+      throw new HttpsError(
+        "failed-precondition",
+        "Insufficient funds for withdrawal.",
+      );
+    }
+
+    // 3. Prepare Relworx API call
+    const apiUrl = `${process.env.RELWORX_BASE_URL}/mobile-money/send-payment`;
+    const apiKey = process.env.RELWORX_API_KEY;
+    const accountNo = process.env.RELWORX_ACCOUNT_NO;
+
+    // Sanitize Reference (8-36 chars)
+    const finalReference =
+      reference.toString().length < 8
+        ? `WD-TXN-${reference}`.padEnd(10, "0")
+        : reference.toString().substring(0, 36);
+
+    const requestData = {
+      account_no: accountNo,
+      reference: finalReference,
+      msisdn: msisdn, // Must be +256...
+      currency: "UGX",
+      amount: Math.round(Number(amount)), // Ensure integer
+      description: description || "Wallet Withdrawal",
+      webhook_url: process.env.RELWORX_WEBHOOK_URL,
+    };
+
+    logger.info("DEBUG: Sending Withdrawal to Relworx", {
+      finalReference,
+      amount,
+    });
+
+    // 4. Execute Relworx Request
+    const response = await axios.post(apiUrl, requestData, {
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/vnd.relworx.v2",
+        Authorization: `Bearer ${apiKey}`,
+      },
+    });
+
+    const responseData = response.data as { internal_reference?: string };
+
+    // 5. Update Local Firestore (Deduct 'amount' & Log)
+    const batch = admin.firestore().batch();
+
+    // Deduct from user's 'amount' field
+    batch.update(userRef, {
+      amount: admin.firestore.FieldValue.increment(-amount),
+    });
+
+    // Save transaction record
+    const withdrawalRecord = {
+      userId,
+      msisdn,
+      amount,
+      reference: finalReference,
+      type: "WITHDRAWAL",
+      status: "PROCESSING",
+      relworx_internal_ref: responseData.internal_reference || null,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    };
+
+    const transRef = admin.firestore().collection("Withdrawals").doc();
+    batch.set(transRef, withdrawalRecord);
+
+    await batch.commit();
+
+    return {
+      success: true,
+      message: "Withdrawal is being processed",
+      relworx_data: responseData,
+    };
+  } catch (error: any) {
+    const errorDetails = error.response?.data || error.message;
+    logger.error("Withdrawal Error:", errorDetails);
+
+    const errorMessage = error.response?.data?.message || error.message;
+    throw new HttpsError("internal", `Withdrawal Failed: ${errorMessage}`);
+  }
+});
+
+
 // Function to send review notification to worker (manual)
 export const sendReviewNotificationManually = onCall(async (request) => {
   try {
