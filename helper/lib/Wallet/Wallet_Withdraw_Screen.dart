@@ -2,6 +2,8 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'Wallet_Withdraw_Payment_Method_Screen.dart';
 
 class NumberInputFormatter extends TextInputFormatter {
@@ -36,6 +38,7 @@ class _WalletWithdrawScreenState extends State<WalletWithdrawScreen> {
   final TextEditingController _amountController = TextEditingController();
   bool loading = false;
   String? selectedAmount;
+  int _balance = 0;
   final double screenWidth =
       WidgetsBinding.instance.window.physicalSize.width /
       WidgetsBinding.instance.window.devicePixelRatio;
@@ -46,7 +49,25 @@ class _WalletWithdrawScreenState extends State<WalletWithdrawScreen> {
     super.dispose();
   }
 
+  int _getCurrentAmount() {
+    String amount = selectedAmount != null
+        ? selectedAmount!.replaceAll('UGX ', '').replaceAll(',', '')
+        : _amountController.text.replaceAll(',', '');
+    return int.tryParse(amount) ?? 0;
+  }
+
   void onContinue() {
+    int currentAmount = _getCurrentAmount();
+    if (currentAmount > _balance) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("You can't withdraw more than your balance"),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     // Get the amount to pass - either from selected preset or manual input
     String amountToPass = selectedAmount != null
         ? selectedAmount!.replaceAll('UGX ', '')
@@ -213,45 +234,61 @@ class _WalletWithdrawScreenState extends State<WalletWithdrawScreen> {
                   ),
                 ),
                 SizedBox(height: screenHeight * 0.04),
-                Center(
-                  child: Container(
-                    width: screenWidth * 0.9,
-                    height: screenHeight * 0.05,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFBBC04),
-                      borderRadius: BorderRadius.circular(25),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.attach_money,
-                          color: Colors.black,
-                          size: screenWidth * 0.05,
+                StreamBuilder<DocumentSnapshot>(
+                  stream: FirebaseAuth.instance.currentUser != null
+                      ? FirebaseFirestore.instance
+                            .collection('Sign Up')
+                            .doc(FirebaseAuth.instance.currentUser!.uid)
+                            .snapshots()
+                      : null,
+                  builder: (context, snapshot) {
+                    if (snapshot.hasData && snapshot.data!.exists) {
+                      final data = snapshot.data!.data() as Map<String, dynamic>?;
+                      _balance = data?['amount'] ?? 0;
+                    } else {
+                      _balance = 0;
+                    }
+                    return Center(
+                      child: Container(
+                        width: screenWidth * 0.9,
+                        height: screenHeight * 0.05,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFBBC04),
+                          borderRadius: BorderRadius.circular(25),
                         ),
-                        SizedBox(width: screenWidth * 0.02),
-                        Text(
-                          'Available Balance:',
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontSize: screenWidth * 0.035,
-                            fontWeight: FontWeight.w500,
-                            fontFamily: 'Inter',
-                          ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.attach_money,
+                              color: Colors.black,
+                              size: screenWidth * 0.05,
+                            ),
+                            SizedBox(width: screenWidth * 0.02),
+                            Text(
+                              'Available Balance:',
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontSize: screenWidth * 0.035,
+                                fontWeight: FontWeight.w500,
+                                fontFamily: 'Inter',
+                              ),
+                            ),
+                            SizedBox(width: screenWidth * 0.02),
+                            Text(
+                              'UGX ${NumberFormat('#,###').format(_balance)}',
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontSize: screenWidth * 0.035,
+                                fontWeight: FontWeight.w600,
+                                fontFamily: 'Poppins',
+                              ),
+                            ),
+                          ],
                         ),
-                        SizedBox(width: screenWidth * 0.02),
-                        Text(
-                          '0.00',
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontSize: screenWidth * 0.035,
-                            fontWeight: FontWeight.w600,
-                            fontFamily: 'Poppins',
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                      ),
+                    );
+                  },
                 ),
                 SizedBox(height: screenHeight * 0.04),
                 Center(
@@ -434,7 +471,7 @@ class _WalletWithdrawScreenState extends State<WalletWithdrawScreen> {
                   width: screenWidth * 0.9,
                   height: screenHeight * 0.062,
                   child: ElevatedButton(
-                    onPressed: loading ? null : onContinue,
+                    onPressed: loading || _getCurrentAmount() > _balance ? null : onContinue,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0XFFFBBC04),
                       disabledBackgroundColor: const Color(
