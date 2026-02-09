@@ -95,89 +95,32 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
     }
   }
 
-  Future<void> _processPayment() async {
+ Future<void> _processPayment() async {
     print('Starting payment process');
     final String phoneNumber = _cardNumberController.text.trim();
 
-    // 1. MSISDN Normalization (Force +256 format for Relworx)
+    // 1. FORMAT MSISDN (Force +256 format)
     String digits = phoneNumber.replaceAll(RegExp(r'\D'), ''); 
-    if (digits.startsWith('0')) {
-      digits = '256' + digits.substring(1);
-    }
-    if (!digits.startsWith('256')) {
-      digits = '256' + digits;
-    }
+    if (digits.startsWith('0')) digits = '256' + digits.substring(1);
+    if (!digits.startsWith('256')) digits = '256' + digits;
     final String finalMsisdn = '+' + digits; 
     
-    print('DEBUG: Original input: $phoneNumber');
-    print('DEBUG: Normalized MSISDN: $finalMsisdn');
+    print('DEBUG: Sending MSISDN: $finalMsisdn');
 
-    // 2. Reference Sanitization (Strictly Max 36 Characters)
+    // 2. SANITIZE REFERENCE (Strictly Max 36 Characters)
+    // We combine 'R' + timestamp to keep it unique but short
     final String timestamp = DateTime.now().millisecondsSinceEpoch.toString();
-    // Using a shorter prefix so the final string doesn't exceed 36 chars
-    final String finalReference = 'REG_$timestamp'.substring(0, 25);
-    print('DEBUG: Generated short reference: $finalReference');
-
-    // Basic validation logic
-    final String cleanPhone = phoneNumber.replaceAll(' ', '').replaceAll('+', '');
-    final RegExp airtelRegex = RegExp(
-      r'^(256(75|70|74[0-2])\d{7}|0(75|70|74[0-2])\d{7}|(75|70|74[0-2])\d{7})$',
-    );
+    final String finalReference = 'R$timestamp'.substring(0, 15); 
     
-    if (phoneNumber.isEmpty || !airtelRegex.hasMatch(cleanPhone)) {
-      print('Phone validation failed: $phoneNumber (cleaned: $cleanPhone)');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter a valid Airtel Uganda phone number'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
-    print('Phone number validated: $phoneNumber (cleaned: $cleanPhone)');
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Phone number validated'), backgroundColor: Colors.green),
-    );
+    print('DEBUG: Sending Reference: $finalReference');
 
     final User? currentUser = FirebaseAuth.instance.currentUser;
-    if (currentUser == null) {
-      print('User not authenticated');
-      return;
-    }
+    if (currentUser == null) return;
 
     try {
-      await currentUser.getIdToken(true);
-      print('User token refreshed successfully');
+      final paymentUrl = 'https://us-central1-helperapp-46849.cloudfunctions.net';
 
-      // Step 1: Validate mobile number with Relworx API
-      print('Validating mobile number with Relworx...');
-      final validateUrl = 'https://us-central1-helperapp-46849.cloudfunctions.net/validateMobileNumber';
-
-      final response = await http.post(
-        Uri.parse(validateUrl),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'msisdn': finalMsisdn, 'userId': currentUser.uid}),
-      );
-
-      print('Calling validateMobileNumber with status: ${response.statusCode}');
-
-      if (response.statusCode != 200) {
-        throw Exception('Failed validation: ${response.body}');
-      }
-
-      final validateData = jsonDecode(response.body);
-      print('validateMobileNumber response body: $validateData');
-
-      if (validateData['success'] != true) {
-        print('Mobile number validation failed: ${validateData['message']}');
-        return;
-      }
-
-      // Step 2: Request payment using REST API
-      print('Initiating payment request to Cloud Function...');
-      final paymentUrl = 'https://us-central1-helperapp-46849.cloudfunctions.net/requestPayment';
-
+      print('Initiating payment request...');
       final paymentResponse = await http.post(
         Uri.parse(paymentUrl),
         headers: {
@@ -187,10 +130,10 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
         body: jsonEncode({
           "data": {
             'userId': currentUser.uid,
-            'msisdn': finalMsisdn, // Fixed format
+            'msisdn': finalMsisdn, // Fixed: includes '+'
             'amount': 25000,
-            'reference': finalReference, // Fixed length
-            'description': 'Registration Fee Payment',
+            'reference': finalReference, // Fixed: Under 36 chars
+            'description': 'Registration Fee',
             'originalPhoneNumber': phoneNumber,
             'saveCard': isChecked,
           }
@@ -198,45 +141,30 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
       );
 
       print('Payment request HTTP status: ${paymentResponse.statusCode}');
-
-      if (paymentResponse.statusCode != 200) {
-        throw Exception('RequestPayment failed with status ${paymentResponse.statusCode}');
-      }
-
       final fullResponseBody = jsonDecode(paymentResponse.body);
-      print('DEBUG: Full Payment Response Body: $fullResponseBody');
-
-      // Handle both onRequest and onCall response formats
+      
+      // Handle the Firebase "result" wrapper
       final paymentData = fullResponseBody['result'] ?? fullResponseBody;
-      print('Extracted Payment Data: $paymentData');
 
-      if (paymentData['success'] == true) {
-        print('Payment successfully initiated for reference: $finalReference');
-        
+      if (paymentResponse.statusCode == 200 && paymentData['success'] == true) {
+        print('SUCCESS: Prompt sent to $finalMsisdn');
         setState(() {
-          _isPaymentSuccessful = false;
           _isDimming = true;
           _showOverlay = true;
         });
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Payment request sent! Check your phone for the PIN prompt.'),
-            backgroundColor: Colors.blue,
-          ),
-        );
-
         _listenForPaymentStatus(finalReference);
       } else {
-        print('Payment request rejected by Relworx: ${paymentData['message']}');
+        print('FAILED: ${paymentData['message']}');
+        throw Exception(paymentData['message'] ?? 'Invalid parameters');
       }
     } catch (e) {
-      print('CRITICAL PAYMENT ERROR: ${e.runtimeType}: $e');
+      print('CRITICAL ERROR: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Payment error: $e'), backgroundColor: Colors.red),
+        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
       );
     }
 }
+
 
 
   void _listenForPaymentStatus(String reference) {
