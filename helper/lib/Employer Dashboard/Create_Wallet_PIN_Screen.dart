@@ -55,7 +55,7 @@ class _CreateWalletPINScreenState extends State<CreateWalletPINScreen> {
         await FirebaseFirestore.instance
             .collection('Sign Up')
             .doc(user.uid)
-            .update({'wallet_pin': pin, 'wallet_pin_set': true});
+            .update({'wallet_pin': pin, 'wallet_pin_set': true, 'amount': 0});
 
         // Also save locally for quick access (optional)
         SharedPreferences prefs = await SharedPreferences.getInstance();
