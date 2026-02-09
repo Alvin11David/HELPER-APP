@@ -16,10 +16,12 @@ class MtnPaymentMethodScreen extends StatefulWidget {
 
 class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
   final TextEditingController _cardNumberController = TextEditingController();
+  final FocusNode _phoneNumberFocusNode = FocusNode();
   bool isChecked = false;
   bool _isDimming = false; // State to track if the screen should dim
   bool _showOverlay = false; // State to control the overlay visibility
   bool _isPaymentSuccessful = false; // State to track payment status
+  bool _isLoading = false; // State to track if payment is processing
   final Duration _overlayAnimDuration = Duration(milliseconds: 300);
   String? _savedPhoneNumber;
 
@@ -27,11 +29,20 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
   void initState() {
     super.initState();
     _loadSavedPhoneNumber();
+    _phoneNumberFocusNode.addListener(() {
+      if (!_phoneNumberFocusNode.hasFocus) {
+        final phoneNumber = _cardNumberController.text.trim();
+        if (phoneNumber.isNotEmpty) {
+          _savePhoneNumber(phoneNumber);
+        }
+      }
+    });
   }
 
   @override
   void dispose() {
     _cardNumberController.dispose();
+    _phoneNumberFocusNode.dispose();
     super.dispose();
   }
 
@@ -84,196 +95,138 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
   }
 
   Future<void> _processPayment() async {
+    setState(() {
+      _isLoading = true;
+    });
+    print('Starting payment process');
     final String phoneNumber = _cardNumberController.text.trim();
 
-    // Basic validation - MTN Uganda prefixes: 077, 078, 076, 079, 031, 039
-    final String cleanPhone = phoneNumber
-        .replaceAll(' ', '')
-        .replaceAll('+', '');
-    final RegExp mtnRegex = RegExp(
-      r'^(256(77|78|76|79|31|39)\d{7}|0(77|78|76|79|31|39)\d{7}|(77|78|76|79|31|39)\d{7})$',
-    );
-    if (phoneNumber.isEmpty || !mtnRegex.hasMatch(cleanPhone)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter a valid MTN Uganda phone number'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
+    // 1. FORMAT MSISDN (Force +256 format)
+    String digits = phoneNumber.replaceAll(RegExp(r'\D'), '');
+    if (digits.startsWith('0')) digits = '256' + digits.substring(1);
+    if (!digits.startsWith('256')) digits = '256' + digits;
+    final String finalMsisdn = '+' + digits;
 
-    // Format phone number for RELWORX (ensure international format)
-    String formattedPhone = cleanPhone;
-    if (formattedPhone.startsWith('0')) {
-      formattedPhone = '256${formattedPhone.substring(1)}';
-    } else if (!formattedPhone.startsWith('256')) {
-      formattedPhone = '256$formattedPhone';
-    }
+    print('DEBUG: Sending MSISDN: $finalMsisdn');
 
-    // Get current user
+    // 2. SAFE REFERENCE (Avoid Substring Crash)
+    final String timestamp = DateTime.now().millisecondsSinceEpoch.toString();
+    // SAFE: Use the whole string or check length before cutting
+    final String rawRef = 'R$timestamp';
+    final String finalReference = rawRef.length > 15
+        ? rawRef.substring(0, 15)
+        : rawRef;
+
+    print('DEBUG: Sending Reference: $finalReference');
+
     final User? currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('User not authenticated'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      print('DEBUG: No user authenticated');
+      setState(() => _isLoading = false);
       return;
     }
-
-    // Validate MTN number
-    final validateResponse = await http.post(
-      Uri.parse(
-        'https://us-central1-helperapp-46849.cloudfunctions.net/validateMtnMobileNumber',
-      ),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'msisdn': formattedPhone, 'userId': currentUser.uid}),
-    );
-
-    final validateData = jsonDecode(validateResponse.body);
-    if (validateData['success'] != true) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(validateData['message'] ?? 'Invalid MTN number'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
-    // RELWORX API configuration
-    const String apiKey = "2902144e65b9a7.v3wxxu9iseWHI-dQzOh7Gg";
-    const String baseUrl = "https://payments.relworx.com/api";
-    const String accountNo =
-        "YOUR_BUSINESS_ACCOUNT_NO"; // TODO: Replace with actual account number
-    final String reference =
-        "reg_fee_${DateTime.now().millisecondsSinceEpoch}_${currentUser.uid}";
-    const double amount = 25000.0;
-    const String currency = "UGX";
-    const String webhookUrl =
-        "https://us-central1-helperapp-46849.cloudfunctions.net/relworxWebhook";
 
     try {
-      // Show loading indicator
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Initiating payment request...'),
-          backgroundColor: Colors.blue,
-        ),
-      );
+      final paymentUrl =
+          'https://us-central1-helperapp-46849.cloudfunctions.net/requestPayment';
 
-      final response = await http.post(
-        Uri.parse('$baseUrl/mobile-money/request-payment'),
+      print('Initiating payment request to $paymentUrl...');
+      final paymentResponse = await http.post(
+        Uri.parse(paymentUrl),
         headers: {
-          'Authorization': 'Bearer $apiKey',
           'Content-Type': 'application/json',
-          'Accept': 'application/vnd.relworx.v2',
+          'Authorization': 'Bearer ${await currentUser.getIdToken()}',
         },
         body: jsonEncode({
-          'account_no': accountNo,
-          'reference': reference,
-          'msisdn': formattedPhone,
-          'currency': currency,
-          'amount': amount,
-          'description': 'Registration Fee Payment',
-          'webhook_url': webhookUrl,
+          "data": {
+            'userId': currentUser.uid,
+            'msisdn': finalMsisdn,
+            'amount': 500,
+            'reference': finalReference,
+            'description': 'Registration Fee',
+            'originalPhoneNumber': phoneNumber,
+            'saveCard': isChecked,
+          },
         }),
       );
 
-      final responseData = jsonDecode(response.body);
+      print('Payment request HTTP status: ${paymentResponse.statusCode}');
+      print('Raw Response: ${paymentResponse.body}');
 
-      if (response.statusCode == 200 && responseData['success'] == true) {
-        // Payment request successful - show pending status
+      final fullResponseBody = jsonDecode(paymentResponse.body);
+      final paymentData = fullResponseBody['result'] ?? fullResponseBody;
+
+      if (paymentResponse.statusCode == 200 &&
+          (paymentData['success'] == true)) {
+        print('SUCCESS: Prompt sent to $finalMsisdn');
         setState(() {
-          _isPaymentSuccessful = false; // Wait for webhook confirmation
           _isDimming = true;
           _showOverlay = true;
         });
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Payment request sent successfully! Please complete the payment on your phone.',
-            ),
-            backgroundColor: Colors.blue,
-          ),
-        );
-
-        // Save phone number if checkbox is checked
-        if (isChecked) {
-          await _savePhoneNumber(phoneNumber);
-        }
-
-        // Start listening for payment status updates
-        _listenForPaymentStatus(reference);
+        _listenForPaymentStatus(finalReference);
       } else {
-        // Payment request failed
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Payment request failed: ${responseData['message'] ?? 'Unknown error'}',
-            ),
-            backgroundColor: Colors.red,
-          ),
-        );
+        String msg = paymentData['message'] ?? 'Invalid response from server';
+        print('FAILED: $msg');
+        throw Exception(msg);
       }
     } catch (e) {
+      print('CRITICAL ERROR: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Payment error: $e'),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
       );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
   void _listenForPaymentStatus(String reference) {
-    final paymentRef = FirebaseFirestore.instance
-        .collection('Payments')
-        .doc(reference);
+    FirebaseFirestore.instance
+        .collection('Payment Data')
+        .where('reference', isEqualTo: reference)
+        .snapshots()
+        .listen((querySnapshot) {
+          if (querySnapshot.docs.isNotEmpty) {
+            final doc = querySnapshot.docs.first;
+            final data = doc.data();
+            final status = data['status'];
 
-    paymentRef.snapshots().listen((snapshot) {
-      if (snapshot.exists) {
-        final data = snapshot.data();
-        final status = data?['status'];
-
-        if (status == 'success') {
-          setState(() {
-            _isPaymentSuccessful = true;
-          });
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Payment completed successfully!'),
-              backgroundColor: Colors.green,
-            ),
-          );
-          // Navigate to role selection after a short delay to show success
-          Future.delayed(const Duration(seconds: 2), () {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (context) => const SelectWorkerTypeScreen(),
-              ),
-            );
-          });
-        } else if (status == 'failed') {
-          setState(() {
-            _isPaymentSuccessful = false;
-            _showOverlay = false; // Hide overlay on failure
-            _isDimming = false;
-          });
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Payment failed: ${data?['message'] ?? 'Unknown error'}',
-              ),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      }
-    });
+            if (status == 'SUCCESS') {
+              setState(() {
+                _isPaymentSuccessful = true;
+              });
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Payment completed successfully!'),
+                  backgroundColor: Colors.green,
+                ),
+              );
+              // Navigate to role selection after a short delay to show success
+              Future.delayed(const Duration(seconds: 2), () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const SelectWorkerTypeScreen(),
+                  ),
+                );
+              });
+            } else if (status == 'FAILED') {
+              setState(() {
+                _isPaymentSuccessful = false;
+                _showOverlay = false; // Hide overlay on failure
+                _isDimming = false;
+              });
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    'Payment failed: ${data['message'] ?? 'Unknown error'}',
+                  ),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+          }
+        });
   }
 
   @override
@@ -402,7 +355,7 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
                                   ),
                                   SizedBox(height: screenHeight * 0.005),
                                   Text(
-                                    'UGX 25,000',
+                                    'UGX 500',
                                     style: TextStyle(
                                       color: Colors.white,
                                       fontSize: screenWidth * 0.07,
@@ -493,6 +446,7 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
                               Expanded(
                                 child: TextField(
                                   controller: _cardNumberController,
+                                  focusNode: _phoneNumberFocusNode,
                                   style: TextStyle(
                                     color: Colors.black,
                                     fontSize: screenWidth * 0.04,
@@ -566,17 +520,26 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
                         ),
                         SizedBox(height: screenHeight * 0.05),
                         GestureDetector(
-                          onTap: _processPayment,
+                          onTap: _isLoading ? null : _processPayment,
                           child: Container(
                             width: screenWidth * 0.93,
                             height: screenHeight * 0.07,
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: _isLoading ? Colors.grey : Colors.white,
                               borderRadius: BorderRadius.circular(30),
                             ),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
+                              children:  _isLoading
+                                  ? [
+                                      CircularProgressIndicator(
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                              Colors.black,
+                                            ),
+                                      ),
+                                    ]
+                                  : [
                                 Text(
                                   'Pay',
                                   style: TextStyle(
@@ -758,7 +721,7 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
                           ),
                           child: Text(
                             _isPaymentSuccessful
-                                ? 'Your payment of UGX 25,000\nhas been successfully\nreceived.'
+                                ? 'Your payment of UGX 500\nhas been successfully\nreceived.'
                                 : 'Please complete your payment\non your MTN mobile phone\nto continue.',
                             textAlign: TextAlign.center,
                             style: TextStyle(
@@ -816,7 +779,7 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
                                         ? 'Go To Worker Type Selection'
                                         : 'Waiting for Payment...',
                                     style: TextStyle(
-                                      fontSize: screenWidth * 0.045,
+                                      fontSize: screenWidth * 0.03,
                                       fontWeight: FontWeight.bold,
                                       color: Colors.white,
                                       fontFamily: 'Inter',

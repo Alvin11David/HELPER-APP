@@ -1207,6 +1207,7 @@ export const paymentWebhook = onRequest(async (req, res) => {
       status, // Relworx uses 'success', 'failed', or 'cancelled'
       message,
       internal_reference, // THIS IS OUR PRIMARY KEY
+      reference, // The reference we sent
       completed_at,
     } = req.body;
 
@@ -1220,15 +1221,14 @@ export const paymentWebhook = onRequest(async (req, res) => {
       `Processing Webhook for Ref: ${internal_reference} | Status: ${status}`,
     );
 
-    // 1. Point to the CORRECT collection and the CORRECT ID
-    const paymentDocRef = admin
+    // 1. Query for the document where reference matches the reference from payload
+    const querySnapshot = await admin
       .firestore()
-      .collection("Payment Data") // Must match your requestPayment collection
-      .doc(internal_reference); // Must match the ID we set earlier
+      .collection("Payment Data")
+      .where("reference", "==", reference)
+      .get();
 
-    // 2. Check if this transaction exists in our records
-    const doc = await paymentDocRef.get();
-    if (!doc.exists) {
+    if (querySnapshot.empty) {
       logger.warn(
         `Webhook received for unknown transaction: ${internal_reference}`,
       );
@@ -1237,9 +1237,14 @@ export const paymentWebhook = onRequest(async (req, res) => {
       return;
     }
 
+    // Assuming only one document matches, get the first one
+    const doc = querySnapshot.docs[0];
+    const paymentDocRef = doc.ref;
+
     // 3. Update the existing document
     await paymentDocRef.update({
       status: status.toUpperCase(), // Store as SUCCESS or FAILED
+      relworx_internal_ref: internal_reference, // Set it now
       relworx_final_message: message,
       completedAt: completed_at
         ? admin.firestore.Timestamp.fromDate(new Date(completed_at))

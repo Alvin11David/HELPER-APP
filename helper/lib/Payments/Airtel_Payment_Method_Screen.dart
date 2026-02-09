@@ -3,10 +3,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_functions/cloud_functions.dart';
 import 'package:http/http.dart' as http;
 import 'package:helper/Document%20Upload/Select_Worker_Type_Screen.dart';
-import 'package:helper/Intro/Role_Selection_Screen.dart';
 
 class AirtelPaymentMethodScreen extends StatefulWidget {
   const AirtelPaymentMethodScreen({super.key});
@@ -115,7 +113,9 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
     final String timestamp = DateTime.now().millisecondsSinceEpoch.toString();
     // SAFE: Use the whole string or check length before cutting
     final String rawRef = 'R$timestamp';
-    final String finalReference = rawRef.length > 15 ? rawRef.substring(0, 15) : rawRef;
+    final String finalReference = rawRef.length > 15
+        ? rawRef.substring(0, 15)
+        : rawRef;
 
     print('DEBUG: Sending Reference: $finalReference');
 
@@ -127,7 +127,8 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
     }
 
     try {
-      final paymentUrl = 'https://us-central1-helperapp-46849.cloudfunctions.net/requestPayment';
+      final paymentUrl =
+          'https://us-central1-helperapp-46849.cloudfunctions.net/requestPayment';
 
       print('Initiating payment request to $paymentUrl...');
       final paymentResponse = await http.post(
@@ -140,7 +141,7 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
           "data": {
             'userId': currentUser.uid,
             'msisdn': finalMsisdn,
-            'amount': 25000,
+            'amount': 500,
             'reference': finalReference,
             'description': 'Registration Fee',
             'originalPhoneNumber': phoneNumber,
@@ -155,7 +156,8 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
       final fullResponseBody = jsonDecode(paymentResponse.body);
       final paymentData = fullResponseBody['result'] ?? fullResponseBody;
 
-      if (paymentResponse.statusCode == 200 && (paymentData['success'] == true)) {
+      if (paymentResponse.statusCode == 200 &&
+          (paymentData['success'] == true)) {
         print('SUCCESS: Prompt sent to $finalMsisdn');
         setState(() {
           _isDimming = true;
@@ -179,7 +181,6 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
     }
   }
 
-
   void _listenForPaymentStatus(String reference) {
     FirebaseFirestore.instance
         .collection('Payment Data')
@@ -191,7 +192,7 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
             final data = doc.data();
             final status = data['status'];
 
-            if (status == 'success') {
+            if (status == 'SUCCESS') {
               setState(() {
                 _isPaymentSuccessful = true;
               });
@@ -209,7 +210,7 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
                   ),
                 );
               });
-            } else if (status == 'failed') {
+            } else if (status == 'FAILED') {
               setState(() {
                 _isPaymentSuccessful = false;
                 _showOverlay = false; // Hide overlay on failure
@@ -354,7 +355,7 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
                                   ),
                                   SizedBox(height: screenHeight * 0.005),
                                   Text(
-                                    'UGX 25,000',
+                                    'UGX 500',
                                     style: TextStyle(
                                       color: Colors.white,
                                       fontSize: screenWidth * 0.07,
@@ -718,7 +719,7 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
                           ),
                           child: Text(
                             _isPaymentSuccessful
-                                ? 'Your payment of UGX 25,000\nhas been successfully\nreceived.'
+                                ? 'Your payment of UGX 500\nhas been successfully\nreceived.'
                                 : 'Please complete your payment\non your Airtel mobile phone\nto continue.',
                             textAlign: TextAlign.center,
                             style: TextStyle(
@@ -746,9 +747,16 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
                           width: double.infinity,
                           height: screenHeight * 0.062,
                           child: ElevatedButton(
-                            onPressed: () {
-                              // TODO: Handle continue action
-                            },
+                            onPressed: _isPaymentSuccessful
+                                ? () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            const SelectWorkerTypeScreen(),
+                                      ),
+                                    );
+                                  }
+                                : null,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFFDF8800),
                               disabledBackgroundColor: const Color(
@@ -764,23 +772,13 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  GestureDetector(
-                                    onTap: () {
-                                      Navigator.of(context).push(
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              const SelectWorkerTypeScreen(),
-                                        ),
-                                      );
-                                    },
-                                    child: Text(
-                                      'Go To Worker Type Selection',
-                                      style: TextStyle(
-                                        fontSize: screenWidth * 0.03,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
-                                        fontFamily: 'Inter',
-                                      ),
+                                  Text(
+                                    'Go To Worker Type Selection',
+                                    style: TextStyle(
+                                      fontSize: screenWidth * 0.03,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                      fontFamily: 'Inter',
                                     ),
                                   ),
                                   SizedBox(width: screenWidth * 0.02),
