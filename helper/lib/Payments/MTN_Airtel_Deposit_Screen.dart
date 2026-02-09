@@ -234,6 +234,18 @@ class _MtnAirtelDepositScreenState extends State<MtnAirtelDepositScreen> {
               setState(() {
                 _isPaymentSuccessful = true;
               });
+              // Update user's balance in Sign Up collection
+              final User? currentUser = FirebaseAuth.instance.currentUser;
+              if (currentUser != null) {
+                final int depositAmount = int.parse(widget.amount);
+                FirebaseFirestore.instance
+                    .collection('Sign Up')
+                    .doc(currentUser.uid)
+                    .update({'amount': FieldValue.increment(depositAmount)})
+                    .catchError((error) {
+                      print('Error updating balance: $error');
+                    });
+              }
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('Payment completed successfully!'),
