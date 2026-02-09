@@ -1,7 +1,10 @@
 import 'dart:ui';
-
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:http/http.dart' as http;
 
 class MtnAirtelWithdrawScreen extends StatefulWidget {
   final String amount;
@@ -18,17 +21,249 @@ class MtnAirtelWithdrawScreen extends StatefulWidget {
       _MtnAirtelWithdrawScreenState();
 }
 
-class _MtnAirtelWithdrawScreenState
-    extends State<MtnAirtelWithdrawScreen> {
+class _MtnAirtelWithdrawScreenState extends State<MtnAirtelWithdrawScreen> {
   final TextEditingController _cardNumberController = TextEditingController();
   bool isChecked = false;
   bool _isDimming = false;
   bool _showOverlay = false;
+  bool _isLoading = false;
+  bool _isPaymentSuccessful = false;
+  String? _savedPhoneNumber;
   final Duration _overlayAnimDuration = Duration(milliseconds: 300);
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedPhoneNumber();
+  }
+
   @override
   void dispose() {
     _cardNumberController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadSavedPhoneNumber() async {
+    try {
+      final User? currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser != null) {
+        final DocumentSnapshot doc = await FirebaseFirestore.instance
+            .collection('Saved Payment Methods')
+            .doc(currentUser.uid)
+            .collection('${widget.type} Numbers')
+            .doc('latest')
+            .get();
+
+        if (doc.exists && doc.data() != null) {
+          final data = doc.data() as Map<String, dynamic>;
+          setState(() {
+            _savedPhoneNumber = data['phoneNumber'] as String?;
+            if (_savedPhoneNumber != null &&
+                _cardNumberController.text.isEmpty) {
+              _cardNumberController.text = _savedPhoneNumber!;
+            }
+          });
+        }
+      }
+    } catch (e) {
+      // Silently handle errors for saved phone number loading
+      print('Error loading saved phone number: $e');
+    }
+  }
+
+  Future<void> _savePhoneNumber(String phoneNumber) async {
+    try {
+      final User? currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser != null) {
+        await FirebaseFirestore.instance
+            .collection('Saved Payment Methods')
+            .doc(currentUser.uid)
+            .collection('${widget.type} Numbers')
+            .doc('latest')
+            .set({
+              'phoneNumber': phoneNumber,
+              'savedAt': FieldValue.serverTimestamp(),
+              'isActive': true,
+            });
+      }
+    } catch (e) {
+      print('Error saving phone number: $e');
+    }
+  }
+
+  Future<void> _processPayment() async {
+    final String phoneNumber = _cardNumberController.text.trim();
+
+    // Basic validation
+    final String cleanPhone = phoneNumber
+        .replaceAll(' ', '')
+        .replaceAll('+', '');
+    final RegExp regex = widget.type == 'MTN'
+        ? RegExp(
+            r'^(256(77|78|76|79|31|39)\d{7}|0(77|78|76|79|31|39)\d{7}|(77|78|76|79|31|39)\d{7})$',
+          )
+        : RegExp(
+            r'^(256(70|74|75|20)\d{7}|0(70|74|75|20)\d{7}|(70|74|75|20)\d{7})$',
+          );
+    if (phoneNumber.isEmpty || !regex.hasMatch(cleanPhone)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Please enter a valid ${widget.type} Uganda phone number',
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+    print('Starting withdrawal process');
+
+    // 1. FORMAT MSISDN (Force +256 format)
+    String digits = phoneNumber.replaceAll(RegExp(r'\D'), '');
+    if (digits.startsWith('0')) digits = '256' + digits.substring(1);
+    if (!digits.startsWith('256')) digits = '256' + digits;
+    final String finalMsisdn = '+' + digits;
+
+    print('DEBUG: Sending MSISDN: $finalMsisdn');
+
+    // 2. SAFE REFERENCE (Avoid Substring Crash)
+    final String timestamp = DateTime.now().millisecondsSinceEpoch.toString();
+    // SAFE: Use the whole string or check length before cutting
+    final String rawRef = 'W$timestamp'; // W for Withdraw
+    final String finalReference = rawRef.length > 15
+        ? rawRef.substring(0, 15)
+        : rawRef;
+
+    print('DEBUG: Sending Reference: $finalReference');
+
+    final User? currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) {
+      print('DEBUG: No user authenticated');
+      setState(() => _isLoading = false);
+      return;
+    }
+
+    try {
+      final paymentUrl =
+          'https://us-central1-helperapp-46849.cloudfunctions.net/requestWithdrawal'; // Assuming same endpoint
+
+      print('Initiating withdrawal request to $paymentUrl...');
+      final paymentResponse = await http.post(
+        Uri.parse(paymentUrl),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${await currentUser.getIdToken()}',
+        },
+        body: jsonEncode({
+          "data": {
+            'userId': currentUser.uid,
+            'msisdn': finalMsisdn,
+            'amount': int.parse(widget.amount),
+            'reference': finalReference,
+            'description': 'Wallet Withdraw',
+            'originalPhoneNumber': phoneNumber,
+            'saveCard': isChecked,
+          },
+        }),
+      );
+
+      print('Withdrawal request HTTP status: ${paymentResponse.statusCode}');
+      print('Raw Response: ${paymentResponse.body}');
+
+      final fullResponseBody = jsonDecode(paymentResponse.body);
+      final paymentData = fullResponseBody['result'] ?? fullResponseBody;
+
+      if (paymentResponse.statusCode == 200 &&
+          (paymentData['success'] == true)) {
+        print('SUCCESS: Prompt sent to $finalMsisdn');
+        if (isChecked) {
+          await _savePhoneNumber(phoneNumber);
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Withdrawal request sent successfully. Please check your phone for the prompt.',
+            ),
+            backgroundColor: Colors.blue,
+          ),
+        );
+        setState(() {
+          _isDimming = true;
+          _showOverlay = true;
+        });
+        _listenForPaymentStatus(finalReference);
+      } else {
+        String msg = paymentData['message'] ?? 'Invalid response from server';
+        print('FAILED: $msg');
+        throw Exception(msg);
+      }
+    } catch (e) {
+      print('CRITICAL ERROR: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  void _listenForPaymentStatus(String reference) {
+    FirebaseFirestore.instance
+        .collection('Payment Data')
+        .where('reference', isEqualTo: reference)
+        .snapshots()
+        .listen((querySnapshot) {
+          if (querySnapshot.docs.isNotEmpty) {
+            final doc = querySnapshot.docs.first;
+            final data = doc.data();
+            final status = data['status'];
+
+            if (status == 'SUCCESS') {
+              setState(() {
+                _isPaymentSuccessful = true;
+              });
+              // Deduct from balance
+              final User? currentUser = FirebaseAuth.instance.currentUser;
+              if (currentUser != null) {
+                final amount = int.parse(widget.amount);
+                FirebaseFirestore.instance
+                    .collection('Sign Up')
+                    .doc(currentUser.uid)
+                    .update({'amount': FieldValue.increment(-amount)});
+              }
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Withdrawal completed successfully!'),
+                  backgroundColor: Colors.green,
+                ),
+              );
+              // Navigate back after a short delay
+              Future.delayed(const Duration(seconds: 2), () {
+                Navigator.of(context).pop();
+              });
+            } else if (status == 'FAILED') {
+              setState(() {
+                _isPaymentSuccessful = false;
+                _showOverlay = false; // Hide overlay on failure
+                _isDimming = false;
+              });
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    'Withdrawal failed: ${data['message'] ?? 'Unknown error'}',
+                  ),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+          }
+        });
   }
 
   @override
@@ -543,13 +778,11 @@ class _MtnAirtelWithdrawScreenState
                           ),
                         ),
                         SizedBox(height: screenHeight * 0.07),
-                        SizedBox( 
+                        SizedBox(
                           width: double.infinity,
                           height: screenHeight * 0.062,
                           child: ElevatedButton(
-                            onPressed: () {
-                              // TODO: Handle continue action
-                            },
+                            onPressed: _isLoading ? null : _processPayment,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFFDF8800),
                               disabledBackgroundColor: const Color(
@@ -560,29 +793,39 @@ class _MtnAirtelWithdrawScreenState
                                 borderRadius: BorderRadius.circular(30),
                               ),
                             ),
-                            child: Center(
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    'Go To Wallet',
-                                    style: TextStyle(
-                                      fontSize: screenWidth * 0.045,
-                                      fontWeight: FontWeight.bold,
+                            child: _isLoading
+                                ? SizedBox(
+                                    width: screenHeight * 0.03,
+                                    height: screenHeight * 0.03,
+                                    child: const CircularProgressIndicator(
+                                      strokeWidth: 3,
                                       color: Colors.white,
-                                      fontFamily: 'AbrilFatface',
+                                    ),
+                                  )
+                                : Center(
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          'Withdraw',
+                                          style: TextStyle(
+                                            fontSize: screenWidth * 0.045,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white,
+                                            fontFamily: 'AbrilFatface',
+                                          ),
+                                        ),
+                                        SizedBox(width: screenWidth * 0.02),
+                                        Icon(
+                                          Icons.arrow_forward_rounded,
+                                          color: Colors.white,
+                                          size: screenHeight * 0.035,
+                                        ),
+                                      ],
                                     ),
                                   ),
-                                  SizedBox(width: screenWidth * 0.02),
-                                  Icon(
-                                    Icons.arrow_forward_rounded,
-                                    color: Colors.white,
-                                    size: screenHeight * 0.035,
-                                  ),
-                                ],
-                              ),
-                            ),
                           ),
                         ),
                         // Add more content here as needed

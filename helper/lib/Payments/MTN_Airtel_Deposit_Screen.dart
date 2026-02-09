@@ -1,7 +1,12 @@
 import 'dart:ui';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:http/http.dart' as http;
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../Wallet/Wallet_Cancelled_screen.dart';
 
 class MtnAirtelDepositScreen extends StatefulWidget {
   final String amount;
@@ -14,21 +19,249 @@ class MtnAirtelDepositScreen extends StatefulWidget {
   });
 
   @override
-  State<MtnAirtelDepositScreen> createState() =>
-      _MtnAirtelDepositScreenState();
+  State<MtnAirtelDepositScreen> createState() => _MtnAirtelDepositScreenState();
 }
 
-class _MtnAirtelDepositScreenState
-    extends State<MtnAirtelDepositScreen> {
+class _MtnAirtelDepositScreenState extends State<MtnAirtelDepositScreen> {
   final TextEditingController _cardNumberController = TextEditingController();
+  final FocusNode _phoneNumberFocusNode = FocusNode();
   bool isChecked = false;
   bool _isDimming = false;
   bool _showOverlay = false;
+  bool _isLoading = false;
+  bool _isPaymentSuccessful = false;
   final Duration _overlayAnimDuration = Duration(milliseconds: 300);
+  String? _savedPhoneNumber;
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedPhoneNumber();
+    _phoneNumberFocusNode.addListener(() {
+      if (!_phoneNumberFocusNode.hasFocus) {
+        final phoneNumber = _cardNumberController.text.trim();
+        if (phoneNumber.isNotEmpty) {
+          _savePhoneNumber(phoneNumber);
+        }
+      }
+    });
+  }
+
   @override
   void dispose() {
     _cardNumberController.dispose();
+    _phoneNumberFocusNode.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadSavedPhoneNumber() async {
+    try {
+      final User? currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser != null) {
+        final DocumentSnapshot doc = await FirebaseFirestore.instance
+            .collection('Saved Payment Methods')
+            .doc(currentUser.uid)
+            .collection('${widget.type} Numbers')
+            .doc('latest')
+            .get();
+
+        if (doc.exists && doc.data() != null) {
+          final data = doc.data() as Map<String, dynamic>;
+          setState(() {
+            _savedPhoneNumber = data['phoneNumber'] as String?;
+            if (_savedPhoneNumber != null &&
+                _cardNumberController.text.isEmpty) {
+              _cardNumberController.text = _savedPhoneNumber!;
+            }
+          });
+        }
+      }
+    } catch (e) {
+      // Silently handle errors for saved phone number loading
+      print('Error loading saved phone number: $e');
+    }
+  }
+
+  Future<void> _savePhoneNumber(String phoneNumber) async {
+    try {
+      final User? currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser != null) {
+        await FirebaseFirestore.instance
+            .collection('Saved Payment Methods')
+            .doc(currentUser.uid)
+            .collection('${widget.type} Numbers')
+            .doc('latest')
+            .set({
+              'phoneNumber': phoneNumber,
+              'savedAt': FieldValue.serverTimestamp(),
+              'isActive': true,
+            });
+      }
+    } catch (e) {
+      print('Error saving phone number: $e');
+    }
+  }
+
+  Future<void> _processPayment() async {
+    final String phoneNumber = _cardNumberController.text.trim();
+
+    // Basic validation
+    final String cleanPhone = phoneNumber
+        .replaceAll(' ', '')
+        .replaceAll('+', '');
+    final RegExp regex = widget.type == 'MTN'
+        ? RegExp(
+            r'^(256(77|78|76|79|31|39)\d{7}|0(77|78|76|79|31|39)\d{7}|(77|78|76|79|31|39)\d{7})$',
+          )
+        : RegExp(
+            r'^(256(70|74|75|20)\d{7}|0(70|74|75|20)\d{7}|(70|74|75|20)\d{7})$',
+          );
+    if (phoneNumber.isEmpty || !regex.hasMatch(cleanPhone)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Please enter a valid ${widget.type} Uganda phone number',
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+    print('Starting payment process');
+
+    // 1. FORMAT MSISDN (Force +256 format)
+    String digits = phoneNumber.replaceAll(RegExp(r'\D'), '');
+    if (digits.startsWith('0')) digits = '256' + digits.substring(1);
+    if (!digits.startsWith('256')) digits = '256' + digits;
+    final String finalMsisdn = '+' + digits;
+
+    print('DEBUG: Sending MSISDN: $finalMsisdn');
+
+    // 2. SAFE REFERENCE (Avoid Substring Crash)
+    final String timestamp = DateTime.now().millisecondsSinceEpoch.toString();
+    // SAFE: Use the whole string or check length before cutting
+    final String rawRef = 'R$timestamp';
+    final String finalReference = rawRef.length > 15
+        ? rawRef.substring(0, 15)
+        : rawRef;
+
+    print('DEBUG: Sending Reference: $finalReference');
+
+    final User? currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) {
+      print('DEBUG: No user authenticated');
+      setState(() => _isLoading = false);
+      return;
+    }
+
+    try {
+      final paymentUrl =
+          'https://us-central1-helperapp-46849.cloudfunctions.net/requestPayment';
+
+      print('Initiating payment request to $paymentUrl...');
+      final paymentResponse = await http.post(
+        Uri.parse(paymentUrl),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${await currentUser.getIdToken()}',
+        },
+        body: jsonEncode({
+          "data": {
+            'userId': currentUser.uid,
+            'msisdn': finalMsisdn,
+            'amount': int.parse(widget.amount),
+            'reference': finalReference,
+            'description': 'Wallet Deposit',
+            'originalPhoneNumber': phoneNumber,
+            'saveCard': isChecked,
+          },
+        }),
+      );
+
+      print('Payment request HTTP status: ${paymentResponse.statusCode}');
+      print('Raw Response: ${paymentResponse.body}');
+
+      final fullResponseBody = jsonDecode(paymentResponse.body);
+      final paymentData = fullResponseBody['result'] ?? fullResponseBody;
+
+      if (paymentResponse.statusCode == 200 &&
+          (paymentData['success'] == true)) {
+        print('SUCCESS: Prompt sent to $finalMsisdn');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Payment request sent successfully. Please check your phone for the prompt.',
+            ),
+            backgroundColor: Colors.blue,
+          ),
+        );
+        setState(() {
+          _isDimming = true;
+          _showOverlay = true;
+        });
+        _listenForPaymentStatus(finalReference);
+      } else {
+        String msg = paymentData['message'] ?? 'Invalid response from server';
+        print('FAILED: $msg');
+        throw Exception(msg);
+      }
+    } catch (e) {
+      print('CRITICAL ERROR: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  void _listenForPaymentStatus(String reference) {
+    FirebaseFirestore.instance
+        .collection('Payment Data')
+        .where('reference', isEqualTo: reference)
+        .snapshots()
+        .listen((querySnapshot) {
+          if (querySnapshot.docs.isNotEmpty) {
+            final doc = querySnapshot.docs.first;
+            final data = doc.data();
+            final status = data['status'];
+
+            if (status == 'SUCCESS') {
+              setState(() {
+                _isPaymentSuccessful = true;
+              });
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Payment completed successfully!'),
+                  backgroundColor: Colors.green,
+                ),
+              );
+              // Navigate to wallet after a short delay to show success
+              Future.delayed(const Duration(seconds: 2), () {
+                // TODO: Navigate to wallet screen
+              });
+            } else if (status == 'FAILED') {
+              setState(() {
+                _isPaymentSuccessful = false;
+                _showOverlay = false; // Hide overlay on failure
+                _isDimming = false;
+              });
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    'Payment failed: ${data['message'] ?? 'Unknown error'}',
+                  ),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+          }
+        });
   }
 
   @override
@@ -192,7 +425,9 @@ class _MtnAirtelDepositScreenState
                                 width: screenWidth * (94 / 340),
                                 height: screenWidth * (40 / 340),
                                 decoration: BoxDecoration(
-                                  color: Colors.white,
+                                  color: _isPaymentSuccessful
+                                      ? Colors.green
+                                      : Colors.white,
                                   borderRadius: BorderRadius.circular(30),
                                   boxShadow: [
                                     BoxShadow(
@@ -205,9 +440,11 @@ class _MtnAirtelDepositScreenState
                                 ),
                                 alignment: Alignment.center,
                                 child: Text(
-                                  'Not Paid', // Change this to 'Not Paid', 'Pending', etc. as needed
+                                  _isPaymentSuccessful ? 'Paid' : 'Not Paid',
                                   style: TextStyle(
-                                    color: Colors.black,
+                                    color: _isPaymentSuccessful
+                                        ? Colors.white
+                                        : Colors.black,
                                     fontSize: screenWidth * 0.035,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -259,6 +496,8 @@ class _MtnAirtelDepositScreenState
                             children: [
                               Expanded(
                                 child: TextField(
+                                  controller: _cardNumberController,
+                                  focusNode: _phoneNumberFocusNode,
                                   style: TextStyle(
                                     color: Colors.black,
                                     fontSize: screenWidth * 0.04,
@@ -279,6 +518,7 @@ class _MtnAirtelDepositScreenState
                                     contentPadding: EdgeInsets.zero,
                                   ),
                                   cursorColor: Colors.black,
+                                  keyboardType: TextInputType.phone,
                                 ),
                               ),
                               SizedBox(width: screenWidth * 0.02),
@@ -338,39 +578,42 @@ class _MtnAirtelDepositScreenState
                         ),
                         SizedBox(height: screenHeight * 0.05),
                         GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              _isDimming = true; // Trigger the dimming effect
-                              _showOverlay =
-                                  true; // Show the overlay permanently
-                            });
-                          },
+                          onTap: _isLoading ? null : _processPayment,
                           child: Container(
                             width: screenWidth * 0.93,
                             height: screenHeight * 0.07,
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: _isLoading ? Colors.grey : Colors.white,
                               borderRadius: BorderRadius.circular(30),
                             ),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  'Pay',
-                                  style: TextStyle(
-                                    color: Colors.black,
-                                    fontSize: screenWidth * 0.06,
-                                    fontWeight: FontWeight.bold,
-                                    fontFamily: 'PlayfairDisplay',
-                                  ),
-                                ),
-                                SizedBox(width: screenWidth * 0.02),
-                                Icon(
-                                  Icons.account_balance_wallet,
-                                  color: Colors.black,
-                                  size: screenWidth * 0.06,
-                                ),
-                              ],
+                              children: _isLoading
+                                  ? [
+                                      CircularProgressIndicator(
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                              Colors.black,
+                                            ),
+                                      ),
+                                    ]
+                                  : [
+                                      Text(
+                                        'Pay',
+                                        style: TextStyle(
+                                          color: Colors.black,
+                                          fontSize: screenWidth * 0.06,
+                                          fontWeight: FontWeight.bold,
+                                          fontFamily: 'PlayfairDisplay',
+                                        ),
+                                      ),
+                                      SizedBox(width: screenWidth * 0.02),
+                                      Icon(
+                                        Icons.account_balance_wallet,
+                                        color: Colors.black,
+                                        size: screenWidth * 0.06,
+                                      ),
+                                    ],
                             ),
                           ),
                         ),
@@ -506,7 +749,9 @@ class _MtnAirtelDepositScreenState
                         ),
                         SizedBox(height: screenHeight * 0.0),
                         Text(
-                          'Congratulations\nyou have added money',
+                          _isPaymentSuccessful
+                              ? 'Congratulations\nyou have added money'
+                              : 'Payment Pending',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: Colors.black,
@@ -516,7 +761,9 @@ class _MtnAirtelDepositScreenState
                           ),
                         ),
                         Text(
-                          'to your wallet',
+                          _isPaymentSuccessful
+                              ? 'to your wallet'
+                              : 'Please Complete Payment',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: Colors.black,
@@ -531,7 +778,9 @@ class _MtnAirtelDepositScreenState
                             horizontal: screenWidth * 0.08,
                           ),
                           child: Text(
-                            'Your deposit of UGX ${NumberFormat('#,###').format(int.parse(widget.amount))}\nhas been successfully\nmade.',
+                            _isPaymentSuccessful
+                                ? 'Your deposit of UGX ${NumberFormat('#,###').format(int.parse(widget.amount))}\nhas been successfully\nmade.'
+                                : 'Please complete your payment\non your ${widget.type} mobile phone\nto continue.',
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               color: Colors.black,
@@ -547,9 +796,17 @@ class _MtnAirtelDepositScreenState
                           width: double.infinity,
                           height: screenHeight * 0.062,
                           child: ElevatedButton(
-                            onPressed: () {
-                              // TODO: Handle continue action
-                            },
+                            onPressed: _isPaymentSuccessful
+                                ? () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            const WalletFlowScreen(),
+                                      ),
+                                    );
+                                  }
+                                : null,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFFDF8800),
                               disabledBackgroundColor: const Color(
@@ -566,12 +823,14 @@ class _MtnAirtelDepositScreenState
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text(
-                                    'Go To Wallet',
+                                    _isPaymentSuccessful
+                                        ? 'Go To Wallet'
+                                        : 'Waiting for Payment...',
                                     style: TextStyle(
-                                      fontSize: screenWidth * 0.045,
+                                      fontSize: screenWidth * 0.03,
                                       fontWeight: FontWeight.bold,
                                       color: Colors.white,
-                                      fontFamily: 'AbrilFatface',
+                                      fontFamily: 'Inter',
                                     ),
                                   ),
                                   SizedBox(width: screenWidth * 0.02),

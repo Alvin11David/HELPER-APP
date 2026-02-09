@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
-import 'package:flutter/services.dart'; 
+import 'package:flutter/services.dart';
 import 'package:helper/Wallet/Wallet_Cancelled_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:cloud_firestore/cloud_firestore.dart'; 
-import 'package:firebase_auth/firebase_auth.dart'; 
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class CreateWalletPINScreen extends StatefulWidget {
   const CreateWalletPINScreen({super.key});
@@ -55,7 +55,11 @@ class _CreateWalletPINScreenState extends State<CreateWalletPINScreen> {
         await FirebaseFirestore.instance
             .collection('Sign Up')
             .doc(user.uid)
-            .update({'wallet_pin': pin, 'wallet_pin_set': true});
+            .update({
+              'wallet_pin': pin,
+              'wallet_pin_set': true,
+              'amount': 0,
+            });
 
         // Also save locally for quick access (optional)
         SharedPreferences prefs = await SharedPreferences.getInstance();

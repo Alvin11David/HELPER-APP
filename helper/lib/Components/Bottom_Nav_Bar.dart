@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:helper/Employer%20Dashboard/Create_Wallet_PIN_Screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../Employer Dashboard/Create_Wallet_PIN_Screen.dart';
+import '../Wallet/Wallet_Cancelled_screen.dart';
 import '../Chats/Chat_List_Screen.dart';
 import '../Document Upload/Profile/Profile_Screen.dart'; // Add this import
 import '../Maps/Map_Screen.dart'; // Add this import
@@ -43,7 +44,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
           builder: (context, setState) {
             double screenWidth = MediaQuery.of(context).size.width;
             return Container(
-              height: 270, // Fixed height to prevent the modal from shrinking
+              height: 290, // Increased from 270 to prevent overflow
               width: double.infinity, // Fixed width to prevent width changes
               padding: EdgeInsets.only(left: 0, right: 0, bottom: 0),
               decoration: BoxDecoration(
@@ -115,13 +116,35 @@ class _BottomNavBarState extends State<BottomNavBar> {
                             borderSide: BorderSide(color: Colors.black),
                           ),
                         ),
-                        onChanged: (value) {
+                        onChanged: (value) async {
                           setState(() {
                             pin = value;
                           });
                           if (pin.length == 4) {
-                            // TODO: Verify PIN
-                            Navigator.pop(context);
+                            // Verify PIN
+                            SharedPreferences prefs =
+                                await SharedPreferences.getInstance();
+                            String? savedPin = prefs.getString('wallet_pin');
+                            if (savedPin == pin) {
+                              Navigator.pop(context); // Close modal
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => WalletFlowScreen(),
+                                ),
+                              );
+                            } else {
+                              // Wrong PIN, show error
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Incorrect PIN'),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                              setState(() {
+                                pin = ''; // Reset PIN
+                              });
+                            }
                           }
                         },
                       ),
@@ -134,6 +157,26 @@ class _BottomNavBarState extends State<BottomNavBar> {
                       color: Color(0xFFFFA10D),
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(height: 5),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.pop(context); // Close modal
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => CreateWalletPINScreen(),
+                        ),
+                      );
+                    },
+                    child: Text(
+                      'I have never created a PIN',
+                      style: TextStyle(
+                        color: Colors.blue,
+                        fontSize: 14,
+                        decoration: TextDecoration.underline,
+                      ),
                     ),
                   ),
                   SizedBox(height: 20),
