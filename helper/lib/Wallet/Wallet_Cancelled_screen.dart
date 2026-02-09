@@ -372,8 +372,20 @@ class _WalletFlowScreenState extends State<WalletFlowScreen> {
                           statusTab: _statusTab,
                           onStatusChange: (i) => setState(() => _statusTab = i),
                           actionMode: _actionMode,
-                          onActionChange: (m) =>
-                              setState(() => _actionMode = m),
+                          onActionChange: (m) {
+                            if (m == _ActionMode.deposit) {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const WalletDepositPaymentMethodScreen(
+                                          amount: "0"),
+                                ),
+                              );
+                            } else {
+                              setState(() => _actionMode = m);
+                            }
+                          },
                           items: _filtered,
                           onOpen: _openDetails,
                         ),
