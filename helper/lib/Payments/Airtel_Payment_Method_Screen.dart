@@ -776,7 +776,7 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
                                     child: Text(
                                       'Go To Worker Type Selection',
                                       style: TextStyle(
-                                        fontSize: screenWidth * 0.045,
+                                        fontSize: screenWidth * 0.03,
                                         fontWeight: FontWeight.bold,
                                         color: Colors.white,
                                         fontFamily: 'Inter',
