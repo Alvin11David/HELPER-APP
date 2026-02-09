@@ -3,8 +3,7 @@ import 'package:helper/Chats/overlays/incoming_call_overlay_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
-import 'Wallet_Deposit_Payment_Method_Screen.dart';
-import 'Wallet_Withdraw_Payment_Method_Screen.dart';
+import 'dart:async';
 import 'Wallet_TopUp_Screen.dart';
 import 'Wallet_Withdraw_Screen.dart';
 
@@ -26,6 +25,46 @@ class _WalletFlowScreenState extends State<WalletFlowScreen> {
 
   bool _showDetails = false;
   _TxItem? _selected;
+
+  StreamSubscription<QuerySnapshot>? _paymentListener;
+
+  @override
+  void initState() {
+    super.initState();
+    _setupPaymentListener();
+  }
+
+  @override
+  void dispose() {
+    _paymentListener?.cancel();
+    super.dispose();
+  }
+
+  void _setupPaymentListener() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      _paymentListener = FirebaseFirestore.instance
+          .collection('Payment Data')
+          .where('userId', isEqualTo: user.uid)
+          .snapshots()
+          .listen((querySnapshot) {
+            for (var change in querySnapshot.docChanges) {
+              if (change.type == DocumentChangeType.modified) {
+                final data = change.doc.data() as Map<String, dynamic>?;
+                if (data != null && data['status'] == 'SUCCESS') {
+                  final amount = data['amount'] as int?;
+                  if (amount != null) {
+                    FirebaseFirestore.instance
+                        .collection('Sign Up')
+                        .doc(user.uid)
+                        .update({'amount': FieldValue.increment(amount)});
+                  }
+                }
+              }
+            }
+          });
+    }
+  }
 
   void _back() {
     if (_showDetails) {
