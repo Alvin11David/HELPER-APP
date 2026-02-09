@@ -96,7 +96,7 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
     }
   }
 
- Future<void> _processPayment() async {
+  Future<void> _processPayment() async {
     setState(() {
       _isLoading = true;
     });
@@ -104,25 +104,26 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
     final String phoneNumber = _cardNumberController.text.trim();
 
     // 1. FORMAT MSISDN (Force +256 format)
-    String digits = phoneNumber.replaceAll(RegExp(r'\D'), ''); 
+    String digits = phoneNumber.replaceAll(RegExp(r'\D'), '');
     if (digits.startsWith('0')) digits = '256' + digits.substring(1);
     if (!digits.startsWith('256')) digits = '256' + digits;
-    final String finalMsisdn = '+' + digits; 
-    
+    final String finalMsisdn = '+' + digits;
+
     print('DEBUG: Sending MSISDN: $finalMsisdn');
 
     // 2. SANITIZE REFERENCE (Strictly Max 36 Characters)
     // We combine 'R' + timestamp to keep it unique but short
     final String timestamp = DateTime.now().millisecondsSinceEpoch.toString();
-    final String finalReference = 'R$timestamp'.substring(0, 15); 
-    
+    final String finalReference = 'R$timestamp'.substring(0, 15);
+
     print('DEBUG: Sending Reference: $finalReference');
 
     final User? currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) return;
 
     try {
-      final paymentUrl = 'https://us-central1-helperapp-46849.cloudfunctions.net';
+      final paymentUrl =
+          'https://us-central1-helperapp-46849.cloudfunctions.net';
 
       print('Initiating payment request...');
       final paymentResponse = await http.post(
@@ -140,13 +141,13 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
             'description': 'Registration Fee',
             'originalPhoneNumber': phoneNumber,
             'saveCard': isChecked,
-          }
+          },
         }),
       );
 
       print('Payment request HTTP status: ${paymentResponse.statusCode}');
       final fullResponseBody = jsonDecode(paymentResponse.body);
-      
+
       // Handle the Firebase "result" wrapper
       final paymentData = fullResponseBody['result'] ?? fullResponseBody;
 
@@ -173,11 +174,9 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
     }
   }
 
-
-
   void _listenForPaymentStatus(String reference) {
     final paymentRef = FirebaseFirestore.instance
-        .collection('Payments')
+        .collection('Payment Data')
         .doc(reference);
 
     paymentRef.snapshots().listen((snapshot) {
@@ -524,7 +523,10 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
                               children: _isLoading
                                   ? [
                                       CircularProgressIndicator(
-                                        valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                              Colors.black,
+                                            ),
                                       ),
                                     ]
                                   : [
