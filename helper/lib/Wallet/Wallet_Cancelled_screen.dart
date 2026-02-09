@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:helper/Chats/overlays/incoming_call_overlay_service.dart';
+import 'Wallet_Deposit_Payment_Method_Screen.dart';
 
 class WalletFlowScreen extends StatefulWidget {
   const WalletFlowScreen({super.key});
@@ -543,7 +544,7 @@ class _BalanceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cardH = h * 0.20;
+    final cardH = h * 0.24;
 
     return Container(
       height: cardH,
