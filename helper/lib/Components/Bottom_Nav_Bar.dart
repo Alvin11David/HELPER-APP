@@ -44,7 +44,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
           builder: (context, setState) {
             double screenWidth = MediaQuery.of(context).size.width;
             return Container(
-              height: 270, // Fixed height to prevent the modal from shrinking
+              height: 290, // Increased from 270 to prevent overflow
               width: double.infinity, // Fixed width to prevent width changes
               padding: EdgeInsets.only(left: 0, right: 0, bottom: 0),
               decoration: BoxDecoration(
@@ -122,7 +122,8 @@ class _BottomNavBarState extends State<BottomNavBar> {
                           });
                           if (pin.length == 4) {
                             // Verify PIN
-                            SharedPreferences prefs = await SharedPreferences.getInstance();
+                            SharedPreferences prefs =
+                                await SharedPreferences.getInstance();
                             String? savedPin = prefs.getString('wallet_pin');
                             if (savedPin == pin) {
                               Navigator.pop(context); // Close modal
@@ -156,6 +157,26 @@ class _BottomNavBarState extends State<BottomNavBar> {
                       color: Color(0xFFFFA10D),
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(height: 5),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.pop(context); // Close modal
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => CreateWalletPINScreen(),
+                        ),
+                      );
+                    },
+                    child: Text(
+                      'I have never created a PIN',
+                      style: TextStyle(
+                        color: Colors.blue,
+                        fontSize: 14,
+                        decoration: TextDecoration.underline,
+                      ),
                     ),
                   ),
                   SizedBox(height: 20),
