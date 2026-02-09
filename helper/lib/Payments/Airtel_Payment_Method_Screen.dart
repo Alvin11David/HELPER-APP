@@ -111,21 +111,25 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
 
     print('DEBUG: Sending MSISDN: $finalMsisdn');
 
-    // 2. SANITIZE REFERENCE (Strictly Max 36 Characters)
-    // We combine 'R' + timestamp to keep it unique but short
+    // 2. SAFE REFERENCE (Avoid Substring Crash)
     final String timestamp = DateTime.now().millisecondsSinceEpoch.toString();
-    final String finalReference = 'R$timestamp'.substring(0, 15);
+    // SAFE: Use the whole string or check length before cutting
+    final String rawRef = 'R$timestamp';
+    final String finalReference = rawRef.length > 15 ? rawRef.substring(0, 15) : rawRef;
 
     print('DEBUG: Sending Reference: $finalReference');
 
     final User? currentUser = FirebaseAuth.instance.currentUser;
-    if (currentUser == null) return;
+    if (currentUser == null) {
+      print('DEBUG: No user authenticated');
+      setState(() => _isLoading = false);
+      return;
+    }
 
     try {
-      final paymentUrl =
-          'https://us-central1-helperapp-46849.cloudfunctions.net/requestPayment';
+      final paymentUrl = 'https://us-central1-helperapp-46849.cloudfunctions.net/requestPayment';
 
-      print('Initiating payment request...');
+      print('Initiating payment request to $paymentUrl...');
       final paymentResponse = await http.post(
         Uri.parse(paymentUrl),
         headers: {
@@ -135,9 +139,9 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
         body: jsonEncode({
           "data": {
             'userId': currentUser.uid,
-            'msisdn': finalMsisdn, // Fixed: includes '+'
+            'msisdn': finalMsisdn,
             'amount': 25000,
-            'reference': finalReference, // Fixed: Under 36 chars
+            'reference': finalReference,
             'description': 'Registration Fee',
             'originalPhoneNumber': phoneNumber,
             'saveCard': isChecked,
@@ -146,29 +150,22 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
       );
 
       print('Payment request HTTP status: ${paymentResponse.statusCode}');
-      final fullResponseBody = jsonDecode(paymentResponse.body);
+      print('Raw Response: ${paymentResponse.body}');
 
-      // Handle the Firebase "result" wrapper
+      final fullResponseBody = jsonDecode(paymentResponse.body);
       final paymentData = fullResponseBody['result'] ?? fullResponseBody;
 
-      if (paymentResponse.statusCode == 200 && paymentData['success'] == true) {
+      if (paymentResponse.statusCode == 200 && (paymentData['success'] == true)) {
         print('SUCCESS: Prompt sent to $finalMsisdn');
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Payment request sent successfully. Please check your phone for the prompt.',
-            ),
-            backgroundColor: Colors.blue,
-          ),
-        );
         setState(() {
           _isDimming = true;
           _showOverlay = true;
         });
         _listenForPaymentStatus(finalReference);
       } else {
-        print('FAILED: ${paymentData['message']}');
-        throw Exception(paymentData['message'] ?? 'Invalid parameters');
+        String msg = paymentData['message'] ?? 'Invalid response from server';
+        print('FAILED: $msg');
+        throw Exception(msg);
       }
     } catch (e) {
       print('CRITICAL ERROR: $e');
@@ -181,6 +178,7 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
       });
     }
   }
+
 
   void _listenForPaymentStatus(String reference) {
     FirebaseFirestore.instance
