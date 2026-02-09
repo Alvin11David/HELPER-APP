@@ -123,7 +123,7 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
 
     try {
       final paymentUrl =
-          'https://us-central1-helperapp-46849.cloudfunctions.net';
+          'https://us-central1-helperapp-46849.cloudfunctions.net/requestPayment';
 
       print('Initiating payment request...');
       final paymentResponse = await http.post(
@@ -153,6 +153,14 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
 
       if (paymentResponse.statusCode == 200 && paymentData['success'] == true) {
         print('SUCCESS: Prompt sent to $finalMsisdn');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Payment request sent successfully. Please check your phone for the prompt.',
+            ),
+            backgroundColor: Colors.blue,
+          ),
+        );
         setState(() {
           _isDimming = true;
           _showOverlay = true;
@@ -175,50 +183,51 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
   }
 
   void _listenForPaymentStatus(String reference) {
-    final paymentRef = FirebaseFirestore.instance
+    FirebaseFirestore.instance
         .collection('Payment Data')
-        .doc(reference);
+        .where('reference', isEqualTo: reference)
+        .snapshots()
+        .listen((querySnapshot) {
+          if (querySnapshot.docs.isNotEmpty) {
+            final doc = querySnapshot.docs.first;
+            final data = doc.data();
+            final status = data['status'];
 
-    paymentRef.snapshots().listen((snapshot) {
-      if (snapshot.exists) {
-        final data = snapshot.data();
-        final status = data?['status'];
-
-        if (status == 'success') {
-          setState(() {
-            _isPaymentSuccessful = true;
-          });
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Payment completed successfully!'),
-              backgroundColor: Colors.green,
-            ),
-          );
-          // Navigate to role selection after a short delay to show success
-          Future.delayed(const Duration(seconds: 2), () {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (context) => const SelectWorkerTypeScreen(),
-              ),
-            );
-          });
-        } else if (status == 'failed') {
-          setState(() {
-            _isPaymentSuccessful = false;
-            _showOverlay = false; // Hide overlay on failure
-            _isDimming = false;
-          });
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Payment failed: ${data?['message'] ?? 'Unknown error'}',
-              ),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      }
-    });
+            if (status == 'success') {
+              setState(() {
+                _isPaymentSuccessful = true;
+              });
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Payment completed successfully!'),
+                  backgroundColor: Colors.green,
+                ),
+              );
+              // Navigate to role selection after a short delay to show success
+              Future.delayed(const Duration(seconds: 2), () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const SelectWorkerTypeScreen(),
+                  ),
+                );
+              });
+            } else if (status == 'failed') {
+              setState(() {
+                _isPaymentSuccessful = false;
+                _showOverlay = false; // Hide overlay on failure
+                _isDimming = false;
+              });
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    'Payment failed: ${data['message'] ?? 'Unknown error'}',
+                  ),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+          }
+        });
   }
 
   @override
