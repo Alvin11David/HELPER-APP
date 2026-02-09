@@ -48,11 +48,13 @@ class _WalletFlowScreenState extends State<WalletFlowScreen> {
   Future<List<_TxItem>> _fetchItems(String statusFilter) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return [];
-    Query query = FirebaseFirestore.instance.collection('Payment Data').where('userId', isEqualTo: user.uid);
+    Query query = FirebaseFirestore.instance
+        .collection('Payment Data')
+        .where('userId', isEqualTo: user.uid);
     if (statusFilter.isNotEmpty) {
       query = query.where('status', isEqualTo: statusFilter);
     }
-    final snapshot = await query.orderBy('createdAt', descending: true).get();
+    final snapshot = await query.get();
     return snapshot.docs.map((doc) => _TxItem.fromFirestore(doc)).toList();
   }
 
@@ -139,11 +141,16 @@ class _WalletFlowScreenState extends State<WalletFlowScreen> {
                       : FutureBuilder<List<_TxItem>>(
                           future: _filtered,
                           builder: (context, snapshot) {
-                            if (snapshot.connectionState == ConnectionState.waiting) {
-                              return const Center(child: CircularProgressIndicator());
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return const Center(
+                                child: CircularProgressIndicator(),
+                              );
                             }
                             if (snapshot.hasError) {
-                              return Center(child: Text('Error: ${snapshot.error}'));
+                              return Center(
+                                child: Text('Error: ${snapshot.error}'),
+                              );
                             }
                             final items = snapshot.data ?? [];
                             return _WalletMain(
@@ -153,7 +160,8 @@ class _WalletFlowScreenState extends State<WalletFlowScreen> {
                               brandOrange: _brandOrange,
                               pendingActive: _pendingActive,
                               statusTab: _statusTab,
-                              onStatusChange: (i) => setState(() => _statusTab = i),
+                              onStatusChange: (i) =>
+                                  setState(() => _statusTab = i),
                               actionMode: _actionMode,
                               onActionChange: (m) {
                                 if (m == _ActionMode.deposit) {
@@ -258,7 +266,8 @@ class _TxItem {
       status: status,
       title: title,
       date: date,
-      amount: 'UGX ${amount.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}',
+      amount:
+          'UGX ${amount.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}',
       txDate: txDate,
       txTime: txTime,
       txId: reference,
