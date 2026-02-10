@@ -570,14 +570,6 @@ class _BalanceCard extends StatelessWidget {
                 ),
               ),
               SizedBox(height: h * 0.006),
-              Text(
-                'DOLLARS',
-                style: TextStyle(
-                  color: Colors.black,
-                  fontFamily: 'AbrilFatface',
-                  fontSize: w * 0.050,
-                ),
-              ),
               SizedBox(height: h * 0.014),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
