@@ -1109,16 +1109,6 @@ class _HeaderRow extends StatelessWidget {
           ),
           child: const Icon(Icons.person, color: Colors.black),
         ),
-        const SizedBox(width: 10),
-        Container(
-          width: 40,
-          height: 40,
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            shape: BoxShape.circle,
-          ),
-          child: const Icon(Icons.notifications, color: Colors.black),
-        ),
       ],
     );
   }
