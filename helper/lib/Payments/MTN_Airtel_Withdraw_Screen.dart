@@ -1,10 +1,10 @@
 import 'dart:ui';
-import 'dart:convert';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:http/http.dart' as http;
 
 class MtnAirtelWithdrawScreen extends StatefulWidget {
   final String amount;
@@ -148,37 +148,22 @@ class _MtnAirtelWithdrawScreenState extends State<MtnAirtelWithdrawScreen> {
     }
 
     try {
-      final paymentUrl =
-          'https://us-central1-helperapp-46849.cloudfunctions.net/requestWithdrawal'; // Assuming same endpoint
-
-      print('Initiating withdrawal request to $paymentUrl...');
-      final paymentResponse = await http.post(
-        Uri.parse(paymentUrl),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${await currentUser.getIdToken()}',
-        },
-        body: jsonEncode({
-          "data": {
-            'userId': currentUser.uid,
-            'msisdn': finalMsisdn,
-            'amount': int.parse(widget.amount),
-            'reference': finalReference,
-            'description': 'Wallet Withdraw',
-            'originalPhoneNumber': phoneNumber,
-            'saveCard': isChecked,
-          },
-        }),
+      final callable = FirebaseFunctions.instance.httpsCallable(
+        'requestWithdrawal',
       );
 
-      print('Withdrawal request HTTP status: ${paymentResponse.statusCode}');
-      print('Raw Response: ${paymentResponse.body}');
+      print('Initiating withdrawal request via callable function...');
+      final result = await callable.call({
+        'userId': currentUser.uid,
+        'msisdn': finalMsisdn,
+        'amount': int.parse(widget.amount),
+        'reference': finalReference,
+        'description': 'Wallet Withdraw',
+      });
 
-      final fullResponseBody = jsonDecode(paymentResponse.body);
-      final paymentData = fullResponseBody['result'] ?? fullResponseBody;
+      final paymentData = result.data as Map<String, dynamic>?;
 
-      if (paymentResponse.statusCode == 200 &&
-          (paymentData['success'] == true)) {
+      if (paymentData?['success'] == true) {
         print('SUCCESS: Prompt sent to $finalMsisdn');
         if (isChecked) {
           await _savePhoneNumber(phoneNumber);
@@ -197,10 +182,18 @@ class _MtnAirtelWithdrawScreenState extends State<MtnAirtelWithdrawScreen> {
         });
         _listenForPaymentStatus(finalReference);
       } else {
-        String msg = paymentData['message'] ?? 'Invalid response from server';
+        String msg = paymentData?['message'] ?? 'Invalid response from server';
         print('FAILED: $msg');
         throw Exception(msg);
       }
+    } on FirebaseFunctionsException catch (e) {
+      print('CRITICAL ERROR: ${e.message}');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: ${e.message ?? 'Withdrawal failed'}'),
+          backgroundColor: Colors.red,
+        ),
+      );
     } catch (e) {
       print('CRITICAL ERROR: $e');
       ScaffoldMessenger.of(context).showSnackBar(
