@@ -246,15 +246,18 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
             ),
 
           SafeArea(
-            child: Container(
-              decoration: const BoxDecoration(
-                image: DecorationImage(
-                  image: AssetImage('assets/background/normalscreenbg.png'),
-                  fit: BoxFit.cover,
-                ),
-              ),
-              child: Stack(
-                children: [
+            child: SingleChildScrollView(
+              child: SizedBox(
+                height: screenHeight * 1.2,
+                child: Container(
+                  decoration: const BoxDecoration(
+                    image: DecorationImage(
+                      image: AssetImage('assets/background/normalscreenbg.png'),
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  child: Stack(
+                    children: [
                   Positioned(
                     top: screenHeight * 0.04,
                     left: screenWidth * 0.04,
@@ -617,7 +620,9 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
                       ),
                     ),
                   ),
-                ],
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
