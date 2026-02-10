@@ -824,6 +824,10 @@ class _TxCard extends StatelessWidget {
         ? Colors.red
         : brandOrange;
 
+    final arrowIcon = item.type == _TxType.withdraw
+        ? Icons.arrow_upward_rounded
+        : Icons.arrow_downward_rounded;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -850,11 +854,7 @@ class _TxCard extends StatelessWidget {
               width: w * 0.10,
               height: w * 0.10,
               decoration: BoxDecoration(color: arrowBg, shape: BoxShape.circle),
-              child: Icon(
-                Icons.arrow_downward_rounded,
-                color: arrowColor,
-                size: w * 0.06,
-              ),
+              child: Icon(arrowIcon, color: arrowColor, size: w * 0.06),
             ),
             SizedBox(width: w * 0.03),
             Expanded(
