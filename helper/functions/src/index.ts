@@ -9,7 +9,10 @@
 
 import { setGlobalOptions } from "firebase-functions";
 import { HttpsError, onCall, onRequest } from "firebase-functions/v2/https";
-import { onDocumentCreated } from "firebase-functions/v2/firestore";
+import {
+  onDocumentCreated,
+  onDocumentUpdated,
+} from "firebase-functions/v2/firestore";
 import * as logger from "firebase-functions/logger";
 import * as nodemailer from "nodemailer";
 import * as admin from "firebase-admin";
@@ -729,6 +732,68 @@ export const sendReviewNotification = onDocumentCreated(
     } catch (error) {
       logger.info("ERROR sending review notification:", error);
     }
+  },
+);
+
+// Notify user when a payment transitions to SUCCESS
+export const notifyPaymentSuccess = onDocumentUpdated(
+  "Payment Data/{paymentId}",
+  async (event) => {
+    const beforeData = event.data?.before.data();
+    const afterData = event.data?.after.data();
+
+    if (!beforeData || !afterData) {
+      return;
+    }
+
+    const prevStatus = String(beforeData.status || "");
+    const nextStatus = String(afterData.status || "");
+
+    if (prevStatus == nextStatus || nextStatus != "SUCCESS") {
+      return;
+    }
+
+    const userId = afterData.userId as string | undefined;
+    if (!userId) {
+      logger.warn("Payment success notification skipped: missing userId");
+      return;
+    }
+
+    const userDoc = await admin
+      .firestore()
+      .collection("users")
+      .doc(userId)
+      .get();
+    if (!userDoc.exists) {
+      logger.warn("Payment success notification skipped: user not found", {
+        userId,
+      });
+      return;
+    }
+
+    const fcmToken = userDoc.data()?.fcmToken as string | undefined;
+    if (!fcmToken) {
+      logger.warn("Payment success notification skipped: no FCM token", {
+        userId,
+      });
+      return;
+    }
+
+    const amount = afterData.amount ?? "";
+
+    await admin.messaging().send({
+      token: fcmToken,
+      notification: {
+        title: "Payment Successful",
+        body: `Your payment of ${amount} has been added made successfully!`,
+      },
+      data: {
+        type: "payment_success",
+        amount: String(amount),
+      },
+    });
+
+    logger.info("Payment success notification sent", { userId });
   },
 );
 
