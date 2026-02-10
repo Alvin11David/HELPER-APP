@@ -1,11 +1,13 @@
 import 'dart:async';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:helper/Employer%20Dashboard/Employer_Notifications.dart';
-import 'package:helper/Payments/Airtel_Payment_Method_Screen.dart';
+import 'package:helper/Payments/Registration_Payment_Screen.dart';
 import 'package:intl/intl.dart';
 import 'package:helper/Components/User_Name.dart';
 import 'package:helper/Components/Side_Bar.dart';
@@ -27,6 +29,7 @@ class EmployerDashboardScreen extends StatefulWidget {
 class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
   int _selectedIndex = 0;
   final GlobalKey<SideBarState> _sidebarKey = GlobalKey();
+  Map<String, String>? _headers;
 
   void _onItemTapped(int index) async {
     setState(() {
@@ -361,11 +364,24 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
           ClipRRect(
             borderRadius: BorderRadius.circular(20),
             child: img.isNotEmpty
-                ? Image.network(
-                    img,
+                ? CachedNetworkImage(
+                    imageUrl: img,
+                    httpHeaders: _headers,
                     width: w * 0.6,
                     height: w * 0.8,
                     fit: BoxFit.cover,
+                    placeholder: (context, url) => Container(
+                      width: w * 0.6,
+                      height: w * 0.8,
+                      color: Colors.grey.shade300,
+                      child: const Center(child: CircularProgressIndicator()),
+                    ),
+                    errorWidget: (context, url, error) => Container(
+                      width: w * 0.6,
+                      height: w * 0.8,
+                      color: Colors.grey.shade300,
+                      child: const Icon(Icons.image),
+                    ),
                   )
                 : Container(
                     width: w * 0.6,
@@ -1421,7 +1437,7 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                               context,
                               MaterialPageRoute(
                                 builder: (context) =>
-                                    const AirtelPaymentMethodScreen(),
+                                    const RegistrationPaymentScreen(),
                               ),
                             );
                           },

@@ -1,5 +1,19 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:helper/Chats/overlays/incoming_call_overlay_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
+import 'dart:async';
+import 'package:helper/Document Upload/Profile/Support_Screen.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:helper/Components/user_avatar_circle.dart';
+import 'package:helper/Amount.dart';
+import 'Wallet_TopUp_Screen.dart';
+import 'Wallet_Withdraw_Screen.dart';
 
 class WalletFlowScreen extends StatefulWidget {
   const WalletFlowScreen({super.key});
@@ -20,249 +34,43 @@ class _WalletFlowScreenState extends State<WalletFlowScreen> {
   bool _showDetails = false;
   _TxItem? _selected;
 
-  // ✅ Seed data: completed tab contains a “real” sample to prove the details screen
-  // is wired for actual values.
-  final List<_TxItem> _all = [
-    // PENDING
-    _TxItem(
-      type: _TxType.deposit,
-      status: _TxStatus.pending,
-      title: "Deposit",
-      date: "Jan, 19, 2026 | 10:45 am",
-      amount: "UGX 120,000",
-      txDate: "Jan 19, 2026",
-      txTime: "10:45 am",
-      txId: "TXN-892134",
-      transferType: "Deposit",
-      from: "Employer Wallet",
-      to: "Worker Wallet (Escrow)",
-    ),
-    _TxItem(
-      type: _TxType.deposit,
-      status: _TxStatus.pending,
-      title: "Deposit",
-      date: "Feb, 09, 2026 | 10:45 am",
-      amount: "UGX 75,000",
-      txDate: "Feb 09, 2026",
-      txTime: "10:45 am",
-      txId: "TXN-900441",
-      transferType: "Deposit",
-      from: "Employer Wallet",
-      to: "Worker Wallet (Escrow)",
-    ),
-    _TxItem(
-      type: _TxType.withdraw,
-      status: _TxStatus.pending,
-      title: "Withdraw",
-      date: "Mar, 15, 2026 | 2:30 pm",
-      amount: "UGX 50,000",
-      txDate: "Mar 15, 2026",
-      txTime: "2:30 pm",
-      txId: "TXN-901234",
-      transferType: "Withdraw",
-      from: "Worker Wallet",
-      to: "Mobile Money (Airtel)",
-    ),
-    _TxItem(
-      type: _TxType.deposit,
-      status: _TxStatus.pending,
-      title: "Deposit",
-      date: "Apr, 20, 2026 | 9:15 am",
-      amount: "UGX 200,000",
-      txDate: "Apr 20, 2026",
-      txTime: "9:15 am",
-      txId: "TXN-902345",
-      transferType: "Deposit",
-      from: "Employer Wallet",
-      to: "Worker Wallet (Escrow)",
-    ),
-    _TxItem(
-      type: _TxType.withdraw,
-      status: _TxStatus.pending,
-      title: "Withdraw",
-      date: "May, 08, 2026 | 11:45 am",
-      amount: "UGX 125,000",
-      txDate: "May 08, 2026",
-      txTime: "11:45 am",
-      txId: "TXN-910123",
-      transferType: "Withdraw",
-      from: "Worker Wallet",
-      to: "Mobile Money (MTN)",
-    ),
-    _TxItem(
-      type: _TxType.deposit,
-      status: _TxStatus.pending,
-      title: "Deposit",
-      date: "Jun, 15, 2026 | 10:30 am",
-      amount: "UGX 175,000",
-      txDate: "Jun 15, 2026",
-      txTime: "10:30 am",
-      txId: "TXN-911234",
-      transferType: "Deposit",
-      from: "Employer Wallet",
-      to: "Worker Wallet (Escrow)",
-    ),
-    _TxItem(
-      type: _TxType.withdraw,
-      status: _TxStatus.pending,
-      title: "Withdraw",
-      date: "Jul, 22, 2026 | 3:20 pm",
-      amount: "UGX 90,000",
-      txDate: "Jul 22, 2026",
-      txTime: "3:20 pm",
-      txId: "TXN-912345",
-      transferType: "Withdraw",
-      from: "Worker Wallet",
-      to: "Bank Account",
-    ),
-    _TxItem(
-      type: _TxType.deposit,
-      status: _TxStatus.pending,
-      title: "Deposit",
-      date: "Aug, 05, 2026 | 9:00 am",
-      amount: "UGX 220,000",
-      txDate: "Aug 05, 2026",
-      txTime: "9:00 am",
-      txId: "TXN-913456",
-      transferType: "Deposit",
-      from: "Employer Wallet",
-      to: "Worker Wallet (Escrow)",
-    ),
+  StreamSubscription<QuerySnapshot>? _paymentListener;
 
-    // COMPLETED (✅ has full actual-looking details)
-    _TxItem(
-      type: _TxType.withdraw,
-      status: _TxStatus.completed,
-      title: "Withdraw",
-      date: "Jan, 20, 2026 | 02:14 pm",
-      amount: "UGX 250,000",
-      txDate: "Jan 20, 2026",
-      txTime: "02:14 pm",
-      txId: "TXN-893221",
-      transferType: "Withdraw",
-      from: "Worker Wallet",
-      to: "Mobile Money (MTN)",
-    ),
-    _TxItem(
-      type: _TxType.deposit,
-      status: _TxStatus.completed,
-      title: "Deposit",
-      date: "Jan, 30, 2026 | 10:45 am",
-      amount: "UGX 95,000",
-      txDate: "Jan 30, 2026",
-      txTime: "10:45 am",
-      txId: "TXN-898777",
-      transferType: "Deposit",
-      from: "Employer Wallet",
-      to: "Worker Wallet (Escrow)",
-    ),
-    _TxItem(
-      type: _TxType.withdraw,
-      status: _TxStatus.completed,
-      title: "Withdraw",
-      date: "Feb, 10, 2026 | 11:20 am",
-      amount: "UGX 150,000",
-      txDate: "Feb 10, 2026",
-      txTime: "11:20 am",
-      txId: "TXN-903456",
-      transferType: "Withdraw",
-      from: "Worker Wallet",
-      to: "Bank Account",
-    ),
-    _TxItem(
-      type: _TxType.deposit,
-      status: _TxStatus.completed,
-      title: "Deposit",
-      date: "Mar, 05, 2026 | 3:45 pm",
-      amount: "UGX 180,000",
-      txDate: "Mar 05, 2026",
-      txTime: "3:45 pm",
-      txId: "TXN-904567",
-      transferType: "Deposit",
-      from: "Employer Wallet",
-      to: "Worker Wallet (Escrow)",
-    ),
-    _TxItem(
-      type: _TxType.withdraw,
-      status: _TxStatus.completed,
-      title: "Withdraw",
-      date: "Apr, 12, 2026 | 1:10 pm",
-      amount: "UGX 300,000",
-      txDate: "Apr 12, 2026",
-      txTime: "1:10 pm",
-      txId: "TXN-905678",
-      transferType: "Withdraw",
-      from: "Worker Wallet",
-      to: "Mobile Money (MTN)",
-    ),
-    _TxItem(
-      type: _TxType.deposit,
-      status: _TxStatus.completed,
-      title: "Deposit",
-      date: "May, 18, 2026 | 2:45 pm",
-      amount: "UGX 135,000",
-      txDate: "May 18, 2026",
-      txTime: "2:45 pm",
-      txId: "TXN-914567",
-      transferType: "Deposit",
-      from: "Employer Wallet",
-      to: "Worker Wallet (Escrow)",
-    ),
-    _TxItem(
-      type: _TxType.withdraw,
-      status: _TxStatus.completed,
-      title: "Withdraw",
-      date: "Jun, 25, 2026 | 4:30 pm",
-      amount: "UGX 190,000",
-      txDate: "Jun 25, 2026",
-      txTime: "4:30 pm",
-      txId: "TXN-915678",
-      transferType: "Withdraw",
-      from: "Worker Wallet",
-      to: "Mobile Money (Airtel)",
-    ),
-    _TxItem(
-      type: _TxType.deposit,
-      status: _TxStatus.completed,
-      title: "Deposit",
-      date: "Jul, 10, 2026 | 11:15 am",
-      amount: "UGX 250,000",
-      txDate: "Jul 10, 2026",
-      txTime: "11:15 am",
-      txId: "TXN-916789",
-      transferType: "Deposit",
-      from: "Employer Wallet",
-      to: "Worker Wallet (Escrow)",
-    ),
-    _TxItem(
-      type: _TxType.withdraw,
-      status: _TxStatus.completed,
-      title: "Withdraw",
-      date: "Aug, 15, 2026 | 12:50 pm",
-      amount: "UGX 165,000",
-      txDate: "Aug 15, 2026",
-      txTime: "12:50 pm",
-      txId: "TXN-917890",
-      transferType: "Withdraw",
-      from: "Worker Wallet",
-      to: "Bank Account",
-    ),
+  @override
+  void initState() {
+    super.initState();
+    _setupPaymentListener();
+  }
 
-    // CANCELLED
-    _TxItem(
-      type: _TxType.withdraw,
-      status: _TxStatus.cancelled,
-      title: "Withdraw",
-      date: "Feb, 08, 2026 | 10:45 am",
-      amount: "UGX 60,000",
-      txDate: "Feb 08, 2026",
-      txTime: "10:45 am",
-      txId: "TXN-899900",
-      transferType: "Withdraw",
-      from: "Worker Wallet",
-      to: "Bank Account",
-    ),
-  ];
+  @override
+  void dispose() {
+    _paymentListener?.cancel();
+    super.dispose();
+  }
+
+  void _setupPaymentListener() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      _paymentListener = FirebaseFirestore.instance
+          .collection('Payment Data')
+          .where('userId', isEqualTo: user.uid)
+          .snapshots()
+          .listen((querySnapshot) {
+            for (var change in querySnapshot.docChanges) {
+              if (change.type == DocumentChangeType.added ||
+                  change.type == DocumentChangeType.modified) {
+                final data = change.doc.data();
+                if (data != null && data['status'] == 'SUCCESS') {
+                  AmountService.applyPaymentSuccess(
+                    paymentRef: change.doc.reference,
+                    userId: user.uid,
+                  );
+                }
+              }
+            }
+          });
+    }
+  }
 
   void _back() {
     if (_showDetails) {
@@ -282,14 +90,165 @@ class _WalletFlowScreenState extends State<WalletFlowScreen> {
     });
   }
 
-  List<_TxItem> get _filtered {
+  Future<Directory?> _getReceiptDirectory() async {
+    if (Platform.isAndroid) {
+      final baseDir = await getExternalStorageDirectory();
+      if (baseDir == null) return null;
+      final receiptsDir = Directory('${baseDir.path}/receipts');
+      if (!await receiptsDir.exists()) {
+        await receiptsDir.create(recursive: true);
+      }
+      return receiptsDir;
+    }
+
+    final baseDir = await getApplicationDocumentsDirectory();
+    final receiptsDir = Directory('${baseDir.path}/receipts');
+    if (!await receiptsDir.exists()) {
+      await receiptsDir.create(recursive: true);
+    }
+    return receiptsDir;
+  }
+
+  Future<void> _downloadReceipt(_TxItem? item) async {
+    if (item == null) {
+      _toast('No transaction selected');
+      return;
+    }
+
+    try {
+      final receiptsDir = await _getReceiptDirectory();
+      if (receiptsDir == null) {
+        _toast('Unable to access storage');
+        return;
+      }
+
+      final fileName = item.txId.isNotEmpty
+          ? item.txId.replaceAll(RegExp(r'[^a-zA-Z0-9_-]'), '_')
+          : DateTime.now().millisecondsSinceEpoch.toString();
+      final file = File('${receiptsDir.path}/receipt_$fileName.pdf');
+
+      final doc = pw.Document();
+      doc.addPage(
+        pw.Page(
+          pageFormat: PdfPageFormat.a4,
+          build: (context) {
+            return pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Text(
+                  'Transaction Receipt',
+                  style: pw.TextStyle(
+                    fontSize: 22,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+                pw.SizedBox(height: 8),
+                pw.Text(
+                  'Generated: ${DateFormat('MMM dd, yyyy | hh:mm a').format(DateTime.now())}',
+                  style: const pw.TextStyle(fontSize: 10),
+                ),
+                pw.SizedBox(height: 16),
+                pw.Divider(),
+                pw.SizedBox(height: 10),
+                _receiptRow('Transaction Date', item.txDate),
+                _receiptRow('Transaction Time', item.txTime),
+                _receiptRow('Transaction ID', item.txId),
+                _receiptRow('Transfer Type', item.transferType),
+                _receiptRow('Amount', item.amount),
+                _receiptRow('From', item.from),
+                _receiptRow('To', item.to),
+                _receiptRow('Status', _statusText(item.status)),
+                pw.SizedBox(height: 12),
+                pw.Divider(),
+                pw.SizedBox(height: 8),
+                pw.Text(
+                  'Thank you for using Helper.',
+                  style: const pw.TextStyle(fontSize: 10),
+                ),
+              ],
+            );
+          },
+        ),
+      );
+
+      await file.writeAsBytes(await doc.save(), flush: true);
+      _toast('Receipt saved to ${file.path}');
+    } catch (e) {
+      _toast('Failed to download receipt');
+    }
+  }
+
+  pw.Widget _receiptRow(String label, String value) {
+    return pw.Padding(
+      padding: const pw.EdgeInsets.symmetric(vertical: 4),
+      child: pw.Row(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Expanded(
+            child: pw.Text(
+              label,
+              style: pw.TextStyle(
+                fontSize: 11,
+                fontWeight: pw.FontWeight.bold,
+              ),
+            ),
+          ),
+          pw.SizedBox(width: 12),
+          pw.Expanded(
+            child: pw.Text(
+              value,
+              style: const pw.TextStyle(fontSize: 11),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _statusText(_TxStatus s) {
+    if (s == _TxStatus.pending) return 'Pending';
+    if (s == _TxStatus.completed) return 'Completed';
+    return 'Cancelled';
+  }
+
+  Future<List<_TxItem>> _fetchPayments(String statusFilter) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return [];
+    Query query = FirebaseFirestore.instance
+        .collection('Payment Data')
+        .where('userId', isEqualTo: user.uid);
+    if (statusFilter.isNotEmpty) {
+      query = query.where('status', isEqualTo: statusFilter);
+    }
+    final snapshot = await query.get();
+    return snapshot.docs.map((doc) => _TxItem.fromPaymentDoc(doc)).toList();
+  }
+
+  Future<List<_TxItem>> _fetchWithdrawals(String statusFilter) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return [];
+    Query query = FirebaseFirestore.instance
+        .collection('Withdrawals')
+        .where('userId', isEqualTo: user.uid);
+    if (statusFilter.isNotEmpty) {
+      query = query.where('status', isEqualTo: statusFilter);
+    }
+    final snapshot = await query.get();
+    return snapshot.docs.map((doc) => _TxItem.fromWithdrawalDoc(doc)).toList();
+  }
+
+  Future<List<_TxItem>> get _filtered async {
     if (_statusTab == 0) {
-      return _all.where((e) => e.status == _TxStatus.pending).toList();
+      final payments = await _fetchPayments('PENDING_USER_CONFIRMATION');
+      final withdrawals = await _fetchWithdrawals('PROCESSING');
+      return [...payments, ...withdrawals];
     }
     if (_statusTab == 1) {
-      return _all.where((e) => e.status == _TxStatus.completed).toList();
+      final payments = await _fetchPayments('SUCCESS');
+      final withdrawals = await _fetchWithdrawals('SUCCESS');
+      return [...payments, ...withdrawals];
     }
-    return _all.where((e) => e.status == _TxStatus.cancelled).toList();
+    return [];
   }
 
   void _toast(String msg) {
@@ -357,24 +316,66 @@ class _WalletFlowScreenState extends State<WalletFlowScreen> {
                           h: h,
                           brandOrange: _brandOrange,
                           item: _selected,
-                          onContact: () =>
-                              _toast('Contact Support (hook later)'),
-                          onDownload: () =>
-                              _toast('Download Receipt (hook later)'),
+                          onContact: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const SupportScreen(),
+                              ),
+                            );
+                          },
+                          onDownload: () => _downloadReceipt(_selected),
                         )
-                      : _WalletMain(
-                          key: const ValueKey('main'),
-                          w: w,
-                          h: h,
-                          brandOrange: _brandOrange,
-                          pendingActive: _pendingActive,
-                          statusTab: _statusTab,
-                          onStatusChange: (i) => setState(() => _statusTab = i),
-                          actionMode: _actionMode,
-                          onActionChange: (m) =>
-                              setState(() => _actionMode = m),
-                          items: _filtered,
-                          onOpen: _openDetails,
+                      : FutureBuilder<List<_TxItem>>(
+                          future: _filtered,
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return const Center(
+                                child: CircularProgressIndicator(),
+                              );
+                            }
+                            if (snapshot.hasError) {
+                              return Center(
+                                child: Text('Error: ${snapshot.error}'),
+                              );
+                            }
+                            final items = snapshot.data ?? [];
+                            return _WalletMain(
+                              key: const ValueKey('main'),
+                              w: w,
+                              h: h,
+                              brandOrange: _brandOrange,
+                              pendingActive: _pendingActive,
+                              statusTab: _statusTab,
+                              onStatusChange: (i) =>
+                                  setState(() => _statusTab = i),
+                              actionMode: _actionMode,
+                              onActionChange: (m) {
+                                if (m == _ActionMode.deposit) {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const WalletTopUpScreen(),
+                                    ),
+                                  );
+                                } else if (m == _ActionMode.withdraw) {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const WalletWithdrawScreen(),
+                                    ),
+                                  );
+                                } else {
+                                  setState(() => _actionMode = m);
+                                }
+                              },
+                              items: items,
+                              onOpen: _openDetails,
+                            );
+                          },
                         ),
                 ),
 
@@ -422,27 +423,82 @@ class _TxItem {
     required this.from,
     required this.to,
   });
+
+  static String _formatAmount(num amount) {
+    return 'UGX ${NumberFormat('#,###').format(amount)}';
+  }
+
+  factory _TxItem.fromPaymentDoc(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    final statusStr = data['status'] as String? ?? '';
+    _TxStatus status;
+    if (statusStr == 'PENDING_USER_CONFIRMATION') {
+      status = _TxStatus.pending;
+    } else if (statusStr == 'SUCCESS') {
+      status = _TxStatus.completed;
+    } else {
+      status = _TxStatus.cancelled;
+    }
+    final amount = (data['amount'] as num?) ?? 0;
+    final reference = data['reference'] as String? ?? '';
+    final createdAt = (data['createdAt'] as Timestamp).toDate();
+    final dateFormat = DateFormat('MMM, dd, yyyy | hh:mm a');
+    final date = dateFormat.format(createdAt);
+    final txDateFormat = DateFormat('MMM dd, yyyy');
+    final txDate = txDateFormat.format(createdAt);
+    final txTimeFormat = DateFormat('hh:mm a');
+    final txTime = txTimeFormat.format(createdAt);
+    return _TxItem(
+      type: _TxType.deposit,
+      status: status,
+      title: 'Deposit',
+      date: date,
+      amount: _formatAmount(amount),
+      txDate: txDate,
+      txTime: txTime,
+      txId: reference,
+      transferType: 'Deposit',
+      from: 'Mobile Money',
+      to: 'Worker Wallet',
+    );
+  }
+
+  factory _TxItem.fromWithdrawalDoc(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    final statusStr = data['status'] as String? ?? '';
+    _TxStatus status;
+    if (statusStr == 'PROCESSING') {
+      status = _TxStatus.pending;
+    } else if (statusStr == 'SUCCESS') {
+      status = _TxStatus.completed;
+    } else {
+      status = _TxStatus.cancelled;
+    }
+    final amount = (data['amount'] as num?) ?? 0;
+    final reference = data['reference'] as String? ?? '';
+    final createdAt = (data['createdAt'] as Timestamp).toDate();
+    final dateFormat = DateFormat('MMM, dd, yyyy | hh:mm a');
+    final date = dateFormat.format(createdAt);
+    final txDateFormat = DateFormat('MMM dd, yyyy');
+    final txDate = txDateFormat.format(createdAt);
+    final txTimeFormat = DateFormat('hh:mm a');
+    final txTime = txTimeFormat.format(createdAt);
+    return _TxItem(
+      type: _TxType.withdraw,
+      status: status,
+      title: 'Withdraw',
+      date: date,
+      amount: _formatAmount(amount),
+      txDate: txDate,
+      txTime: txTime,
+      txId: reference,
+      transferType: 'Withdrawal',
+      from: 'Worker Wallet',
+      to: 'Mobile Money',
+    );
+  }
 }
 
-void showIncomingCall(BuildContext context) {
-  IncomingCallOverlayService.instance.show(
-    context: context,
-    businessName: 'Business Name',
-    subtitle: 'Incoming voice call',
-    timeText: '9:45AM',
-    avatarImage: const AssetImage(
-      'assets/images/person.png',
-    ), // or NetworkImage(...)
-    onDecline: () {
-      // TODO: send "declined" to backend
-      debugPrint('Declined');
-    },
-    onAnswer: () {
-      // TODO: navigate to call screen
-      debugPrint('Answered');
-    },
-  );
-}
 
 // ===================== MAIN WALLET =====================
 
@@ -545,67 +601,93 @@ class _BalanceCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final cardH = h * 0.20;
 
-    return Container(
-      height: cardH,
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-      ),
-      padding: EdgeInsets.symmetric(horizontal: w * 0.06, vertical: h * 0.018),
-      child: Column(
-        children: [
-          Text(
-            'Balance',
-            style: TextStyle(
-              color: Colors.black.withOpacity(0.85),
-              fontFamily: 'Inter',
-              fontWeight: FontWeight.w800,
-              fontSize: w * 0.040,
-            ),
+    return StreamBuilder<DocumentSnapshot>(
+      stream: FirebaseAuth.instance.currentUser != null
+          ? FirebaseFirestore.instance
+                .collection('Sign Up')
+                .doc(FirebaseAuth.instance.currentUser!.uid)
+                .snapshots()
+          : null,
+      builder: (context, snapshot) {
+        int balance = 0;
+        if (snapshot.hasData && snapshot.data!.exists) {
+          final data = snapshot.data!.data() as Map<String, dynamic>?;
+          balance = data?['amount'] ?? 0;
+        }
+
+        return Container(
+          height: cardH,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(22),
           ),
-          SizedBox(height: h * 0.006),
-          Text(
-            'UGX/DOLLARS',
-            style: TextStyle(
-              color: Colors.black,
-              fontFamily: 'AbrilFatface',
-              fontSize: w * 0.050,
-            ),
+          padding: EdgeInsets.symmetric(
+            horizontal: w * 0.06,
+            vertical: h * 0.018,
           ),
-          SizedBox(height: h * 0.014),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+          child: Column(
             children: [
-              _RoundAction(
-                w: w,
-                label: 'Deposit',
-                icon: Icons.arrow_upward_rounded,
-                active: actionMode == _ActionMode.deposit,
-                brandOrange: brandOrange,
-                onTap: () => onActionChange(
-                  actionMode == _ActionMode.deposit
-                      ? _ActionMode.none
-                      : _ActionMode.deposit,
+              RichText(
+                text: TextSpan(
+                  children: [
+                    TextSpan(
+                      text: 'Balance: UGX ',
+                      style: TextStyle(
+                        color: Colors.black.withOpacity(0.85),
+                        fontFamily: 'Inter',
+                        fontWeight: FontWeight.w800,
+                        fontSize: w * 0.040,
+                      ),
+                    ),
+                    TextSpan(
+                      text: NumberFormat('#,###').format(balance),
+                      style: TextStyle(
+                        color: brandOrange,
+                        fontFamily: 'Inter',
+                        fontWeight: FontWeight.w800,
+                        fontSize: w * 0.040,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              SizedBox(width: w * 0.12),
-              _RoundAction(
-                w: w,
-                label: 'Withdraw',
-                icon: Icons.arrow_downward_rounded,
-                active: actionMode == _ActionMode.withdraw,
-                brandOrange: brandOrange,
-                onTap: () => onActionChange(
-                  actionMode == _ActionMode.withdraw
-                      ? _ActionMode.none
-                      : _ActionMode.withdraw,
-                ),
+              SizedBox(height: h * 0.006),
+              SizedBox(height: h * 0.014),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _RoundAction(
+                    w: w,
+                    label: 'Deposit',
+                    icon: Icons.arrow_upward_rounded,
+                    active: actionMode == _ActionMode.deposit,
+                    brandOrange: brandOrange,
+                    onTap: () => onActionChange(
+                      actionMode == _ActionMode.deposit
+                          ? _ActionMode.none
+                          : _ActionMode.deposit,
+                    ),
+                  ),
+                  SizedBox(width: w * 0.12),
+                  _RoundAction(
+                    w: w,
+                    label: 'Withdraw',
+                    icon: Icons.arrow_downward_rounded,
+                    active: actionMode == _ActionMode.withdraw,
+                    brandOrange: brandOrange,
+                    onTap: () => onActionChange(
+                      actionMode == _ActionMode.withdraw
+                          ? _ActionMode.none
+                          : _ActionMode.withdraw,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
@@ -817,6 +899,10 @@ class _TxCard extends StatelessWidget {
         ? Colors.red
         : brandOrange;
 
+    final arrowIcon = item.type == _TxType.withdraw
+        ? Icons.arrow_upward_rounded
+        : Icons.arrow_downward_rounded;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -843,11 +929,7 @@ class _TxCard extends StatelessWidget {
               width: w * 0.10,
               height: w * 0.10,
               decoration: BoxDecoration(color: arrowBg, shape: BoxShape.circle),
-              child: Icon(
-                Icons.arrow_downward_rounded,
-                color: arrowColor,
-                size: w * 0.06,
-              ),
+              child: Icon(arrowIcon, color: arrowColor, size: w * 0.06),
             ),
             SizedBox(width: w * 0.03),
             Expanded(
@@ -1101,24 +1183,11 @@ class _HeaderRow extends StatelessWidget {
           ),
         ),
         SizedBox(width: w * 0.03),
-        Container(
-          width: 40,
-          height: 40,
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            shape: BoxShape.circle,
-          ),
-          child: const Icon(Icons.person, color: Colors.black),
-        ),
-        const SizedBox(width: 10),
-        Container(
-          width: 40,
-          height: 40,
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            shape: BoxShape.circle,
-          ),
-          child: const Icon(Icons.notifications, color: Colors.black),
+        const UserAvatarCircle(
+          size: 40,
+          backgroundColor: Colors.white,
+          iconColor: Colors.black,
+          borderWidth: 1.5,
         ),
       ],
     );
