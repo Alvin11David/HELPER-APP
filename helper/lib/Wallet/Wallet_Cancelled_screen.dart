@@ -1,9 +1,17 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:helper/Chats/overlays/incoming_call_overlay_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'dart:async';
+import 'package:helper/Document Upload/Profile/Support_Screen.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:helper/Components/user_avatar_circle.dart';
+import 'package:helper/Amount.dart';
 import 'Wallet_TopUp_Screen.dart';
 import 'Wallet_Withdraw_Screen.dart';
 
@@ -32,7 +40,6 @@ class _WalletFlowScreenState extends State<WalletFlowScreen> {
   void initState() {
     super.initState();
     _setupPaymentListener();
-    _checkExistingSuccessPayments();
   }
 
   @override
@@ -53,46 +60,15 @@ class _WalletFlowScreenState extends State<WalletFlowScreen> {
               if (change.type == DocumentChangeType.added ||
                   change.type == DocumentChangeType.modified) {
                 final data = change.doc.data() as Map<String, dynamic>?;
-                if (data != null &&
-                    data['status'] == 'SUCCESS' &&
-                    !data.containsKey('balanceUpdated')) {
-                  final amount = data['amount'] as int?;
-                  if (amount != null) {
-                    FirebaseFirestore.instance
-                        .collection('Sign Up')
-                        .doc(user.uid)
-                        .update({'amount': FieldValue.increment(amount)});
-                    // Mark as updated
-                    change.doc.reference.update({'balanceUpdated': true});
-                  }
+                if (data != null && data['status'] == 'SUCCESS') {
+                  AmountService.applyPaymentSuccess(
+                    paymentRef: change.doc.reference,
+                    userId: user.uid,
+                  );
                 }
               }
             }
           });
-    }
-  }
-
-  Future<void> _checkExistingSuccessPayments() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      final snapshot = await FirebaseFirestore.instance
-          .collection('Payment Data')
-          .where('userId', isEqualTo: user.uid)
-          .where('status', isEqualTo: 'SUCCESS')
-          .get();
-      for (var doc in snapshot.docs) {
-        final data = doc.data();
-        if (!data.containsKey('balanceUpdated')) {
-          final amount = data['amount'] as int?;
-          if (amount != null) {
-            await FirebaseFirestore.instance
-                .collection('Sign Up')
-                .doc(user.uid)
-                .update({'amount': FieldValue.increment(amount)});
-            await doc.reference.update({'balanceUpdated': true});
-          }
-        }
-      }
     }
   }
 
@@ -114,7 +90,128 @@ class _WalletFlowScreenState extends State<WalletFlowScreen> {
     });
   }
 
-  Future<List<_TxItem>> _fetchItems(String statusFilter) async {
+  Future<Directory?> _getReceiptDirectory() async {
+    if (Platform.isAndroid) {
+      final baseDir = await getExternalStorageDirectory();
+      if (baseDir == null) return null;
+      final receiptsDir = Directory('${baseDir.path}/receipts');
+      if (!await receiptsDir.exists()) {
+        await receiptsDir.create(recursive: true);
+      }
+      return receiptsDir;
+    }
+
+    final baseDir = await getApplicationDocumentsDirectory();
+    final receiptsDir = Directory('${baseDir.path}/receipts');
+    if (!await receiptsDir.exists()) {
+      await receiptsDir.create(recursive: true);
+    }
+    return receiptsDir;
+  }
+
+  Future<void> _downloadReceipt(_TxItem? item) async {
+    if (item == null) {
+      _toast('No transaction selected');
+      return;
+    }
+
+    try {
+      final receiptsDir = await _getReceiptDirectory();
+      if (receiptsDir == null) {
+        _toast('Unable to access storage');
+        return;
+      }
+
+      final fileName = item.txId.isNotEmpty
+          ? item.txId.replaceAll(RegExp(r'[^a-zA-Z0-9_-]'), '_')
+          : DateTime.now().millisecondsSinceEpoch.toString();
+      final file = File('${receiptsDir.path}/receipt_$fileName.pdf');
+
+      final doc = pw.Document();
+      doc.addPage(
+        pw.Page(
+          pageFormat: PdfPageFormat.a4,
+          build: (context) {
+            return pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Text(
+                  'Transaction Receipt',
+                  style: pw.TextStyle(
+                    fontSize: 22,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+                pw.SizedBox(height: 8),
+                pw.Text(
+                  'Generated: ${DateFormat('MMM dd, yyyy | hh:mm a').format(DateTime.now())}',
+                  style: const pw.TextStyle(fontSize: 10),
+                ),
+                pw.SizedBox(height: 16),
+                pw.Divider(),
+                pw.SizedBox(height: 10),
+                _receiptRow('Transaction Date', item.txDate),
+                _receiptRow('Transaction Time', item.txTime),
+                _receiptRow('Transaction ID', item.txId),
+                _receiptRow('Transfer Type', item.transferType),
+                _receiptRow('Amount', item.amount),
+                _receiptRow('From', item.from),
+                _receiptRow('To', item.to),
+                _receiptRow('Status', _statusText(item.status)),
+                pw.SizedBox(height: 12),
+                pw.Divider(),
+                pw.SizedBox(height: 8),
+                pw.Text(
+                  'Thank you for using Helper.',
+                  style: const pw.TextStyle(fontSize: 10),
+                ),
+              ],
+            );
+          },
+        ),
+      );
+
+      await file.writeAsBytes(await doc.save(), flush: true);
+      _toast('Receipt saved to ${file.path}');
+    } catch (e) {
+      _toast('Failed to download receipt');
+    }
+  }
+
+  pw.Widget _receiptRow(String label, String value) {
+    return pw.Padding(
+      padding: const pw.EdgeInsets.symmetric(vertical: 4),
+      child: pw.Row(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Expanded(
+            child: pw.Text(
+              label,
+              style: pw.TextStyle(
+                fontSize: 11,
+                fontWeight: pw.FontWeight.bold,
+              ),
+            ),
+          ),
+          pw.SizedBox(width: 12),
+          pw.Expanded(
+            child: pw.Text(
+              value,
+              style: const pw.TextStyle(fontSize: 11),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _statusText(_TxStatus s) {
+    if (s == _TxStatus.pending) return 'Pending';
+    if (s == _TxStatus.completed) return 'Completed';
+    return 'Cancelled';
+  }
+
+  Future<List<_TxItem>> _fetchPayments(String statusFilter) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return [];
     Query query = FirebaseFirestore.instance
@@ -124,15 +221,32 @@ class _WalletFlowScreenState extends State<WalletFlowScreen> {
       query = query.where('status', isEqualTo: statusFilter);
     }
     final snapshot = await query.get();
-    return snapshot.docs.map((doc) => _TxItem.fromFirestore(doc)).toList();
+    return snapshot.docs.map((doc) => _TxItem.fromPaymentDoc(doc)).toList();
+  }
+
+  Future<List<_TxItem>> _fetchWithdrawals(String statusFilter) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return [];
+    Query query = FirebaseFirestore.instance
+        .collection('Withdrawals')
+        .where('userId', isEqualTo: user.uid);
+    if (statusFilter.isNotEmpty) {
+      query = query.where('status', isEqualTo: statusFilter);
+    }
+    final snapshot = await query.get();
+    return snapshot.docs.map((doc) => _TxItem.fromWithdrawalDoc(doc)).toList();
   }
 
   Future<List<_TxItem>> get _filtered async {
     if (_statusTab == 0) {
-      return await _fetchItems('PENDING_USER_CONFIRMATION');
+      final payments = await _fetchPayments('PENDING_USER_CONFIRMATION');
+      final withdrawals = await _fetchWithdrawals('PROCESSING');
+      return [...payments, ...withdrawals];
     }
     if (_statusTab == 1) {
-      return await _fetchItems('SUCCESS');
+      final payments = await _fetchPayments('SUCCESS');
+      final withdrawals = await _fetchWithdrawals('SUCCESS');
+      return [...payments, ...withdrawals];
     }
     return [];
   }
@@ -202,10 +316,15 @@ class _WalletFlowScreenState extends State<WalletFlowScreen> {
                           h: h,
                           brandOrange: _brandOrange,
                           item: _selected,
-                          onContact: () =>
-                              _toast('Contact Support (hook later)'),
-                          onDownload: () =>
-                              _toast('Download Receipt (hook later)'),
+                          onContact: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const SupportScreen(),
+                              ),
+                            );
+                          },
+                          onDownload: () => _downloadReceipt(_selected),
                         )
                       : FutureBuilder<List<_TxItem>>(
                           future: _filtered,
@@ -305,9 +424,13 @@ class _TxItem {
     required this.to,
   });
 
-  factory _TxItem.fromFirestore(DocumentSnapshot doc) {
+  static String _formatAmount(num amount) {
+    return 'UGX ${NumberFormat('#,###').format(amount)}';
+  }
+
+  factory _TxItem.fromPaymentDoc(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
-    final statusStr = data['status'] as String;
+    final statusStr = data['status'] as String? ?? '';
     _TxStatus status;
     if (statusStr == 'PENDING_USER_CONFIRMATION') {
       status = _TxStatus.pending;
@@ -316,8 +439,8 @@ class _TxItem {
     } else {
       status = _TxStatus.cancelled;
     }
-    final amount = data['amount'] as int;
-    final reference = data['reference'] as String;
+    final amount = (data['amount'] as num?) ?? 0;
+    final reference = data['reference'] as String? ?? '';
     final createdAt = (data['createdAt'] as Timestamp).toDate();
     final dateFormat = DateFormat('MMM, dd, yyyy | hh:mm a');
     final date = dateFormat.format(createdAt);
@@ -325,47 +448,57 @@ class _TxItem {
     final txDate = txDateFormat.format(createdAt);
     final txTimeFormat = DateFormat('hh:mm a');
     final txTime = txTimeFormat.format(createdAt);
-    final type = _TxType.deposit;
-    final title = 'Deposit';
-    final transferType = 'Deposit';
-    final from = 'Mobile Money';
-    final to = 'Worker Wallet';
     return _TxItem(
-      type: type,
+      type: _TxType.deposit,
       status: status,
-      title: title,
+      title: 'Deposit',
       date: date,
-      amount:
-          'UGX ${amount.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}',
+      amount: _formatAmount(amount),
       txDate: txDate,
       txTime: txTime,
       txId: reference,
-      transferType: transferType,
-      from: from,
-      to: to,
+      transferType: 'Deposit',
+      from: 'Mobile Money',
+      to: 'Worker Wallet',
+    );
+  }
+
+  factory _TxItem.fromWithdrawalDoc(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    final statusStr = data['status'] as String? ?? '';
+    _TxStatus status;
+    if (statusStr == 'PROCESSING') {
+      status = _TxStatus.pending;
+    } else if (statusStr == 'SUCCESS') {
+      status = _TxStatus.completed;
+    } else {
+      status = _TxStatus.cancelled;
+    }
+    final amount = (data['amount'] as num?) ?? 0;
+    final reference = data['reference'] as String? ?? '';
+    final createdAt = (data['createdAt'] as Timestamp).toDate();
+    final dateFormat = DateFormat('MMM, dd, yyyy | hh:mm a');
+    final date = dateFormat.format(createdAt);
+    final txDateFormat = DateFormat('MMM dd, yyyy');
+    final txDate = txDateFormat.format(createdAt);
+    final txTimeFormat = DateFormat('hh:mm a');
+    final txTime = txTimeFormat.format(createdAt);
+    return _TxItem(
+      type: _TxType.withdraw,
+      status: status,
+      title: 'Withdraw',
+      date: date,
+      amount: _formatAmount(amount),
+      txDate: txDate,
+      txTime: txTime,
+      txId: reference,
+      transferType: 'Withdrawal',
+      from: 'Worker Wallet',
+      to: 'Mobile Money',
     );
   }
 }
 
-void showIncomingCall(BuildContext context) {
-  IncomingCallOverlayService.instance.show(
-    context: context,
-    businessName: 'Business Name',
-    subtitle: 'Incoming voice call',
-    timeText: '9:45AM',
-    avatarImage: const AssetImage(
-      'assets/images/person.png',
-    ), // or NetworkImage(...)
-    onDecline: () {
-      // TODO: send "declined" to backend
-      debugPrint('Declined');
-    },
-    onAnswer: () {
-      // TODO: navigate to call screen
-      debugPrint('Answered');
-    },
-  );
-}
 
 // ===================== MAIN WALLET =====================
 
@@ -466,7 +599,7 @@ class _BalanceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cardH = h * 0.24;
+    final cardH = h * 0.20;
 
     return StreamBuilder<DocumentSnapshot>(
       stream: FirebaseAuth.instance.currentUser != null
@@ -520,14 +653,6 @@ class _BalanceCard extends StatelessWidget {
                 ),
               ),
               SizedBox(height: h * 0.006),
-              Text(
-                'DOLLARS',
-                style: TextStyle(
-                  color: Colors.black,
-                  fontFamily: 'AbrilFatface',
-                  fontSize: w * 0.050,
-                ),
-              ),
               SizedBox(height: h * 0.014),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -774,6 +899,10 @@ class _TxCard extends StatelessWidget {
         ? Colors.red
         : brandOrange;
 
+    final arrowIcon = item.type == _TxType.withdraw
+        ? Icons.arrow_upward_rounded
+        : Icons.arrow_downward_rounded;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -800,11 +929,7 @@ class _TxCard extends StatelessWidget {
               width: w * 0.10,
               height: w * 0.10,
               decoration: BoxDecoration(color: arrowBg, shape: BoxShape.circle),
-              child: Icon(
-                Icons.arrow_downward_rounded,
-                color: arrowColor,
-                size: w * 0.06,
-              ),
+              child: Icon(arrowIcon, color: arrowColor, size: w * 0.06),
             ),
             SizedBox(width: w * 0.03),
             Expanded(
@@ -1058,24 +1183,11 @@ class _HeaderRow extends StatelessWidget {
           ),
         ),
         SizedBox(width: w * 0.03),
-        Container(
-          width: 40,
-          height: 40,
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            shape: BoxShape.circle,
-          ),
-          child: const Icon(Icons.person, color: Colors.black),
-        ),
-        const SizedBox(width: 10),
-        Container(
-          width: 40,
-          height: 40,
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            shape: BoxShape.circle,
-          ),
-          child: const Icon(Icons.notifications, color: Colors.black),
+        const UserAvatarCircle(
+          size: 40,
+          backgroundColor: Colors.white,
+          iconColor: Colors.black,
+          borderWidth: 1.5,
         ),
       ],
     );

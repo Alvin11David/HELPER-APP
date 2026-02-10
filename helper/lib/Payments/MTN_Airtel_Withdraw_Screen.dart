@@ -1,10 +1,10 @@
 import 'dart:ui';
-import 'dart:convert';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:http/http.dart' as http;
 
 class MtnAirtelWithdrawScreen extends StatefulWidget {
   final String amount;
@@ -148,37 +148,22 @@ class _MtnAirtelWithdrawScreenState extends State<MtnAirtelWithdrawScreen> {
     }
 
     try {
-      final paymentUrl =
-          'https://us-central1-helperapp-46849.cloudfunctions.net/requestWithdrawal'; // Assuming same endpoint
-
-      print('Initiating withdrawal request to $paymentUrl...');
-      final paymentResponse = await http.post(
-        Uri.parse(paymentUrl),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${await currentUser.getIdToken()}',
-        },
-        body: jsonEncode({
-          "data": {
-            'userId': currentUser.uid,
-            'msisdn': finalMsisdn,
-            'amount': int.parse(widget.amount),
-            'reference': finalReference,
-            'description': 'Wallet Withdraw',
-            'originalPhoneNumber': phoneNumber,
-            'saveCard': isChecked,
-          },
-        }),
+      final callable = FirebaseFunctions.instance.httpsCallable(
+        'requestWithdrawal',
       );
 
-      print('Withdrawal request HTTP status: ${paymentResponse.statusCode}');
-      print('Raw Response: ${paymentResponse.body}');
+      print('Initiating withdrawal request via callable function...');
+      final result = await callable.call({
+        'userId': currentUser.uid,
+        'msisdn': finalMsisdn,
+        'amount': int.parse(widget.amount),
+        'reference': finalReference,
+        'description': 'Wallet Withdraw',
+      });
 
-      final fullResponseBody = jsonDecode(paymentResponse.body);
-      final paymentData = fullResponseBody['result'] ?? fullResponseBody;
+      final paymentData = result.data as Map<String, dynamic>?;
 
-      if (paymentResponse.statusCode == 200 &&
-          (paymentData['success'] == true)) {
+      if (paymentData?['success'] == true) {
         print('SUCCESS: Prompt sent to $finalMsisdn');
         if (isChecked) {
           await _savePhoneNumber(phoneNumber);
@@ -197,10 +182,18 @@ class _MtnAirtelWithdrawScreenState extends State<MtnAirtelWithdrawScreen> {
         });
         _listenForPaymentStatus(finalReference);
       } else {
-        String msg = paymentData['message'] ?? 'Invalid response from server';
+        String msg = paymentData?['message'] ?? 'Invalid response from server';
         print('FAILED: $msg');
         throw Exception(msg);
       }
+    } on FirebaseFunctionsException catch (e) {
+      print('CRITICAL ERROR: ${e.message}');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: ${e.message ?? 'Withdrawal failed'}'),
+          backgroundColor: Colors.red,
+        ),
+      );
     } catch (e) {
       print('CRITICAL ERROR: $e');
       ScaffoldMessenger.of(context).showSnackBar(
@@ -215,7 +208,7 @@ class _MtnAirtelWithdrawScreenState extends State<MtnAirtelWithdrawScreen> {
 
   void _listenForPaymentStatus(String reference) {
     FirebaseFirestore.instance
-        .collection('Payment Data')
+        .collection('Withdrawals')
         .where('reference', isEqualTo: reference)
         .snapshots()
         .listen((querySnapshot) {
@@ -228,15 +221,6 @@ class _MtnAirtelWithdrawScreenState extends State<MtnAirtelWithdrawScreen> {
               setState(() {
                 _isPaymentSuccessful = true;
               });
-              // Deduct from balance
-              final User? currentUser = FirebaseAuth.instance.currentUser;
-              if (currentUser != null) {
-                final amount = int.parse(widget.amount);
-                FirebaseFirestore.instance
-                    .collection('Sign Up')
-                    .doc(currentUser.uid)
-                    .update({'amount': FieldValue.increment(-amount)});
-              }
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('Withdrawal completed successfully!'),
@@ -283,393 +267,405 @@ class _MtnAirtelWithdrawScreenState extends State<MtnAirtelWithdrawScreen> {
             ),
 
           SafeArea(
-            child: Container(
-              decoration: const BoxDecoration(
-                image: DecorationImage(
-                  image: AssetImage('assets/background/normalscreenbg.png'),
-                  fit: BoxFit.cover,
-                ),
-              ),
-              child: Stack(
-                children: [
-                  Positioned(
-                    top: screenHeight * 0.04,
-                    left: screenWidth * 0.04,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        GestureDetector(
-                          onTap: () => Navigator.of(context).maybePop(),
-                          child: Container(
-                            width: screenWidth * 0.13,
-                            height: screenWidth * 0.13,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFFFFFFF),
-                              borderRadius: BorderRadius.circular(15),
-                            ),
-                            child: Center(
-                              child: Icon(
-                                Icons.chevron_left,
-                                color: Colors.black,
-                                size: screenWidth * 0.10,
-                              ),
-                            ),
-                          ),
-                        ),
-                        SizedBox(width: screenWidth * 0.06),
-                        Text(
-                          'Payment Method',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: screenWidth * 0.07,
-                            fontWeight: FontWeight.bold,
-                            fontFamily: 'Montserrat',
-                          ),
-                        ),
-                      ],
+            child: SingleChildScrollView(
+              child: SizedBox(
+                height: screenHeight * 1.2,
+                child: Container(
+                  decoration: const BoxDecoration(
+                    image: DecorationImage(
+                      image: AssetImage('assets/background/normalscreenbg.png'),
+                      fit: BoxFit.cover,
                     ),
                   ),
-                  Positioned(
-                    top: screenHeight * 0.14,
-                    left: screenWidth * 0.04,
-                    child: Container(
-                      width: screenWidth * 0.92,
-                      height: screenWidth * 0.92 * (148 / 340),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(30),
-                        gradient: LinearGradient(
-                          begin: Alignment.centerLeft,
-                          end: Alignment.centerRight,
-                          colors: widget.type == 'MTN'
-                              ? [
-                                  const Color(0xFFFFCB05),
-                                  const Color(0xFFFFFFFF),
-                                ]
-                              : [
-                                  const Color(0xFFD40000),
-                                  const Color(0xFFFFFFFF),
-                                ],
-                          stops: [0.73, 1.2],
-                        ),
-                      ),
-                      child: Stack(
-                        clipBehavior: Clip.none,
-                        children: [
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Container(
-                                decoration: BoxDecoration(
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.25),
-                                      blurRadius: 12,
-                                      spreadRadius: 1,
-                                      offset: Offset(0, 6),
-                                    ),
-                                  ],
-                                ),
-                                child: Image.asset(
-                                  widget.type == 'MTN'
-                                      ? 'assets/images/mtn.png'
-                                      : 'assets/images/airtel.png',
-                                  width: screenWidth * 0.15,
-                                  fit: BoxFit.contain,
-                                ),
-                              ),
-                              SizedBox(width: screenWidth * 0.04),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  SizedBox(height: screenHeight * 0.002),
-                                  Text(
-                                    widget.type,
-                                    style: TextStyle(
-                                      color: Colors.black,
-                                      fontSize: screenWidth * 0.055,
-                                      fontWeight: FontWeight.bold,
-                                      fontFamily: 'Montserrat',
-                                    ),
-                                  ),
-                                  SizedBox(height: screenHeight * 0.00),
-                                  Text(
-                                    'Amount',
-                                    style: TextStyle(
-                                      color: Colors.black,
-                                      fontSize: screenWidth * 0.045,
-                                      fontWeight: FontWeight.w900,
-                                      fontFamily: 'Montserrat',
-                                    ),
-                                  ),
-                                  SizedBox(height: screenHeight * 0.005),
-                                  Text(
-                                    'UGX ${NumberFormat('#,###').format(int.parse(widget.amount))}',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: screenWidth * 0.07,
-                                      fontWeight: FontWeight.w500,
-                                      fontFamily: 'AbrilFatface',
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-
-                          Align(
-                            alignment: Alignment.bottomRight,
-                            child: Padding(
-                              padding: EdgeInsets.only(
-                                bottom: screenWidth * 0.04,
-                                right: screenWidth * 0.04,
-                              ),
-                              child: Container(
-                                width: screenWidth * (94 / 340),
-                                height: screenWidth * (40 / 340),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(30),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.10),
-                                      blurRadius: 6,
-                                      spreadRadius: 1,
-                                      offset: Offset(0, 2),
-                                    ),
-                                  ],
-                                ),
-                                alignment: Alignment.center,
-                                child: Text(
-                                  'Not Paid', // Change this to 'Not Paid', 'Pending', etc. as needed
-                                  style: TextStyle(
-                                    color: Colors.black,
-                                    fontSize: screenWidth * 0.035,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  // Add Card Number input section below the rectangle
-                  Positioned(
-                    top:
-                        screenHeight * 0.14 +
-                        screenWidth * 0.92 * (148 / 340) +
-                        screenHeight * 0.03,
-                    left: screenWidth * 0.04,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Add Card Holder Name input section below the Card Number field
-                        SizedBox(height: screenHeight * 0.02),
-                        Text(
-                          'Phone Number',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontFamily: 'PlayfairDisplay',
-                            fontSize: screenWidth * 0.04,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        SizedBox(height: screenHeight * 0.012),
-                        Container(
-                          width: screenWidth * (347 / 375),
-                          height: 35,
-                          padding: EdgeInsets.symmetric(
-                            horizontal: screenWidth * 0.04,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(30),
-                            border: Border.all(
-                              color: Colors.white.withOpacity(0.4),
-                              width: 1,
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: TextField(
-                                  style: TextStyle(
-                                    color: Colors.black,
-                                    fontSize: screenWidth * 0.04,
-                                    fontFamily: 'Inter',
-                                    fontWeight: FontWeight.w900,
-                                  ),
-                                  decoration: InputDecoration(
-                                    hintText:
-                                        'Enter Your ${widget.type} Number',
-                                    hintStyle: TextStyle(
-                                      color: Colors.black54,
-                                      fontSize: screenWidth * 0.04,
-                                      fontFamily: 'Inter',
-                                      fontWeight: FontWeight.w900,
-                                    ),
-                                    border: InputBorder.none,
-                                    isCollapsed: true,
-                                    contentPadding: EdgeInsets.zero,
-                                  ),
-                                  cursorColor: Colors.black,
-                                ),
-                              ),
-                              SizedBox(width: screenWidth * 0.02),
-                              Icon(
-                                Icons.phone,
-                                color: widget.type == 'MTN'
-                                    ? Colors.yellow
-                                    : Colors.red,
-                                size: 24,
-                              ),
-                            ],
-                          ),
-                        ),
-                        // Add Save Card for Future checkbox below the Expires On row
-                        SizedBox(height: screenHeight * 0.04),
-                        Row(
+                  child: Stack(
+                    children: [
+                      Positioned(
+                        top: screenHeight * 0.04,
+                        left: screenWidth * 0.04,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             GestureDetector(
-                              onTap: () {
-                                setState(() {
-                                  isChecked = !isChecked;
-                                });
-                              },
+                              onTap: () => Navigator.of(context).maybePop(),
                               child: Container(
-                                width: screenWidth * 0.05,
-                                height: screenWidth * 0.05,
+                                width: screenWidth * 0.13,
+                                height: screenWidth * 0.13,
                                 decoration: BoxDecoration(
-                                  color: isChecked
-                                      ? Colors.white
-                                      : Colors.transparent,
-                                  border: Border.all(
-                                    color: Colors.white,
-                                    width: 2,
-                                  ),
-                                  borderRadius: BorderRadius.circular(5),
+                                  color: const Color(0xFFFFFFFF),
+                                  borderRadius: BorderRadius.circular(15),
                                 ),
-                                child: isChecked
-                                    ? Icon(
-                                        Icons.check,
-                                        color: Colors.black,
-                                        size: screenWidth * 0.03,
-                                      )
-                                    : null,
+                                child: Center(
+                                  child: Icon(
+                                    Icons.chevron_left,
+                                    color: Colors.black,
+                                    size: screenWidth * 0.10,
+                                  ),
+                                ),
                               ),
                             ),
-                            SizedBox(width: screenWidth * 0.03),
+                            SizedBox(width: screenWidth * 0.06),
                             Text(
-                              'Save card for future',
+                              'Payment Method',
                               style: TextStyle(
                                 color: Colors.white,
-                                fontFamily: 'PlayfairDisplay',
-                                fontSize: screenWidth * 0.04,
-                                fontWeight: FontWeight.w500,
+                                fontSize: screenWidth * 0.07,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'Montserrat',
                               ),
                             ),
                           ],
                         ),
-                        SizedBox(height: screenHeight * 0.05),
-                        GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              _isDimming = true; // Trigger the dimming effect
-                              _showOverlay =
-                                  true; // Show the overlay permanently
-                            });
-                          },
-                          child: Container(
-                            width: screenWidth * 0.93,
-                            height: screenHeight * 0.07,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(30),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  'Pay',
-                                  style: TextStyle(
-                                    color: Colors.black,
-                                    fontSize: screenWidth * 0.06,
-                                    fontWeight: FontWeight.bold,
-                                    fontFamily: 'PlayfairDisplay',
-                                  ),
-                                ),
-                                SizedBox(width: screenWidth * 0.02),
-                                Icon(
-                                  Icons.account_balance_wallet,
-                                  color: Colors.black,
-                                  size: screenWidth * 0.06,
-                                ),
-                              ],
+                      ),
+                      Positioned(
+                        top: screenHeight * 0.14,
+                        left: screenWidth * 0.04,
+                        child: Container(
+                          width: screenWidth * 0.92,
+                          height: screenWidth * 0.92 * (148 / 340),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(30),
+                            gradient: LinearGradient(
+                              begin: Alignment.centerLeft,
+                              end: Alignment.centerRight,
+                              colors: widget.type == 'MTN'
+                                  ? [
+                                      const Color(0xFFFFCB05),
+                                      const Color(0xFFFFFFFF),
+                                    ]
+                                  : [
+                                      const Color(0xFFD40000),
+                                      const Color(0xFFFFFFFF),
+                                    ],
+                              stops: [0.73, 1.2],
                             ),
                           ),
-                        ),
-                        SizedBox(height: screenHeight * 0.01),
-                      ],
-                    ),
-                  ),
-                  Positioned(
-                    bottom: screenHeight * 0.03,
-                    left: screenWidth * 0.05,
-                    right: screenWidth * 0.05,
-                    child: Center(
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(30),
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                          child: Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: screenWidth * 0.06,
-                              vertical: screenHeight * 0.010,
-                            ),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                colors: [
-                                  Colors.white.withOpacity(0.25),
-                                  Colors.white.withOpacity(0.15),
+                          child: Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.25),
+                                          blurRadius: 12,
+                                          spreadRadius: 1,
+                                          offset: Offset(0, 6),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Image.asset(
+                                      widget.type == 'MTN'
+                                          ? 'assets/images/mtn.png'
+                                          : 'assets/images/airtel.png',
+                                      width: screenWidth * 0.15,
+                                      fit: BoxFit.contain,
+                                    ),
+                                  ),
+                                  SizedBox(width: screenWidth * 0.04),
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      SizedBox(height: screenHeight * 0.002),
+                                      Text(
+                                        widget.type,
+                                        style: TextStyle(
+                                          color: Colors.black,
+                                          fontSize: screenWidth * 0.055,
+                                          fontWeight: FontWeight.bold,
+                                          fontFamily: 'Montserrat',
+                                        ),
+                                      ),
+                                      SizedBox(height: screenHeight * 0.00),
+                                      Text(
+                                        'Amount',
+                                        style: TextStyle(
+                                          color: Colors.black,
+                                          fontSize: screenWidth * 0.045,
+                                          fontWeight: FontWeight.w900,
+                                          fontFamily: 'Montserrat',
+                                        ),
+                                      ),
+                                      SizedBox(height: screenHeight * 0.005),
+                                      Text(
+                                        'UGX ${NumberFormat('#,###').format(int.parse(widget.amount))}',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: screenWidth * 0.07,
+                                          fontWeight: FontWeight.w500,
+                                          fontFamily: 'AbrilFatface',
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ],
                               ),
-                              borderRadius: BorderRadius.circular(30),
-                              border: Border.all(
-                                color: Colors.white.withOpacity(0.4),
-                                width: 2,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.white.withOpacity(0.1),
-                                  blurRadius: 15,
-                                  spreadRadius: 2,
+
+                              Align(
+                                alignment: Alignment.bottomRight,
+                                child: Padding(
+                                  padding: EdgeInsets.only(
+                                    bottom: screenWidth * 0.04,
+                                    right: screenWidth * 0.04,
+                                  ),
+                                  child: Container(
+                                    width: screenWidth * (94 / 340),
+                                    height: screenWidth * (40 / 340),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(30),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.10),
+                                          blurRadius: 6,
+                                          spreadRadius: 1,
+                                          offset: Offset(0, 2),
+                                        ),
+                                      ],
+                                    ),
+                                    alignment: Alignment.center,
+                                    child: Text(
+                                      'Not Paid', // Change this to 'Not Paid', 'Pending', etc. as needed
+                                      style: TextStyle(
+                                        color: Colors.black,
+                                        fontSize: screenWidth * 0.035,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
                                 ),
-                              ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      // Add Card Number input section below the rectangle
+                      Positioned(
+                        top:
+                            screenHeight * 0.14 +
+                            screenWidth * 0.92 * (148 / 340) +
+                            screenHeight * 0.03,
+                        left: screenWidth * 0.04,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Add Card Holder Name input section below the Card Number field
+                            SizedBox(height: screenHeight * 0.02),
+                            Text(
+                              'Phone Number',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontFamily: 'PlayfairDisplay',
+                                fontSize: screenWidth * 0.04,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
+                            SizedBox(height: screenHeight * 0.012),
+                            Container(
+                              width: screenWidth * (347 / 375),
+                              height: 35,
+                              padding: EdgeInsets.symmetric(
+                                horizontal: screenWidth * 0.04,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(30),
+                                border: Border.all(
+                                  color: Colors.white.withOpacity(0.4),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: TextField(
+                                      controller: _cardNumberController,
+                                      style: TextStyle(
+                                        color: Colors.black,
+                                        fontSize: screenWidth * 0.04,
+                                        fontFamily: 'Inter',
+                                        fontWeight: FontWeight.w900,
+                                      ),
+                                      decoration: InputDecoration(
+                                        hintText:
+                                            'Enter Your ${widget.type} Number',
+                                        hintStyle: TextStyle(
+                                          color: Colors.black54,
+                                          fontSize: screenWidth * 0.04,
+                                          fontFamily: 'Inter',
+                                          fontWeight: FontWeight.w900,
+                                        ),
+                                        border: InputBorder.none,
+                                        isCollapsed: true,
+                                        contentPadding: EdgeInsets.zero,
+                                      ),
+                                      cursorColor: Colors.black,
+                                    ),
+                                  ),
+                                  SizedBox(width: screenWidth * 0.02),
+                                  Icon(
+                                    Icons.phone,
+                                    color: widget.type == 'MTN'
+                                        ? Colors.yellow
+                                        : Colors.red,
+                                    size: 24,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            // Add Save Card for Future checkbox below the Expires On row
+                            SizedBox(height: screenHeight * 0.04),
+                            Row(
                               children: [
-                                SizedBox(width: screenWidth * 0.02),
+                                GestureDetector(
+                                  onTap: () {
+                                    setState(() {
+                                      isChecked = !isChecked;
+                                    });
+                                  },
+                                  child: Container(
+                                    width: screenWidth * 0.05,
+                                    height: screenWidth * 0.05,
+                                    decoration: BoxDecoration(
+                                      color: isChecked
+                                          ? Colors.white
+                                          : Colors.transparent,
+                                      border: Border.all(
+                                        color: Colors.white,
+                                        width: 2,
+                                      ),
+                                      borderRadius: BorderRadius.circular(5),
+                                    ),
+                                    child: isChecked
+                                        ? Icon(
+                                            Icons.check,
+                                            color: Colors.black,
+                                            size: screenWidth * 0.03,
+                                          )
+                                        : null,
+                                  ),
+                                ),
+                                SizedBox(width: screenWidth * 0.03),
                                 Text(
-                                  'Instant Confirmation',
+                                  'Save card for future',
                                   style: TextStyle(
                                     color: Colors.white,
-                                    fontSize: screenWidth * 0.033,
+                                    fontFamily: 'PlayfairDisplay',
+                                    fontSize: screenWidth * 0.04,
                                     fontWeight: FontWeight.w500,
-                                    fontFamily: 'Poppins',
                                   ),
                                 ),
                               ],
+                            ),
+                            SizedBox(height: screenHeight * 0.05),
+                            GestureDetector(
+                              onTap: _isLoading ? null : _processPayment,
+                              child: Container(
+                                width: screenWidth * 0.93,
+                                height: screenHeight * 0.07,
+                                decoration: BoxDecoration(
+                                  color: _isLoading
+                                      ? Colors.grey
+                                      : Colors.white,
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: _isLoading
+                                      ? [
+                                          CircularProgressIndicator(
+                                            valueColor:
+                                                AlwaysStoppedAnimation<Color>(
+                                                  Colors.black,
+                                                ),
+                                          ),
+                                        ]
+                                      : [
+                                          Text(
+                                            'Pay',
+                                            style: TextStyle(
+                                              color: Colors.black,
+                                              fontSize: screenWidth * 0.06,
+                                              fontWeight: FontWeight.bold,
+                                              fontFamily: 'PlayfairDisplay',
+                                            ),
+                                          ),
+                                          SizedBox(width: screenWidth * 0.02),
+                                          Icon(
+                                            Icons.account_balance_wallet,
+                                            color: Colors.black,
+                                            size: screenWidth * 0.06,
+                                          ),
+                                        ],
+                                ),
+                              ),
+                            ),
+                            SizedBox(height: screenHeight * 0.01),
+                          ],
+                        ),
+                      ),
+                      Positioned(
+                        bottom: screenHeight * 0.03,
+                        left: screenWidth * 0.05,
+                        right: screenWidth * 0.05,
+                        child: Center(
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(30),
+                            child: BackdropFilter(
+                              filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                              child: Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: screenWidth * 0.06,
+                                  vertical: screenHeight * 0.010,
+                                ),
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [
+                                      Colors.white.withOpacity(0.25),
+                                      Colors.white.withOpacity(0.15),
+                                    ],
+                                  ),
+                                  borderRadius: BorderRadius.circular(30),
+                                  border: Border.all(
+                                    color: Colors.white.withOpacity(0.4),
+                                    width: 2,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.white.withOpacity(0.1),
+                                      blurRadius: 15,
+                                      spreadRadius: 2,
+                                    ),
+                                  ],
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    SizedBox(width: screenWidth * 0.02),
+                                    Text(
+                                      'Instant Confirmation',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: screenWidth * 0.033,
+                                        fontWeight: FontWeight.w500,
+                                        fontFamily: 'Poppins',
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ),

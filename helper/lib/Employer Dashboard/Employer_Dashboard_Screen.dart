@@ -9,6 +9,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:helper/Employer%20Dashboard/Employer_Notifications.dart';
 import 'package:helper/Payments/Airtel_Payment_Method_Screen.dart';
 import 'package:helper/Payments/MTN_Payment_Method_Screen.dart';
+import 'package:helper/Payments/Registration_Payment_Screen.dart';
 import 'package:intl/intl.dart';
 import 'package:helper/Components/User_Name.dart';
 import 'package:helper/Components/Side_Bar.dart';
@@ -1439,7 +1440,7 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                               context,
                               MaterialPageRoute(
                                 builder: (context) =>
-                                    const MtnPaymentMethodScreen(),
+                                    const RegistrationPaymentScreen(),
                               ),
                             );
                           },
