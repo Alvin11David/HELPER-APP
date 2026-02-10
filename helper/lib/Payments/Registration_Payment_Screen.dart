@@ -1,10 +1,16 @@
-import 'package:flutter/material.dart';
-import 'package:helper/Intro/Role_Selection_Screen.dart';
+import 'dart:convert';
 import 'dart:ui';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import 'Visa_Payment_Method_Screen.dart';
 import 'MTN_Payment_Method_Screen.dart';
 import 'Airtel_Payment_Method_Screen.dart';
 import 'PayPal_Payment_Method_Screen.dart';
+import 'package:helper/Document Upload/Select_Worker_Type_Screen.dart';
+import 'package:http/http.dart' as http;
+import 'package:url_launcher/url_launcher.dart';
 
 class RegistrationPaymentScreen extends StatefulWidget {
   const RegistrationPaymentScreen({super.key});
@@ -20,6 +26,70 @@ class _RegistrationPaymentScreenState extends State<RegistrationPaymentScreen> {
   final bool _isMtnCardSelected = false;
   final bool _isPaypalSelected = false;
   final bool _isAirtelCardSelected = false;
+  bool _isLoading = false;
+
+  Future<void> _handleMasterCardPayment() async {
+    setState(() => _isLoading = true);
+
+    final user = FirebaseAuth.instance.currentUser;
+    final String reference = 'MC_${DateTime.now().millisecondsSinceEpoch}';
+
+    try {
+      final response = await http.post(
+        Uri.parse(
+          'https://us-central1-helperapp-46849.cloudfunctions.net/requestCardSession',
+        ),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'userId': user?.uid,
+          'amount': 25000,
+          'reference': reference,
+          'description': 'Helper App Registration',
+        }),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (data['success'] == true) {
+        final String paymentUrl = data['payment_url'];
+        if (await canLaunchUrl(Uri.parse(paymentUrl))) {
+          await launchUrl(
+            Uri.parse(paymentUrl),
+            mode: LaunchMode.externalApplication,
+          );
+
+          _listenForCompletion(reference);
+        }
+      } else {
+        throw Exception(data['message'] ?? 'Payment initiation failed');
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  void _listenForCompletion(String reference) {
+    FirebaseFirestore.instance
+        .collection('Payment Data')
+        .doc(reference)
+        .snapshots()
+        .listen((snapshot) {
+          if (snapshot.exists && snapshot.data()?['status'] == 'COMPLETED') {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const SelectWorkerTypeScreen(),
+              ),
+            );
+          }
+        });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,8 +105,11 @@ class _RegistrationPaymentScreenState extends State<RegistrationPaymentScreen> {
               fit: BoxFit.cover,
             ),
           ),
-          child: Stack(
-            children: [
+          child: SingleChildScrollView(
+            child: SizedBox(
+              height: screenHeight * 1.2,
+              child: Stack(
+                children: [
               Positioned(
                 top: screenHeight * 0.04,
                 left: screenWidth * 0.04,
@@ -219,14 +292,7 @@ class _RegistrationPaymentScreenState extends State<RegistrationPaymentScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     GestureDetector(
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                const RoleSelectionScreen(),
-                          ),
-                        );
-                      },
+                      onTap: _isLoading ? null : _handleMasterCardPayment,
                       child: Container(
                         width: screenWidth * 0.91,
                         height: screenHeight * 0.091,
@@ -605,7 +671,9 @@ class _RegistrationPaymentScreenState extends State<RegistrationPaymentScreen> {
                   ),
                 ),
               ),
-            ],
+                ],
+              ),
+            ),
           ),
         ),
       ),

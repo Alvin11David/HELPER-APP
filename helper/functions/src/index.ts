@@ -1143,7 +1143,7 @@ export const requestWithdrawal = onCall(async (request) => {
 
     const userData = userDoc.data();
     // CHANGED: Use 'amount' instead of 'balance'
-    const currentUserFunds = userData?.amount || 0; 
+    const currentUserFunds = userData?.amount || 0;
 
     if (currentUserFunds < amount) {
       throw new HttpsError(
@@ -1227,7 +1227,6 @@ export const requestWithdrawal = onCall(async (request) => {
     throw new HttpsError("internal", `Withdrawal Failed: ${errorMessage}`);
   }
 });
-
 
 // Function to send review notification to worker (manual)
 export const sendReviewNotificationManually = onCall(async (request) => {
@@ -1383,5 +1382,192 @@ export const paymentWebhook = onRequest(async (req, res) => {
   } catch (error) {
     logger.error("Webhook processing failed:", error);
     res.status(500).send("Internal Server Error");
+  }
+});
+
+export const masterWebhook = onRequest({ cors: true }, async (req, res) => {
+  try {
+    // 1. Handshake for Relworx Dashboard validation
+    if (req.method === "GET") {
+      res.status(200).send("Webhook active");
+      return;
+    }
+
+    if (req.method !== "POST") {
+      res.status(405).send("Method Not Allowed");
+      return;
+    }
+
+    const {
+      status,
+      message,
+      internal_reference,
+      reference, // This is the 'finalReference' we created in our functions
+      completed_at,
+    } = req.body;
+
+    if (!internal_reference) {
+      logger.error("Webhook Error: No internal_reference found in payload");
+      res.status(400).send("Missing internal_reference");
+      return;
+    }
+
+    logger.info(
+      `Master Webhook: Ref ${internal_reference} | Status: ${status}`,
+    );
+
+    // 2. SEARCH: Look for the transaction in both collections
+    const collections = ["Payment Data", "Withdrawals"];
+    let targetDoc: admin.firestore.QueryDocumentSnapshot | null = null;
+    let foundIn = "";
+
+    for (const col of collections) {
+      const querySnapshot = await admin
+        .firestore()
+        .collection(col)
+        .where("reference", "==", reference)
+        .limit(1)
+        .get();
+
+      if (!querySnapshot.empty) {
+        targetDoc = querySnapshot.docs[0];
+        foundIn = col;
+        break;
+      }
+    }
+
+    if (!targetDoc) {
+      logger.warn(
+        `Webhook received for unknown transaction reference: ${reference}`,
+      );
+      res.status(200).send("OK"); // Respond 200 so Relworx stops retrying
+      return;
+    }
+
+    const docRef = targetDoc.ref;
+    const transData = targetDoc.data();
+    const normalizedStatus = status.toLowerCase();
+
+    // 3. UPDATE: Update the transaction record with the final status
+    await docRef.update({
+      status: status.toUpperCase(), // e.g., SUCCESS or FAILED
+      relworx_internal_ref: internal_reference,
+      relworx_final_message: message,
+      completedAt: completed_at
+        ? admin.firestore.Timestamp.fromDate(new Date(completed_at))
+        : null,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      raw_webhook_payload: req.body,
+    });
+
+    // 4. LOGIC: Handle DEPOSIT Success (Add money to user balance)
+    if (foundIn === "Payment Data" && normalizedStatus === "success") {
+      const depositAmount = Math.round(Number(transData.amount));
+      await admin
+        .firestore()
+        .collection("Sign Up")
+        .doc(transData.userId)
+        .update({
+          amount: admin.firestore.FieldValue.increment(depositAmount),
+        });
+      logger.info(
+        `DEPOSIT SUCCESS: Added ${depositAmount} to user ${transData.userId}`,
+      );
+    }
+
+    // 5. LOGIC: Handle WITHDRAWAL Failure (Refund money back to user)
+    if (foundIn === "Withdrawals" && normalizedStatus === "failed") {
+      const refundAmount = Math.round(Number(transData.amount));
+      await admin
+        .firestore()
+        .collection("Sign Up")
+        .doc(transData.userId)
+        .update({
+          amount: admin.firestore.FieldValue.increment(refundAmount),
+        });
+      logger.info(
+        `WITHDRAWAL FAILED: Refunded ${refundAmount} to user ${transData.userId}`,
+      );
+    }
+
+    res.status(200).send("OK");
+  } catch (error) {
+    logger.error("Master Webhook processing failed:", error);
+    res.status(500).send("Internal Server Error");
+  }
+});
+
+//function for mastercard session request
+export const requestCardSession = onRequest(async (req, res) => {
+  // Only allow POST requests
+  if (req.method !== "POST") {
+    res.status(405).send("Method Not Allowed");
+    return;
+  }
+
+  logger.info("DEBUG: Card Session Request started", {
+    userId: req.body.userId,
+  });
+
+  try {
+    const { userId, amount, reference, description } = req.body;
+
+    // 1. Validation
+    if (!userId || !amount || !reference) {
+      res
+        .status(400)
+        .send({ success: false, message: "Missing required fields." });
+      return;
+    }
+
+    // 2. Relworx Configuration
+    const apiUrl = `${process.env.RELWORX_BASE_URL}/visa/request-session`;
+    const finalReference =
+      reference.toString().length < 8
+        ? `CARD-TXN-${reference}`.padEnd(10, "0")
+        : reference.toString().substring(0, 36);
+
+    const requestData = {
+      account_no: process.env.RELWORX_ACCOUNT_NO,
+      reference: finalReference,
+      currency: "UGX",
+      amount: Math.round(Number(amount)),
+      description: description || "Registration Fee Payment",
+    };
+
+    // 3. API Call to Relworx
+    const response = await axios.post(apiUrl, requestData, {
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/vnd.relworx.v2",
+        Authorization: `Bearer ${process.env.RELWORX_API_KEY}`,
+      },
+    });
+
+    const responseData = response.data as { payment_url?: string };
+
+    // 4. Save Record to Firestore
+    await admin.firestore().collection("Payment Data").doc(finalReference).set({
+      userId: userId,
+      amount: requestData.amount,
+      reference: finalReference,
+      status: "PENDING",
+      type: "CARD",
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    res.status(200).send({
+      success: true,
+      payment_url: responseData.payment_url,
+    });
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+    const responseData =
+      error && typeof error === "object" && "response" in error
+        ? (error as any).response?.data
+        : null;
+    logger.error("Card Session Error:", responseData || errorMessage);
+    res.status(500).send({ success: false, message: "Internal Server Error" });
   }
 });
