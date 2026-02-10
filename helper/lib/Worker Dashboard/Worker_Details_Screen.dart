@@ -846,6 +846,25 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                                                     FieldValue.serverTimestamp(),
                                               });
 
+                                          final workerUid =
+                                              (widget.data?['workerUid'] ?? '')
+                                                  .toString();
+                                          if (workerUid.isNotEmpty) {
+                                            await FirebaseFirestore.instance
+                                                .collection('workerNotifications')
+                                                .add({
+                                              'workerId': workerUid,
+                                              'title': 'New review',
+                                              'message':
+                                                  '$reviewerName left a review for your service.',
+                                              'type': 'review_received',
+                                              'serviceProviderId': providerId,
+                                              'read': false,
+                                              'timestamp':
+                                                  FieldValue.serverTimestamp(),
+                                            });
+                                          }
+
                                           // Add notification to Support Issues
                                           await FirebaseFirestore.instance
                                               .collection('Support Issues')

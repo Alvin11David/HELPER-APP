@@ -568,6 +568,16 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
         'workerAcceptedBy': workerId,
       });
 
+      await FirebaseFirestore.instance.collection('workerNotifications').add({
+        'workerId': workerId,
+        'title': 'Booking accepted',
+        'message': 'You accepted a booking request.',
+        'type': 'booking_accepted',
+        'bookingId': bookingId,
+        'read': false,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -587,6 +597,7 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
   }
 
   Future<void> _declinePendingBooking(String bookingId) async {
+    final workerId = FirebaseAuth.instance.currentUser?.uid;
     try {
       await FirebaseFirestore.instance
           .collection('bookings')
@@ -595,6 +606,18 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
         'status': 'cancelled',
         'updatedAt': FieldValue.serverTimestamp(),
       });
+
+      if (workerId != null) {
+        await FirebaseFirestore.instance.collection('workerNotifications').add({
+          'workerId': workerId,
+          'title': 'Booking declined',
+          'message': 'You declined a booking request.',
+          'type': 'booking_declined',
+          'bookingId': bookingId,
+          'read': false,
+          'timestamp': FieldValue.serverTimestamp(),
+        });
+      }
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

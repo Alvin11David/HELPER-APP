@@ -585,6 +585,20 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
 
       await bookingRef.set(bookingData);
 
+      await FirebaseFirestore.instance.collection('workerNotifications').add({
+        'workerId': workerUid,
+        'title': 'New booking request',
+        'message':
+          '$employerName requested ${_jobCategoryName ?? 'a job'} at ${_jobLocationText ?? 'your location'}.',
+        'type': 'booking_request',
+        'bookingId': bookingId,
+        'serviceProviderId': providerId,
+        'jobCategoryId': _jobCategoryId ?? '',
+        'jobCategoryName': _jobCategoryName ?? '',
+        'read': false,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+
       _toast("Booking request sent!");
 
       // ✅ go back to employer dashboard

@@ -184,6 +184,22 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                     'status': 'confirmed', // revert back
                     'updatedAt': FieldValue.serverTimestamp(),
                   });
+              final workerUid = (b['workerUid'] ?? '').toString();
+              final employerName = (b['employerName'] ?? 'Employer').toString();
+              if (workerUid.isNotEmpty) {
+                await FirebaseFirestore.instance
+                    .collection('workerNotifications')
+                    .add({
+                  'workerId': workerUid,
+                  'title': 'Reschedule declined',
+                  'message':
+                      '$employerName declined your reschedule request.',
+                  'type': 'reschedule_declined',
+                  'bookingId': bookingId,
+                  'read': false,
+                  'timestamp': FieldValue.serverTimestamp(),
+                });
+              }
               await FirebaseFirestore.instance
                   .collection('notifications')
                   .doc(notifId)
@@ -207,6 +223,22 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                     'status': 'confirmed',
                     'updatedAt': FieldValue.serverTimestamp(),
                   });
+              final workerUid = (b['workerUid'] ?? '').toString();
+              final employerName = (b['employerName'] ?? 'Employer').toString();
+              if (workerUid.isNotEmpty) {
+                await FirebaseFirestore.instance
+                    .collection('workerNotifications')
+                    .add({
+                  'workerId': workerUid,
+                  'title': 'Reschedule accepted',
+                  'message':
+                      '$employerName accepted your reschedule request.',
+                  'type': 'reschedule_accepted',
+                  'bookingId': bookingId,
+                  'read': false,
+                  'timestamp': FieldValue.serverTimestamp(),
+                });
+              }
               await FirebaseFirestore.instance
                   .collection('notifications')
                   .doc(notifId)

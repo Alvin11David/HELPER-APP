@@ -116,6 +116,24 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
     );
   }
 
+  Future<void> _addWorkerNotification({
+    required String workerId,
+    required String title,
+    required String message,
+    required String type,
+    String? bookingId,
+  }) async {
+    await FirebaseFirestore.instance.collection('workerNotifications').add({
+      'workerId': workerId,
+      'title': title,
+      'message': message,
+      'type': type,
+      if (bookingId != null) 'bookingId': bookingId,
+      'read': false,
+      'timestamp': FieldValue.serverTimestamp(),
+    });
+  }
+
   // ---------------------- Booking helpers ----------------------
 
   void _openBookingDetails({
@@ -225,6 +243,14 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
           .doc(bookingId)
           .update(updateData);
 
+      await _addWorkerNotification(
+        workerId: workerId,
+        title: 'Booking accepted',
+        message: 'You accepted a booking request.',
+        type: 'booking_accepted',
+        bookingId: bookingId,
+      );
+
       if (hasConflict) {
         final batch = FirebaseFirestore.instance.batch();
         for (final doc in conflicts) {
@@ -257,6 +283,13 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
             'cancelledAt': FieldValue.serverTimestamp(),
             'cancelledBy': workerId,
           });
+      await _addWorkerNotification(
+        workerId: workerId,
+        title: 'Booking cancelled',
+        message: 'You cancelled a booking request.',
+        type: 'booking_cancelled',
+        bookingId: bookingId,
+      );
       _toast("Booking cancelled!");
       setState(() => _tab = 3);
     } catch (e) {
@@ -305,6 +338,13 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
             'startedAt': FieldValue.serverTimestamp(),
             'startedBy': workerId,
           });
+      await _addWorkerNotification(
+        workerId: workerId,
+        title: 'Job started',
+        message: 'Your job is now in progress.',
+        type: 'job_started',
+        bookingId: bookingId,
+      );
       _toast("Job started!");
       return true;
     } catch (e) {

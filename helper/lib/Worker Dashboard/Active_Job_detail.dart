@@ -445,6 +445,16 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
               'updatedAt': FieldValue.serverTimestamp(),
             });
 
+        await FirebaseFirestore.instance.collection('workerNotifications').add({
+          'workerId': uid,
+          'title': 'Completion sent',
+          'message': 'Your completion request was sent to the employer.',
+          'type': 'completion_requested',
+          'bookingId': widget.bookingId,
+          'read': false,
+          'timestamp': FieldValue.serverTimestamp(),
+        });
+
         if (employerId.isNotEmpty) {
           await FirebaseFirestore.instance.collection('notifications').add({
             'type': 'job_completed_request',
