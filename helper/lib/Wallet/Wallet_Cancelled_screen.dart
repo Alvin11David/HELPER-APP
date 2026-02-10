@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'dart:async';
+import 'package:helper/Document Upload/Profile/Support_Screen.dart';
 import 'Wallet_TopUp_Screen.dart';
 import 'Wallet_Withdraw_Screen.dart';
 
@@ -219,8 +220,14 @@ class _WalletFlowScreenState extends State<WalletFlowScreen> {
                           h: h,
                           brandOrange: _brandOrange,
                           item: _selected,
-                          onContact: () =>
-                              _toast('Contact Support (hook later)'),
+                          onContact: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const SupportScreen(),
+                              ),
+                            );
+                          },
                           onDownload: () =>
                               _toast('Download Receipt (hook later)'),
                         )
