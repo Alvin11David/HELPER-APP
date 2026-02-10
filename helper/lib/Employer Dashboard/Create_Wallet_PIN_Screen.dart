@@ -5,6 +5,7 @@ import 'package:helper/Wallet/Wallet_Cancelled_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:helper/Amount.dart';
 
 class CreateWalletPINScreen extends StatefulWidget {
   const CreateWalletPINScreen({super.key});
@@ -51,11 +52,12 @@ class _CreateWalletPINScreenState extends State<CreateWalletPINScreen> {
           return;
         }
 
-        // Save to Firestore in "Sign Up" collection
+        // Save to Firestore in "Sign Up" collection without resetting balance
         await FirebaseFirestore.instance
             .collection('Sign Up')
             .doc(user.uid)
-            .update({'wallet_pin': pin, 'wallet_pin_set': true, 'amount': 0});
+            .update({'wallet_pin': pin, 'wallet_pin_set': true});
+        await AmountService.setAmountIfMissing(user.uid, initialAmount: 0);
 
         // Also save locally for quick access (optional)
         SharedPreferences prefs = await SharedPreferences.getInstance();

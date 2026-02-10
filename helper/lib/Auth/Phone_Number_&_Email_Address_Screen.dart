@@ -11,6 +11,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:helper/Intro/Role_Selection_Screen.dart';
 import 'OTP_Verification_Screen.dart';
 import 'Sign_In_Screen.dart';
+import 'Referral_Code_Screen.dart';
 
 class _UgandaPhoneFormatter extends TextInputFormatter {
   @override
@@ -928,6 +929,25 @@ class _EmailBlock extends StatelessWidget {
         SizedBox(height: h * 0.014),
         Row(
           children: [
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ReferralCodeScreen(),
+                  ),
+                );
+              },
+              child: Text(
+                'Use Referral Code',
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.85),
+                  fontSize: w * 0.035,
+                  fontWeight: FontWeight.w600,
+                  fontFamily: 'Inter',
+                ),
+              ),
+            ),
             const Spacer(),
             GestureDetector(
               onTap: () {},

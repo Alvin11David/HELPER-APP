@@ -11,6 +11,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:helper/Components/user_avatar_circle.dart';
+import 'package:helper/Amount.dart';
 import 'Wallet_TopUp_Screen.dart';
 import 'Wallet_Withdraw_Screen.dart';
 
@@ -39,7 +40,6 @@ class _WalletFlowScreenState extends State<WalletFlowScreen> {
   void initState() {
     super.initState();
     _setupPaymentListener();
-    _checkExistingSuccessPayments();
   }
 
   @override
@@ -60,46 +60,15 @@ class _WalletFlowScreenState extends State<WalletFlowScreen> {
               if (change.type == DocumentChangeType.added ||
                   change.type == DocumentChangeType.modified) {
                 final data = change.doc.data() as Map<String, dynamic>?;
-                if (data != null &&
-                    data['status'] == 'SUCCESS' &&
-                    !data.containsKey('balanceUpdated')) {
-                  final amount = data['amount'] as int?;
-                  if (amount != null) {
-                    FirebaseFirestore.instance
-                        .collection('Sign Up')
-                        .doc(user.uid)
-                        .update({'amount': FieldValue.increment(amount)});
-                    // Mark as updated
-                    change.doc.reference.update({'balanceUpdated': true});
-                  }
+                if (data != null && data['status'] == 'SUCCESS') {
+                  AmountService.applyPaymentSuccess(
+                    paymentRef: change.doc.reference,
+                    userId: user.uid,
+                  );
                 }
               }
             }
           });
-    }
-  }
-
-  Future<void> _checkExistingSuccessPayments() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      final snapshot = await FirebaseFirestore.instance
-          .collection('Payment Data')
-          .where('userId', isEqualTo: user.uid)
-          .where('status', isEqualTo: 'SUCCESS')
-          .get();
-      for (var doc in snapshot.docs) {
-        final data = doc.data();
-        if (!data.containsKey('balanceUpdated')) {
-          final amount = data['amount'] as int?;
-          if (amount != null) {
-            await FirebaseFirestore.instance
-                .collection('Sign Up')
-                .doc(user.uid)
-                .update({'amount': FieldValue.increment(amount)});
-            await doc.reference.update({'balanceUpdated': true});
-          }
-        }
-      }
     }
   }
 
