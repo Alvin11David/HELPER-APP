@@ -126,25 +126,28 @@ class _WalletWithdrawScreenState extends State<WalletWithdrawScreen> {
     final screenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
-      body: Stack(
-        children: [
-          Container(
-            constraints: const BoxConstraints.expand(),
-            decoration: const BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage('assets/background/normalscreenbg.png'),
-                fit: BoxFit.cover,
+      body: SingleChildScrollView(
+        child: SizedBox(
+          height: screenHeight * 1.2,
+          child: Stack(
+            children: [
+              Container(
+                constraints: const BoxConstraints.expand(),
+                decoration: const BoxDecoration(
+                  image: DecorationImage(
+                    image: AssetImage('assets/background/normalscreenbg.png'),
+                    fit: BoxFit.cover,
+                  ),
+                ),
               ),
-            ),
-          ),
-          Positioned(
-            top: screenHeight * 0.04,
-            left: 0,
-            right: 0,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
+              Positioned(
+                top: screenHeight * 0.04,
+                left: 0,
+                right: 0,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
                 Align(
                   alignment: Alignment.centerLeft,
                   child: Padding(
@@ -519,10 +522,12 @@ class _WalletWithdrawScreenState extends State<WalletWithdrawScreen> {
                           ),
                   ),
                 ),
-              ],
-            ),
+                  ],
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
