@@ -488,9 +488,10 @@ class _WalletWithdrawScreenState extends State<WalletWithdrawScreen> {
                       width: screenWidth * 0.9,
                       height: screenHeight * 0.062,
                       child: ElevatedButton(
-                        onPressed: loading ||
-                          _getCurrentAmount() <= 0 ||
-                          _getCurrentAmount() > _balance
+                        onPressed:
+                            loading ||
+                                _getCurrentAmount() <= 0 ||
+                                _getCurrentAmount() > _balance
                             ? null
                             : onContinue,
                         style: ElevatedButton.styleFrom(

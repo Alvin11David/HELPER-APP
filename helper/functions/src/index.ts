@@ -797,6 +797,64 @@ export const notifyPaymentSuccess = onDocumentUpdated(
   },
 );
 
+// Notify user when a withdrawal transitions to SUCCESS
+export const notifyWithdrawalSuccess = onDocumentUpdated(
+  "Withdrawals/{withdrawalId}",
+  async (event) => {
+    const beforeData = event.data?.before.data();
+    const afterData = event.data?.after.data();
+
+    if (!beforeData || !afterData) {
+      return;
+    }
+
+    const prevStatus = String(beforeData.status || "");
+    const nextStatus = String(afterData.status || "");
+
+    if (prevStatus == nextStatus || nextStatus != "SUCCESS") {
+      return;
+    }
+
+    const userId = afterData.userId as string | undefined;
+    if (!userId) {
+      logger.warn("Withdrawal success notification skipped: missing userId");
+      return;
+    }
+
+    const userDoc = await admin.firestore().collection("users").doc(userId).get();
+    if (!userDoc.exists) {
+      logger.warn("Withdrawal success notification skipped: user not found", {
+        userId,
+      });
+      return;
+    }
+
+    const fcmToken = userDoc.data()?.fcmToken as string | undefined;
+    if (!fcmToken) {
+      logger.warn("Withdrawal success notification skipped: no FCM token", {
+        userId,
+      });
+      return;
+    }
+
+    const amount = afterData.amount ?? "";
+
+    await admin.messaging().send({
+      token: fcmToken,
+      notification: {
+        title: "Withdrawal Successful",
+        body: `You have withdrawn ${amount} to your mobile money`,
+      },
+      data: {
+        type: "withdrawal_success",
+        amount: String(amount),
+      },
+    });
+
+    logger.info("Withdrawal success notification sent", { userId });
+  },
+);
+
 // Test function to verify Cloud Functions are working
 // Function to test call notification (callable function)
 export const testCallNotification = onCall(async (request) => {
