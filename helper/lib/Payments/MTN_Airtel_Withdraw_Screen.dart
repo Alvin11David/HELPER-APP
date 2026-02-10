@@ -482,6 +482,7 @@ class _MtnAirtelWithdrawScreenState extends State<MtnAirtelWithdrawScreen> {
                                 children: [
                                   Expanded(
                                     child: TextField(
+                                      controller: _cardNumberController,
                                       style: TextStyle(
                                         color: Colors.black,
                                         fontSize: screenWidth * 0.04,
@@ -561,40 +562,44 @@ class _MtnAirtelWithdrawScreenState extends State<MtnAirtelWithdrawScreen> {
                             ),
                             SizedBox(height: screenHeight * 0.05),
                             GestureDetector(
-                              onTap: () {
-                                setState(() {
-                                  _isDimming =
-                                      true; // Trigger the dimming effect
-                                  _showOverlay =
-                                      true; // Show the overlay permanently
-                                });
-                              },
+                              onTap: _isLoading ? null : _processPayment,
                               child: Container(
                                 width: screenWidth * 0.93,
                                 height: screenHeight * 0.07,
                                 decoration: BoxDecoration(
-                                  color: Colors.white,
+                                  color: _isLoading
+                                      ? Colors.grey
+                                      : Colors.white,
                                   borderRadius: BorderRadius.circular(30),
                                 ),
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      'Pay',
-                                      style: TextStyle(
-                                        color: Colors.black,
-                                        fontSize: screenWidth * 0.06,
-                                        fontWeight: FontWeight.bold,
-                                        fontFamily: 'PlayfairDisplay',
-                                      ),
-                                    ),
-                                    SizedBox(width: screenWidth * 0.02),
-                                    Icon(
-                                      Icons.account_balance_wallet,
-                                      color: Colors.black,
-                                      size: screenWidth * 0.06,
-                                    ),
-                                  ],
+                                  children: _isLoading
+                                      ? [
+                                          CircularProgressIndicator(
+                                            valueColor:
+                                                AlwaysStoppedAnimation<Color>(
+                                              Colors.black,
+                                            ),
+                                          ),
+                                        ]
+                                      : [
+                                          Text(
+                                            'Pay',
+                                            style: TextStyle(
+                                              color: Colors.black,
+                                              fontSize: screenWidth * 0.06,
+                                              fontWeight: FontWeight.bold,
+                                              fontFamily: 'PlayfairDisplay',
+                                            ),
+                                          ),
+                                          SizedBox(width: screenWidth * 0.02),
+                                          Icon(
+                                            Icons.account_balance_wallet,
+                                            color: Colors.black,
+                                            size: screenWidth * 0.06,
+                                          ),
+                                        ],
                                 ),
                               ),
                             ),
