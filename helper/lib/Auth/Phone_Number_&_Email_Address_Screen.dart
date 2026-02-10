@@ -12,6 +12,7 @@ import 'package:helper/Intro/Role_Selection_Screen.dart';
 import 'OTP_Verification_Screen.dart';
 import 'Sign_In_Screen.dart';
 import 'Referral_Code_Screen.dart';
+import 'Forgot_Password_Screen.dart';
 
 class _UgandaPhoneFormatter extends TextInputFormatter {
   @override
@@ -950,7 +951,14 @@ class _EmailBlock extends StatelessWidget {
             ),
             const Spacer(),
             GestureDetector(
-              onTap: () {},
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ForgotYourPasswordScreen(),
+                  ),
+                );
+              },
               child: Text(
                 'Forgot Password?',
                 style: TextStyle(
