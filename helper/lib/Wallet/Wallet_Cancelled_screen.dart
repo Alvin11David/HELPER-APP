@@ -516,7 +516,7 @@ class _BalanceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cardH = h * 0.24;
+    final cardH = h * 0.20;
 
     return StreamBuilder<DocumentSnapshot>(
       stream: FirebaseAuth.instance.currentUser != null
