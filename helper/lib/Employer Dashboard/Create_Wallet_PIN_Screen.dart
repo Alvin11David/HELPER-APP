@@ -95,15 +95,18 @@ class _CreateWalletPINScreenState extends State<CreateWalletPINScreen> {
     double screenWidth = MediaQuery.of(context).size.width;
     double screenHeight = MediaQuery.of(context).size.height;
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('assets/background/normalscreenbg.png'),
-            fit: BoxFit.cover,
-          ),
-        ),
-        child: Stack(
-          children: [
+      body: SingleChildScrollView(
+        child: SizedBox(
+          height: screenHeight * 1.2,
+          child: Container(
+            decoration: const BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage('assets/background/normalscreenbg.png'),
+                fit: BoxFit.cover,
+              ),
+            ),
+            child: Stack(
+              children: [
             Positioned(
               top: screenWidth * 0.1,
               left: 0,
@@ -394,7 +397,9 @@ class _CreateWalletPINScreenState extends State<CreateWalletPINScreen> {
                 ),
               ),
             ),
-          ],
+              ],
+            ),
+          ),
         ),
       ),
     );

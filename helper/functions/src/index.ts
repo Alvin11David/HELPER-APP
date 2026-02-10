@@ -1310,16 +1310,27 @@ export const paymentWebhook = onRequest(async (req, res) => {
     const {
       status, // Relworx uses 'success', 'failed', or 'cancelled'
       message,
-      internal_reference, // THIS IS OUR PRIMARY KEY
-      reference, // The reference we sent
+      internal_reference, // Relworx internal reference
+      reference, // Relworx may send this
+      customer_reference, // Relworx commonly sends this
       completed_at,
     } = req.body;
 
+    const lookupReference = reference || customer_reference;
+
     if (!internal_reference) {
       logger.error("Webhook Error: No internal_reference found in payload");
+      res.status(400).send("Missing internal_reference");
+      return;
+    }
+
+    if (!lookupReference) {
+      logger.error("Webhook Error: No reference found in payload");
       res.status(400).send("Missing reference");
       return;
     }
+
+    const normalizedStatus = String(status || "").toLowerCase();
 
     logger.info(
       `Processing Webhook for Ref: ${internal_reference} | Status: ${status}`,
@@ -1329,7 +1340,7 @@ export const paymentWebhook = onRequest(async (req, res) => {
     const querySnapshot = await admin
       .firestore()
       .collection("Payment Data")
-      .where("reference", "==", reference)
+      .where("reference", "==", lookupReference)
       .get();
 
     if (querySnapshot.empty) {
@@ -1347,7 +1358,7 @@ export const paymentWebhook = onRequest(async (req, res) => {
 
     // 3. Update the existing document
     await paymentDocRef.update({
-      status: status.toUpperCase(), // Store as SUCCESS or FAILED
+      status: String(status || "").toUpperCase(), // Store as SUCCESS or FAILED
       relworx_internal_ref: internal_reference, // Set it now
       relworx_final_message: message,
       completedAt: completed_at
@@ -1358,13 +1369,13 @@ export const paymentWebhook = onRequest(async (req, res) => {
     });
 
     // 4. Handle logical success (e.g. giving the user their credits/items)
-    if (status === "success") {
+    if (normalizedStatus === "success") {
       const paymentData = doc.data();
       logger.info(`Finalizing value for User: ${paymentData?.userId}`);
 
       // Update user's balance in Sign Up collection
       if (paymentData?.userId && paymentData?.amount) {
-        const depositAmount = parseInt(paymentData.amount);
+        const depositAmount = Math.round(Number(paymentData.amount));
         await admin
           .firestore()
           .collection("Sign Up")
