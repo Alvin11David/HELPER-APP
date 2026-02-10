@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:helper/Chats/overlays/incoming_call_overlay_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -5,6 +7,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'dart:async';
 import 'package:helper/Document Upload/Profile/Support_Screen.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
 import 'Wallet_TopUp_Screen.dart';
 import 'Wallet_Withdraw_Screen.dart';
 
@@ -113,6 +118,127 @@ class _WalletFlowScreenState extends State<WalletFlowScreen> {
       _selected = item;
       _showDetails = true;
     });
+  }
+
+  Future<Directory?> _getReceiptDirectory() async {
+    if (Platform.isAndroid) {
+      final baseDir = await getExternalStorageDirectory();
+      if (baseDir == null) return null;
+      final receiptsDir = Directory('${baseDir.path}/receipts');
+      if (!await receiptsDir.exists()) {
+        await receiptsDir.create(recursive: true);
+      }
+      return receiptsDir;
+    }
+
+    final baseDir = await getApplicationDocumentsDirectory();
+    final receiptsDir = Directory('${baseDir.path}/receipts');
+    if (!await receiptsDir.exists()) {
+      await receiptsDir.create(recursive: true);
+    }
+    return receiptsDir;
+  }
+
+  Future<void> _downloadReceipt(_TxItem? item) async {
+    if (item == null) {
+      _toast('No transaction selected');
+      return;
+    }
+
+    try {
+      final receiptsDir = await _getReceiptDirectory();
+      if (receiptsDir == null) {
+        _toast('Unable to access storage');
+        return;
+      }
+
+      final fileName = item.txId.isNotEmpty
+          ? item.txId.replaceAll(RegExp(r'[^a-zA-Z0-9_-]'), '_')
+          : DateTime.now().millisecondsSinceEpoch.toString();
+      final file = File('${receiptsDir.path}/receipt_$fileName.pdf');
+
+      final doc = pw.Document();
+      doc.addPage(
+        pw.Page(
+          pageFormat: PdfPageFormat.a4,
+          build: (context) {
+            return pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Text(
+                  'Transaction Receipt',
+                  style: pw.TextStyle(
+                    fontSize: 22,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+                pw.SizedBox(height: 8),
+                pw.Text(
+                  'Generated: ${DateFormat('MMM dd, yyyy | hh:mm a').format(DateTime.now())}',
+                  style: const pw.TextStyle(fontSize: 10),
+                ),
+                pw.SizedBox(height: 16),
+                pw.Divider(),
+                pw.SizedBox(height: 10),
+                _receiptRow('Transaction Date', item.txDate),
+                _receiptRow('Transaction Time', item.txTime),
+                _receiptRow('Transaction ID', item.txId),
+                _receiptRow('Transfer Type', item.transferType),
+                _receiptRow('Amount', item.amount),
+                _receiptRow('From', item.from),
+                _receiptRow('To', item.to),
+                _receiptRow('Status', _statusText(item.status)),
+                pw.SizedBox(height: 12),
+                pw.Divider(),
+                pw.SizedBox(height: 8),
+                pw.Text(
+                  'Thank you for using Helper.',
+                  style: const pw.TextStyle(fontSize: 10),
+                ),
+              ],
+            );
+          },
+        ),
+      );
+
+      await file.writeAsBytes(await doc.save(), flush: true);
+      _toast('Receipt saved to ${file.path}');
+    } catch (e) {
+      _toast('Failed to download receipt');
+    }
+  }
+
+  pw.Widget _receiptRow(String label, String value) {
+    return pw.Padding(
+      padding: const pw.EdgeInsets.symmetric(vertical: 4),
+      child: pw.Row(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Expanded(
+            child: pw.Text(
+              label,
+              style: pw.TextStyle(
+                fontSize: 11,
+                fontWeight: pw.FontWeight.bold,
+              ),
+            ),
+          ),
+          pw.SizedBox(width: 12),
+          pw.Expanded(
+            child: pw.Text(
+              value,
+              style: const pw.TextStyle(fontSize: 11),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _statusText(_TxStatus s) {
+    if (s == _TxStatus.pending) return 'Pending';
+    if (s == _TxStatus.completed) return 'Completed';
+    return 'Cancelled';
   }
 
   Future<List<_TxItem>> _fetchPayments(String statusFilter) async {
@@ -228,8 +354,7 @@ class _WalletFlowScreenState extends State<WalletFlowScreen> {
                               ),
                             );
                           },
-                          onDownload: () =>
-                              _toast('Download Receipt (hook later)'),
+                          onDownload: () => _downloadReceipt(_selected),
                         )
                       : FutureBuilder<List<_TxItem>>(
                           future: _filtered,
