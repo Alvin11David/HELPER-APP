@@ -579,8 +579,8 @@ class _MtnAirtelWithdrawScreenState extends State<MtnAirtelWithdrawScreen> {
                                           CircularProgressIndicator(
                                             valueColor:
                                                 AlwaysStoppedAnimation<Color>(
-                                              Colors.black,
-                                            ),
+                                                  Colors.black,
+                                                ),
                                           ),
                                         ]
                                       : [

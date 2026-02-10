@@ -58,6 +58,15 @@ class _WalletWithdrawScreenState extends State<WalletWithdrawScreen> {
 
   void onContinue() {
     int currentAmount = _getCurrentAmount();
+    if (currentAmount <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter an amount to withdraw'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
     if (currentAmount > _balance) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -479,7 +488,9 @@ class _WalletWithdrawScreenState extends State<WalletWithdrawScreen> {
                       width: screenWidth * 0.9,
                       height: screenHeight * 0.062,
                       child: ElevatedButton(
-                        onPressed: loading || _getCurrentAmount() > _balance
+                        onPressed: loading ||
+                          _getCurrentAmount() <= 0 ||
+                          _getCurrentAmount() > _balance
                             ? null
                             : onContinue,
                         style: ElevatedButton.styleFrom(
