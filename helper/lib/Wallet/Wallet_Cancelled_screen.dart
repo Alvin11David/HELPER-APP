@@ -10,6 +10,7 @@ import 'package:helper/Document Upload/Profile/Support_Screen.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:helper/Components/user_avatar_circle.dart';
 import 'Wallet_TopUp_Screen.dart';
 import 'Wallet_Withdraw_Screen.dart';
 
@@ -529,25 +530,6 @@ class _TxItem {
   }
 }
 
-void showIncomingCall(BuildContext context) {
-  IncomingCallOverlayService.instance.show(
-    context: context,
-    businessName: 'Business Name',
-    subtitle: 'Incoming voice call',
-    timeText: '9:45AM',
-    avatarImage: const AssetImage(
-      'assets/images/person.png',
-    ), // or NetworkImage(...)
-    onDecline: () {
-      // TODO: send "declined" to backend
-      debugPrint('Declined');
-    },
-    onAnswer: () {
-      // TODO: navigate to call screen
-      debugPrint('Answered');
-    },
-  );
-}
 
 // ===================== MAIN WALLET =====================
 
@@ -1232,14 +1214,11 @@ class _HeaderRow extends StatelessWidget {
           ),
         ),
         SizedBox(width: w * 0.03),
-        Container(
-          width: 40,
-          height: 40,
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            shape: BoxShape.circle,
-          ),
-          child: const Icon(Icons.person, color: Colors.black),
+        const UserAvatarCircle(
+          size: 40,
+          backgroundColor: Colors.white,
+          iconColor: Colors.black,
+          borderWidth: 1.5,
         ),
       ],
     );
