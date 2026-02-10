@@ -11,6 +11,8 @@ import 'package:helper/Components/user_avatar_circle.dart';
 import 'package:helper/Components/Bottom_Nav_Bar.dart';
 import 'Worker_Jobs_Hub_Screen.dart';
 import 'Active_Job_detail.dart';
+import 'Worker_Details_Screen.dart';
+import 'Workers_skills_and_Job_Details.dart';
 
 class WorkersDashboardScreen extends StatefulWidget {
   const WorkersDashboardScreen({super.key});
@@ -27,6 +29,7 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
   String workerStatus = 'Available'; // Can be 'Available', 'On Job', 'Not Available'
   bool _isCallDialogShowing = false;
   Map<String, dynamic>? activeJobData; // Store active job details for display
+  String? _activeServiceProviderId;
   
   // Next job countdown
   Timer? _nextJobTimer;
@@ -301,38 +304,32 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
   }
   
   void _updateNextJobCountdown() async {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) return;
+    final workerUid = FirebaseAuth.instance.currentUser?.uid;
+    if (workerUid == null) return;
     
     try {
       // If there is an active job, do not count down
       final activeSnap = await FirebaseFirestore.instance
           .collection('bookings')
-          .where('serviceProviderId', isEqualTo: uid)
+          .where('workerUid', isEqualTo: workerUid)
           .where('status', whereIn: const ['in_progress', 'started'])
           .limit(1)
           .get();
       if (activeSnap.docs.isNotEmpty) {
-        setState(() {
-          _nextJobCountdown = '00:00:00';
-          _nextJobStarted = false;
-        });
+        _setNextJobCountdown('00:00:00', false);
         return;
       }
 
       final snap = await FirebaseFirestore.instance
           .collection('bookings')
-          .where('serviceProviderId', isEqualTo: uid)
+          .where('workerUid', isEqualTo: workerUid)
           .where('status', whereIn: const ['confirmed', 'in_progress', 'started'])
           .orderBy('startDateTime')
           .limit(1)
           .get();
       
       if (snap.docs.isEmpty) {
-        setState(() {
-          _nextJobCountdown = '00:00:00';
-          _nextJobStarted = false;
-        });
+        _setNextJobCountdown('00:00:00', false);
         return;
       }
       
@@ -348,10 +345,7 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
       
       if (now.isAfter(startDateTime)) {
         // Job has started
-        setState(() {
-          _nextJobCountdown = '00:00:00';
-          _nextJobStarted = true;
-        });
+        _setNextJobCountdown('00:00:00', true);
       } else {
         // Still counting down
         final remaining = startDateTime.difference(now);
@@ -360,14 +354,203 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
         final seconds = (remaining.inSeconds % 60);
         final formattedTime = '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
         
-        setState(() {
-          _nextJobCountdown = formattedTime;
-          _nextJobStarted = false;
-        });
+        _setNextJobCountdown(formattedTime, false);
       }
     } catch (e) {
       print('Error updating next job countdown: $e');
     }
+  }
+
+  void _setNextJobCountdown(String value, bool started) {
+    if (_nextJobCountdown == value && _nextJobStarted == started) return;
+    if (!mounted) return;
+    setState(() {
+      _nextJobCountdown = value;
+      _nextJobStarted = started;
+    });
+  }
+
+  String? _getActiveProviderId() {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    return _activeServiceProviderId ?? uid;
+  }
+
+  Widget _serviceProviderCards(double w) {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) {
+      return const SizedBox.shrink();
+    }
+
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: FirebaseFirestore.instance
+          .collection('serviceProviders')
+          .where('workerUid', isEqualTo: uid)
+          .snapshots(),
+      builder: (context, snap) {
+        if (snap.connectionState == ConnectionState.waiting) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(vertical: 8),
+            child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+          );
+        }
+
+        final docs = snap.data?.docs ?? [];
+        if (docs.isEmpty) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(vertical: 8),
+            child: Text(
+              'No service provider cards yet',
+              style: TextStyle(color: Colors.white),
+            ),
+          );
+        }
+
+        final hasActive = _activeServiceProviderId != null &&
+            docs.any((d) => d.id == _activeServiceProviderId);
+        if (!hasActive) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              setState(() => _activeServiceProviderId = docs.first.id);
+            }
+          });
+        }
+
+        return SizedBox(
+          height: 80,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: docs.length + 1,
+            separatorBuilder: (_, __) => const SizedBox(width: 10),
+            itemBuilder: (context, index) {
+              if (index == docs.length) {
+                return GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const WorkerSkillsJobDetailsScreen(),
+                      ),
+                    );
+                  },
+                  child: Container(
+                    width: 120,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.85),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.black12),
+                    ),
+                    child: const Center(
+                      child: Icon(
+                        Icons.add,
+                        color: Colors.black,
+                        size: 28,
+                      ),
+                    ),
+                  ),
+                );
+              }
+
+              final doc = docs[index];
+              final data = doc.data();
+              final isSelected = doc.id == _activeServiceProviderId;
+              final title = (data['jobCategoryName'] ?? 'Job').toString();
+              final sub = (data['businessName'] ?? '').toString();
+
+              return GestureDetector(
+                onTap: () {
+                  if (_activeServiceProviderId == doc.id) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => WorkerDetailsScreen(
+                          providerId: doc.id,
+                          data: data,
+                          workerId: uid,
+                          isWorkerView: true,
+                        ),
+                      ),
+                    );
+                    return;
+                  }
+                  setState(() => _activeServiceProviderId = doc.id);
+                },
+                child: Container(
+                  width: 180,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: isSelected
+                          ? const Color(0xFFF79F1A)
+                          : Colors.transparent,
+                      width: 2,
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Colors.black,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => WorkerDetailsScreen(
+                                    providerId: doc.id,
+                                    data: data,
+                                    workerId: uid,
+                                    isWorkerView: true,
+                                  ),
+                                ),
+                              );
+                            },
+                            child: const Padding(
+                              padding: EdgeInsets.only(left: 6),
+                              child: Icon(
+                                Icons.more_vert,
+                                color: Colors.black87,
+                                size: 18,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (sub.isNotEmpty)
+                        Text(
+                          sub,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Colors.black54,
+                            fontSize: 12,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
   }
 
   Future<void> _acceptPendingBooking(String bookingId) async {
@@ -635,6 +818,7 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
     final w = MediaQuery.of(context).size.width;
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
+    final workerUid = FirebaseAuth.instance.currentUser?.uid;
     final now = DateTime.now();
     final hour = now.hour % 12 == 0 ? 12 : now.hour % 12;
     final minute = now.minute.toString().padLeft(2, '0');
@@ -810,6 +994,25 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                             ),
                           ),
                           SizedBox(height: 20),
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: w * 0.05),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: const [
+                                Text(
+                                  'Your Service Cards',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          _serviceProviderCards(w),
+                          SizedBox(height: 20),
                           // Status
                           Padding(
                             padding: const EdgeInsets.only(
@@ -836,40 +1039,52 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                                   ),
                                 ),
                                 const Spacer(),
-                                StreamBuilder<QuerySnapshot>(
-                                  stream: FirebaseFirestore.instance
-                                      .collection('bookings')
-                                      .where('serviceProviderId',
-                                          isEqualTo: FirebaseAuth.instance.currentUser?.uid)
-                                      .where('status',
-                                          whereIn: ['in_progress', 'started'])
-                                      .limit(1)
-                                      .snapshots(),
-                                  builder: (ctx, snap) {
-                                    if (snap.hasData && snap.data!.docs.isNotEmpty) {
+                                if (workerUid == null)
+                                  const Text(
+                                    'Not Available',
+                                    style: TextStyle(
+                                      color: Color(0xFFE80B0B),
+                                      fontFamily: 'Inter',
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14,
+                                      height: 1.25,
+                                    ),
+                                  )
+                                else
+                                  StreamBuilder<QuerySnapshot>(
+                                    stream: FirebaseFirestore.instance
+                                        .collection('bookings')
+                                      .where('workerUid',
+                                        isEqualTo: workerUid)
+                                        .where('status',
+                                            whereIn: ['in_progress', 'started'])
+                                        .limit(1)
+                                        .snapshots(),
+                                    builder: (ctx, snap) {
+                                      if (snap.hasData && snap.data!.docs.isNotEmpty) {
+                                        return const Text(
+                                          'On Job',
+                                          style: TextStyle(
+                                            color: Color(0xFFE80B0B),
+                                            fontFamily: 'Inter',
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 14,
+                                            height: 1.25,
+                                          ),
+                                        );
+                                      }
                                       return const Text(
-                                        'On Job',
+                                        'Available',
                                         style: TextStyle(
-                                          color: Color(0xFFE80B0B),
+                                          color: Color(0xFF00E539),
                                           fontFamily: 'Inter',
                                           fontWeight: FontWeight.bold,
                                           fontSize: 14,
                                           height: 1.25,
                                         ),
                                       );
-                                    }
-                                    return const Text(
-                                      'Available',
-                                      style: TextStyle(
-                                        color: Color(0xFF00E539),
-                                        fontFamily: 'Inter',
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 14,
-                                        height: 1.25,
-                                      ),
-                                    );
-                                  },
-                                ),
+                                    },
+                                  ),
                               ],
                             ),
                           ),
@@ -890,9 +1105,7 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                                 ),
                                 GestureDetector(
                                   onTap: () {
-                                    final uid =
-                                        FirebaseAuth.instance.currentUser?.uid;
-                                    if (uid == null) {
+                                    if (workerUid == null) {
                                       ScaffoldMessenger.of(
                                         context,
                                       ).showSnackBar(
@@ -906,7 +1119,7 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                                       context,
                                       MaterialPageRoute(
                                         builder: (_) => WorkerJobsHubScreen(
-                                          providerId: uid,
+                                          providerId: workerUid,
                                           initialTab: 0,
                                         ),
                                       ),
@@ -941,11 +1154,10 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                               ),
                               child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                                 stream: () {
-                                  final uid = FirebaseAuth.instance.currentUser?.uid;
-                                  if (uid == null) return null;
+                                  if (workerUid == null) return null;
                                   return FirebaseFirestore.instance
                                       .collection('bookings')
-                                      .where('serviceProviderId', isEqualTo: uid)
+                                      .where('workerUid', isEqualTo: workerUid)
                                       .where('status', isEqualTo: 'pending')
                                       .orderBy('createdAt', descending: true)
                                       .limit(1)
@@ -976,7 +1188,8 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                                   final d = doc.data();
                                   final bookingId = doc.id;
                                   final employerName = (d['employerName'] ?? 'Employer').toString();
-                                  final jobType = (d['pricingType'] ?? 'Job').toString();
+                                  final jobCategory = (d['jobCategoryName'] ?? 'Job').toString();
+                                  final jobLocation = (d['jobLocationText'] ?? 'Unknown').toString();
 
                                   return Stack(
                                     children: [
@@ -1017,10 +1230,17 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                                                   ),
                                                 ),
                                                 Text(
-                                                  jobType,
+                                                  jobCategory,
                                                   style: const TextStyle(
                                                     color: Colors.black,
                                                     fontSize: 12,
+                                                  ),
+                                                ),
+                                                Text(
+                                                  jobLocation,
+                                                  style: const TextStyle(
+                                                    color: Colors.black54,
+                                                    fontSize: 11,
                                                   ),
                                                 ),
                                               ],
@@ -1155,12 +1375,18 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                                 GestureDetector(
                                   onTap: () {
                                     // Fetch active job and pass data to Active Job Screen
-                                    final uid = FirebaseAuth.instance.currentUser?.uid;
-                                    if (uid == null) return;
+                                    if (workerUid == null) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text('Not signed in'),
+                                        ),
+                                      );
+                                      return;
+                                    }
 
                                     FirebaseFirestore.instance
                                         .collection('bookings')
-                                        .where('serviceProviderId', isEqualTo: uid)
+                                        .where('workerUid', isEqualTo: workerUid)
                                         .where('status', whereIn: ['in_progress', 'started'])
                                         .limit(1)
                                         .get()
@@ -1216,11 +1442,14 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                                 borderRadius: BorderRadius.circular(25),
                               ),
                               child: StreamBuilder<QuerySnapshot>(
-                                stream: FirebaseFirestore.instance
+                                stream: workerUid == null
+                                  ? null
+                                  : FirebaseFirestore.instance
                                     .collection('bookings')
-                                    .where('serviceProviderId',
-                                        isEqualTo: FirebaseAuth.instance.currentUser?.uid)
-                                    .where('status', whereIn: ['in_progress', 'started'])
+                                    .where('workerUid',
+                                      isEqualTo: workerUid)
+                                    .where('status',
+                                      whereIn: ['in_progress', 'started'])
                                     .limit(1)
                                     .snapshots(),
                                 builder: (ctx, snap) {

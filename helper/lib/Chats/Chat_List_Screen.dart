@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../Components/Bottom_Nav_Bar.dart';
-import '../Components/UnreadMessagesBadge.dart';
 import '../Components/User_Avatar_Circle.dart';
 import 'Chat_Screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';

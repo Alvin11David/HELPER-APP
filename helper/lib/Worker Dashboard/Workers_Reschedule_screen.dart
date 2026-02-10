@@ -305,7 +305,7 @@ class _WorkerJobRescheduleScreenState extends State<WorkerJobRescheduleScreen> {
   Stream<QuerySnapshot<Map<String, dynamic>>> _workerBookingsStream(String workerId) {
     return FirebaseFirestore.instance
         .collection('bookings')
-        .where('serviceProviderId', isEqualTo: workerId)
+      .where('workerUid', isEqualTo: workerId)
         .where('status', whereIn: const ['pending', 'confirmed', 'reschedule_requested'])
         .orderBy('startDateTime', descending: false)
         .snapshots();

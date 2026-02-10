@@ -27,11 +27,13 @@ class Review {
 class WorkerDetailsScreen extends StatefulWidget {
   final String providerId;
   final Map<String, dynamic>? data;
+  final bool isWorkerView;
   const WorkerDetailsScreen({
     super.key,
     required this.providerId,
     this.data,
     required String workerId,
+    this.isWorkerView = false,
   });
 
   @override
@@ -98,7 +100,7 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
     final batch = FirebaseFirestore.instance.batch();
 
     for (var doc in query.docs) {
-      final data = doc.data() as Map<String, dynamic>;
+      final data = doc.data();
       final messages = List<Map<String, dynamic>>.from(data['messages'] ?? []);
       bool updated = false;
       for (int i = 0; i < messages.length; i++) {
@@ -168,7 +170,9 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
   }
 
   Future<void> _loadReviews() async {
-    final providerId = widget.data?['uid'] ?? widget.providerId;
+    final providerId =
+        (widget.data?['serviceProviderId'] ?? widget.data?['uid'] ?? widget.providerId)
+            .toString();
     if (providerId.isEmpty) return;
 
     try {
@@ -242,6 +246,9 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
   }
 
   void _onWorkplaceLocationTap() {
+    final providerId =
+        (widget.data?['serviceProviderId'] ?? widget.data?['uid'] ?? widget.providerId)
+            .toString();
     final workerData = {
       'businessName': _businessName,
       'jobCategoryName': _jobCategoryName,
@@ -253,7 +260,7 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
       'portfolioFiles': _portfolioFiles,
       'workplaceLocationText': _workplaceLocationText,
       'workplaceLatLng': _workplaceLatLng,
-      'uid': widget.data?['uid'] ?? widget.providerId,
+      'uid': providerId,
     };
     Navigator.push(
       context,
@@ -378,11 +385,16 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                       left: w * 0.04,
                       child: GestureDetector(
                         onTap: () {
-                          Navigator.of(context).pushReplacement(
-                            MaterialPageRoute(
-                              builder: (context) => EmployerDashboardScreen(),
-                            ),
-                          );
+                          if (widget.isWorkerView) {
+                            Navigator.of(context).pop();
+                          } else {
+                            Navigator.of(context).pushReplacement(
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    EmployerDashboardScreen(),
+                              ),
+                            );
+                          }
                         },
                         child: Container(
                           width: 40,
@@ -931,7 +943,7 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            '(${_totalReviews})',
+                            '($_totalReviews)',
                             style: TextStyle(color: Colors.white, fontSize: 14),
                           ),
                         ],

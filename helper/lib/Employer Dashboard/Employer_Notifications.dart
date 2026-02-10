@@ -29,7 +29,7 @@ class _EmployerNotificationsState extends State<EmployerNotifications> {
     final batch = FirebaseFirestore.instance.batch();
 
     for (var doc in query.docs) {
-      final data = doc.data() as Map<String, dynamic>;
+      final data = doc.data();
       final messages = List<Map<String, dynamic>>.from(data['messages'] ?? []);
       bool updated = false;
       for (int i = 0; i < messages.length; i++) {
@@ -52,7 +52,7 @@ class _EmployerNotificationsState extends State<EmployerNotifications> {
         .get();
 
     for (var doc in notifQuery.docs) {
-      final data = doc.data() as Map<String, dynamic>;
+      final data = doc.data();
       if (data['read'] != true) {
         batch.update(doc.reference, {'read': true});
       }

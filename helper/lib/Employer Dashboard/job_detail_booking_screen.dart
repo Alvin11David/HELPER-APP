@@ -10,7 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:helper/Worker Dashboard/Worker_Jobs_Hub_Screen.dart';
+import 'package:helper/Employer Dashboard/Employer_Dashboard_Screen.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 
@@ -97,6 +97,9 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
   String get _profession => widget.profession;
   String? _pricingType;
   String? _amount;
+  String? _workerUid;
+  String? _jobCategoryName;
+  String? _jobCategoryId;
   //String? _pricingType;
 
   String? get _jobDuration {
@@ -151,6 +154,9 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
       if (doc.exists) {
         final data = doc.data()!;
         setState(() {
+          _workerUid = (data['workerUid'] ?? '').toString();
+          _jobCategoryName = (data['jobCategoryName'] ?? '').toString();
+          _jobCategoryId = (data['jobCategoryId'] ?? '').toString();
           _pricingType = (data['pricingType'] as String?)?.trim();
           _amount = data['amount']?.toString();
 
@@ -169,10 +175,34 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
         });
 
         _recalcAmount();
+        _refreshMonthBookings();
       }
     } catch (e) {
       _toast("Failed to load pricing info: $e");
     }
+  }
+
+  Future<String?> _ensureWorkerUid() async {
+    if ((_workerUid ?? '').trim().isNotEmpty) {
+      return _workerUid;
+    }
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('serviceProviders')
+          .doc(widget.serviceProviderId)
+          .get();
+      if (doc.exists) {
+        final data = doc.data();
+        final uid = (data?['workerUid'] ?? '').toString();
+        if (uid.isNotEmpty) {
+          _workerUid = uid;
+          _jobCategoryName ??= (data?['jobCategoryName'] ?? '').toString();
+          _jobCategoryId ??= (data?['jobCategoryId'] ?? '').toString();
+          return uid;
+        }
+      }
+    } catch (_) {}
+    return null;
   }
 
   // ===================== VALIDATION =====================
@@ -460,6 +490,12 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
         return;
       }
 
+      final workerUid = await _ensureWorkerUid();
+      if (workerUid == null || workerUid.trim().isEmpty) {
+        _toast("Unable to resolve worker for this service card.");
+        return;
+      }
+
       // ✅ pricing + totals
       final pricingType = (_pricingType ?? "Per Job").trim();
 
@@ -481,17 +517,39 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
       // final attachmentUrls = await _uploadPickedFiles(bookingId: bookingId, clientId: user.uid);
       final attachmentUrls = <String>[]; // keep empty for now
 
+      String employerName = widget.businessName;
+      try {
+        final employerDoc = await FirebaseFirestore.instance
+            .collection('Sign Up')
+            .doc(user.uid)
+            .get();
+        if (employerDoc.exists) {
+          final data = employerDoc.data();
+          final fullName = (data?['fullName'] ?? '').toString();
+          if (fullName.isNotEmpty) {
+            employerName = fullName;
+          }
+        }
+      } catch (_) {}
+
+      if (employerName.trim().isEmpty) {
+        employerName = user.displayName ?? widget.businessName;
+      }
+
       final bookingData = <String, dynamic>{
         'id': bookingId,
 
         // employer/client info
         'employerId': user.uid,
-        'employerName': widget.businessName,        // if you have real employer name, put it here
+        'employerName': employerName,
         'employerEmail': user.email ?? '',
         'employerPhone': '',
 
         // provider info
         'serviceProviderId': providerId,
+        'workerUid': workerUid,
+        'jobCategoryName': _jobCategoryName ?? '',
+        'jobCategoryId': _jobCategoryId ?? '',
 
         // job details
         'jobDescription': _descCtrl.text.trim(),
@@ -506,7 +564,13 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
         'pricingType': pricingType,     // "Per Job" / "Per Day" / "Per Hour"
         'baseAmount': baseAmount,       // base price from provider
         'amount': totalAmount,          // ✅ total payable saved in amount
-        'workingDays': pricingType == 'Per Job' ? 1 : workingDays,
+        'workingDays':
+            (pricingType == 'Per Job' ||
+              pricingType == 'Per Week' ||
+              pricingType == 'Per Month' ||
+              pricingType == 'Per Year')
+          ? 1
+          : workingDays,
         'workingHours': pricingType == 'Per Hour' ? workingHours : 0,
 
         // booking flow state
@@ -523,10 +587,10 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
 
       _toast("Booking request sent!");
 
-      // ✅ go to worker hub screen
+      // ✅ go back to employer dashboard
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => WorkerJobsHubScreen(providerId: widget.serviceProviderId)),
+        MaterialPageRoute(builder: (_) => EmployerDashboardScreen()),
       );
     } catch (e) {
       debugPrint("CREATE BOOKING ERROR: $e");
@@ -817,10 +881,17 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
       ).add(const Duration(seconds: 1));
 
       // Any booking that intersects this month window.
-      final qs = await FirebaseFirestore.instance
+      Query<Map<String, dynamic>> query = FirebaseFirestore.instance
           .collection('bookings')
-          .where('serviceProviderId', isEqualTo: widget.serviceProviderId)
-          .where('status', whereIn: const ['pending', 'confirmed', 'accepted'])
+          .where('status', whereIn: const ['pending', 'confirmed', 'accepted']);
+
+      if ((_workerUid ?? '').trim().isNotEmpty) {
+        query = query.where('workerUid', isEqualTo: _workerUid);
+      } else {
+        query = query.where('serviceProviderId', isEqualTo: widget.serviceProviderId);
+      }
+
+      final qs = await query
           .where('startDateTime', isLessThan: Timestamp.fromDate(windowEndExclusive))
           .where('endDateTime', isGreaterThan: Timestamp.fromDate(windowStart))
           .get();
@@ -910,10 +981,17 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
     try {
       // Overlap rule:
       // existing.start < newEnd AND existing.end > newStart
-      final qs = await FirebaseFirestore.instance
+      Query<Map<String, dynamic>> query = FirebaseFirestore.instance
           .collection('bookings')
-          .where('serviceProviderId', isEqualTo: widget.serviceProviderId)
-          .where('status', whereIn: const ['pending', 'confirmed', 'accepted'])
+          .where('status', whereIn: const ['pending', 'confirmed', 'accepted']);
+
+      if ((_workerUid ?? '').trim().isNotEmpty) {
+        query = query.where('workerUid', isEqualTo: _workerUid);
+      } else {
+        query = query.where('serviceProviderId', isEqualTo: widget.serviceProviderId);
+      }
+
+      final qs = await query
           .where('startDateTime', isLessThan: Timestamp.fromDate(newEnd))
           .where('endDateTime', isGreaterThan: Timestamp.fromDate(newStart))
           .limit(1)
@@ -1298,7 +1376,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
       key: const ValueKey('phase2'),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (!_isPerJob) ...[
+        if (_isPerDay || _isPerHour) ...[
           _label("Number of Working Days", w),
           SizedBox(height: h * 0.010),
           _pillDropdown(

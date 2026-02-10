@@ -15,7 +15,6 @@ import 'package:helper/Worker%20Dashboard/Worker_Details_Screen.dart';
 import '../Components/Bottom_Nav_Bar.dart';
 import 'All_Categories_Screen.dart';
 import 'NearYouProvidersScreen.dart';
-import 'ForYouProvidersScreen.dart';
 
 class EmployerDashboardScreen extends StatefulWidget {
   const EmployerDashboardScreen({super.key});
@@ -1561,8 +1560,9 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                                   } else {
                                     Timestamp? aTime = a.data()['updatedAt'];
                                     Timestamp? bTime = b.data()['updatedAt'];
-                                    if (aTime == null && bTime == null)
+                                    if (aTime == null && bTime == null) {
                                       return 0;
+                                    }
                                     if (aTime == null) return 1;
                                     if (bTime == null) return -1;
                                     return bTime.compareTo(aTime);

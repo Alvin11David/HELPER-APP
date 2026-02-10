@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:helper/Intro/Role_Selection_Screen.dart';
+import 'package:helper/Document Upload/Verification_Information_Screen.dart';
 import 'dart:ui';
 import 'Visa_Payment_Method_Screen.dart';
 import 'MTN_Payment_Method_Screen.dart';
@@ -223,7 +223,7 @@ class _RegistrationPaymentScreenState extends State<RegistrationPaymentScreen> {
                         Navigator.of(context).push(
                           MaterialPageRoute(
                             builder: (context) =>
-                                const RoleSelectionScreen(),
+                                const VerificationInformationScreen(),
                           ),
                         );
                       },

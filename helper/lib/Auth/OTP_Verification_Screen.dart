@@ -347,7 +347,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
 
           // Generate email for auth
           final email =
-              key.replaceAll('+', '').replaceAll(' ', '') + '@helper.com';
+              '${key.replaceAll('+', '').replaceAll(' ', '')}@helper.com';
           final password = 'phoneauth';
 
           UserCredential userCred;

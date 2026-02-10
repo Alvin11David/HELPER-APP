@@ -300,22 +300,30 @@ class _WorkerSkillsJobDetailsScreenState
     if (user == null) return;
 
     try {
-      final docSnap = await FirebaseFirestore.instance
-          .collection('serviceProviders')
-          .doc(user.uid)
-          .get();
+      if (_jobCategoryId == null && (_jobCategory ?? '').trim().isEmpty) {
+        return;
+      }
 
-      if (docSnap.exists && docSnap.data() != null) {
-        // User already has service provider details - go directly to dashboard
+      Query query = FirebaseFirestore.instance
+          .collection('serviceProviders')
+          .where('workerUid', isEqualTo: user.uid);
+
+      if (_jobCategoryId != null) {
+        query = query.where('jobCategoryId', isEqualTo: _jobCategoryId);
+      } else {
+        query = query.where('jobCategoryName', isEqualTo: _jobCategory);
+      }
+
+      final docSnap = await query.limit(1).get();
+
+      if (docSnap.docs.isNotEmpty) {
+        _toast('You already have a profile for this job category.');
         if (mounted) {
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(builder: (_) => WorkersDashboardScreen()),
           );
         }
-        return;
       }
-
-      // No existing data - user needs to fill the form (normal flow continues)
     } catch (e) {
       // Ignore errors, user can fill form manually
       print('Error loading existing service provider data: $e');
@@ -339,7 +347,7 @@ class _WorkerSkillsJobDetailsScreenState
   }
 
   Future<void> _pickPricingType() async {
-    final items = const ['Per Hour', 'Per Day', 'Per Job'];
+    final items = const ['Per Hour', 'Per Day', 'Per Job', 'Per Month', 'Per Week', 'Per Year'];
     final selected = await _bottomPick(
       title: 'Pricing Type',
       items: items,
@@ -505,16 +513,24 @@ class _WorkerSkillsJobDetailsScreenState
     setState(() => _saving = true);
 
     try {
+      final duplicate = await _hasDuplicateCategory(user.uid);
+      if (duplicate) {
+        _toast('You already have a profile for this job category.');
+        return;
+      }
+
+      final serviceProviderId = const Uuid().v4();
+
       // 1) Upload files
-      final newUrls = await _uploadPickedFiles(user.uid);
+      final newUrls = await _uploadPickedFiles(serviceProviderId);
 
       // 2) Combine existing and new portfolio URLs
       final allPortfolioUrls = [..._existingPortfolioUrls, ...newUrls];
 
       // 2) Save profile
-      final doc = FirebaseFirestore.instance
+        final doc = FirebaseFirestore.instance
           .collection('serviceProviders')
-          .doc(user.uid);
+          .doc(serviceProviderId);
 
       final searchableText = [
         _businessNameCtrl.text.trim(),
@@ -524,7 +540,8 @@ class _WorkerSkillsJobDetailsScreenState
       ].join(' ').toLowerCase().replaceAll(RegExp(r'\s+'), ' ').trim();
 
       await doc.set({
-        'uid': user.uid,
+        'serviceProviderId': serviceProviderId,
+        'workerUid': user.uid,
         'jobCategoryId': _jobCategoryId,
         'jobCategoryName': _jobCategory,
         'businessName': _businessNameCtrl.text.trim(),
@@ -560,10 +577,10 @@ class _WorkerSkillsJobDetailsScreenState
       });
 
       _toast('Your workplace has been successfully registered');
-      // Navigate to WorkersDashboardScreen
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => WorkersDashboardScreen()),
-      );
+
+      if (mounted) {
+        await _showAddAnotherDialog();
+      }
     } catch (e) {
       _toast('Submit failed: $e');
     } finally {
@@ -571,7 +588,7 @@ class _WorkerSkillsJobDetailsScreenState
     }
   }
 
-  Future<List<String>> _uploadPickedFiles(String uid) async {
+  Future<List<String>> _uploadPickedFiles(String serviceProviderId) async {
     final storage = FirebaseStorage.instance;
     final out = <String>[];
 
@@ -581,13 +598,93 @@ class _WorkerSkillsJobDetailsScreenState
 
       final ext = (f.extension ?? 'file').toLowerCase();
       final name = const Uuid().v4();
-      final ref = storage.ref('serviceProviders/$uid/portfolio/$name.$ext');
+        final ref = storage
+          .ref('serviceProviders/$serviceProviderId/portfolio/$name.$ext');
 
       await ref.putFile(file);
       final url = await ref.getDownloadURL();
       out.add(url);
     }
     return out;
+  }
+
+  Future<bool> _hasDuplicateCategory(String workerUid) async {
+    if (_jobCategoryId == null && (_jobCategory ?? '').trim().isEmpty) {
+      return false;
+    }
+
+    Query query = FirebaseFirestore.instance
+        .collection('serviceProviders')
+        .where('workerUid', isEqualTo: workerUid);
+
+    if (_jobCategoryId != null) {
+      query = query.where('jobCategoryId', isEqualTo: _jobCategoryId);
+    } else {
+      query = query.where('jobCategoryName', isEqualTo: _jobCategory);
+    }
+
+    final snap = await query.limit(1).get();
+    return snap.docs.isNotEmpty;
+  }
+
+  Future<void> _showAddAnotherDialog() async {
+    final addAnother = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => AlertDialog(
+        title: const Text(
+          'Add another job/skill?',
+          style: TextStyle(fontFamily: 'AbrilFatface'),
+        ),
+        content: const Text(
+          'You can create another service provider card with a different job category.',
+          style: TextStyle(fontFamily: 'Inter'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Done'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Add another'),
+          ),
+        ],
+      ),
+    );
+
+    if (addAnother == true) {
+      _resetForAnotherCard();
+      return;
+    }
+
+    if (mounted) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => WorkersDashboardScreen()),
+      );
+    }
+  }
+
+  void _resetForAnotherCard() {
+    setState(() {
+      _step = 0;
+      _jobCategoryId = null;
+      _jobCategory = null;
+      _businessNameCtrl.clear();
+      _skillsDescCtrl.clear();
+      _jobCategoryCtrl.clear();
+      _yearsExp = null;
+      _pricingType = null;
+      _amountCtrl.clear();
+      _workplaceCtrl.clear();
+      _experienceLevel = null;
+      _pickedPlaceOnMap = false;
+      _pickedLatLng = null;
+      _pickedMarker = null;
+      _pickedFiles.clear();
+      _existingPortfolioUrls.clear();
+    });
+    _recalcProgress();
   }
 
   Future<void> _pickJobCategory() async {
