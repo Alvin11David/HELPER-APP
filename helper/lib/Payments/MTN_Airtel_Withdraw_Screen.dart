@@ -208,7 +208,7 @@ class _MtnAirtelWithdrawScreenState extends State<MtnAirtelWithdrawScreen> {
 
   void _listenForPaymentStatus(String reference) {
     FirebaseFirestore.instance
-        .collection('Payment Data')
+        .collection('Withdrawals')
         .where('reference', isEqualTo: reference)
         .snapshots()
         .listen((querySnapshot) {
@@ -221,15 +221,6 @@ class _MtnAirtelWithdrawScreenState extends State<MtnAirtelWithdrawScreen> {
               setState(() {
                 _isPaymentSuccessful = true;
               });
-              // Deduct from balance
-              final User? currentUser = FirebaseAuth.instance.currentUser;
-              if (currentUser != null) {
-                final amount = int.parse(widget.amount);
-                FirebaseFirestore.instance
-                    .collection('Sign Up')
-                    .doc(currentUser.uid)
-                    .update({'amount': FieldValue.increment(-amount)});
-              }
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('Withdrawal completed successfully!'),
