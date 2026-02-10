@@ -191,14 +191,37 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
         return;
       }
 
+      final referrerUserId = query.docs.first.id;
+      final referredUserId = user.uid;
+
+      // Prevent duplicates: one referral per referred user.
+      final referredRef = FirebaseFirestore.instance
+          .collection('Referred Users')
+          .doc(referredUserId);
+
+      await FirebaseFirestore.instance.runTransaction((transaction) async {
+        final existing = await transaction.get(referredRef);
+        if (existing.exists) {
+          throw Exception('Referral already used.');
+        }
+
+        transaction.set(referredRef, {
+          'referredUserId': referredUserId,
+          'referrerUserId': referrerUserId,
+          'referralCode': code,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+      });
+
       // Valid code and not user's own
       setState(() {
         _showOverlay = true;
       });
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error verifying code: $e')));
+      final msg = e.toString().contains('Referral already used')
+          ? 'Referral code already used.'
+          : 'Error verifying code: $e';
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
     } finally {
       setState(() => _isLoading = false);
     }
