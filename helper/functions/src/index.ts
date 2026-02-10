@@ -821,7 +821,11 @@ export const notifyWithdrawalSuccess = onDocumentUpdated(
       return;
     }
 
-    const userDoc = await admin.firestore().collection("users").doc(userId).get();
+    const userDoc = await admin
+      .firestore()
+      .collection("users")
+      .doc(userId)
+      .get();
     if (!userDoc.exists) {
       logger.warn("Withdrawal success notification skipped: user not found", {
         userId,

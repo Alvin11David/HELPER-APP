@@ -114,7 +114,7 @@ class _WalletFlowScreenState extends State<WalletFlowScreen> {
     });
   }
 
-  Future<List<_TxItem>> _fetchItems(String statusFilter) async {
+  Future<List<_TxItem>> _fetchPayments(String statusFilter) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return [];
     Query query = FirebaseFirestore.instance
@@ -124,15 +124,32 @@ class _WalletFlowScreenState extends State<WalletFlowScreen> {
       query = query.where('status', isEqualTo: statusFilter);
     }
     final snapshot = await query.get();
-    return snapshot.docs.map((doc) => _TxItem.fromFirestore(doc)).toList();
+    return snapshot.docs.map((doc) => _TxItem.fromPaymentDoc(doc)).toList();
+  }
+
+  Future<List<_TxItem>> _fetchWithdrawals(String statusFilter) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return [];
+    Query query = FirebaseFirestore.instance
+        .collection('Withdrawals')
+        .where('userId', isEqualTo: user.uid);
+    if (statusFilter.isNotEmpty) {
+      query = query.where('status', isEqualTo: statusFilter);
+    }
+    final snapshot = await query.get();
+    return snapshot.docs.map((doc) => _TxItem.fromWithdrawalDoc(doc)).toList();
   }
 
   Future<List<_TxItem>> get _filtered async {
     if (_statusTab == 0) {
-      return await _fetchItems('PENDING_USER_CONFIRMATION');
+      final payments = await _fetchPayments('PENDING_USER_CONFIRMATION');
+      final withdrawals = await _fetchWithdrawals('PROCESSING');
+      return [...payments, ...withdrawals];
     }
     if (_statusTab == 1) {
-      return await _fetchItems('SUCCESS');
+      final payments = await _fetchPayments('SUCCESS');
+      final withdrawals = await _fetchWithdrawals('SUCCESS');
+      return [...payments, ...withdrawals];
     }
     return [];
   }
@@ -305,9 +322,13 @@ class _TxItem {
     required this.to,
   });
 
-  factory _TxItem.fromFirestore(DocumentSnapshot doc) {
+  static String _formatAmount(num amount) {
+    return 'UGX ${NumberFormat('#,###').format(amount)}';
+  }
+
+  factory _TxItem.fromPaymentDoc(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
-    final statusStr = data['status'] as String;
+    final statusStr = data['status'] as String? ?? '';
     _TxStatus status;
     if (statusStr == 'PENDING_USER_CONFIRMATION') {
       status = _TxStatus.pending;
@@ -316,8 +337,8 @@ class _TxItem {
     } else {
       status = _TxStatus.cancelled;
     }
-    final amount = data['amount'] as int;
-    final reference = data['reference'] as String;
+    final amount = (data['amount'] as num?) ?? 0;
+    final reference = data['reference'] as String? ?? '';
     final createdAt = (data['createdAt'] as Timestamp).toDate();
     final dateFormat = DateFormat('MMM, dd, yyyy | hh:mm a');
     final date = dateFormat.format(createdAt);
@@ -325,24 +346,53 @@ class _TxItem {
     final txDate = txDateFormat.format(createdAt);
     final txTimeFormat = DateFormat('hh:mm a');
     final txTime = txTimeFormat.format(createdAt);
-    final type = _TxType.deposit;
-    final title = 'Deposit';
-    final transferType = 'Deposit';
-    final from = 'Mobile Money';
-    final to = 'Worker Wallet';
     return _TxItem(
-      type: type,
+      type: _TxType.deposit,
       status: status,
-      title: title,
+      title: 'Deposit',
       date: date,
-      amount:
-          'UGX ${amount.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}',
+      amount: _formatAmount(amount),
       txDate: txDate,
       txTime: txTime,
       txId: reference,
-      transferType: transferType,
-      from: from,
-      to: to,
+      transferType: 'Deposit',
+      from: 'Mobile Money',
+      to: 'Worker Wallet',
+    );
+  }
+
+  factory _TxItem.fromWithdrawalDoc(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    final statusStr = data['status'] as String? ?? '';
+    _TxStatus status;
+    if (statusStr == 'PROCESSING') {
+      status = _TxStatus.pending;
+    } else if (statusStr == 'SUCCESS') {
+      status = _TxStatus.completed;
+    } else {
+      status = _TxStatus.cancelled;
+    }
+    final amount = (data['amount'] as num?) ?? 0;
+    final reference = data['reference'] as String? ?? '';
+    final createdAt = (data['createdAt'] as Timestamp).toDate();
+    final dateFormat = DateFormat('MMM, dd, yyyy | hh:mm a');
+    final date = dateFormat.format(createdAt);
+    final txDateFormat = DateFormat('MMM dd, yyyy');
+    final txDate = txDateFormat.format(createdAt);
+    final txTimeFormat = DateFormat('hh:mm a');
+    final txTime = txTimeFormat.format(createdAt);
+    return _TxItem(
+      type: _TxType.withdraw,
+      status: status,
+      title: 'Withdraw',
+      date: date,
+      amount: _formatAmount(amount),
+      txDate: txDate,
+      txTime: txTime,
+      txId: reference,
+      transferType: 'Withdrawal',
+      from: 'Worker Wallet',
+      to: 'Mobile Money',
     );
   }
 }
