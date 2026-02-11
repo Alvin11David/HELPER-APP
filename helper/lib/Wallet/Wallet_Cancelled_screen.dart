@@ -34,42 +34,15 @@ class _WalletFlowScreenState extends State<WalletFlowScreen> {
   bool _showDetails = false;
   _TxItem? _selected;
 
-  StreamSubscription<QuerySnapshot>? _paymentListener;
 
   @override
   void initState() {
     super.initState();
-    _setupPaymentListener();
   }
 
   @override
   void dispose() {
-    _paymentListener?.cancel();
     super.dispose();
-  }
-
-  void _setupPaymentListener() {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      _paymentListener = FirebaseFirestore.instance
-          .collection('Payment Data')
-          .where('userId', isEqualTo: user.uid)
-          .snapshots()
-          .listen((querySnapshot) {
-            for (var change in querySnapshot.docChanges) {
-              if (change.type == DocumentChangeType.added ||
-                  change.type == DocumentChangeType.modified) {
-                final data = change.doc.data();
-                if (data != null && data['status'] == 'SUCCESS') {
-                  AmountService.applyPaymentSuccess(
-                    paymentRef: change.doc.reference,
-                    userId: user.uid,
-                  );
-                }
-              }
-            }
-          });
-    }
   }
 
   void _back() {

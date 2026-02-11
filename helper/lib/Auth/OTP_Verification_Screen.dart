@@ -11,6 +11,7 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:helper/Intro/Role_Selection_Screen.dart';
 import 'package:helper/Payments/Registration_Payment_Screen.dart';
+import 'package:helper/Amount.dart';
 import 'Sign_In_Screen.dart';
 
 class DashedLinePainter extends CustomPainter {
@@ -300,6 +301,72 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
         .catchError((_) {});
   }
 
+  /// Apply referral rewards using the Cloud Function
+  /// This is called after successful user profile creation
+  /// Doesn't block navigation on failure (logs and continues)
+  Future<void> _applyReferralRewards(
+    String referredUserId,
+    String referralCode,
+  ) async {
+    try {
+      final result = await AmountService.applyReferralRewards(
+        referredUserId: referredUserId,
+        referralCode: referralCode,
+      );
+
+      if (result['success'] == true) {
+        // Rewards applied successfully
+        // User's balance will be updated automatically server-side
+      } else {
+        // Silently fail - this shouldn't block user signup
+        // Could be no referral code, already rewarded, etc.
+      }
+    } catch (e) {
+      // Silently catch exceptions - referral rewards are optional
+      // and shouldn't prevent user from completing signup
+    }
+  }
+
+  /// Check if a phone number has already been invited via a referral code
+  /// This prevents multiple accounts on the same device/phone from being created
+  /// Returns true if the phone has already been invited, false otherwise
+  Future<bool> _hasPhoneBeenInvited(
+    String phoneNumber,
+    String referralCode,
+  ) async {
+    try {
+      // Check if this phone number already exists in Referred Users collection
+      // This indicates the phone was already invited at some point
+      final referredSnapshot = await FirebaseFirestore.instance
+          .collection('Referred Users')
+          .where('referredPhone', isEqualTo: phoneNumber)
+          .limit(1)
+          .get();
+
+      if (referredSnapshot.docs.isNotEmpty) {
+        // Phone has already been invited before
+        return true;
+      }
+
+      // Also check in Sign Up collection to see if this phone already exists
+      final signUpSnapshot = await FirebaseFirestore.instance
+          .collection('Sign Up')
+          .where('phoneNumber', isEqualTo: phoneNumber)
+          .limit(1)
+          .get();
+
+      if (signUpSnapshot.docs.isNotEmpty) {
+        // Phone already has an account
+        return true;
+      }
+
+      return false;
+    } catch (e) {
+      // If check fails, allow signup (don't block on error)
+      return false;
+    }
+  }
+
   Future<void> _checkOTPAndNavigate() async {
     if (_verifying) return;
 
@@ -391,6 +458,25 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
               ? widget.referralCode
               : _generateReferralCode();
 
+          // 🔒 Anti-fraud check: Prevent multiple invites on same phone with referral code
+          if (widget.referralCode.isNotEmpty) {
+            final alreadyInvited = await _hasPhoneBeenInvited(
+              key,
+              widget.referralCode,
+            );
+            if (alreadyInvited) {
+              _snack(
+                'This phone number has already been invited. Each phone can only be invited once.',
+              );
+              if (mounted) {
+                setState(() {
+                  _verifying = false;
+                });
+              }
+              return;
+            }
+          }
+
           await _writeUserProfileDoc(
             user: user,
             provider: 'phone',
@@ -401,6 +487,11 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
             referralCode: referralCode,
             password: fullName.isNotEmpty ? password : '',
           );
+
+          // Apply referral rewards if referral code is provided
+          if (widget.referralCode.isNotEmpty) {
+            await _applyReferralRewards(user.uid, widget.referralCode);
+          }
 
           await _cleanupOTPDoc(key);
 
@@ -439,6 +530,25 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
               ? widget.referralCode
               : _generateReferralCode();
 
+          // 🔒 Anti-fraud check: Prevent multiple invites on same phone with referral code
+          if (widget.referralCode.isNotEmpty) {
+            final alreadyInvited = await _hasPhoneBeenInvited(
+              key,
+              widget.referralCode,
+            );
+            if (alreadyInvited) {
+              _snack(
+                'This phone number has already been invited. Each phone can only be invited once.',
+              );
+              if (mounted) {
+                setState(() {
+                  _verifying = false;
+                });
+              }
+              return;
+            }
+          }
+
           await _writeUserProfileDoc(
             user: user,
             provider: 'phone',
@@ -449,6 +559,11 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
             referralCode: referralCode,
             password: '',
           );
+
+          // Apply referral rewards if referral code is provided
+          if (widget.referralCode.isNotEmpty) {
+            await _applyReferralRewards(user.uid, widget.referralCode);
+          }
 
           if (!mounted) return;
           _snack('Phone number verified successfully!');
@@ -530,6 +645,28 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
           ? widget.referralCode
           : _generateReferralCode(); // <-- Generate if empty
 
+      // 🔒 Anti-fraud check: Prevent multiple invites with same email + referral code
+      if (widget.referralCode.isNotEmpty) {
+        // Check if this email already exists in Sign Up
+        final existingEmail = await FirebaseFirestore.instance
+            .collection('Sign Up')
+            .where('email', isEqualTo: email)
+            .limit(1)
+            .get();
+
+        if (existingEmail.docs.isNotEmpty) {
+          _snack(
+            'This email has already been registered. Each email can only be invited once.',
+          );
+          if (mounted) {
+            setState(() {
+              _verifying = false;
+            });
+          }
+          return;
+        }
+      }
+
       await _writeUserProfileDoc(
         user: user,
         provider: 'email',
@@ -540,6 +677,11 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
         referralCode: referralCode,
         password: password,
       );
+
+      // Apply referral rewards if referral code is provided
+      if (widget.referralCode.isNotEmpty) {
+        await _applyReferralRewards(user.uid, widget.referralCode);
+      }
 
       await _cleanupOTPDoc(email);
 

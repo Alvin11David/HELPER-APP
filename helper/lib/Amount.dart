@@ -1,7 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 
 class AmountService {
   static final FirebaseFirestore _db = FirebaseFirestore.instance;
+  static final FirebaseFunctions _functions = FirebaseFunctions.instance;
 
   static Future<void> applyPaymentSuccess({
     required DocumentReference paymentRef,
@@ -77,5 +79,36 @@ class AmountService {
     final newBalance = depositsTotal - withdrawalsTotal;
     await _db.collection('Sign Up').doc(userId).update({'amount': newBalance});
     return newBalance;
+  }
+
+  /// Call the Cloud Function to apply referral rewards
+  /// - Referrer receives referrerBonus from System Settings
+  /// - Referred user receives referralBonusUG from System Settings
+  /// Both amounts are incremented atomically on the server
+  static Future<Map<String, dynamic>> applyReferralRewards({
+    required String referredUserId,
+    required String referralCode,
+  }) async {
+    try {
+      if (referralCode.isEmpty) {
+        return {'success': false, 'message': 'No referral code provided'};
+      }
+
+      final HttpsCallable callable = _functions.httpsCallable(
+        'applyReferralRewards',
+      );
+      final result = await callable.call({
+        'referredUserId': referredUserId,
+        'referralCode': referralCode,
+      });
+
+      return result.data as Map<String, dynamic>;
+    } catch (e) {
+      final errorMessage = e.toString();
+      return {
+        'success': false,
+        'message': 'Failed to apply referral rewards: $errorMessage',
+      };
+    }
   }
 }

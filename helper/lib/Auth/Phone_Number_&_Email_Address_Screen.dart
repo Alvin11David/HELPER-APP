@@ -9,6 +9,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:helper/Intro/Role_Selection_Screen.dart';
+import 'package:helper/Amount.dart';
 import 'OTP_Verification_Screen.dart';
 import 'Sign_In_Screen.dart';
 import 'Referral_Code_Screen.dart';
@@ -94,6 +95,8 @@ class _PhoneNumberEmailAddressScreenState
 
   bool _obscure = true;
   bool _loading = false;
+  String _referralCode =
+      ''; // <-- Store referral code passed from ReferralCodeScreen
 
   @override
   void dispose() {
@@ -102,6 +105,17 @@ class _PhoneNumberEmailAddressScreenState
     _emailCtrl.dispose();
     _passwordCtrl.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Capture referral code from navigation arguments if provided
+    final args =
+        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+    if (args != null && args['referralCode'] != null) {
+      _referralCode = args['referralCode'] as String;
+    }
   }
 
   void _switchMode(_AuthMode m) {
@@ -222,7 +236,7 @@ class _PhoneNumberEmailAddressScreenState
               verificationId: '', // empty for custom OTP
               fullName: fullName,
               password: '',
-              referralCode: '',
+              referralCode: _referralCode, // <-- Pass the referral code
             ),
           ),
         ).then((_) {
@@ -296,7 +310,7 @@ class _PhoneNumberEmailAddressScreenState
               verificationId: '', // not used for email
               fullName: fullName,
               password: password,
-              referralCode: '',
+              referralCode: _referralCode, // <-- Pass the referral code
             ),
           ),
         );
@@ -352,6 +366,14 @@ class _PhoneNumberEmailAddressScreenState
 
       await _saveGoogleUserToFirestore(user);
 
+      // Apply referral rewards if referral code is provided (Google signup)
+      if (_referralCode.isNotEmpty) {
+        await AmountService.applyReferralRewards(
+          referredUserId: user.uid,
+          referralCode: _referralCode,
+        );
+      }
+
       if (!mounted) return;
       setState(() => _loading = false);
 
@@ -373,6 +395,23 @@ class _PhoneNumberEmailAddressScreenState
     final docRef = col.doc(user.uid);
     final snap = await docRef.get();
 
+    // 🔒 Anti-fraud check: Prevent duplicate Google accounts with referral code
+    if (_referralCode.isNotEmpty) {
+      final email = user.email ?? '';
+      if (email.isNotEmpty) {
+        final existingEmail = await col
+            .where('email', isEqualTo: email)
+            .limit(1)
+            .get();
+
+        if (existingEmail.docs.isNotEmpty) {
+          throw Exception(
+            'This email has already been registered. Each email can only be invited once.',
+          );
+        }
+      }
+    }
+
     // Get FCM token
     String? fcmToken;
     try {
@@ -390,7 +429,9 @@ class _PhoneNumberEmailAddressScreenState
       'photoUrl': user.photoURL ?? '',
       'phoneNumber': user.phoneNumber ?? '',
       'role': '',
-      'referralCode': _generateReferralCode(),
+      'referralCode': _referralCode.isNotEmpty
+          ? _referralCode
+          : _generateReferralCode(),
       'verified': true,
       'updatedAt': FieldValue.serverTimestamp(),
     };
@@ -558,14 +599,34 @@ class _PhoneNumberEmailAddressScreenState
                       Row(
                         children: [
                           GestureDetector(
-                            onTap: () {
-                              Navigator.push(
+                            onTap: () async {
+                              final result = await Navigator.push<String>(
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) =>
                                       const ReferralCodeScreen(),
                                 ),
                               );
+                              if (result != null && result.isNotEmpty) {
+                                setState(() {
+                                  _referralCode = result;
+                                });
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'Referral code accepted: $result',
+                                        style: const TextStyle(
+                                          fontFamily: 'Inter',
+                                        ),
+                                      ),
+                                      backgroundColor: Colors.black.withOpacity(
+                                        0.85,
+                                      ),
+                                    ),
+                                  );
+                                }
+                              }
                             },
                             child: Text(
                               'Use Referral Code',

@@ -42,145 +42,153 @@ class _BottomNavBarState extends State<BottomNavBar> {
       builder: (BuildContext context) {
         return StatefulBuilder(
           builder: (context, setState) {
-            double screenWidth = MediaQuery.of(context).size.width;
-            return Container(
-              height: 290, // Increased from 270 to prevent overflow
-              width: double.infinity, // Fixed width to prevent width changes
-              padding: EdgeInsets.only(left: 0, right: 0, bottom: 0),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(30),
-                  topRight: Radius.circular(30),
-                ),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  SizedBox(height: 20),
-                  Image.asset(
-                    'assets/images/padlock.png',
-                    width: 50,
-                    height: 50,
-                  ),
-                  SizedBox(height: 10),
-                  Text(
-                    'Enter Your PIN',
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+            final media = MediaQuery.of(context);
+            final screenWidth = media.size.width;
+            final bottomInset = media.viewInsets.bottom;
+            return AnimatedPadding(
+              padding: EdgeInsets.only(bottom: bottomInset),
+              duration: const Duration(milliseconds: 180),
+              curve: Curves.easeOut,
+              child: SafeArea(
+                top: false,
+                child: SingleChildScrollView(
+                  child: Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.only(
+                      left: 0,
+                      right: 0,
+                      bottom: 20,
                     ),
-                  ),
-                  SizedBox(height: 20),
-                  pin.isEmpty
-                      ? Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: List.generate(4, (index) {
-                            return Container(
-                              margin: EdgeInsets.symmetric(horizontal: 10),
-                              width: 15,
-                              height: 15,
-                              decoration: BoxDecoration(
-                                color: pin.length > index
-                                    ? Colors.black
-                                    : Color(0xFFD9D9D9),
-                                shape: BoxShape.circle,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(30),
+                        topRight: Radius.circular(30),
+                      ),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SizedBox(height: 20),
+                        Image.asset(
+                          'assets/images/padlock.png',
+                          width: 50,
+                          height: 50,
+                        ),
+                        SizedBox(height: 10),
+                        Text(
+                          'Enter Your PIN',
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(height: 20),
+                        pin.isEmpty
+                            ? Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: List.generate(4, (index) {
+                                  return Container(
+                                    margin: EdgeInsets.symmetric(horizontal: 10),
+                                    width: 15,
+                                    height: 15,
+                                    decoration: BoxDecoration(
+                                      color: pin.length > index
+                                          ? Colors.black
+                                          : Color(0xFFD9D9D9),
+                                      shape: BoxShape.circle,
+                                    ),
+                                  );
+                                }),
+                              )
+                            : SizedBox(height: 15),
+                        Transform.translate(
+                          offset: Offset(0, -30),
+                          child: SizedBox(
+                            width: screenWidth * 0.35,
+                            child: TextField(
+                              keyboardType: TextInputType.number,
+                              maxLength: 4,
+                              obscureText: true,
+                              textAlign: TextAlign.center,
+                              decoration: InputDecoration(
+                                contentPadding: EdgeInsets.symmetric(
+                                  vertical: 0,
+                                ),
+                                enabledBorder: UnderlineInputBorder(
+                                  borderSide: BorderSide(color: Colors.black),
+                                ),
+                                focusedBorder: UnderlineInputBorder(
+                                  borderSide: BorderSide(color: Colors.black),
+                                ),
+                              ),
+                              onChanged: (value) async {
+                                setState(() {
+                                  pin = value;
+                                });
+                                if (pin.length == 4) {
+                                  SharedPreferences prefs =
+                                      await SharedPreferences.getInstance();
+                                  String? savedPin =
+                                      prefs.getString('wallet_pin');
+                                  if (savedPin == pin) {
+                                    Navigator.pop(context);
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => WalletFlowScreen(),
+                                      ),
+                                    );
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text('Incorrect PIN'),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                    setState(() {
+                                      pin = '';
+                                    });
+                                  }
+                                }
+                              },
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: 0),
+                        Text(
+                          'Forgot PIN?',
+                          style: TextStyle(
+                            color: Color(0xFFFFA10D),
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(height: 5),
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.pop(context);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => CreateWalletPINScreen(),
                               ),
                             );
-                          }),
-                        )
-                      : SizedBox(
-                          height: 15,
-                        ), // Maintain height when circles are hidden
-                  Transform.translate(
-                    offset: Offset(
-                      0,
-                      -30,
-                    ), // Move up by 8 pixels to be very close to the circles
-                    child: SizedBox(
-                      width: screenWidth * 0.35, // Reduced from 0.8 to 0.6
-                      child: TextField(
-                        keyboardType: TextInputType.number,
-                        maxLength: 4,
-                        obscureText: true,
-                        textAlign: TextAlign.center,
-                        decoration: InputDecoration(
-                          contentPadding: EdgeInsets.symmetric(
-                            vertical: 0,
-                          ), // Reduce vertical padding to lift the underline
-                          enabledBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.black),
-                          ),
-                          focusedBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.black),
+                          },
+                          child: Text(
+                            'I have never created a PIN',
+                            style: TextStyle(
+                              color: Colors.blue,
+                              fontSize: 14,
+                              decoration: TextDecoration.underline,
+                            ),
                           ),
                         ),
-                        onChanged: (value) async {
-                          setState(() {
-                            pin = value;
-                          });
-                          if (pin.length == 4) {
-                            // Verify PIN
-                            SharedPreferences prefs =
-                                await SharedPreferences.getInstance();
-                            String? savedPin = prefs.getString('wallet_pin');
-                            if (savedPin == pin) {
-                              Navigator.pop(context); // Close modal
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => WalletFlowScreen(),
-                                ),
-                              );
-                            } else {
-                              // Wrong PIN, show error
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Incorrect PIN'),
-                                  backgroundColor: Colors.red,
-                                ),
-                              );
-                              setState(() {
-                                pin = ''; // Reset PIN
-                              });
-                            }
-                          }
-                        },
-                      ),
+                      ],
                     ),
                   ),
-                  SizedBox(height: 0),
-                  Text(
-                    'Forgot PIN?',
-                    style: TextStyle(
-                      color: Color(0xFFFFA10D),
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  SizedBox(height: 5),
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.pop(context); // Close modal
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => CreateWalletPINScreen(),
-                        ),
-                      );
-                    },
-                    child: Text(
-                      'I have never created a PIN',
-                      style: TextStyle(
-                        color: Colors.blue,
-                        fontSize: 14,
-                        decoration: TextDecoration.underline,
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 20),
-                ],
+                ),
               ),
             );
           },
