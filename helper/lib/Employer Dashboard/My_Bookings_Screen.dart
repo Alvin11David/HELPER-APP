@@ -97,11 +97,37 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
         onTerminateActive: tab == 1
             ? () {
                 Navigator.pop(context);
-                _cancelBooking(bookingId);
+                _confirmTerminate(bookingId);
               }
             : null,
       ),
     );
+  }
+
+  Future<void> _confirmTerminate(String bookingId) async {
+    final shouldTerminate = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Terminate job?'),
+        content: const Text(
+          'This will terminate the active job and cancel the booking with escrow. Continue?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('No'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Yes, terminate'),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldTerminate == true) {
+      await _cancelBooking(bookingId);
+    }
   }
 
   Future<void> _cancelBooking(String bookingId) async {
