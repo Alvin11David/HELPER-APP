@@ -13,6 +13,7 @@ import 'Worker_Jobs_Hub_Screen.dart';
 import 'Active_Job_detail.dart';
 import 'Worker_Details_Screen.dart';
 import 'Workers_skills_and_Job_Details.dart';
+import 'package:helper/Wallet/Wallet_Cancelled_screen.dart';
 
 class WorkersDashboardScreen extends StatefulWidget {
   const WorkersDashboardScreen({super.key});
@@ -1785,36 +1786,47 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                                     ),
                                     const SizedBox(height: 10),
                                     Center(
-                                      child: Container(
-                                        width: screenWidth * 0.4,
-                                        padding: const EdgeInsets.symmetric(
-                                          vertical: 10,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xFFFFA10D),
-                                          borderRadius: BorderRadius.circular(
-                                            20,
+                                      child: GestureDetector(
+                                        onTap: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (_) =>
+                                                  const WalletFlowScreen(),
+                                            ),
+                                          );
+                                        },
+                                        child: Container(
+                                          width: screenWidth * 0.4,
+                                          padding: const EdgeInsets.symmetric(
+                                            vertical: 10,
                                           ),
-                                        ),
-                                        child: Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                          children: [
-                                            const Icon(
-                                              Icons.wallet,
-                                              color: Colors.white,
-                                              size: 20,
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFFFFA10D),
+                                            borderRadius: BorderRadius.circular(
+                                              20,
                                             ),
-                                            const SizedBox(width: 8),
-                                            const Text(
-                                              'View Wallet',
-                                              style: TextStyle(
+                                          ),
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              const Icon(
+                                                Icons.wallet,
                                                 color: Colors.white,
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.bold,
+                                                size: 20,
                                               ),
-                                            ),
-                                          ],
+                                              const SizedBox(width: 8),
+                                              const Text(
+                                                'View Wallet',
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
                                         ),
                                       ),
                                     ),

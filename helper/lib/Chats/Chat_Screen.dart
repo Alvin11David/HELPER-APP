@@ -8,6 +8,13 @@ import 'package:record/record.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:audioplayers/audioplayers.dart';
 
+class _ProviderIdentity {
+  final String providerUid;
+  final String? providerProfileId;
+
+  const _ProviderIdentity(this.providerUid, this.providerProfileId);
+}
+
 class ChatScreen extends StatefulWidget {
   final String chatPartnerName;
   final String providerId;
@@ -26,7 +33,10 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  late String chatId;
+  String? chatId;
+  String? _providerUid;
+  String? _providerProfileId;
+  bool _isChatReady = false;
   final AudioRecorder _audioRecorder = AudioRecorder();
   bool _isRecording = false;
   String? _recordedFilePath;
@@ -39,15 +49,46 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void initState() {
     super.initState();
-    // Create a unique chat ID by sorting the IDs
-    final ids = [widget.employerId, widget.providerId]..sort();
+    _initChat();
+  }
+
+  Future<void> _initChat() async {
+    final identity = await _resolveProviderIdentity();
+    if (!mounted) return;
+    _providerUid = identity.providerUid;
+    _providerProfileId = identity.providerProfileId;
+    final ids = [widget.employerId, _providerUid ?? '']..sort();
     chatId = '${ids[0]}_${ids[1]}';
+    setState(() => _isChatReady = true);
     _markMessagesAsRead();
+  }
+
+  Future<_ProviderIdentity> _resolveProviderIdentity() async {
+    final providerId = widget.providerId.trim();
+    if (providerId.isEmpty) {
+      return const _ProviderIdentity('', null);
+    }
+
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('serviceProviders')
+          .doc(providerId)
+          .get();
+      if (doc.exists) {
+        final data = doc.data();
+        final workerUid = data?['workerUid'];
+        if (workerUid is String && workerUid.isNotEmpty) {
+          return _ProviderIdentity(workerUid, doc.id);
+        }
+      }
+    } catch (_) {}
+
+    return _ProviderIdentity(providerId, null);
   }
 
   Future<void> _markMessagesAsRead() async {
     final currentUser = FirebaseAuth.instance.currentUser;
-    if (currentUser == null) return;
+    if (currentUser == null || chatId == null) return;
 
     final snapshot = await FirebaseFirestore.instance
         .collection('chats')
@@ -63,6 +104,43 @@ class _ChatScreenState extends State<ChatScreen> {
         batch.update(doc.reference, {'read': true});
       }
       await batch.commit();
+    }
+  }
+
+  Future<void> _ensureChatDocument(
+    String activeChatId,
+    String providerUid,
+    String providerProfileId,
+  ) async {
+    final chatDoc = FirebaseFirestore.instance
+        .collection('chats')
+        .doc(activeChatId);
+    final docSnapshot = await chatDoc.get();
+    if (!docSnapshot.exists) {
+      await chatDoc.set({
+        'employerId': widget.employerId,
+        'providerId': providerProfileId,
+        'providerUid': providerUid,
+        'chatPartnerName': widget.chatPartnerName,
+      });
+      return;
+    }
+
+    final data = docSnapshot.data() as Map<String, dynamic>?;
+    final hasProviderUid =
+        (data?['providerUid'] ?? '').toString().trim().isNotEmpty;
+    final hasProviderId =
+        (data?['providerId'] ?? '').toString().trim().isNotEmpty;
+    if (!hasProviderUid || !hasProviderId) {
+      await chatDoc.set(
+        {
+          'employerId': widget.employerId,
+          'providerId': providerProfileId,
+          'providerUid': providerUid,
+          'chatPartnerName': widget.chatPartnerName,
+        },
+        SetOptions(merge: true),
+      );
     }
   }
 
@@ -131,6 +209,16 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
+    if (!_isChatReady) {
+      return const Scaffold(
+        body: SafeArea(
+          child: Center(child: CircularProgressIndicator()),
+        ),
+      );
+    }
+    final activeChatId = chatId ?? '';
+    final providerUid = _providerUid ?? widget.providerId;
+    final providerProfileId = _providerProfileId ?? widget.providerId;
     Widget inputWidget;
     if (_showRecordingUI) {
       inputWidget = Container(
@@ -248,18 +336,11 @@ class _ChatScreenState extends State<ChatScreen> {
                   final ImagePicker picker = ImagePicker();
                   final List<XFile> images = await picker.pickMultiImage();
                   for (var image in images) {
-                    // Ensure the chat document exists
-                    final chatDoc = FirebaseFirestore.instance
-                        .collection('chats')
-                        .doc(chatId);
-                    final docSnapshot = await chatDoc.get();
-                    if (!docSnapshot.exists) {
-                      await chatDoc.set({
-                        'employerId': widget.employerId,
-                        'providerId': widget.providerId,
-                        'chatPartnerName': widget.chatPartnerName,
-                      });
-                    }
+                    await _ensureChatDocument(
+                      activeChatId,
+                      providerUid,
+                      providerProfileId,
+                    );
                     final file = File(image.path);
                     final fileName =
                         '${DateTime.now().millisecondsSinceEpoch}_${image.name}';
@@ -273,19 +354,20 @@ class _ChatScreenState extends State<ChatScreen> {
                     final currentUserId =
                         FirebaseAuth.instance.currentUser!.uid;
                     final receiverId = currentUserId == widget.employerId
-                        ? widget.providerId
+                        ? providerUid
                         : widget.employerId;
                     final message = {
                       'imageUrl': downloadUrl,
                       'senderId': currentUserId,
                       'receiverId': receiverId,
+                      'providerUid': providerUid,
                       'timestamp': FieldValue.serverTimestamp(),
                       'type': 'image',
                       'read': false,
                     };
                     await FirebaseFirestore.instance
                         .collection('chats')
-                        .doc(chatId)
+                        .doc(activeChatId)
                         .collection('messages')
                         .add(message);
                   }
@@ -356,7 +438,7 @@ class _ChatScreenState extends State<ChatScreen> {
         child: StreamBuilder<QuerySnapshot>(
           stream: FirebaseFirestore.instance
               .collection('chats')
-              .doc(chatId)
+              .doc(activeChatId)
               .collection('messages')
               .orderBy('timestamp', descending: false)
               .snapshots(),
@@ -434,7 +516,7 @@ class _ChatScreenState extends State<ChatScreen> {
                             StreamBuilder<DocumentSnapshot>(
                               stream: FirebaseFirestore.instance
                                   .collection('users')
-                                  .doc(widget.providerId)
+                                    .doc(providerUid)
                                   .snapshots(),
                               builder: (context, snapshot) {
                                 bool isOnline = false;
@@ -459,7 +541,7 @@ class _ChatScreenState extends State<ChatScreen> {
                         StreamBuilder<DocumentSnapshot>(
                           stream: FirebaseFirestore.instance
                               .collection('serviceProviders')
-                              .doc(widget.providerId)
+                              .doc(providerProfileId)
                               .snapshots(),
                           builder: (context, snapshot) {
                             String? imageUrl;
@@ -636,23 +718,16 @@ class _ChatScreenState extends State<ChatScreen> {
                         const SizedBox(width: 10),
                         GestureDetector(
                           onTap: () async {
-                            // Ensure the chat document exists
-                            final chatDoc = FirebaseFirestore.instance
-                                .collection('chats')
-                                .doc(chatId);
-                            final docSnapshot = await chatDoc.get();
-                            if (!docSnapshot.exists) {
-                              await chatDoc.set({
-                                'employerId': widget.employerId,
-                                'providerId': widget.providerId,
-                                'chatPartnerName': widget.chatPartnerName,
-                              });
-                            }
+                            await _ensureChatDocument(
+                              activeChatId,
+                              providerUid,
+                              providerProfileId,
+                            );
                             final currentUserId =
                                 FirebaseAuth.instance.currentUser!.uid;
                             final receiverId =
                                 currentUserId == widget.employerId
-                                ? widget.providerId
+                                ? providerUid
                                 : widget.employerId;
 
                             if (_recordedFilePath != null) {
@@ -674,13 +749,14 @@ class _ChatScreenState extends State<ChatScreen> {
                                 'audioUrl': downloadUrl,
                                 'senderId': currentUserId,
                                 'receiverId': receiverId,
+                                'providerUid': providerUid,
                                 'timestamp': FieldValue.serverTimestamp(),
                                 'type': 'audio',
                                 'read': false,
                               };
                               await FirebaseFirestore.instance
                                   .collection('chats')
-                                  .doc(chatId)
+                                  .doc(activeChatId)
                                   .collection('messages')
                                   .add(message);
                               setState(() {
@@ -699,13 +775,14 @@ class _ChatScreenState extends State<ChatScreen> {
                                 'text': _controller.text,
                                 'senderId': currentUserId,
                                 'receiverId': receiverId,
+                                'providerUid': providerUid,
                                 'timestamp': FieldValue.serverTimestamp(),
                                 'type': 'text',
                                 'read': false,
                               };
                               await FirebaseFirestore.instance
                                   .collection('chats')
-                                  .doc(chatId)
+                                  .doc(activeChatId)
                                   .collection('messages')
                                   .add(message);
                               _controller.clear();

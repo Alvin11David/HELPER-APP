@@ -725,9 +725,28 @@ class _EscrowSingleTab extends StatelessWidget {
     required this.brandOrange,
   });
 
+  String _formatAmount(num amount) {
+    return 'UGX ${NumberFormat('#,###').format(amount)}';
+  }
+
+  num _sumEscrowAmount(QuerySnapshot<Map<String, dynamic>> snap) {
+    num total = 0;
+    for (final doc in snap.docs) {
+      final data = doc.data();
+      final raw = data['amount'];
+      if (raw is num) {
+        total += raw;
+      } else if (raw is String) {
+        total += num.tryParse(raw) ?? 0;
+      }
+    }
+    return total;
+  }
+
   @override
   Widget build(BuildContext context) {
     final pillH = h * 0.05;
+    final uid = FirebaseAuth.instance.currentUser?.uid;
 
     return Container(
       height: pillH,
@@ -755,15 +774,51 @@ class _EscrowSingleTab extends StatelessWidget {
             ),
           ),
           SizedBox(width: w * 0.02),
-          Text(
-            'UGX/DOLLARS',
-            style: TextStyle(
-              color: Colors.black,
-              fontFamily: 'Inter',
-              fontWeight: FontWeight.w900,
-              fontSize: w * 0.030,
+          if (uid == null)
+            Text(
+              _formatAmount(0),
+              style: TextStyle(
+                color: Colors.black,
+                fontFamily: 'Inter',
+                fontWeight: FontWeight.w900,
+                fontSize: w * 0.030,
+              ),
+            )
+          else
+            StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+              stream: FirebaseFirestore.instance
+                  .collection('Escrow')
+                  .where('inEscrow', isEqualTo: true)
+                  .where('workerUid', isEqualTo: uid)
+                  .snapshots(),
+              builder: (context, workerSnap) {
+                return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                  stream: FirebaseFirestore.instance
+                      .collection('Escrow')
+                      .where('inEscrow', isEqualTo: true)
+                      .where('employerId', isEqualTo: uid)
+                      .snapshots(),
+                  builder: (context, employerSnap) {
+                    final workerTotal = workerSnap.hasData
+                        ? _sumEscrowAmount(workerSnap.data!)
+                        : 0;
+                    final employerTotal = employerSnap.hasData
+                        ? _sumEscrowAmount(employerSnap.data!)
+                        : 0;
+                    final total = workerTotal + employerTotal;
+                    return Text(
+                      _formatAmount(total),
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontFamily: 'Inter',
+                        fontWeight: FontWeight.w900,
+                        fontSize: w * 0.030,
+                      ),
+                    );
+                  },
+                );
+              },
             ),
-          ),
         ],
       ),
     );

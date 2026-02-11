@@ -1,8 +1,7 @@
-// ignore_for_file: depend_on_referenced_packages
-
 import 'dart:async';
 import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -95,20 +94,48 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                 _cancelBooking(bookingId);
               }
             : null,
+        onTerminateActive: tab == 1
+            ? () {
+                Navigator.pop(context);
+                _confirmTerminate(bookingId);
+              }
+            : null,
       ),
     );
   }
 
+  Future<void> _confirmTerminate(String bookingId) async {
+    final shouldTerminate = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Terminate job?'),
+        content: const Text(
+          'This will terminate the active job and cancel the booking with escrow. Continue?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('No'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Yes, terminate'),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldTerminate == true) {
+      await _cancelBooking(bookingId);
+    }
+  }
+
   Future<void> _cancelBooking(String bookingId) async {
     try {
-      await FirebaseFirestore.instance
-          .collection('bookings')
-          .doc(bookingId)
-          .update({
-            'status': 'cancelled',
-            'updatedAt': FieldValue.serverTimestamp(),
-            'cancelledAt': FieldValue.serverTimestamp(),
-          });
+      final callable = FirebaseFunctions.instance.httpsCallable(
+        'cancelBookingWithEscrow',
+      );
+      await callable.call({'bookingId': bookingId});
       _toast('Booking cancelled successfully');
     } catch (e) {
       _toast('Failed to cancel booking: $e');
@@ -477,6 +504,7 @@ class _BookingDetailsSheet extends StatelessWidget {
 
   final VoidCallback onViewLocation;
   final VoidCallback? onCancelPending;
+  final VoidCallback? onTerminateActive;
 
   const _BookingDetailsSheet({
     required this.bookingId,
@@ -485,6 +513,7 @@ class _BookingDetailsSheet extends StatelessWidget {
     required this.accent,
     required this.onViewLocation,
     this.onCancelPending,
+    this.onTerminateActive,
   });
 
   @override
@@ -629,6 +658,33 @@ class _BookingDetailsSheet extends StatelessWidget {
                         ),
                         child: Text(
                           'Cancel Booking',
+                          style: TextStyle(
+                            color: Colors.red,
+                            fontFamily: 'Inter',
+                            fontWeight: FontWeight.w900,
+                            fontSize: w * 0.035,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                  if (tab == 1 && onTerminateActive != null) ...[
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton(
+                        onPressed: onTerminateActive,
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(
+                            color: Colors.red.withOpacity(0.9),
+                            width: 1.5,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          padding: EdgeInsets.symmetric(vertical: h * 0.016),
+                        ),
+                        child: Text(
+                          'Terminate Job',
                           style: TextStyle(
                             color: Colors.red,
                             fontFamily: 'Inter',
