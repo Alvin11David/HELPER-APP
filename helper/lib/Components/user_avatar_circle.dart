@@ -7,19 +7,22 @@ class UserAvatarCircle extends StatelessWidget {
   final Color backgroundColor;
   final Color iconColor;
   final double borderWidth;
+  final String? role;
 
   const UserAvatarCircle({
     super.key,
     this.size = 40,
     this.backgroundColor = Colors.white,
     this.iconColor = Colors.black,
-    this.borderWidth = 1.5, String? imageUrl,
+    this.borderWidth = 1.5,
+    this.role,
+    String? imageUrl,
   });
 
   @override
   Widget build(BuildContext context) {
     final User? user = FirebaseAuth.instance.currentUser;
-    
+
     if (user == null) {
       return _buildDefaultAvatar();
     }
@@ -60,11 +63,7 @@ class UserAvatarCircle extends StatelessWidget {
         border: Border.all(color: Colors.white, width: borderWidth),
       ),
       child: Center(
-        child: Icon(
-          Icons.person,
-          size: size * 0.6,
-          color: iconColor,
-        ),
+        child: Icon(Icons.person, size: size * 0.6, color: iconColor),
       ),
     );
   }
@@ -82,10 +81,7 @@ class UserAvatarCircle extends StatelessWidget {
         child: SizedBox(
           width: size * 0.4,
           height: size * 0.4,
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-            color: iconColor,
-          ),
+          child: CircularProgressIndicator(strokeWidth: 2, color: iconColor),
         ),
       ),
     );
@@ -111,7 +107,7 @@ class UserAvatarCircle extends StatelessWidget {
               child: CircularProgressIndicator(
                 value: loadingProgress.expectedTotalBytes != null
                     ? loadingProgress.cumulativeBytesLoaded /
-                        loadingProgress.expectedTotalBytes!
+                          loadingProgress.expectedTotalBytes!
                     : null,
                 strokeWidth: 2,
                 color: iconColor,
