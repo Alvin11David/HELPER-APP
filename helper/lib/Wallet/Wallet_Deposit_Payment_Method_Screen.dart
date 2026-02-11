@@ -32,7 +32,8 @@ class _WalletDepositPaymentMethodScreenState
     setState(() => _isLoading = true);
 
     final user = FirebaseAuth.instance.currentUser;
-    final String reference = 'MC_WALLET_${DateTime.now().millisecondsSinceEpoch}';
+    final String reference =
+        'MC_WALLET_${DateTime.now().millisecondsSinceEpoch}';
 
     try {
       final response = await http.post(
@@ -78,7 +79,8 @@ class _WalletDepositPaymentMethodScreenState
     setState(() => _isLoading = true);
 
     final user = FirebaseAuth.instance.currentUser;
-    final String reference = 'VISA_WALLET_${DateTime.now().millisecondsSinceEpoch}';
+    final String reference =
+        'VISA_WALLET_${DateTime.now().millisecondsSinceEpoch}';
 
     try {
       final response = await http.post(
@@ -126,11 +128,11 @@ class _WalletDepositPaymentMethodScreenState
         .doc(reference)
         .snapshots()
         .listen((snapshot) {
-      if (snapshot.exists && snapshot.data()?['status'] == 'COMPLETED') {
-        // Update wallet balance or navigate back
-        Navigator.of(context).pop(); // Or show success message
-      }
-    });
+          if (snapshot.exists && snapshot.data()?['status'] == 'COMPLETED') {
+            // Update wallet balance or navigate back
+            Navigator.of(context).pop(); // Or show success message
+          }
+        });
   }
 
   @override
