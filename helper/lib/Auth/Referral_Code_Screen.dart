@@ -48,6 +48,7 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
   final int _otpLength = 10;
   bool _showOverlay = false;
   final Duration _overlayAnimDuration = const Duration(milliseconds: 360);
+  int _referralBonus = 500; // default value
 
   late final List<TextEditingController> _controllers;
   late final List<FocusNode> _focusNodes;
@@ -62,6 +63,7 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
     );
     _focusNodes = List.generate(_otpLength, (_) => FocusNode());
     _startCountdown();
+    _fetchReferralBonus();
   }
 
   void _checkOTPAndNavigate() {
@@ -117,6 +119,25 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
         timer.cancel();
       }
     });
+  }
+
+  Future<void> _fetchReferralBonus() async {
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('System Settings')
+          .doc('default')
+          .get();
+      if (doc.exists) {
+        final data = doc.data();
+        if (data != null && data['referralBonusUG'] != null) {
+          setState(() {
+            _referralBonus = data['referralBonusUG'] as int;
+          });
+        }
+      }
+    } catch (e) {
+      // Keep default value on error
+    }
   }
 
   @override
@@ -403,6 +424,7 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
                                       controller: _controllers[otpIndex],
                                       focusNode: _focusNodes[otpIndex],
                                       textAlign: TextAlign.center,
+                                      textCapitalization: TextCapitalization.characters,
                                       maxLength: 1,
                                       style: TextStyle(
                                         color: Colors.white,
@@ -568,147 +590,6 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
                   curve: Curves.easeInOut,
                   opacity: (_showOverlay || _showHowToUse) ? 0.55 : 0.0,
                   child: Container(color: Colors.black),
-                ),
-              ),
-
-              // Sliding white rectangle for congratulations overlay
-              AnimatedPositioned(
-                duration: _overlayAnimDuration,
-                curve: Curves.easeOutCubic,
-                left: baseHorizontalPadding,
-                right: baseHorizontalPadding,
-                bottom: _showOverlay
-                    ? (baseHorizontalPadding + bottomInset)
-                    : -(sheetHeight + 40),
-                child: AnimatedOpacity(
-                  duration: _overlayAnimDuration,
-                  curve: Curves.easeInOut,
-                  opacity: _showOverlay ? 1.0 : 0.0,
-                  child: Align(
-                    alignment: Alignment.bottomCenter,
-                    child: Container(
-                      width: sheetWidth,
-                      height: sheetHeight,
-                      padding: EdgeInsets.fromLTRB(
-                        baseHorizontalPadding,
-                        0,
-                        baseHorizontalPadding,
-                        baseHorizontalPadding + bottomInset,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(30),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.15),
-                            blurRadius: 18,
-                            offset: const Offset(0, 8),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        children: [
-                          SizedBox(height: screenHeight * 0.0),
-                          Stack(
-                            alignment: Alignment.topCenter,
-                            clipBehavior: Clip.none,
-                            children: [
-                              Image.asset(
-                                'assets/images/pop.png',
-                                width: screenWidth * 1.1,
-                                fit: BoxFit.contain,
-                              ),
-                              Positioned(
-                                top: 0,
-                                child: Image.asset(
-                                  'assets/images/celebration.png',
-                                  width: screenWidth * 0.4,
-                                  fit: BoxFit.contain,
-                                ),
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: screenHeight * 0.0),
-                          Text(
-                            'Congratulations',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Colors.black,
-                              fontSize: screenWidth * 0.065,
-                              fontFamily: 'Montserrat',
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Text(
-                            "You have been referred to Helper's App by the $_refCode and You have also received 1,000 UGX on your wallet",
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Colors.black,
-                              fontSize: screenWidth * 0.045,
-                              fontFamily: 'Montserrat',
-                              fontWeight: FontWeight.w600,
-                              height: 1.4,
-                            ),
-                          ),
-                          SizedBox(height: screenHeight * 0.07),
-                          SizedBox(
-                            width: double.infinity,
-                            height: screenHeight * 0.062,
-                            child: ElevatedButton(
-                              onPressed: _isLoading
-                                  ? null
-                                  : () {
-                                      // TODO: Handle continue action
-                                    },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFFDF8800),
-                                disabledBackgroundColor: const Color(
-                                  0xFFDF8800,
-                                ).withOpacity(0.6),
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(30),
-                                ),
-                              ),
-                              child: _isLoading
-                                  ? SizedBox(
-                                      width: screenHeight * 0.03,
-                                      height: screenHeight * 0.03,
-                                      child: const CircularProgressIndicator(
-                                        strokeWidth: 3,
-                                        color: Colors.white,
-                                      ),
-                                    )
-                                  : Center(
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Text(
-                                            'Continue',
-                                            style: TextStyle(
-                                              fontSize: screenWidth * 0.045,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.white,
-                                              fontFamily: 'Poppins',
-                                            ),
-                                          ),
-                                          SizedBox(width: screenWidth * 0.02),
-                                          Icon(
-                                            Icons.arrow_forward_rounded,
-                                            color: Colors.white,
-                                            size: screenHeight * 0.035,
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
                 ),
               ),
 
