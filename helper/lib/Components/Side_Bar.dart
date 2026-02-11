@@ -110,20 +110,6 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
     }
   }
 
-  Future<bool> _hasEmployerData() async {
-    try {
-      User? user = FirebaseAuth.instance.currentUser;
-      if (user == null) return false;
-      DocumentSnapshot doc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .get();
-      return doc.exists;
-    } catch (e) {
-      return false;
-    }
-  }
-
   Future<void> _switchRole(String newRole) async {
     try {
       User? user = FirebaseAuth.instance.currentUser;
@@ -332,61 +318,51 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                           if (_userRole == 'employer')
                             const SizedBox(height: 20),
                           if (_userRole != 'employer') ...[
-                            GestureDetector(
-                              onTap: () async {
-                                bool? isVerified = await _fetchVerifiedStatus();
-                                if (isVerified == false) {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          RoleSelectionScreen(),
-                                    ),
-                                  );
-                                }
-                              },
-                              child: Padding(
-                                padding: EdgeInsets.only(left: 8, right: 8),
-                                child: Row(
-                                  children: [
-                                    Text(
-                                      "Verified?",
-                                      style: TextStyle(
-                                        color: Colors.black,
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                    Spacer(),
-                                    FutureBuilder<bool?>(
-                                      future: _fetchVerifiedStatus(),
-                                      builder: (context, snapshot) {
-                                        if (snapshot.connectionState ==
-                                            ConnectionState.waiting) {
-                                          return Text(
-                                            'Loading...',
-                                            style: TextStyle(
-                                              color: Colors.green,
-                                              fontSize: 15,
-                                              fontWeight: FontWeight.w600,
+                            FutureBuilder<bool?>(
+                              future: _fetchVerifiedStatus(),
+                              builder: (context, snapshot) {
+                                bool isVerified = snapshot.data ?? false;
+                                return GestureDetector(
+                                  onTap: !isVerified
+                                      ? () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  RoleSelectionScreen(),
                                             ),
                                           );
                                         }
-                                        bool isVerified =
-                                            snapshot.data ?? false;
-                                        return Text(
-                                          isVerified ? 'Yes' : 'No',
+                                      : null,
+                                  child: Padding(
+                                    padding: EdgeInsets.only(left: 8, right: 8),
+                                    child: Row(
+                                      children: [
+                                        Text(
+                                          "Verified?",
+                                          style: TextStyle(
+                                            color: Colors.black,
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                        Spacer(),
+                                        Text(
+                                          snapshot.connectionState ==
+                                                  ConnectionState.waiting
+                                              ? 'Loading...'
+                                              : (isVerified ? 'Yes' : 'No'),
                                           style: TextStyle(
                                             color: Colors.green,
                                             fontSize: 15,
                                             fontWeight: FontWeight.w600,
                                           ),
-                                        );
-                                      },
+                                        ),
+                                      ],
                                     ),
-                                  ],
-                                ),
-                              ),
+                                  ),
+                                );
+                              },
                             ),
                             const SizedBox(height: 20),
                           ],
@@ -468,89 +444,76 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                           ),
                           const SizedBox(height: 20),
                           // Switch role row
-                          FutureBuilder<List<bool>>(
-                            future: Future.wait([
-                              _hasWorkerData(),
-                              _hasEmployerData(),
-                            ]),
-                            builder: (context, snapshot) {
-                              List<bool> data = snapshot.data ?? [false, false];
-                              bool hasWorker = data[0];
-                              bool hasEmployer = data[1];
-                              if (_userRole == 'employer' && hasWorker) {
-                                return GestureDetector(
-                                  onTap: () async {
-                                    // Switch to worker
-                                    await _switchRole('worker');
-                                    toggleDrawer();
-                                    Navigator.pushReplacement(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            const WorkersDashboardScreen(),
-                                      ),
-                                    );
-                                  },
-                                  child: Padding(
-                                    padding: EdgeInsets.only(left: 8, right: 8),
-                                    child: Row(
-                                      children: [
-                                        Icon(
-                                          Icons.swap_horiz,
-                                          color: Colors.black.withOpacity(0.6),
-                                        ),
-                                        SizedBox(width: 15),
-                                        Text(
-                                          "Switch to Worker",
-                                          style: TextStyle(
-                                            color: Colors.black,
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
+                          if (_userRole == 'employer') 
+                            GestureDetector(
+                              onTap: () async {
+                                // Switch to worker
+                                await _switchRole('worker');
+                                toggleDrawer();
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        const WorkersDashboardScreen(),
                                   ),
                                 );
-                              } else if (_userRole == 'worker' && hasEmployer) {
-                                return GestureDetector(
-                                  onTap: () async {
-                                    // Switch to employer
-                                    await _switchRole('employer');
-                                    toggleDrawer();
-                                    Navigator.pushReplacement(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            const EmployerDashboardScreen(),
-                                      ),
-                                    );
-                                  },
-                                  child: Padding(
-                                    padding: EdgeInsets.only(left: 8, right: 8),
-                                    child: Row(
-                                      children: [
-                                        Icon(
-                                          Icons.swap_horiz,
-                                          color: Colors.black.withOpacity(0.6),
-                                        ),
-                                        SizedBox(width: 15),
-                                        Text(
-                                          "Switch to Employer",
-                                          style: TextStyle(
-                                            color: Colors.black,
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                      ],
+                              },
+                              child: Padding(
+                                padding: EdgeInsets.only(left: 8, right: 8),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.swap_horiz,
+                                      color: Colors.black.withOpacity(0.6),
                                     ),
+                                    SizedBox(width: 15),
+                                    Text(
+                                      "Switch to Worker",
+                                      style: TextStyle(
+                                        color: Colors.black,
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            )
+                          else if (_userRole == 'worker')
+                            GestureDetector(
+                              onTap: () async {
+                                // Switch to employer
+                                await _switchRole('employer');
+                                toggleDrawer();
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        const EmployerDashboardScreen(),
                                   ),
                                 );
-                              }
-                              return const SizedBox.shrink();
-                            },
-                          ),
+                              },
+                              child: Padding(
+                                padding: EdgeInsets.only(left: 8, right: 8),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.swap_horiz,
+                                      color: Colors.black.withOpacity(0.6),
+                                    ),
+                                    SizedBox(width: 15),
+                                    Text(
+                                      "Switch to Employer",
+                                      style: TextStyle(
+                                        color: Colors.black,
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
                           const SizedBox(height: 20),
                           if (_userRole == 'worker') ...[
                             GestureDetector(
@@ -582,7 +545,7 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                             ),
                             const SizedBox(height: 20),
                           ],
-                          if (_userRole == 'worker') const SizedBox(height: 40),
+                          if (_userRole == 'worker') const SizedBox(height: 15),
                           if (_userRole == 'worker')
                             GestureDetector(
                               onTap: () => setState(() => _selectedIndex = 2),
@@ -648,7 +611,7 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                                 ),
                               ),
                             ),
-                          if (_userRole == 'worker') const SizedBox(height: 60),
+                          if (_userRole == 'worker') const SizedBox(height: 20),
                           GestureDetector(
                             onTap: () {
                               Navigator.push(
