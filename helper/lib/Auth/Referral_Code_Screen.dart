@@ -6,7 +6,7 @@ import 'package:flutter/services.dart';
 
 import 'Sign_In_Screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'Phone_Number_&_Email_Address_Screen.dart';
 
 class DashedLinePainter extends CustomPainter {
   final Color color;
@@ -143,15 +143,6 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
     }
     setState(() => _isLoading = true);
     try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('User not logged in.')));
-        setState(() => _isLoading = false);
-        return;
-      }
-
       // Find a user in 'Sign Up' with this referral code
       final query = await FirebaseFirestore.instance
           .collection('Sign Up')
@@ -169,66 +160,26 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
         return;
       }
 
-      final refUser = query.docs.first.data();
-      // Check if the referral code belongs to the current user
-      final currentUserPhone = user.phoneNumber;
-      final currentUserEmail = user.email;
-      final refUserPhone = refUser['phoneNumber'] as String?;
-      final refUserEmail = refUser['email'] as String?;
-
-      if ((currentUserPhone != null &&
-              refUserPhone != null &&
-              currentUserPhone == refUserPhone) ||
-          (currentUserEmail != null &&
-              refUserEmail != null &&
-              currentUserEmail == refUserEmail)) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('You cannot use your own referral code.'),
-          ),
-        );
-        setState(() => _isLoading = false);
-        return;
+      // Valid code found - return it to the previous screen
+      if (mounted) {
+        Navigator.of(context).pop(code);
       }
-
-      final referrerUserId = query.docs.first.id;
-      final referredUserId = user.uid;
-
-      // Prevent duplicates: one referral per referred user.
-      final referredRef = FirebaseFirestore.instance
-          .collection('Referred Users')
-          .doc(referredUserId);
-
-      await FirebaseFirestore.instance.runTransaction((transaction) async {
-        final existing = await transaction.get(referredRef);
-        if (existing.exists) {
-          throw Exception('Referral already used.');
-        }
-
-        transaction.set(referredRef, {
-          'referredUserId': referredUserId,
-          'referrerUserId': referrerUserId,
-          'referralCode': code,
-          'createdAt': FieldValue.serverTimestamp(),
-        });
-      });
-
-      // Valid code and not user's own
-      setState(() {
-        _showOverlay = true;
-      });
     } catch (e) {
-      final msg = e.toString().contains('Referral already used')
-          ? 'Referral code already used.'
-          : 'Error verifying code: $e';
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error verifying code: $e')));
     } finally {
       setState(() => _isLoading = false);
     }
   }
 
   void _onSkip() {
-    // TODO: navigate next
+    // Navigate to PhoneNumberEmailAddressScreen without referral code
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const PhoneNumberEmailAddressScreen(),
+      ),
+    );
   }
 
   void _onHowToUse() {
@@ -320,288 +271,293 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
               ),
 
               // Main content
-              Column(
-                children: [
-                  SizedBox(height: screenHeight * 0.03),
+              SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Column(
+                  children: [
+                    SizedBox(height: screenHeight * 0.03),
 
-                  // Center logo (required structure)
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Image.asset(
-                        'assets/icons/logo.png',
-                        width: screenWidth * 0.08,
-                        height: screenWidth * 0.08,
-                      ),
-                      SizedBox(width: screenWidth * 0.03),
-                      Text(
-                        'Helper',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: screenWidth * 0.055,
-                          fontWeight: FontWeight.bold,
-                          fontFamily: 'Poppins',
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  SizedBox(height: screenHeight * 0.035),
-
-                  // Heading (Abril Fatface)
-                  Padding(
-                    padding: EdgeInsets.only(
-                      left: screenWidth * 0.06,
-                      right: screenWidth * 0.20,
-                    ),
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        'Enter\nreferral code and\nearn rewards after\nregistration',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: screenWidth * 0.085,
-                          fontFamily: 'AbrilFatface',
-                          height: 1.05,
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  SizedBox(height: screenHeight * 0.03),
-
-                  // Glass label: "Your referral code is:"
-                  _GlassPill(
-                    width: screenWidth * 0.52,
-                    radius: 30,
-                    padding: EdgeInsets.symmetric(
-                      horizontal: screenWidth * 0.06,
-                      vertical: screenHeight * 0.009,
-                    ),
-                    child: Text(
-                      'Your referral code is:',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.9),
-                        fontSize: screenWidth * 0.035,
-                        fontFamily: 'Poppins',
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-
-                  SizedBox(height: screenHeight * 0.05),
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(_otpLength + 1, (index) {
-                        // Add separator after 5th box
-                        if (index == 5) {
-                          return Container(
-                            width: screenWidth * 0.015,
-                            height: screenWidth * 0.015,
-                            margin: EdgeInsets.symmetric(
-                              horizontal: screenWidth * 0.018,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
-                            ),
-                          );
-                        }
-
-                        // Calculate actual OTP box index
-                        final otpIndex = index > 5 ? index - 1 : index;
-                        // Make the boxes fit 10 on screen
-                        final otpBoxWidth = screenWidth * 0.079;
-                        final otpBoxHeight = screenWidth * 0.15;
-
-                        if (otpIndex >= _otpLength) return SizedBox.shrink();
-
-                        return Container(
-                          width: otpBoxWidth,
-                          height: otpBoxHeight,
-                          margin: EdgeInsets.symmetric(
-                            horizontal: screenWidth * 0.005,
-                          ),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.white, width: 1.2),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Stack(
-                            alignment: Alignment.bottomCenter,
-                            children: [
-                              Positioned(
-                                bottom: screenWidth * 0.02,
-                                child: Container(
-                                  width: otpBoxWidth * 0.75,
-                                  height: 1.2,
-                                  color: Colors.white.withOpacity(0.9),
-                                ),
-                              ),
-                              Center(
-                                child: SizedBox(
-                                  width: otpBoxWidth * 0.65,
-                                  child: TextField(
-                                    controller: _controllers[otpIndex],
-                                    focusNode: _focusNodes[otpIndex],
-                                    textAlign: TextAlign.center,
-                                    keyboardType: TextInputType.number,
-                                    maxLength: 1,
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: screenWidth * 0.055,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                    decoration: const InputDecoration(
-                                      counterText: '',
-                                      border: InputBorder.none,
-                                    ),
-                                    onChanged: (value) {
-                                      if (value.length == 1 &&
-                                          otpIndex < _otpLength - 1) {
-                                        _focusNodes[otpIndex + 1]
-                                            .requestFocus();
-                                      } else if (value.isEmpty &&
-                                          otpIndex > 0) {
-                                        _focusNodes[otpIndex - 1]
-                                            .requestFocus();
-                                      }
-
-                                      _checkOTPAndNavigate();
-                                    },
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      }),
-                    ),
-                  ),
-
-                  SizedBox(height: screenHeight * 0.05),
-
-                  // Share button (white)
-                  SizedBox(
-                    width: screenWidth * 0.88,
-                    height: screenHeight * 0.062,
-                    child: ElevatedButton(
-                      onPressed: _onVerify,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            'Verify',
-                            style: TextStyle(
-                              fontSize: screenWidth * 0.045,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
-                              fontFamily: 'Poppins',
-                            ),
-                          ),
-                          SizedBox(width: screenWidth * 0.03),
-                          Icon(
-                            Icons.arrow_forward_rounded,
-                            color: Colors.black,
-                            size: screenHeight * 0.032,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  SizedBox(height: screenHeight * 0.05),
-
-                  // How to use the code? (link)
-                  GestureDetector(
-                    onTap: _onHowToUse,
-                    child: Text(
-                      'How to use the code?',
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.9),
-                        fontSize: screenWidth * 0.036,
-                        fontFamily: 'Montserrat',
-                        fontWeight: FontWeight.w700,
-                        decoration: TextDecoration.underline,
-                        decorationColor: Colors.white.withOpacity(0.7),
-                      ),
-                    ),
-                  ),
-
-                  SizedBox(height: screenHeight * 0.05),
-
-                  // Glass note pill
-                  _GlassPill(
-                    width: screenWidth * 0.9,
-                    radius: 30,
-                    padding: EdgeInsets.symmetric(
-                      horizontal: screenWidth * 0.06,
-                      vertical: screenHeight * 0.010,
-                    ),
-                    child: Text(
-                      'You can use your referral code to invite friends and earn rewards.',
-                      textAlign: TextAlign.center,
-                      maxLines: 2,
-                      softWrap: false,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.9),
-                        fontSize: screenWidth * 0.033,
-                        fontFamily: 'Inter',
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-
-                  const Spacer(),
-
-                  // Bottom sign-in line
-                  Padding(
-                    padding: EdgeInsets.only(bottom: screenHeight * 0.03),
-                    child: Row(
+                    // Center logo (required structure)
+                    Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text(
-                          'Already have an account?',
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.9),
-                            fontSize: screenWidth * 0.036,
-                            fontFamily: 'Poppins',
-                            fontWeight: FontWeight.w500,
-                          ),
+                        Image.asset(
+                          'assets/icons/logo.png',
+                          width: screenWidth * 0.08,
+                          height: screenWidth * 0.08,
                         ),
-                        SizedBox(width: screenWidth * 0.02),
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) => SignInScreen(),
-                              ),
-                            );
-                          },
-                          child: Text(
-                            'Sign In',
-                            style: TextStyle(
-                              color: _brandOrange,
-                              fontSize: screenWidth * 0.032,
-                              fontFamily: 'Montserrat',
-                              fontWeight: FontWeight.w800,
-                            ),
+                        SizedBox(width: screenWidth * 0.03),
+                        Text(
+                          'Helper',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: screenWidth * 0.055,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'Poppins',
                           ),
                         ),
                       ],
                     ),
-                  ),
-                ],
+
+                    SizedBox(height: screenHeight * 0.035),
+
+                    // Heading (Abril Fatface)
+                    Padding(
+                      padding: EdgeInsets.only(
+                        left: screenWidth * 0.06,
+                        right: screenWidth * 0.20,
+                      ),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'Enter\nreferral code and\nearn rewards after\nregistration',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: screenWidth * 0.085,
+                            fontFamily: 'AbrilFatface',
+                            height: 1.05,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    SizedBox(height: screenHeight * 0.03),
+
+                    // Glass label: "Your referral code is:"
+                    _GlassPill(
+                      width: screenWidth * 0.52,
+                      radius: 30,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: screenWidth * 0.06,
+                        vertical: screenHeight * 0.009,
+                      ),
+                      child: Text(
+                        'Enter the referral code below',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.9),
+                          fontSize: screenWidth * 0.03,
+                          fontFamily: 'Poppins',
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+
+                    SizedBox(height: screenHeight * 0.05),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: List.generate(_otpLength + 1, (index) {
+                          // Add separator after 5th box
+                          if (index == 5) {
+                            return Container(
+                              width: screenWidth * 0.015,
+                              height: screenWidth * 0.015,
+                              margin: EdgeInsets.symmetric(
+                                horizontal: screenWidth * 0.018,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                              ),
+                            );
+                          }
+
+                          // Calculate actual OTP box index
+                          final otpIndex = index > 5 ? index - 1 : index;
+                          // Make the boxes fit 10 on screen
+                          final otpBoxWidth = screenWidth * 0.079;
+                          final otpBoxHeight = screenWidth * 0.15;
+
+                          if (otpIndex >= _otpLength) return SizedBox.shrink();
+
+                          return Container(
+                            width: otpBoxWidth,
+                            height: otpBoxHeight,
+                            margin: EdgeInsets.symmetric(
+                              horizontal: screenWidth * 0.005,
+                            ),
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                color: Colors.white,
+                                width: 1.2,
+                              ),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Stack(
+                              alignment: Alignment.bottomCenter,
+                              children: [
+                                Positioned(
+                                  bottom: screenWidth * 0.02,
+                                  child: Container(
+                                    width: otpBoxWidth * 0.75,
+                                    height: 1.2,
+                                    color: Colors.white.withOpacity(0.9),
+                                  ),
+                                ),
+                                Center(
+                                  child: SizedBox(
+                                    width: otpBoxWidth * 0.65,
+                                    child: TextField(
+                                      controller: _controllers[otpIndex],
+                                      focusNode: _focusNodes[otpIndex],
+                                      textAlign: TextAlign.center,
+                                      maxLength: 1,
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: screenWidth * 0.055,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      decoration: const InputDecoration(
+                                        counterText: '',
+                                        border: InputBorder.none,
+                                      ),
+                                      onChanged: (value) {
+                                        if (value.length == 1 &&
+                                            otpIndex < _otpLength - 1) {
+                                          _focusNodes[otpIndex + 1]
+                                              .requestFocus();
+                                        } else if (value.isEmpty &&
+                                            otpIndex > 0) {
+                                          _focusNodes[otpIndex - 1]
+                                              .requestFocus();
+                                        }
+
+                                        _checkOTPAndNavigate();
+                                      },
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }),
+                      ),
+                    ),
+
+                    SizedBox(height: screenHeight * 0.05),
+
+                    // Share button (white)
+                    SizedBox(
+                      width: screenWidth * 0.88,
+                      height: screenHeight * 0.062,
+                      child: ElevatedButton(
+                        onPressed: _onVerify,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Verify',
+                              style: TextStyle(
+                                fontSize: screenWidth * 0.045,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                                fontFamily: 'Poppins',
+                              ),
+                            ),
+                            SizedBox(width: screenWidth * 0.03),
+                            Icon(
+                              Icons.arrow_forward_rounded,
+                              color: Colors.black,
+                              size: screenHeight * 0.032,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    SizedBox(height: screenHeight * 0.05),
+
+                    // How to use the code? (link)
+                    GestureDetector(
+                      onTap: _onHowToUse,
+                      child: Text(
+                        'How to use the code?',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.9),
+                          fontSize: screenWidth * 0.036,
+                          fontFamily: 'Montserrat',
+                          fontWeight: FontWeight.w700,
+                          decoration: TextDecoration.underline,
+                          decorationColor: Colors.white.withOpacity(0.7),
+                        ),
+                      ),
+                    ),
+
+                    SizedBox(height: screenHeight * 0.05),
+
+                    // Glass note pill
+                    _GlassPill(
+                      width: screenWidth * 0.9,
+                      radius: 30,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: screenWidth * 0.06,
+                        vertical: screenHeight * 0.010,
+                      ),
+                      child: Text(
+                        'You can use your referral code to invite friends and earn rewards.',
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        softWrap: false,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.9),
+                          fontSize: screenWidth * 0.033,
+                          fontFamily: 'Inter',
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+
+                    SizedBox(height: screenHeight * 0.08),
+
+                    // Bottom sign-in line
+                    Padding(
+                      padding: EdgeInsets.only(bottom: screenHeight * 0.03),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'Already have an account?',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.9),
+                              fontSize: screenWidth * 0.036,
+                              fontFamily: 'Poppins',
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          SizedBox(width: screenWidth * 0.02),
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => SignInScreen(),
+                                ),
+                              );
+                            },
+                            child: Text(
+                              'Sign In',
+                              style: TextStyle(
+                                color: _brandOrange,
+                                fontSize: screenWidth * 0.032,
+                                fontFamily: 'Montserrat',
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
 
               // Dim background overlay for overlay or how-to-use
