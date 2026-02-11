@@ -210,6 +210,54 @@ class _WalletFlowScreenState extends State<WalletFlowScreen> {
     return snapshot.docs.map((doc) => _TxItem.fromWithdrawalDoc(doc)).toList();
   }
 
+  Future<List<_TxItem>> _fetchEscrowUnpaid() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return [];
+
+    final base = FirebaseFirestore.instance
+        .collection('Escrow')
+        .where('isPaid', isEqualTo: false);
+
+    final workerSnap = await base.where('workerUid', isEqualTo: user.uid).get();
+    final employerSnap = await base
+        .where('employerId', isEqualTo: user.uid)
+        .get();
+
+    final byId = <String, QueryDocumentSnapshot<Map<String, dynamic>>>{};
+    for (final doc in workerSnap.docs) {
+      byId[doc.id] = doc;
+    }
+    for (final doc in employerSnap.docs) {
+      byId[doc.id] = doc;
+    }
+
+    return byId.values.map((doc) => _TxItem.fromEscrowDoc(doc)).toList();
+  }
+
+  Future<List<_TxItem>> _fetchEscrowPaid() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return [];
+
+    final base = FirebaseFirestore.instance
+        .collection('Escrow')
+        .where('isPaid', isEqualTo: true);
+
+    final workerSnap = await base.where('workerUid', isEqualTo: user.uid).get();
+    final employerSnap = await base
+        .where('employerId', isEqualTo: user.uid)
+        .get();
+
+    final byId = <String, QueryDocumentSnapshot<Map<String, dynamic>>>{};
+    for (final doc in workerSnap.docs) {
+      byId[doc.id] = doc;
+    }
+    for (final doc in employerSnap.docs) {
+      byId[doc.id] = doc;
+    }
+
+    return byId.values.map((doc) => _TxItem.fromEscrowPaidDoc(doc)).toList();
+  }
+
   Future<List<_TxItem>> get _filtered async {
     if (_statusTab == 0) {
       final payments = await _fetchPayments('PENDING_USER_CONFIRMATION');
@@ -219,9 +267,11 @@ class _WalletFlowScreenState extends State<WalletFlowScreen> {
     if (_statusTab == 1) {
       final payments = await _fetchPayments('SUCCESS');
       final withdrawals = await _fetchWithdrawals('SUCCESS');
-      return [...payments, ...withdrawals];
+      final escrowPaid = await _fetchEscrowPaid();
+      return [...payments, ...withdrawals, ...escrowPaid];
     }
-    return [];
+    final escrowUnpaid = await _fetchEscrowUnpaid();
+    return escrowUnpaid;
   }
 
   void _toast(String msg) {
@@ -468,6 +518,68 @@ class _TxItem {
       transferType: 'Withdrawal',
       from: 'Worker Wallet',
       to: 'Mobile Money',
+    );
+  }
+
+  factory _TxItem.fromEscrowDoc(
+    QueryDocumentSnapshot<Map<String, dynamic>> doc,
+  ) {
+    final data = doc.data();
+    final amount = (data['amount'] as num?) ?? 0;
+    final createdAt =
+        (data['createdAt'] as Timestamp?) ??
+        (data['updatedAt'] as Timestamp?) ??
+        Timestamp.now();
+    final dateFormat = DateFormat('MMM, dd, yyyy | hh:mm a');
+    final date = dateFormat.format(createdAt.toDate());
+    final txDateFormat = DateFormat('MMM dd, yyyy');
+    final txDate = txDateFormat.format(createdAt.toDate());
+    final txTimeFormat = DateFormat('hh:mm a');
+    final txTime = txTimeFormat.format(createdAt.toDate());
+
+    return _TxItem(
+      type: _TxType.withdraw,
+      status: _TxStatus.cancelled,
+      title: 'Escrow (Unpaid)',
+      date: date,
+      amount: _formatAmount(amount),
+      txDate: txDate,
+      txTime: txTime,
+      txId: doc.id,
+      transferType: 'Escrow',
+      from: 'Escrow',
+      to: 'Wallet',
+    );
+  }
+
+  factory _TxItem.fromEscrowPaidDoc(
+    QueryDocumentSnapshot<Map<String, dynamic>> doc,
+  ) {
+    final data = doc.data();
+    final amount = (data['amount'] as num?) ?? 0;
+    final createdAt =
+        (data['createdAt'] as Timestamp?) ??
+        (data['updatedAt'] as Timestamp?) ??
+        Timestamp.now();
+    final dateFormat = DateFormat('MMM, dd, yyyy | hh:mm a');
+    final date = dateFormat.format(createdAt.toDate());
+    final txDateFormat = DateFormat('MMM dd, yyyy');
+    final txDate = txDateFormat.format(createdAt.toDate());
+    final txTimeFormat = DateFormat('hh:mm a');
+    final txTime = txTimeFormat.format(createdAt.toDate());
+
+    return _TxItem(
+      type: _TxType.deposit,
+      status: _TxStatus.completed,
+      title: 'Escrow (Paid)',
+      date: date,
+      amount: _formatAmount(amount),
+      txDate: txDate,
+      txTime: txTime,
+      txId: doc.id,
+      transferType: 'Escrow',
+      from: 'Escrow',
+      to: 'Wallet',
     );
   }
 }
