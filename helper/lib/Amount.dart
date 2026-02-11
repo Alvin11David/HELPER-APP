@@ -38,7 +38,7 @@ class AmountService {
     final userRef = _db.collection('Sign Up').doc(userId);
     await _db.runTransaction((transaction) async {
       final snapshot = await transaction.get(userRef);
-      final data = snapshot.data() as Map<String, dynamic>?;
+      final data = snapshot.data();
       final hasAmount = data != null && data.containsKey('amount');
       if (hasAmount) return;
       transaction.update(userRef, {'amount': initialAmount});

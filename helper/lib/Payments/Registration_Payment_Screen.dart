@@ -4,13 +4,13 @@ import 'dart:ui';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:helper/Document Upload/Select_Worker_Type_Screen.dart';
+import 'package:http/http.dart' as http;
+import 'package:url_launcher/url_launcher.dart';
 import 'Visa_Payment_Method_Screen.dart';
 import 'MTN_Payment_Method_Screen.dart';
 import 'Airtel_Payment_Method_Screen.dart';
 import 'PayPal_Payment_Method_Screen.dart';
-import 'package:helper/Document Upload/Select_Worker_Type_Screen.dart';
-import 'package:http/http.dart' as http;
-import 'package:url_launcher/url_launcher.dart';
 
 class RegistrationPaymentScreen extends StatefulWidget {
   const RegistrationPaymentScreen({super.key});
@@ -80,15 +80,15 @@ class _RegistrationPaymentScreenState extends State<RegistrationPaymentScreen> {
         .doc(reference)
         .snapshots()
         .listen((snapshot) {
-          if (snapshot.exists && snapshot.data()?['status'] == 'COMPLETED') {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const SelectWorkerTypeScreen(),
-              ),
-            );
-          }
-        });
+      if (snapshot.exists && snapshot.data()?['status'] == 'COMPLETED') {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const SelectWorkerTypeScreen(),
+          ),
+        );
+      }
+    });
   }
 
   @override

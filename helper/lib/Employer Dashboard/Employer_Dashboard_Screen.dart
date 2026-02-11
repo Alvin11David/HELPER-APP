@@ -7,8 +7,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:helper/Employer%20Dashboard/Employer_Notifications.dart';
-import 'package:helper/Payments/Airtel_Payment_Method_Screen.dart';
-import 'package:helper/Payments/MTN_Payment_Method_Screen.dart';
 import 'package:helper/Payments/Registration_Payment_Screen.dart';
 import 'package:intl/intl.dart';
 import 'package:helper/Components/User_Name.dart';
@@ -19,7 +17,6 @@ import 'package:helper/Worker%20Dashboard/Worker_Details_Screen.dart';
 import '../Components/Bottom_Nav_Bar.dart';
 import 'All_Categories_Screen.dart';
 import 'NearYouProvidersScreen.dart';
-import 'ForYouProvidersScreen.dart';
 
 class EmployerDashboardScreen extends StatefulWidget {
   const EmployerDashboardScreen({super.key});
@@ -187,6 +184,22 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                     'status': 'confirmed', // revert back
                     'updatedAt': FieldValue.serverTimestamp(),
                   });
+              final workerUid = (b['workerUid'] ?? '').toString();
+              final employerName = (b['employerName'] ?? 'Employer').toString();
+              if (workerUid.isNotEmpty) {
+                await FirebaseFirestore.instance
+                    .collection('workerNotifications')
+                    .add({
+                  'workerId': workerUid,
+                  'title': 'Reschedule declined',
+                  'message':
+                      '$employerName declined your reschedule request.',
+                  'type': 'reschedule_declined',
+                  'bookingId': bookingId,
+                  'read': false,
+                  'timestamp': FieldValue.serverTimestamp(),
+                });
+              }
               await FirebaseFirestore.instance
                   .collection('notifications')
                   .doc(notifId)
@@ -210,6 +223,22 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                     'status': 'confirmed',
                     'updatedAt': FieldValue.serverTimestamp(),
                   });
+              final workerUid = (b['workerUid'] ?? '').toString();
+              final employerName = (b['employerName'] ?? 'Employer').toString();
+              if (workerUid.isNotEmpty) {
+                await FirebaseFirestore.instance
+                    .collection('workerNotifications')
+                    .add({
+                  'workerId': workerUid,
+                  'title': 'Reschedule accepted',
+                  'message':
+                      '$employerName accepted your reschedule request.',
+                  'type': 'reschedule_accepted',
+                  'bookingId': bookingId,
+                  'read': false,
+                  'timestamp': FieldValue.serverTimestamp(),
+                });
+              }
               await FirebaseFirestore.instance
                   .collection('notifications')
                   .doc(notifId)
@@ -1579,8 +1608,9 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                                   } else {
                                     Timestamp? aTime = a.data()['updatedAt'];
                                     Timestamp? bTime = b.data()['updatedAt'];
-                                    if (aTime == null && bTime == null)
+                                    if (aTime == null && bTime == null) {
                                       return 0;
+                                    }
                                     if (aTime == null) return 1;
                                     if (bTime == null) return -1;
                                     return bTime.compareTo(aTime);

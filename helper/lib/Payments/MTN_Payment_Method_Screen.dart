@@ -5,7 +5,6 @@ import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:helper/Intro/Role_Selection_Screen.dart';
 
 class MtnPaymentMethodScreen extends StatefulWidget {
   const MtnPaymentMethodScreen({super.key});
@@ -103,9 +102,9 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
 
     // 1. FORMAT MSISDN (Force +256 format)
     String digits = phoneNumber.replaceAll(RegExp(r'\D'), '');
-    if (digits.startsWith('0')) digits = '256' + digits.substring(1);
-    if (!digits.startsWith('256')) digits = '256' + digits;
-    final String finalMsisdn = '+' + digits;
+    if (digits.startsWith('0')) digits = '256${digits.substring(1)}';
+    if (!digits.startsWith('256')) digits = '256$digits';
+    final String finalMsisdn = '+$digits';
 
     print('DEBUG: Sending MSISDN: $finalMsisdn');
 

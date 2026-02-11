@@ -51,8 +51,8 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
     final workerId = widget.providerId;
 
     _conflictsSub = FirebaseFirestore.instance
-        .collection('bookings')
-        .where('serviceProviderId', isEqualTo: workerId)
+            .collection('bookings')
+            .where('workerUid', isEqualTo: workerId)
         .where(
           'status',
           whereIn: const ['pending', 'confirmed', 'reschedule_requested'],
@@ -114,6 +114,24 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
         backgroundColor: Colors.black.withOpacity(0.85),
       ),
     );
+  }
+
+  Future<void> _addWorkerNotification({
+    required String workerId,
+    required String title,
+    required String message,
+    required String type,
+    String? bookingId,
+  }) async {
+    await FirebaseFirestore.instance.collection('workerNotifications').add({
+      'workerId': workerId,
+      'title': title,
+      'message': message,
+      'type': type,
+      if (bookingId != null) 'bookingId': bookingId,
+      'read': false,
+      'timestamp': FieldValue.serverTimestamp(),
+    });
   }
 
   // ---------------------- Booking helpers ----------------------
@@ -195,7 +213,7 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
     try {
       final overlapSnap = await FirebaseFirestore.instance
           .collection('bookings')
-          .where('serviceProviderId', isEqualTo: workerId)
+          .where('workerUid', isEqualTo: workerId)
           .where('status', isEqualTo: 'confirmed')
           .where('startDateTime', isLessThan: Timestamp.fromDate(newEnd))
           .where('endDateTime', isGreaterThan: Timestamp.fromDate(newStart))
@@ -224,6 +242,14 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
           .collection('bookings')
           .doc(bookingId)
           .update(updateData);
+
+      await _addWorkerNotification(
+        workerId: workerId,
+        title: 'Booking accepted',
+        message: 'You accepted a booking request.',
+        type: 'booking_accepted',
+        bookingId: bookingId,
+      );
 
       if (hasConflict) {
         final batch = FirebaseFirestore.instance.batch();
@@ -257,6 +283,13 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
             'cancelledAt': FieldValue.serverTimestamp(),
             'cancelledBy': workerId,
           });
+      await _addWorkerNotification(
+        workerId: workerId,
+        title: 'Booking cancelled',
+        message: 'You cancelled a booking request.',
+        type: 'booking_cancelled',
+        bookingId: bookingId,
+      );
       _toast("Booking cancelled!");
       setState(() => _tab = 3);
     } catch (e) {
@@ -305,6 +338,13 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
             'startedAt': FieldValue.serverTimestamp(),
             'startedBy': workerId,
           });
+      await _addWorkerNotification(
+        workerId: workerId,
+        title: 'Job started',
+        message: 'Your job is now in progress.',
+        type: 'job_started',
+        bookingId: bookingId,
+      );
       _toast("Job started!");
       return true;
     } catch (e) {
@@ -331,8 +371,8 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
     try {
       // Query all pending jobs for this worker
       final pendingSnap = await FirebaseFirestore.instance
-          .collection('bookings')
-          .where('serviceProviderId', isEqualTo: workerId)
+              .collection('bookings')
+              .where('workerUid', isEqualTo: workerId)
           .where('status', isEqualTo: 'pending')
           .get();
 
@@ -384,8 +424,8 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
 
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
       stream: FirebaseFirestore.instance
-          .collection('bookings')
-          .where('serviceProviderId', isEqualTo: workerId)
+              .collection('bookings')
+              .where('workerUid', isEqualTo: workerId)
           .where('status', isEqualTo: 'pending')
           .orderBy('createdAt', descending: true)
           .snapshots(),
@@ -459,8 +499,8 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
 
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
       stream: FirebaseFirestore.instance
-          .collection('bookings')
-          .where('serviceProviderId', isEqualTo: workerId)
+              .collection('bookings')
+              .where('workerUid', isEqualTo: workerId)
           .where(
             'status',
             whereIn: const ['confirmed', 'in_progress', 'started', 'completed_pending'],
@@ -549,8 +589,8 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
 
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
       stream: FirebaseFirestore.instance
-          .collection('bookings')
-          .where('serviceProviderId', isEqualTo: workerId)
+              .collection('bookings')
+              .where('workerUid', isEqualTo: workerId)
           .where('status', isEqualTo: status)
           .orderBy('createdAt', descending: true)
           .snapshots(),
@@ -740,7 +780,7 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
       stream: FirebaseFirestore.instance
           .collection('bookings')
-          .where('serviceProviderId', isEqualTo: workerId)
+          .where('workerUid', isEqualTo: workerId)
           .where('status', whereIn: const ['reschedule_requested', 'confirmed', 'cancelled'])
           .orderBy('updatedAt', descending: true)
           .snapshots(),
@@ -1018,29 +1058,6 @@ class _BookingDetailsSheet extends StatelessWidget {
                           'View Location',
                           style: TextStyle(
                             color: accent,
-                            fontFamily: 'Inter',
-                            fontWeight: FontWeight.w900,
-                            fontSize: w * 0.032,
-                          ),
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: w * 0.02),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: onStartJob,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: accent,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(999),
-                          ),
-                          padding: EdgeInsets.symmetric(vertical: h * 0.016),
-                        ),
-                        child: Text(
-                          'Start Job',
-                          style: TextStyle(
-                            color: Colors.white,
                             fontFamily: 'Inter',
                             fontWeight: FontWeight.w900,
                             fontSize: w * 0.032,

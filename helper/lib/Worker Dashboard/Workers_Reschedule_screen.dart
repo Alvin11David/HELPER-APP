@@ -279,6 +279,16 @@ class _WorkerJobRescheduleScreenState extends State<WorkerJobRescheduleScreen> {
         'updatedAt': FieldValue.serverTimestamp(),
       });
 
+      await FirebaseFirestore.instance.collection('workerNotifications').add({
+        'workerId': workerId,
+        'title': 'Reschedule requested',
+        'message': 'Your reschedule request was sent to the employer.',
+        'type': 'reschedule_requested',
+        'bookingId': bookingId,
+        'read': false,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+
       final employerId = (widget.bookingData['employerId'] ?? '').toString();
       if (employerId.isNotEmpty) {
         await FirebaseFirestore.instance.collection('notifications').add({
@@ -305,7 +315,7 @@ class _WorkerJobRescheduleScreenState extends State<WorkerJobRescheduleScreen> {
   Stream<QuerySnapshot<Map<String, dynamic>>> _workerBookingsStream(String workerId) {
     return FirebaseFirestore.instance
         .collection('bookings')
-        .where('serviceProviderId', isEqualTo: workerId)
+      .where('workerUid', isEqualTo: workerId)
         .where('status', whereIn: const ['pending', 'confirmed', 'reschedule_requested'])
         .orderBy('startDateTime', descending: false)
         .snapshots();

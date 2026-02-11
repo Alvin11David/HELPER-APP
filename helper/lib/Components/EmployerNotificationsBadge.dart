@@ -33,8 +33,7 @@ class _EmployerNotificationsBadgeState
               data['messages'] ?? [],
             );
             for (var msg in messages) {
-              if (msg is Map<String, dynamic> &&
-                  msg['sender'] == 'admin' &&
+              if (msg['sender'] == 'admin' &&
                   !(msg['read'] == true)) {
                 supportCount++;
               }

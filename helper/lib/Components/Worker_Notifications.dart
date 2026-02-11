@@ -12,6 +12,18 @@ class WorkerNotificationsBadge extends StatefulWidget {
 
 class _WorkerNotificationsBadgeState extends State<WorkerNotificationsBadge> {
   int _unreadCount = 0;
+  static const List<String> _bookingTypes = [
+    'booking_request',
+    'booking_accepted',
+    'booking_declined',
+    'booking_cancelled',
+    'job_started',
+    'reschedule_requested',
+    'reschedule_accepted',
+    'reschedule_declined',
+    'completion_requested',
+    'review_received',
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -23,6 +35,7 @@ class _WorkerNotificationsBadgeState extends State<WorkerNotificationsBadge> {
           .collection('workerNotifications')
           .where('workerId', isEqualTo: currentUser.uid)
           .where('read', isEqualTo: false)
+          .where('type', whereIn: _bookingTypes)
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.hasError) {

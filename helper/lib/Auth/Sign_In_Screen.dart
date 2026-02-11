@@ -13,7 +13,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/foundation.dart';
 
-import 'OTP_Verification_Screen.dart';
 import 'Phone_Number_&_Email_Address_Screen.dart';
 import 'Referral_Code_Screen.dart';
 
@@ -326,7 +325,7 @@ class _SignInScreenState extends State<SignInScreen> {
     }
 
     // Sign in with email auth
-    final email = phone.replaceAll('+', '').replaceAll(' ', '') + '@helper.com';
+    final email = '${phone.replaceAll('+', '').replaceAll(' ', '')}@helper.com';
     try {
       final userCred = await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: email,

@@ -2,7 +2,6 @@
 
 import 'dart:async';
 import 'dart:ui';
-import 'dart:typed_data';
 import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -445,6 +444,16 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
               'completion.requestedAt': FieldValue.serverTimestamp(),
               'updatedAt': FieldValue.serverTimestamp(),
             });
+
+        await FirebaseFirestore.instance.collection('workerNotifications').add({
+          'workerId': uid,
+          'title': 'Completion sent',
+          'message': 'Your completion request was sent to the employer.',
+          'type': 'completion_requested',
+          'bookingId': widget.bookingId,
+          'read': false,
+          'timestamp': FieldValue.serverTimestamp(),
+        });
 
         if (employerId.isNotEmpty) {
           await FirebaseFirestore.instance.collection('notifications').add({

@@ -134,9 +134,9 @@ class _MtnAirtelDepositScreenState extends State<MtnAirtelDepositScreen> {
 
     // 1. FORMAT MSISDN (Force +256 format)
     String digits = phoneNumber.replaceAll(RegExp(r'\D'), '');
-    if (digits.startsWith('0')) digits = '256' + digits.substring(1);
-    if (!digits.startsWith('256')) digits = '256' + digits;
-    final String finalMsisdn = '+' + digits;
+    if (digits.startsWith('0')) digits = '256${digits.substring(1)}';
+    if (!digits.startsWith('256')) digits = '256$digits';
+    final String finalMsisdn = '+$digits';
 
     print('DEBUG: Sending MSISDN: $finalMsisdn');
 
