@@ -29,6 +29,7 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
   void initState() {
     super.initState();
     _loadSavedPhoneNumber();
+    _checkExistingPaymentStatus();
     _phoneNumberFocusNode.addListener(() {
       if (!_phoneNumberFocusNode.hasFocus) {
         final phoneNumber = _cardNumberController.text.trim();
@@ -92,6 +93,38 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
     } catch (e) {
       print('Error saving phone number: $e');
     }
+  }
+
+  Future<void> _checkExistingPaymentStatus() async {
+    final User? currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) return;
+
+    FirebaseFirestore.instance
+        .collection('Payment Data')
+        .where('userId', isEqualTo: currentUser.uid)
+        .where('status', isEqualTo: 'SUCCESS')
+        .snapshots()
+        .listen((querySnapshot) {
+          if (querySnapshot.docs.isNotEmpty) {
+            setState(() {
+              _isPaymentSuccessful = true;
+            });
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Payment already completed successfully!'),
+                backgroundColor: Colors.green,
+              ),
+            );
+            // Navigate to role selection after a short delay
+            Future.delayed(const Duration(seconds: 2), () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const SelectWorkerTypeScreen(),
+                ),
+              );
+            });
+          }
+        });
   }
 
   Future<void> _processPayment() async {
@@ -233,6 +266,51 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
   Widget build(BuildContext context) {
     final double screenWidth = MediaQuery.of(context).size.width;
     final double screenHeight = MediaQuery.of(context).size.height;
+
+    // If payment is already successful, show success screen
+    if (_isPaymentSuccessful) {
+      return Scaffold(
+        body: Container(
+          decoration: const BoxDecoration(
+            image: DecorationImage(
+              image: AssetImage('assets/background/normalscreenbg.png'),
+              fit: BoxFit.cover,
+            ),
+          ),
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.check_circle,
+                  color: Colors.green,
+                  size: screenWidth * 0.3,
+                ),
+                SizedBox(height: screenHeight * 0.02),
+                Text(
+                  'Payment Already Completed!',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: screenWidth * 0.06,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: screenHeight * 0.02),
+                Text(
+                  'Redirecting to next step...',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: screenWidth * 0.04,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       body: Stack(

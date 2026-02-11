@@ -13,18 +13,43 @@ class UserEmailOrPhoneNumber extends StatelessWidget {
         return null; // User not authenticated
       }
 
-      // Fetch the document from "Sign Up" collection
-      DocumentSnapshot doc = await FirebaseFirestore.instance
+      // First, get the activeRole from "Sign Up"
+      DocumentSnapshot signUpDoc = await FirebaseFirestore.instance
           .collection('Sign Up')
           .doc(user.uid)
           .get();
+      String? activeRole;
+      if (signUpDoc.exists && signUpDoc.data() != null) {
+        activeRole =
+            (signUpDoc.data() as Map<String, dynamic>)['activeRole'] as String?;
+        if (activeRole == null) {
+          activeRole =
+              (signUpDoc.data() as Map<String, dynamic>)['role'] as String?;
+        }
+      }
 
-      if (doc.exists && doc.data() != null) {
-        Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
-        // Prefer email, then phone number
+      // Try to fetch from "User Roles" first
+      if (activeRole != null) {
+        DocumentSnapshot roleDoc = await FirebaseFirestore.instance
+            .collection('User Roles')
+            .doc('${user.uid}_${activeRole}')
+            .get();
+        if (roleDoc.exists && roleDoc.data() != null) {
+          Map<String, dynamic> data = roleDoc.data() as Map<String, dynamic>;
+          String? email = data['email'] as String?;
+          String? phoneNumber = data['phoneNumber'] as String?;
+          if (email != null || phoneNumber != null) {
+            return email ?? phoneNumber;
+          }
+        }
+      }
+
+      // Fallback to "Sign Up"
+      if (signUpDoc.exists && signUpDoc.data() != null) {
+        Map<String, dynamic> data = signUpDoc.data() as Map<String, dynamic>;
         String? email = data['email'] as String?;
         String? phoneNumber = data['phoneNumber'] as String?;
-        return email ?? phoneNumber; // Return email if available, else phone number
+        return email ?? phoneNumber;
       } else {
         return null; // Document or fields don't exist
       }

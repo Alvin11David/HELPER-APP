@@ -3,15 +3,15 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:helper/Components/User_Name.dart';
 import 'package:helper/Components/Worker_Profession.dart';
-import 'package:helper/Components/User_Avatar_Circle.dart'; // Add this import
-import '../Document Upload/Profile/Profile_Screen.dart'; // Add this import
-import '../Auth/Sign_In_Screen.dart'; // Add this import
+import 'package:helper/Components/User_Avatar_Circle.dart';
+import '../Document Upload/Profile/Profile_Screen.dart';
+import '../Auth/Sign_In_Screen.dart';
 import '../Employer Dashboard/Employer_Dashboard_Screen.dart';
 import '../Employer Dashboard/My_Bookings_Screen.dart';
 import '../Worker Dashboard/Workers_Dashboard_Screen.dart';
 import '../Worker Dashboard/Worker_Ratings_Reviews_Screen.dart';
-import '../Document Upload/Profile/Support_Screen.dart'; // Add this import
-import '../Intro/Role_Selection_Screen.dart'; // Add this import
+import '../Document Upload/Profile/Support_Screen.dart';
+import '../Intro/Role_Selection_Screen.dart';
 
 class SideBar extends StatefulWidget {
   const SideBar({super.key});
@@ -84,14 +84,14 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
           .doc(user.uid)
           .get();
       if (doc.exists && doc.data() != null) {
+        String? activeRole =
+            (doc.data() as Map<String, dynamic>)['activeRole'] as String?;
+        if (activeRole != null) return activeRole;
         String? role = (doc.data() as Map<String, dynamic>)['role'] as String?;
-        print('Fetched user role: $role'); // Debug print
         return role;
       }
-      print('User document does not exist or has no data'); // Debug print
       return null;
     } catch (e) {
-      print('Error fetching user role: $e'); // Debug print
       return null;
     }
   }
@@ -101,7 +101,21 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
       User? user = FirebaseAuth.instance.currentUser;
       if (user == null) return false;
       DocumentSnapshot doc = await FirebaseFirestore.instance
-          .collection('serviceProviders')
+          .collection('Sign Up')
+          .doc(user.uid)
+          .get();
+      return doc.exists;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> _hasEmployerData() async {
+    try {
+      User? user = FirebaseAuth.instance.currentUser;
+      if (user == null) return false;
+      DocumentSnapshot doc = await FirebaseFirestore.instance
+          .collection('Sign Up')
           .doc(user.uid)
           .get();
       return doc.exists;
@@ -113,11 +127,29 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
   Future<void> _switchRole(String newRole) async {
     try {
       User? user = FirebaseAuth.instance.currentUser;
-      if (user == null) return;
-      await FirebaseFirestore.instance
-          .collection('Sign Up')
-          .doc(user.uid)
-          .update({'role': newRole});
+      if (user != null) {
+        // Update fields based on the new role
+        Map<String, dynamic> updates = {'activeRole': newRole};
+        if (newRole == 'worker') {
+          updates.addAll({
+            'fullName': 'Drena',
+            'email': 'drenajennie@gmail.com',
+            'referralCode': 'UG863UP963',
+            // Add other fields if needed
+          });
+        } else if (newRole == 'employer') {
+          updates.addAll({
+            'fullName': 'Lilian',
+            'email': 'liliannabulya3@gmail.com',
+            'referralCode': 'UG864MX537',
+            // Add other fields if needed
+          });
+        }
+        await FirebaseFirestore.instance
+            .collection('Sign Up')
+            .doc(user.uid)
+            .update(updates);
+      }
       setState(() => _userRole = newRole);
     } catch (e) {
       print('Error switching role: $e');
@@ -194,7 +226,7 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                               ),
                             ],
                           ),
-                          child: UserAvatarCircle(),
+                          child: UserAvatarCircle(role: _userRole),
                         ),
                       ),
                       // Add Worker's Name text below the circle
@@ -204,7 +236,7 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                         children: [
                           Padding(
                             padding: EdgeInsets.only(left: 8),
-                            child: UserName(),
+                            child: UserName(role: _userRole),
                           ),
                           const SizedBox(height: 2),
                           Padding(
@@ -444,7 +476,7 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                           ),
                           const SizedBox(height: 20),
                           // Switch role row
-                          if (_userRole == 'employer') 
+                          if (_userRole == 'employer')
                             GestureDetector(
                               onTap: () async {
                                 // Switch to worker
@@ -514,6 +546,7 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                                 ),
                               ),
                             ),
+                          const SizedBox(height: 20),
                           const SizedBox(height: 20),
                           if (_userRole == 'worker') ...[
                             GestureDetector(
@@ -611,7 +644,7 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                                 ),
                               ),
                             ),
-                          if (_userRole == 'worker') const SizedBox(height: 20),
+                          if (_userRole == 'worker') const SizedBox(height: 15),
                           GestureDetector(
                             onTap: () {
                               Navigator.push(

@@ -28,6 +28,7 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
   void initState() {
     super.initState();
     _loadSavedPhoneNumber();
+    _checkExistingPaymentStatus();
     _phoneNumberFocusNode.addListener(() {
       if (!_phoneNumberFocusNode.hasFocus) {
         final phoneNumber = _cardNumberController.text.trim();
@@ -93,7 +94,33 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
     }
   }
 
+  void _checkExistingPaymentStatus() async {
+    final User? currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) return;
+
+    try {
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('Payment Data')
+          .where('userId', isEqualTo: currentUser.uid)
+          .where('status', isEqualTo: 'SUCCESS')
+          .get();
+
+      if (querySnapshot.docs.isNotEmpty) {
+        setState(() {
+          _isPaymentSuccessful = true;
+          _showOverlay = true;
+          _isDimming = true;
+        });
+      }
+    } catch (e) {
+      print('Error checking existing payment: $e');
+    }
+  }
+
   Future<void> _processPayment() async {
+    if (_isPaymentSuccessful)
+      return; // Prevent re-payment if already successful
+
     setState(() {
       _isLoading = true;
     });
@@ -529,7 +556,7 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
                             ),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
-                              children:  _isLoading
+                              children: _isLoading
                                   ? [
                                       CircularProgressIndicator(
                                         valueColor:
@@ -539,22 +566,22 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
                                       ),
                                     ]
                                   : [
-                                Text(
-                                  'Pay',
-                                  style: TextStyle(
-                                    color: Colors.black,
-                                    fontSize: screenWidth * 0.06,
-                                    fontWeight: FontWeight.bold,
-                                    fontFamily: 'PlayfairDisplay',
-                                  ),
-                                ),
-                                SizedBox(width: screenWidth * 0.02),
-                                Icon(
-                                  Icons.account_balance_wallet,
-                                  color: Colors.black,
-                                  size: screenWidth * 0.06,
-                                ),
-                              ],
+                                      Text(
+                                        'Pay',
+                                        style: TextStyle(
+                                          color: Colors.black,
+                                          fontSize: screenWidth * 0.06,
+                                          fontWeight: FontWeight.bold,
+                                          fontFamily: 'PlayfairDisplay',
+                                        ),
+                                      ),
+                                      SizedBox(width: screenWidth * 0.02),
+                                      Icon(
+                                        Icons.account_balance_wallet,
+                                        color: Colors.black,
+                                        size: screenWidth * 0.06,
+                                      ),
+                                    ],
                             ),
                           ),
                         ),

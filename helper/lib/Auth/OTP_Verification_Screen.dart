@@ -688,7 +688,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
 
       Navigator.of(context).push(
         MaterialPageRoute(
-          builder: (context) => const RegistrationPaymentScreen(),
+          builder: (context) => const RoleSelectionScreen(),
         ),
       );
     } on FirebaseAuthException catch (e) {

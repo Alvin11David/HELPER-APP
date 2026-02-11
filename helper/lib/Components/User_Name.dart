@@ -3,19 +3,21 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class UserName extends StatefulWidget {
-  const UserName({super.key});
+  final String? role; // Optional role parameter
+
+  const UserName({super.key, this.role});
 
   @override
   State<UserName> createState() => _UserNameState();
 }
 
 class _UserNameState extends State<UserName> {
-  static Future<String?>? _fullNameFuture;
+  Future<String?>? _fullNameFuture;
 
   @override
   void initState() {
     super.initState();
-    _fullNameFuture ??= _fetchFullName(); // runs ONCE globally
+    _fullNameFuture = _fetchFullName(); // Fetch based on role
   }
 
   Future<String?> _fetchFullName() async {
@@ -23,6 +25,21 @@ class _UserNameState extends State<UserName> {
       User? user = FirebaseAuth.instance.currentUser;
       if (user == null) return null;
 
+      String docId;
+      if (widget.role != null) {
+        // Fetch from User Roles collection
+        docId = '${user.uid}_${widget.role}';
+        DocumentSnapshot doc = await FirebaseFirestore.instance
+            .collection('User Roles')
+            .doc(docId)
+            .get();
+        if (doc.exists && doc.data() != null) {
+          final data = doc.data() as Map<String, dynamic>;
+          return data['fullName'] as String?;
+        }
+      }
+
+      // Fallback to Sign Up collection
       DocumentSnapshot doc = await FirebaseFirestore.instance
           .collection('Sign Up')
           .doc(user.uid)
