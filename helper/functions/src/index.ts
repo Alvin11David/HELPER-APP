@@ -1709,3 +1709,165 @@ export const requestCardSession = onRequest(async (req, res) => {
     res.status(500).send({ success: false, message: "Internal Server Error" });
   }
 });
+
+/**
+ * Cloud Function: applyReferralRewards
+ * Callable function to apply referral bonuses to both referrer and referred user
+ * - Reads dynamic bonus amounts from System Settings.default collection
+ * - Finds the referrer by their referralCode
+ * - Creates/updates Referred Users entry
+ * - Atomically increments both user amounts using transactions
+ */
+export const applyReferralRewards = onCall(
+  { maxInstances: 5 },
+  async (request) => {
+    try {
+      const { referredUserId, referralCode } = request.data;
+
+      // 1. Validate inputs
+      if (!referredUserId || !referralCode) {
+        throw new HttpsError(
+          "invalid-argument",
+          "referredUserId and referralCode are required",
+        );
+      }
+
+      const db = admin.firestore();
+
+      // 2. Check if referral already rewarded (prevent duplicates)
+      const existingReferral = await db
+        .collection("Referred Users")
+        .doc(referredUserId)
+        .get();
+
+      if (existingReferral.exists) {
+        const data = existingReferral.data();
+        if (data?.rewarded === true) {
+          return {
+            success: false,
+            message: "Referral reward already applied",
+          };
+        }
+      }
+
+      // 3. Get dynamic bonus amounts from System Settings
+      const settingsSnap = await db
+        .collection("System Settings")
+        .doc("default")
+        .get();
+
+      if (!settingsSnap.exists) {
+        throw new HttpsError("not-found", "System Settings document not found");
+      }
+
+      const settings = settingsSnap.data() as {
+        referralBonusUG?: number;
+        referrerBonus?: number;
+      };
+      const referredBonus = settings?.referralBonusUG ?? 500;
+      const referrerBonus = settings?.referrerBonus ?? 600;
+
+      // 4. Find the referrer by their referralCode
+      const referrerSnap = await db
+        .collection("Sign Up")
+        .where("referralCode", "==", referralCode)
+        .limit(1)
+        .get();
+
+      if (referrerSnap.empty) {
+        throw new HttpsError(
+          "not-found",
+          `Referral code "${referralCode}" not found`,
+        );
+      }
+
+      const referrerDoc = referrerSnap.docs[0];
+      const referrerUserId = referrerDoc.id;
+      const referrerData = referrerDoc.data();
+
+      // Prevent self-referral
+      if (referrerUserId === referredUserId) {
+        throw new HttpsError("invalid-argument", "Cannot refer yourself");
+      }
+
+      // 5. Get referred user data
+      const referredUserSnap = await db
+        .collection("Sign Up")
+        .doc(referredUserId)
+        .get();
+
+      if (!referredUserSnap.exists) {
+        throw new HttpsError("not-found", "Referred user not found");
+      }
+
+      const referredUserData = referredUserSnap.data() as {
+        phoneNumber?: string;
+        email?: string;
+        fullName?: string;
+      };
+
+      // 6. Apply rewards using transaction (atomic operation)
+      await db.runTransaction(async (transaction) => {
+        // Increment referrer's amount
+        const referrerRef = db.collection("Sign Up").doc(referrerUserId);
+        transaction.update(referrerRef, {
+          amount: admin.firestore.FieldValue.increment(referrerBonus),
+        });
+
+        // Increment referred user's amount
+        const referredRef = db.collection("Sign Up").doc(referredUserId);
+        transaction.update(referredRef, {
+          amount: admin.firestore.FieldValue.increment(referredBonus),
+        });
+
+        // Create/update Referred Users entry
+        const referredUsersRef = db
+          .collection("Referred Users")
+          .doc(referredUserId);
+        transaction.set(
+          referredUsersRef,
+          {
+            referredUserId: referredUserId,
+            referrerUserId: referrerUserId,
+            referralCode: referralCode,
+            referredPhone: referredUserData?.phoneNumber || "",
+            referredEmail: referredUserData?.email || "",
+            referredFullName: referredUserData?.fullName || "",
+            referrerPhone: referrerData?.phoneNumber || "",
+            referrerEmail: referrerData?.email || "",
+            referrerFullName: referrerData?.fullName || "",
+            referrerReward: referrerBonus,
+            referredReward: referredBonus,
+            rewarded: true,
+            rewardedAt: admin.firestore.FieldValue.serverTimestamp(),
+          },
+          { merge: true },
+        );
+      });
+
+      logger.info(
+        `Referral rewards applied: referrer=${referrerUserId} (+${referrerBonus}), referred=${referredUserId} (+${referredBonus})`,
+      );
+
+      return {
+        success: true,
+        message: "Referral rewards applied successfully",
+        referrerBonus,
+        referredBonus,
+      };
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
+      logger.error("Error applying referral rewards:", errorMessage);
+
+      if (error instanceof HttpsError) {
+        throw error;
+      }
+
+      throw new HttpsError(
+        "internal",
+        `Failed to apply referral rewards: ${errorMessage}`,
+      );
+    }
+  },
+);
