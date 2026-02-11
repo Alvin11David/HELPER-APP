@@ -1,6 +1,12 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:intl/intl.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:http/http.dart' as http;
+import 'package:url_launcher/url_launcher.dart';
 import '../Payments/MTN_Airtel_Deposit_Screen.dart';
 
 class WalletDepositPaymentMethodScreen extends StatefulWidget {
@@ -17,6 +23,114 @@ class _WalletDepositPaymentMethodScreenState
     extends State<WalletDepositPaymentMethodScreen> {
   final bool _isMtnCardSelected = false;
   final bool _isAirtelCardSelected = false;
+  final bool _isMasterCardSelected = false;
+  final bool _isVisaCardSelected = false;
+  bool _isLoading = false;
+
+  Future<void> _handleMasterCardPayment() async {
+    setState(() => _isLoading = true);
+
+    final user = FirebaseAuth.instance.currentUser;
+    final String reference = 'MC_WALLET_${DateTime.now().millisecondsSinceEpoch}';
+
+    try {
+      final response = await http.post(
+        Uri.parse(
+          'https://us-central1-helperapp-46849.cloudfunctions.net/requestCardSession',
+        ),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'userId': user?.uid,
+          'amount': int.parse(widget.amount),
+          'reference': reference,
+          'description': 'Wallet Deposit',
+        }),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (data['success'] == true) {
+        final String paymentUrl = data['payment_url'];
+        if (await canLaunchUrl(Uri.parse(paymentUrl))) {
+          await launchUrl(
+            Uri.parse(paymentUrl),
+            mode: LaunchMode.externalApplication,
+          );
+
+          _listenForCompletion(reference);
+        }
+      } else {
+        throw Exception(data['message'] ?? 'Payment initiation failed');
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _handleVisaPayment() async {
+    setState(() => _isLoading = true);
+
+    final user = FirebaseAuth.instance.currentUser;
+    final String reference = 'VISA_WALLET_${DateTime.now().millisecondsSinceEpoch}';
+
+    try {
+      final response = await http.post(
+        Uri.parse(
+          'https://us-central1-helperapp-46849.cloudfunctions.net/requestCardSession',
+        ),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'userId': user?.uid,
+          'amount': int.parse(widget.amount),
+          'reference': reference,
+          'description': 'Wallet Deposit',
+        }),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (data['success'] == true) {
+        final String paymentUrl = data['payment_url'];
+        if (await canLaunchUrl(Uri.parse(paymentUrl))) {
+          await launchUrl(
+            Uri.parse(paymentUrl),
+            mode: LaunchMode.externalApplication,
+          );
+
+          _listenForCompletion(reference);
+        }
+      } else {
+        throw Exception(data['message'] ?? 'Payment initiation failed');
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  void _listenForCompletion(String reference) {
+    FirebaseFirestore.instance
+        .collection('Payment Data')
+        .doc(reference)
+        .snapshots()
+        .listen((snapshot) {
+      if (snapshot.exists && snapshot.data()?['status'] == 'COMPLETED') {
+        // Update wallet balance or navigate back
+        Navigator.of(context).pop(); // Or show success message
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -295,6 +409,124 @@ class _WalletDepositPaymentMethodScreenState
                                           : Colors.transparent,
                                       border: Border.all(
                                         color: _isAirtelCardSelected
+                                            ? Colors.white
+                                            : Colors.black,
+                                        width: 1.5,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: screenHeight * 0.03),
+                        GestureDetector(
+                          onTap: _isLoading ? null : _handleMasterCardPayment,
+                          child: Container(
+                            width: screenWidth * 0.91,
+                            height: screenHeight * 0.091,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: screenWidth * 0.05,
+                              ),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Image.asset(
+                                        'assets/images/mastercard.png',
+                                        width: screenWidth * 0.12,
+                                        height: screenWidth * 0.12,
+                                      ),
+                                      SizedBox(width: screenWidth * 0.04),
+                                      Text(
+                                        'Master Card',
+                                        style: TextStyle(
+                                          color: Colors.black,
+                                          fontSize: screenWidth * 0.045,
+                                          fontWeight: FontWeight.w600,
+                                          fontFamily: 'Poppins',
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  Container(
+                                    width: screenWidth * 0.065,
+                                    height: screenWidth * 0.065,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: _isMasterCardSelected
+                                          ? Colors.orange
+                                          : Colors.transparent,
+                                      border: Border.all(
+                                        color: _isMasterCardSelected
+                                            ? Colors.white
+                                            : Colors.black,
+                                        width: 1.5,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: screenHeight * 0.03),
+                        GestureDetector(
+                          onTap: _isLoading ? null : _handleVisaPayment,
+                          child: Container(
+                            width: screenWidth * 0.91,
+                            height: screenHeight * 0.091,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: screenWidth * 0.05,
+                              ),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Image.asset(
+                                        'assets/images/visa.png',
+                                        width: screenWidth * 0.12,
+                                        height: screenWidth * 0.12,
+                                      ),
+                                      SizedBox(width: screenWidth * 0.04),
+                                      Text(
+                                        'Visa Card',
+                                        style: TextStyle(
+                                          color: Colors.black,
+                                          fontSize: screenWidth * 0.045,
+                                          fontWeight: FontWeight.w600,
+                                          fontFamily: 'Poppins',
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  Container(
+                                    width: screenWidth * 0.065,
+                                    height: screenWidth * 0.065,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: _isVisaCardSelected
+                                          ? Colors.orange
+                                          : Colors.transparent,
+                                      border: Border.all(
+                                        color: _isVisaCardSelected
                                             ? Colors.white
                                             : Colors.black,
                                         width: 1.5,
