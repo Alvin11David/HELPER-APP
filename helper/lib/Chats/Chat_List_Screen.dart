@@ -86,17 +86,31 @@ class _ChatListScreenState extends State<ChatListScreen> {
         .get();
 
     QuerySnapshot providerChats = await FirebaseFirestore.instance
-        .collection('chats')
-        .where('providerId', isEqualTo: user.uid)
-        .get();
+      .collection('chats')
+      .where('providerUid', isEqualTo: user.uid)
+      .get();
 
-    List<QueryDocumentSnapshot> allChats = [
-      ...chatSnapshot.docs,
-      ...providerChats.docs,
-    ];
+    QuerySnapshot legacyProviderChats = await FirebaseFirestore.instance
+      .collection('chats')
+      .where('providerId', isEqualTo: user.uid)
+      .get();
+
+    final allChatsById = <String, QueryDocumentSnapshot>{};
+    for (final doc in chatSnapshot.docs) {
+      allChatsById[doc.id] = doc;
+    }
+    for (final doc in providerChats.docs) {
+      allChatsById[doc.id] = doc;
+    }
+    for (final doc in legacyProviderChats.docs) {
+      allChatsById[doc.id] = doc;
+    }
+    final allChats = allChatsById.values.toList();
 
     print('Employer chats found: ${chatSnapshot.docs.length}');
-    print('Provider chats found: ${providerChats.docs.length}');
+    print(
+      'Provider chats found: ${providerChats.docs.length} (legacy: ${legacyProviderChats.docs.length})',
+    );
     print('Total chats found: ${allChats.length}');
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -161,12 +175,19 @@ class _ChatListScreenState extends State<ChatListScreen> {
           );
         });
       }
-      if (messagesSnapshot.docs.isNotEmpty) {
+        if (messagesSnapshot.docs.isNotEmpty) {
         var lastMessageDoc = messagesSnapshot.docs.first;
-        String otherId = doc['employerId'] == user.uid
-            ? doc['providerId']
-            : doc['employerId'];
-        bool isEmployer = doc['employerId'] == user.uid;
+        final data = doc.data() as Map<String, dynamic>;
+        final providerUid =
+          (data['providerUid'] ?? data['providerId'] ?? '').toString();
+        final providerProfileId =
+          (data['providerId'] ?? '').toString().trim().isEmpty
+            ? null
+            : data['providerId'].toString();
+        String otherId = data['employerId'] == user.uid
+          ? providerUid
+          : data['employerId'];
+        bool isEmployer = data['employerId'] == user.uid;
 
         // Fetch online status and business name
         bool isOnline = false;
@@ -180,7 +201,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
             // If current user is employer, other is provider
             userDoc = await FirebaseFirestore.instance
                 .collection('serviceProviders')
-                .doc(otherId)
+                .doc(providerProfileId ?? otherId)
                 .get();
             if (userDoc.exists) {
               final data = userDoc.data() as Map<String, dynamic>?;
@@ -235,6 +256,9 @@ class _ChatListScreenState extends State<ChatListScreen> {
         fetchedChats.add({
           'chatId': chatId,
           'otherId': otherId,
+          'providerUid': providerUid,
+          'providerProfileId': providerProfileId,
+          'employerId': data['employerId'],
           'businessName': businessName,
           'lastMessage': lastMessage,
           'timestamp': lastMessageDoc['timestamp'],
@@ -505,18 +529,16 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                     MaterialPageRoute(
                                       builder: (context) => ChatScreen(
                                         chatPartnerName: chat['displayName'],
-                                        providerId: chat['isEmployer']
-                                            ? chat['otherId']
-                                            : FirebaseAuth
-                                                  .instance
-                                                  .currentUser!
-                                                  .uid,
-                                        employerId: chat['isEmployer']
-                                            ? FirebaseAuth
-                                                  .instance
-                                                  .currentUser!
-                                                  .uid
-                                            : chat['otherId'],
+                                          providerId:
+                                          chat['providerProfileId'] ??
+                                          chat['providerUid'] ??
+                                          chat['otherId'],
+                                          employerId: chat['isEmployer']
+                                          ? FirebaseAuth
+                                            .instance
+                                            .currentUser!
+                                            .uid
+                                          : chat['otherId'],
                                       ),
                                     ),
                                   ),

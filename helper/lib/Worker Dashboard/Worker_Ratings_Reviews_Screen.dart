@@ -77,15 +77,67 @@ class _WorkerRatingsReviewsScreenState
     print('Current user UID: ${user.uid}'); // Debug print
 
     try {
-      // TEMPORARY: Remove orderBy to avoid index requirement
-      final querySnapshot = await FirebaseFirestore.instance
-          .collection('Reviews')
-          .where('providerId', isEqualTo: user.uid)
-          // .orderBy('timestamp', descending: true)  // Temporarily removed
+      final providersSnapshot = await FirebaseFirestore.instance
+          .collection('serviceProviders')
+          .where('workerUid', isEqualTo: user.uid)
           .get();
 
+      final providerIds = providersSnapshot.docs.map((doc) => doc.id).toList();
+      if (providerIds.isEmpty) {
+        setState(() {
+          _reviews = [];
+          _overallRating = 0.0;
+          _ratingProgress = {
+            '5 stars': 0.0,
+            '4 stars': 0.0,
+            '3 stars': 0.0,
+            '2 stars': 0.0,
+            '1 star': 0.0,
+          };
+          _isLoading = false;
+        });
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('ℹ️ No service provider profiles found'),
+              duration: Duration(seconds: 3),
+            ),
+          );
+        });
+        return;
+      }
+
+      // Firestore whereIn limit is 10, so chunk provider IDs if needed.
+      final chunks = <List<String>>[];
+      for (var i = 0; i < providerIds.length; i += 10) {
+        chunks.add(
+          providerIds.sublist(
+            i,
+            i + 10 > providerIds.length ? providerIds.length : i + 10,
+          ),
+        );
+      }
+
+      final querySnapshots = await Future.wait(
+        chunks
+            .map(
+              (chunk) => FirebaseFirestore.instance
+                  .collection('Reviews')
+                  .where('providerId', whereIn: chunk)
+                  .get(),
+            )
+            .toList(),
+      );
+
+      final docById = <String, QueryDocumentSnapshot<Map<String, dynamic>>>{};
+      for (final snap in querySnapshots) {
+        for (final doc in snap.docs) {
+          docById[doc.id] = doc;
+        }
+      }
+
       // Sort in memory instead
-      final docs = querySnapshot.docs;
+      final docs = docById.values.toList();
       docs.sort((a, b) {
         final aTime = a.data()['timestamp'] as Timestamp?;
         final bTime = b.data()['timestamp'] as Timestamp?;
@@ -96,7 +148,7 @@ class _WorkerRatingsReviewsScreenState
       });
 
       print(
-        'Found ${docs.length} reviews for user ${user.uid} (sorted in memory)',
+        'Found ${docs.length} reviews for ${providerIds.length} provider profiles',
       ); // Debug print
 
       // Show results in snackbar
@@ -117,7 +169,7 @@ class _WorkerRatingsReviewsScreenState
           'rating': data['rating'] ?? 0,
           'review': data['reviewText'] ?? '',
           'date': _formatDate(data['timestamp'] as Timestamp?),
-          'providerId':
+            'providerId':
               data['providerId'] ?? 'Unknown', // Add providerId for debugging
         };
       }).toList();

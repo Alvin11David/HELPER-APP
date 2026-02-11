@@ -735,6 +735,328 @@ export const sendReviewNotification = onDocumentCreated(
   },
 );
 
+// Notify worker when a new booking is created
+export const sendBookingRequestNotification = onDocumentCreated(
+  "bookings/{bookingId}",
+  async (event) => {
+    logger.info(
+      "=== CLOUD FUNCTION sendBookingRequestNotification TRIGGERED ===",
+    );
+    logger.info("Booking ID:", event.params.bookingId);
+
+    const booking = event.data?.data();
+    if (!booking) {
+      logger.info("ERROR: Booking data is null");
+      return;
+    }
+
+    const workerUid = (booking.workerUid as string | undefined) ?? "";
+    if (!workerUid.trim()) {
+      logger.info("ERROR: Missing workerUid on booking");
+      return;
+    }
+
+    const employerId = (booking.employerId as string | undefined) ?? "";
+    const employerNameFallback =
+      (booking.employerName as string | undefined) ?? "an employer";
+
+    let employerName = employerNameFallback;
+    if (employerId.trim()) {
+      try {
+        const employerDoc = await admin
+          .firestore()
+          .collection("Sign Up")
+          .doc(employerId)
+          .get();
+        if (employerDoc.exists) {
+          const fullName = employerDoc.data()?.fullName;
+          if (typeof fullName === "string" && fullName.trim()) {
+            employerName = fullName.trim();
+          }
+        }
+      } catch (error) {
+        logger.info("ERROR fetching employer name:", error);
+      }
+    }
+
+    try {
+      const workerDoc = await admin
+        .firestore()
+        .collection("users")
+        .doc(workerUid)
+        .get();
+
+      if (!workerDoc.exists) {
+        logger.info("ERROR: Worker document does not exist", workerUid);
+        return;
+      }
+
+      const fcmToken = workerDoc.data()?.fcmToken as string | undefined;
+      if (!fcmToken) {
+        logger.info("ERROR: No FCM token found for worker", workerUid);
+        return;
+      }
+
+      await admin.messaging().send({
+        token: fcmToken,
+        notification: {
+          title: "New Booking Request",
+          body: `${employerName} booked you. View the booking request.`,
+        },
+        data: {
+          type: "booking_request",
+          bookingId: event.params.bookingId,
+          employerName: employerName,
+        },
+        android: {
+          priority: "high",
+          notification: {
+            channelId: "bookings",
+            priority: "high",
+            sound: "default",
+          },
+        },
+        apns: {
+          payload: {
+            aps: {
+              sound: "default",
+              badge: 1,
+            },
+          },
+        },
+      });
+
+      logger.info("SUCCESS: Booking request notification sent", {
+        bookingId: event.params.bookingId,
+        workerUid,
+      });
+    } catch (error) {
+      logger.info("ERROR sending booking request notification:", error);
+    }
+  },
+);
+
+// Cancel booking with escrow refund and cancellation fee
+export const cancelBookingWithEscrow = onCall(async (request) => {
+  logger.info("DEBUG: cancelBookingWithEscrow called", {
+    data: request.data,
+    uid: request.auth?.uid,
+  });
+
+  try {
+    const { bookingId } = request.data;
+    if (!bookingId) {
+      throw new HttpsError("invalid-argument", "bookingId is required");
+    }
+
+    const callerId = request.auth?.uid as string | undefined;
+    if (!callerId) {
+      throw new HttpsError("unauthenticated", "User must be authenticated");
+    }
+
+    const db = admin.firestore();
+    const bookingRef = db.collection("bookings").doc(bookingId);
+    const bookingSnap = await bookingRef.get();
+    if (!bookingSnap.exists) {
+      throw new HttpsError("not-found", "Booking not found");
+    }
+
+    const booking = bookingSnap.data() as {
+      employerId?: string;
+      status?: string;
+      amount?: number;
+      escrowId?: string;
+    };
+
+    if ((booking.employerId ?? "") !== callerId) {
+      throw new HttpsError(
+        "permission-denied",
+        "You are not allowed to cancel this booking",
+      );
+    }
+
+    if ((booking.status ?? "") === "cancelled") {
+      return { success: true, message: "Booking already cancelled" };
+    }
+
+    let escrowRef: admin.firestore.DocumentReference | null = null;
+    let escrowData: admin.firestore.DocumentData | undefined;
+
+    const escrowId = (booking.escrowId ?? "").toString();
+    if (escrowId.trim()) {
+      escrowRef = db.collection("Escrow").doc(escrowId);
+      const escrowSnap = await escrowRef.get();
+      if (escrowSnap.exists) {
+        escrowData = escrowSnap.data();
+      }
+    }
+
+    if (!escrowData) {
+      const escrowQuery = await db
+        .collection("Escrow")
+        .where("bookingId", "==", bookingId)
+        .limit(1)
+        .get();
+      if (!escrowQuery.empty) {
+        escrowRef = escrowQuery.docs[0].ref;
+        escrowData = escrowQuery.docs[0].data();
+      }
+    }
+
+    if (!escrowRef || !escrowData) {
+      throw new HttpsError(
+        "failed-precondition",
+        "Escrow record not found for this booking",
+      );
+    }
+
+    const escrowAmountRaw = escrowData.amount ?? booking.amount ?? 0;
+    const escrowAmount = Math.max(0, Math.round(Number(escrowAmountRaw)));
+    const feeAmount = Math.round(escrowAmount * 0.005);
+    const refundAmount = Math.max(0, escrowAmount - feeAmount);
+
+    const employerRef = db.collection("Sign Up").doc(callerId);
+
+    await db.runTransaction(async (tx) => {
+      const escrowSnap = await tx.get(
+        escrowRef as admin.firestore.DocumentReference,
+      );
+      if (!escrowSnap.exists) {
+        throw new HttpsError("failed-precondition", "Escrow record not found");
+      }
+
+      const currentEscrow = escrowSnap.data() as {
+        inEscrow?: boolean;
+      };
+      if (currentEscrow.inEscrow === false) {
+        throw new HttpsError("failed-precondition", "Escrow already released");
+      }
+
+      tx.update(employerRef, {
+        amount: admin.firestore.FieldValue.increment(refundAmount),
+      });
+
+      tx.update(escrowRef as admin.firestore.DocumentReference, {
+        inEscrow: false,
+        isPaid: false,
+        feeAmount: feeAmount,
+        refundAmount: refundAmount,
+        feeStatus: feeAmount > 0 ? "PENDING" : "NOT_REQUIRED",
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      tx.update(bookingRef, {
+        status: "cancelled",
+        cancelledAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        cancelledBy: callerId,
+        cancellationFee: feeAmount,
+        escrowRefund: refundAmount,
+      });
+    });
+
+    if (feeAmount <= 0) {
+      return { success: true, feeAmount, refundAmount };
+    }
+
+    const employerDoc = await employerRef.get();
+    if (!employerDoc.exists) {
+      throw new HttpsError("not-found", "Employer not found");
+    }
+
+    const employerData = employerDoc.data() as {
+      phoneNumber?: string;
+      phone?: string;
+      msisdn?: string;
+    };
+    const rawPhone =
+      employerData.phoneNumber || employerData.phone || employerData.msisdn;
+    if (!rawPhone) {
+      throw new HttpsError(
+        "failed-precondition",
+        "Employer phone number missing",
+      );
+    }
+
+    let normalizedMsisdn = rawPhone.replace(/\D/g, "");
+    if (normalizedMsisdn.startsWith("0")) {
+      normalizedMsisdn = "256" + normalizedMsisdn.slice(1);
+    } else if (!normalizedMsisdn.startsWith("256")) {
+      normalizedMsisdn = "256" + normalizedMsisdn;
+    }
+
+    const apiUrl = `${process.env.RELWORX_BASE_URL}/mobile-money/request-payment`;
+    const apiKey = process.env.RELWORX_API_KEY;
+    const accountNo = process.env.RELWORX_ACCOUNT_NO;
+
+    const baseRef = `ESCROW-FEE-${bookingId}`;
+    const finalReference =
+      baseRef.length < 8 ? baseRef.padEnd(10, "0") : baseRef.substring(0, 36);
+
+    const requestData = {
+      account_no: accountNo,
+      reference: finalReference,
+      msisdn: normalizedMsisdn,
+      currency: "UGX",
+      amount: feeAmount,
+      description: "Booking cancellation fee (0.5%)",
+      webhook_url: process.env.RELWORX_WEBHOOK_URL,
+    };
+
+    try {
+      const response = await axios.post(apiUrl, requestData, {
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/vnd.relworx.v2",
+          Authorization: `Bearer ${apiKey}`,
+        },
+      });
+
+      await (escrowRef as admin.firestore.DocumentReference).update({
+        relworx_reference: finalReference,
+        relworx_response: response.data,
+        feeStatus: "PENDING_USER_CONFIRMATION",
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      return {
+        success: true,
+        feeAmount,
+        refundAmount,
+        relworx_data: response.data,
+      };
+    } catch (error: any) {
+      const errorDetails = error.response?.data || error.message;
+      logger.error("Escrow fee Relworx error:", errorDetails);
+
+      await (escrowRef as admin.firestore.DocumentReference).update({
+        relworx_reference: finalReference,
+        relworx_error: errorDetails,
+        feeStatus: "FAILED",
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      throw new HttpsError(
+        "internal",
+        "Cancellation fee request failed. Please try again.",
+      );
+    }
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+    logger.error("cancelBookingWithEscrow error:", errorMessage);
+
+    if (error instanceof HttpsError) {
+      throw error;
+    }
+
+    throw new HttpsError(
+      "internal",
+      `Failed to cancel booking: ${errorMessage}`,
+    );
+  }
+});
+
 // Notify user when a payment transitions to SUCCESS
 export const notifyPaymentSuccess = onDocumentUpdated(
   "Payment Data/{paymentId}",
@@ -1650,14 +1972,17 @@ export const requestCardSession = onRequest(async (req, res) => {
   try {
     // 2. Validation
     if (!userId || !amount || !reference) {
-      res.status(400).send({ success: false, message: "Missing required fields (userId, amount, or reference)." });
+      res.status(400).send({
+        success: false,
+        message: "Missing required fields (userId, amount, or reference).",
+      });
       return;
     }
 
     // 3. Relworx Configuration
     // Ensure RELWORX_BASE_URL does not end with a slash in your Env Vars
     const apiUrl = `${process.env.RELWORX_BASE_URL}/visa/request-session`;
-    
+
     // Formatting reference to meet Relworx length requirements
     const finalReference =
       reference.toString().length < 8
@@ -1676,9 +2001,9 @@ export const requestCardSession = onRequest(async (req, res) => {
     const response = await axios.post(apiUrl, requestData, {
       headers: {
         "Content-Type": "application/json",
-        "Accept": "application/vnd.relworx.v2",
+        Accept: "application/vnd.relworx.v2",
         // Ensure your API Key in Env Vars is just the string, not starting with "Bearer "
-        "Authorization": `Bearer ${process.env.RELWORX_API_KEY}`,
+        Authorization: `Bearer ${process.env.RELWORX_API_KEY}`,
       },
     });
 
@@ -1700,7 +2025,6 @@ export const requestCardSession = onRequest(async (req, res) => {
       success: true,
       payment_url: responseData.payment_url,
     });
-
   } catch (error: any) {
     // 6. Detailed Error Logging for Debugging FORBIDDEN_ACCESS
     const apiErrorData = error.response?.data;
@@ -1710,19 +2034,17 @@ export const requestCardSession = onRequest(async (req, res) => {
       status: apiStatus,
       relworxResponse: apiErrorData, // This will show the EXACT reason from Relworx
       message: error.message,
-      endpoint: error.config?.url
+      endpoint: error.config?.url,
     });
 
     // Return the specific error from Relworx to your frontend for easier debugging
-    res.status(apiStatus || 500).send({ 
-      success: false, 
+    res.status(apiStatus || 500).send({
+      success: false,
       error_code: apiErrorData?.error_code || "INTERNAL_ERROR",
-      message: apiErrorData?.message || "An unexpected error occurred."
+      message: apiErrorData?.message || "An unexpected error occurred.",
     });
   }
 });
-
-
 
 /**
  * Cloud Function: applyReferralRewards

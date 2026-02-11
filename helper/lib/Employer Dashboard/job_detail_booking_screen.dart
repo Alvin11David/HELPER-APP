@@ -74,7 +74,8 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
   // ===================== PHASE 2 (Workers & Pricing) =====================
   String? _workingDays;
   String? _workingHours; // only for Per Hour
-  String? _workingDaysPerJob; // for Per Job (display only, not used in calculations)
+  String?
+  _workingDaysPerJob; // for Per Job (display only, not used in calculations)
   final _amountCtrl = TextEditingController();
 
   // ===================== PHASE 3 (Schedule / Calendar) =====================
@@ -100,6 +101,11 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
   String? _workerUid;
   String? _jobCategoryName;
   String? _jobCategoryId;
+  int? _walletBalance;
+  int? _lastInsufficientTotal;
+  bool _walletInsufficient = false;
+  bool _checkingWallet = false;
+  StreamSubscription<DocumentSnapshot>? _walletSub;
   //String? _pricingType;
 
   String? get _jobDuration {
@@ -128,6 +134,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
     }
     // Ensure UI shows computed amount when pricing/amount provided by caller
     _recalcAmount();
+    _startWalletListener();
     if (widget.pricingType == null || widget.amount == null) {
       _fetchServiceProviderData();
     }
@@ -140,9 +147,38 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
   void dispose() {
     _descCtrl.dispose();
     _amountCtrl.dispose();
+    _walletSub?.cancel();
     _locationSearchCtrl.removeListener(_onSearchChanged);
     _locationSearchCtrl.dispose();
     super.dispose();
+  }
+
+  void _startWalletListener() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    _walletSub?.cancel();
+    _walletSub = FirebaseFirestore.instance
+        .collection('Sign Up')
+        .doc(user.uid)
+        .snapshots()
+        .listen((doc) {
+          if (!doc.exists) {
+            _walletBalance = 0;
+            _checkWalletBalance(forceFetch: false);
+            return;
+          }
+          final data = doc.data() as Map<String, dynamic>?;
+          final raw = data?['amount'];
+          if (raw is int) {
+            _walletBalance = raw;
+          } else if (raw is num) {
+            _walletBalance = raw.toInt();
+          } else {
+            _walletBalance = int.tryParse((raw ?? '0').toString()) ?? 0;
+          }
+          _checkWalletBalance(forceFetch: false);
+        });
   }
 
   Future<void> _fetchServiceProviderData() async {
@@ -278,7 +314,9 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
       total = base * days;
     } else if (type == "Per Hour") {
       total = base * hours;
-    } else if (type == "Per Week" || type == "Per Month" || type == "Per Year") {
+    } else if (type == "Per Week" ||
+        type == "Per Month" ||
+        type == "Per Year") {
       // For Per Week, Per Month, Per Year: just use base amount (no multiplier)
       total = base;
     } else {
@@ -286,6 +324,56 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
     }
 
     _amountCtrl.text = NumberFormat('#,##0').format(total);
+    _checkWalletBalance();
+  }
+
+  Future<void> _checkWalletBalance({bool forceFetch = false}) async {
+    if (_checkingWallet) return;
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    _checkingWallet = true;
+    try {
+      if (_walletBalance == null || forceFetch) {
+        final doc = await FirebaseFirestore.instance
+            .collection('Sign Up')
+            .doc(user.uid)
+            .get();
+        if (doc.exists) {
+          final data = doc.data();
+          final raw = data?['amount'];
+          if (raw is int) {
+            _walletBalance = raw;
+          } else if (raw is num) {
+            _walletBalance = raw.toInt();
+          } else {
+            _walletBalance = int.tryParse((raw ?? '0').toString()) ?? 0;
+          }
+        } else {
+          _walletBalance = 0;
+        }
+      }
+
+      final total = _parseMoney(_amountCtrl.text);
+      if (total <= 0) return;
+
+      if ((_walletBalance ?? 0) < total) {
+        _walletInsufficient = true;
+        if (_lastInsufficientTotal != total) {
+          _lastInsufficientTotal = total;
+          _toast(
+            "You have less funds in your wallet to book this service provider.",
+          );
+        }
+      } else {
+        _walletInsufficient = false;
+        _lastInsufficientTotal = null;
+      }
+    } catch (_) {
+      // Ignore wallet check failures to avoid blocking the flow.
+    } finally {
+      _checkingWallet = false;
+    }
   }
 
   bool get _phase2Complete {
@@ -300,7 +388,9 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
 
     // Per Hour needs days + hours
     if (_isPerHour) {
-      return _workingDays != null && _workingHours != null && _computeTotal() > 0;
+      return _workingDays != null &&
+          _workingHours != null &&
+          _computeTotal() > 0;
     }
 
     // Per Week, Per Month, Per Year: no additional requirements
@@ -354,6 +444,12 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
     }
 
     if (_step == 1) {
+      if (_walletInsufficient) {
+        _toast(
+          "You have less funds in your wallet to book this service provider.",
+        );
+        return;
+      }
       if (!_phase2Complete) {
         _toast("Please complete pricing, days/hours, and amount.");
         return;
@@ -452,7 +548,9 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
       final providerId = widget.serviceProviderId.trim();
       if (providerId.isEmpty) {
         _toast("BUG: serviceProviderId is empty. Booking not sent.");
-        debugPrint("BUG: widget.serviceProviderId='${widget.serviceProviderId}'");
+        debugPrint(
+          "BUG: widget.serviceProviderId='${widget.serviceProviderId}'",
+        );
         return;
       }
 
@@ -471,18 +569,30 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
       }
 
       // ✅ build start/end DateTime
-      final sDay = DateTime(_startDate!.year, _startDate!.month, _startDate!.day);
+      final sDay = DateTime(
+        _startDate!.year,
+        _startDate!.month,
+        _startDate!.day,
+      );
       final eDay = DateTime(_endDate!.year, _endDate!.month, _endDate!.day);
 
       final from = _timeFrom!;
       final to = _timeTo!;
 
       final startDateTime = DateTime(
-        sDay.year, sDay.month, sDay.day, from.hour, from.minute,
+        sDay.year,
+        sDay.month,
+        sDay.day,
+        from.hour,
+        from.minute,
       );
 
       final endDateTime = DateTime(
-        eDay.year, eDay.month, eDay.day, to.hour, to.minute,
+        eDay.year,
+        eDay.month,
+        eDay.day,
+        to.hour,
+        to.minute,
       );
 
       if (!endDateTime.isAfter(startDateTime)) {
@@ -509,9 +619,13 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
       final workingDays = int.tryParse(_workingDays ?? '1') ?? 1;
       final workingHours = int.tryParse(_workingHours ?? '1') ?? 1;
 
-      // ✅ create booking doc ref
-      final bookingRef = FirebaseFirestore.instance.collection('bookings').doc();
+      // ✅ create booking + escrow refs
+      final bookingRef = FirebaseFirestore.instance
+          .collection('bookings')
+          .doc();
       final bookingId = bookingRef.id;
+      final escrowRef = FirebaseFirestore.instance.collection('Escrow').doc();
+      final escrowId = escrowRef.id;
 
       // ✅ optional attachments upload (only if you want)
       // final attachmentUrls = await _uploadPickedFiles(bookingId: bookingId, clientId: user.uid);
@@ -555,22 +669,21 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
         'jobDescription': _descCtrl.text.trim(),
         'jobLocationText': _jobLocationText ?? '',
         'jobLatLng': _jobLatLng, // GeoPoint
-
         // schedule
         'startDateTime': Timestamp.fromDate(startDateTime),
         'endDateTime': Timestamp.fromDate(endDateTime),
 
         // pricing
-        'pricingType': pricingType,     // "Per Job" / "Per Day" / "Per Hour"
-        'baseAmount': baseAmount,       // base price from provider
-        'amount': totalAmount,          // ✅ total payable saved in amount
+        'pricingType': pricingType, // "Per Job" / "Per Day" / "Per Hour"
+        'baseAmount': baseAmount, // base price from provider
+        'amount': totalAmount, // ✅ total payable saved in amount
         'workingDays':
             (pricingType == 'Per Job' ||
-              pricingType == 'Per Week' ||
-              pricingType == 'Per Month' ||
-              pricingType == 'Per Year')
-          ? 1
-          : workingDays,
+                pricingType == 'Per Week' ||
+                pricingType == 'Per Month' ||
+                pricingType == 'Per Year')
+            ? 1
+            : workingDays,
         'workingHours': pricingType == 'Per Hour' ? workingHours : 0,
 
         // booking flow state
@@ -581,15 +694,53 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
         'attachments': attachmentUrls,
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
-      };
 
-      await bookingRef.set(bookingData);
+        // escrow
+        'escrowId': escrowId,
+        'inEscrow': true,
+      };
+      await FirebaseFirestore.instance.runTransaction((tx) async {
+        final employerRef = FirebaseFirestore.instance
+            .collection('Sign Up')
+            .doc(user.uid);
+        final employerSnap = await tx.get(employerRef);
+        if (!employerSnap.exists) {
+          throw Exception('Employer wallet not found.');
+        }
+        final employerData = employerSnap.data() as Map<String, dynamic>?;
+        final rawAmount = employerData?['amount'];
+        final currentBalance = rawAmount is int
+            ? rawAmount
+            : rawAmount is num
+            ? rawAmount.toInt()
+            : int.tryParse((rawAmount ?? '0').toString()) ?? 0;
+
+        if (currentBalance < totalAmount) {
+          throw Exception('Insufficient wallet balance.');
+        }
+
+        tx.update(employerRef, {'amount': FieldValue.increment(-totalAmount)});
+
+        tx.set(escrowRef, {
+          'id': escrowId,
+          'bookingId': bookingId,
+          'employerId': user.uid,
+          'workerUid': workerUid,
+          'amount': totalAmount,
+          'isPaid': false,
+          'inEscrow': true,
+          'createdAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+
+        tx.set(bookingRef, bookingData);
+      });
 
       await FirebaseFirestore.instance.collection('workerNotifications').add({
         'workerId': workerUid,
         'title': 'New booking request',
         'message':
-          '$employerName requested ${_jobCategoryName ?? 'a job'} at ${_jobLocationText ?? 'your location'}.',
+            '$employerName requested ${_jobCategoryName ?? 'a job'} at ${_jobLocationText ?? 'your location'}.',
         'type': 'booking_request',
         'bookingId': bookingId,
         'serviceProviderId': providerId,
@@ -597,6 +748,17 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
         'jobCategoryName': _jobCategoryName ?? '',
         'read': false,
         'timestamp': FieldValue.serverTimestamp(),
+      });
+
+      await FirebaseFirestore.instance.collection('notifications').add({
+        'type': 'booking_request_sent',
+        'toUserId': user.uid,
+        'fromUserId': workerUid,
+        'bookingId': bookingId,
+        'read': false,
+        'createdAt': FieldValue.serverTimestamp(),
+        'title': 'Booking request sent',
+        'message': 'Your booking request was sent. Continue to payment.',
       });
 
       _toast("Booking request sent!");
@@ -902,11 +1064,17 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
       if ((_workerUid ?? '').trim().isNotEmpty) {
         query = query.where('workerUid', isEqualTo: _workerUid);
       } else {
-        query = query.where('serviceProviderId', isEqualTo: widget.serviceProviderId);
+        query = query.where(
+          'serviceProviderId',
+          isEqualTo: widget.serviceProviderId,
+        );
       }
 
       final qs = await query
-          .where('startDateTime', isLessThan: Timestamp.fromDate(windowEndExclusive))
+          .where(
+            'startDateTime',
+            isLessThan: Timestamp.fromDate(windowEndExclusive),
+          )
           .where('endDateTime', isGreaterThan: Timestamp.fromDate(windowStart))
           .get();
 
@@ -1002,7 +1170,10 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
       if ((_workerUid ?? '').trim().isNotEmpty) {
         query = query.where('workerUid', isEqualTo: _workerUid);
       } else {
-        query = query.where('serviceProviderId', isEqualTo: widget.serviceProviderId);
+        query = query.where(
+          'serviceProviderId',
+          isEqualTo: widget.serviceProviderId,
+        );
       }
 
       final qs = await query
@@ -1137,7 +1308,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
                       width: double.infinity,
                       height: h * 0.070,
                       child: ElevatedButton(
-                        onPressed: _next,
+                        onPressed: _walletInsufficient ? null : _next,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: _brandOrange,
                           elevation: 0,
@@ -1476,6 +1647,42 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
         Row(
           children: [
             Icon(
+              Icons.account_balance_wallet_rounded,
+              color: Colors.white.withOpacity(0.85),
+              size: w * 0.050,
+            ),
+            SizedBox(width: w * 0.02),
+            Expanded(
+              child: Text(
+                _walletBalance == null
+                    ? "Wallet balance: loading..."
+                    : "Wallet balance: UGX ${NumberFormat('#,##0').format(_walletBalance)}",
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.85),
+                  fontFamily: 'Inter',
+                  fontWeight: FontWeight.w700,
+                  fontSize: w * 0.030,
+                ),
+              ),
+            ),
+          ],
+        ),
+        if (_walletInsufficient) ...[
+          SizedBox(height: h * 0.006),
+          Text(
+            "Wallet balance is too low for this booking.",
+            style: TextStyle(
+              color: Colors.redAccent,
+              fontFamily: 'Inter',
+              fontWeight: FontWeight.w800,
+              fontSize: w * 0.028,
+            ),
+          ),
+        ],
+        SizedBox(height: h * 0.010),
+        Row(
+          children: [
+            Icon(
               Icons.info_outline_rounded,
               color: Colors.white.withOpacity(0.85),
               size: w * 0.050,
@@ -1663,8 +1870,16 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _legendDot(color: Colors.green.shade400, label: "Available", w: w),
-                _legendDot(color: Colors.red.shade400, label: "Booked/Selected", w: w),
+                _legendDot(
+                  color: Colors.green.shade400,
+                  label: "Available",
+                  w: w,
+                ),
+                _legendDot(
+                  color: Colors.red.shade400,
+                  label: "Booked/Selected",
+                  w: w,
+                ),
                 _legendDot(color: Colors.grey.shade400, label: "Past", w: w),
                 _legendDot(color: Colors.blue.shade400, label: "Today", w: w),
               ],

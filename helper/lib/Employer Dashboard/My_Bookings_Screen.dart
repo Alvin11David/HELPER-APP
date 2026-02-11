@@ -1,8 +1,7 @@
-// ignore_for_file: depend_on_referenced_packages
-
 import 'dart:async';
 import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -101,14 +100,10 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
 
   Future<void> _cancelBooking(String bookingId) async {
     try {
-      await FirebaseFirestore.instance
-          .collection('bookings')
-          .doc(bookingId)
-          .update({
-            'status': 'cancelled',
-            'updatedAt': FieldValue.serverTimestamp(),
-            'cancelledAt': FieldValue.serverTimestamp(),
-          });
+      final callable = FirebaseFunctions.instance.httpsCallable(
+        'cancelBookingWithEscrow',
+      );
+      await callable.call({'bookingId': bookingId});
       _toast('Booking cancelled successfully');
     } catch (e) {
       _toast('Failed to cancel booking: $e');
