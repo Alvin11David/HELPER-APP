@@ -9,7 +9,6 @@ import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 import 'MTN_Payment_Method_Screen.dart';
 import 'Airtel_Payment_Method_Screen.dart';
-import 'PayPal_Payment_Method_Screen.dart';
 
 class RegistrationPaymentScreen extends StatefulWidget {
   const RegistrationPaymentScreen({super.key});
@@ -23,7 +22,6 @@ class _RegistrationPaymentScreenState extends State<RegistrationPaymentScreen> {
   final bool _isMasterCardSelected = false;
   final bool _isVisaCardSelected = false;
   final bool _isMtnCardSelected = false;
-  final bool _isPaypalSelected = false;
   final bool _isAirtelCardSelected = false;
   bool _isLoading = false;
 
@@ -509,73 +507,6 @@ class _RegistrationPaymentScreenState extends State<RegistrationPaymentScreen> {
                                           : Colors.transparent,
                                       border: Border.all(
                                         color: _isMtnCardSelected
-                                            ? Colors.white
-                                            : Colors.black,
-                                        width: 1.5,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                        SizedBox(height: screenHeight * 0.02),
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    const PayPalPaymentMethodScreen(),
-                              ),
-                            );
-                          },
-                          child: Container(
-                            width: screenWidth * 0.91,
-                            height: screenHeight * 0.091,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(30),
-                            ),
-                            child: Padding(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: screenWidth * 0.05,
-                              ),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Image.asset(
-                                        'assets/images/paypal.png',
-                                        width: screenWidth * 0.12,
-                                        height: screenWidth * 0.12,
-                                      ),
-                                      SizedBox(width: screenWidth * 0.04),
-                                      Text(
-                                        'PayPal',
-                                        style: TextStyle(
-                                          color: Colors.black,
-                                          fontSize: screenWidth * 0.045,
-                                          fontWeight: FontWeight.w600,
-                                          fontFamily: 'Inter',
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  Container(
-                                    width: screenWidth * 0.065,
-                                    height: screenWidth * 0.065,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      color: _isPaypalSelected
-                                          ? Colors.orange
-                                          : Colors.transparent,
-                                      border: Border.all(
-                                        color: _isPaypalSelected
                                             ? Colors.white
                                             : Colors.black,
                                         width: 1.5,
