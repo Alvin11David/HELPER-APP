@@ -866,6 +866,7 @@ export const cancelBookingWithEscrow = onCall(async (request) => {
       status?: string;
       amount?: number;
       escrowId?: string;
+      employerPhone?: string;
     };
 
     if ((booking.employerId ?? "") !== callerId) {
@@ -970,7 +971,10 @@ export const cancelBookingWithEscrow = onCall(async (request) => {
       msisdn?: string;
     };
     const rawPhone =
-      employerData.phoneNumber || employerData.phone || employerData.msisdn;
+      employerData.phoneNumber ||
+      employerData.phone ||
+      employerData.msisdn ||
+      booking.employerPhone;
     if (!rawPhone) {
       throw new HttpsError(
         "failed-precondition",

@@ -632,6 +632,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
       final attachmentUrls = <String>[]; // keep empty for now
 
       String employerName = widget.businessName;
+      String employerPhone = '';
       try {
         final employerDoc = await FirebaseFirestore.instance
             .collection('Sign Up')
@@ -642,6 +643,11 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
           final fullName = (data?['fullName'] ?? '').toString();
           if (fullName.isNotEmpty) {
             employerName = fullName;
+          }
+          final rawPhone =
+              data?['phoneNumber'] ?? data?['phone'] ?? data?['msisdn'];
+          if (rawPhone != null) {
+            employerPhone = rawPhone.toString().trim();
           }
         }
       } catch (_) {}
@@ -657,7 +663,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
         'employerId': user.uid,
         'employerName': employerName,
         'employerEmail': user.email ?? '',
-        'employerPhone': '',
+        'employerPhone': employerPhone,
 
         // provider info
         'serviceProviderId': providerId,
