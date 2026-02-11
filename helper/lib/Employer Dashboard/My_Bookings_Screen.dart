@@ -94,6 +94,12 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                 _cancelBooking(bookingId);
               }
             : null,
+        onTerminateActive: tab == 1
+            ? () {
+                Navigator.pop(context);
+                _cancelBooking(bookingId);
+              }
+            : null,
       ),
     );
   }
@@ -472,6 +478,7 @@ class _BookingDetailsSheet extends StatelessWidget {
 
   final VoidCallback onViewLocation;
   final VoidCallback? onCancelPending;
+  final VoidCallback? onTerminateActive;
 
   const _BookingDetailsSheet({
     required this.bookingId,
@@ -480,6 +487,7 @@ class _BookingDetailsSheet extends StatelessWidget {
     required this.accent,
     required this.onViewLocation,
     this.onCancelPending,
+    this.onTerminateActive,
   });
 
   @override
@@ -624,6 +632,33 @@ class _BookingDetailsSheet extends StatelessWidget {
                         ),
                         child: Text(
                           'Cancel Booking',
+                          style: TextStyle(
+                            color: Colors.red,
+                            fontFamily: 'Inter',
+                            fontWeight: FontWeight.w900,
+                            fontSize: w * 0.035,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                  if (tab == 1 && onTerminateActive != null) ...[
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton(
+                        onPressed: onTerminateActive,
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(
+                            color: Colors.red.withOpacity(0.9),
+                            width: 1.5,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          padding: EdgeInsets.symmetric(vertical: h * 0.016),
+                        ),
+                        child: Text(
+                          'Terminate Job',
                           style: TextStyle(
                             color: Colors.red,
                             fontFamily: 'Inter',
