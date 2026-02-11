@@ -46,7 +46,6 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
   bool _isLoading = false;
   int _countdown = 60;
   final int _otpLength = 10;
-  bool _showOverlay = false;
   final Duration _overlayAnimDuration = const Duration(milliseconds: 360);
   int _referralBonus = 500; // default value
 
@@ -68,12 +67,9 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
 
   void _checkOTPAndNavigate() {
     String otp = _controllers.map((controller) => controller.text).join();
-    if (otp.length == _otpLength && !_showOverlay) {
-      setState(() {
-        _showOverlay = true;
-      });
-      // TODO: Add your OTP verification logic here
-      // print('OTP entered: $otp');
+    if (otp.length == _otpLength) {
+      // Directly verify when full
+      _onVerify();
     }
   }
 
@@ -424,7 +420,8 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
                                       controller: _controllers[otpIndex],
                                       focusNode: _focusNodes[otpIndex],
                                       textAlign: TextAlign.center,
-                                      textCapitalization: TextCapitalization.characters,
+                                      textCapitalization:
+                                          TextCapitalization.characters,
                                       maxLength: 1,
                                       style: TextStyle(
                                         color: Colors.white,
@@ -446,7 +443,7 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
                                               .requestFocus();
                                         }
 
-                                        _checkOTPAndNavigate();
+                                        // Removed auto-verify on full code
                                       },
                                     ),
                                   ),
@@ -584,11 +581,11 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
 
               // Dim background overlay for overlay or how-to-use
               IgnorePointer(
-                ignoring: !_showOverlay && !_showHowToUse,
+                ignoring: !_showHowToUse,
                 child: AnimatedOpacity(
                   duration: _overlayAnimDuration,
                   curve: Curves.easeInOut,
-                  opacity: (_showOverlay || _showHowToUse) ? 0.55 : 0.0,
+                  opacity: _showHowToUse ? 0.55 : 0.0,
                   child: Container(color: Colors.black),
                 ),
               ),
