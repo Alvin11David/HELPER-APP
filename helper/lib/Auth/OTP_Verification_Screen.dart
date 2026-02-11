@@ -454,9 +454,8 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
             await user.updateDisplayName(fullName);
           }
 
-          final referralCode = widget.referralCode.isNotEmpty
-              ? widget.referralCode
-              : _generateReferralCode();
+          final referralCode =
+              _generateReferralCode(); // Always generate unique code for new user
 
           // 🔒 Anti-fraud check: Prevent multiple invites on same phone with referral code
           if (widget.referralCode.isNotEmpty) {
@@ -526,9 +525,8 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
             await user.updateDisplayName(fullName);
           }
 
-          final referralCode = widget.referralCode.isNotEmpty
-              ? widget.referralCode
-              : _generateReferralCode();
+          final referralCode =
+              _generateReferralCode(); // Always generate unique code for new user
 
           // 🔒 Anti-fraud check: Prevent multiple invites on same phone with referral code
           if (widget.referralCode.isNotEmpty) {
@@ -641,9 +639,8 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
         await user.updateDisplayName(fullName);
       }
 
-      final referralCode = widget.referralCode.isNotEmpty
-          ? widget.referralCode
-          : _generateReferralCode(); // <-- Generate if empty
+      final referralCode =
+          _generateReferralCode(); // Always generate unique code for new user
 
       // 🔒 Anti-fraud check: Prevent multiple invites with same email + referral code
       if (widget.referralCode.isNotEmpty) {
