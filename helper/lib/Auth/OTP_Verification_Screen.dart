@@ -455,7 +455,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
           }
 
           final referralCode =
-              _generateReferralCode(); // Always generate unique code for new user
+              _generateReferralCode();  // Always generate unique code for new user
 
           // 🔒 Anti-fraud check: Prevent multiple invites on same phone with referral code
           if (widget.referralCode.isNotEmpty) {

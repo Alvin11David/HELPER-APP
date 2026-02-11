@@ -1637,54 +1637,54 @@ export const masterWebhook = onRequest({ cors: true }, async (req, res) => {
 
 //function for mastercard session request
 export const requestCardSession = onRequest(async (req, res) => {
-  // Only allow POST requests
+  // 1. Only allow POST requests
   if (req.method !== "POST") {
     res.status(405).send("Method Not Allowed");
     return;
   }
 
-  logger.info("DEBUG: Card Session Request started", {
-    userId: req.body.userId,
-  });
+  const { userId, amount, reference, description } = req.body;
+
+  logger.info("DEBUG: Card Session Request started", { userId });
 
   try {
-    const { userId, amount, reference, description } = req.body;
-
-    // 1. Validation
+    // 2. Validation
     if (!userId || !amount || !reference) {
-      res
-        .status(400)
-        .send({ success: false, message: "Missing required fields." });
+      res.status(400).send({ success: false, message: "Missing required fields (userId, amount, or reference)." });
       return;
     }
 
-    // 2. Relworx Configuration
+    // 3. Relworx Configuration
+    // Ensure RELWORX_BASE_URL does not end with a slash in your Env Vars
     const apiUrl = `${process.env.RELWORX_BASE_URL}/visa/request-session`;
+    
+    // Formatting reference to meet Relworx length requirements
     const finalReference =
       reference.toString().length < 8
         ? `CARD-TXN-${reference}`.padEnd(10, "0")
         : reference.toString().substring(0, 36);
 
     const requestData = {
-      account_no: process.env.RELWORX_ACCOUNT_NO,
+      account_no: process.env.RELWORX_ACCOUNT_NO, // Should be REL4E261389F7
       reference: finalReference,
       currency: "UGX",
       amount: Math.round(Number(amount)),
       description: description || "Registration Fee Payment",
     };
 
-    // 3. API Call to Relworx
+    // 4. API Call to Relworx
     const response = await axios.post(apiUrl, requestData, {
       headers: {
         "Content-Type": "application/json",
-        Accept: "application/vnd.relworx.v2",
-        Authorization: `Bearer ${process.env.RELWORX_API_KEY}`,
+        "Accept": "application/vnd.relworx.v2",
+        // Ensure your API Key in Env Vars is just the string, not starting with "Bearer "
+        "Authorization": `Bearer ${process.env.RELWORX_API_KEY}`,
       },
     });
 
     const responseData = response.data as { payment_url?: string };
 
-    // 4. Save Record to Firestore
+    // 5. Save Record to Firestore
     await admin.firestore().collection("Payment Data").doc(finalReference).set({
       userId: userId,
       amount: requestData.amount,
@@ -1694,21 +1694,35 @@ export const requestCardSession = onRequest(async (req, res) => {
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 
+    logger.info("SUCCESS: Card Session Created", { reference: finalReference });
+
     res.status(200).send({
       success: true,
       payment_url: responseData.payment_url,
     });
-  } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
-    const responseData =
-      error && typeof error === "object" && "response" in error
-        ? (error as any).response?.data
-        : null;
-    logger.error("Card Session Error:", responseData || errorMessage);
-    res.status(500).send({ success: false, message: "Internal Server Error" });
+
+  } catch (error: any) {
+    // 6. Detailed Error Logging for Debugging FORBIDDEN_ACCESS
+    const apiErrorData = error.response?.data;
+    const apiStatus = error.response?.status;
+
+    logger.error("Card Session Error Details:", {
+      status: apiStatus,
+      relworxResponse: apiErrorData, // This will show the EXACT reason from Relworx
+      message: error.message,
+      endpoint: error.config?.url
+    });
+
+    // Return the specific error from Relworx to your frontend for easier debugging
+    res.status(apiStatus || 500).send({ 
+      success: false, 
+      error_code: apiErrorData?.error_code || "INTERNAL_ERROR",
+      message: apiErrorData?.message || "An unexpected error occurred."
+    });
   }
 });
+
+
 
 /**
  * Cloud Function: applyReferralRewards

@@ -7,7 +7,6 @@ import 'package:flutter/material.dart';
 import 'package:helper/Document Upload/Select_Worker_Type_Screen.dart';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
-import 'Visa_Payment_Method_Screen.dart';
 import 'MTN_Payment_Method_Screen.dart';
 import 'Airtel_Payment_Method_Screen.dart';
 import 'PayPal_Payment_Method_Screen.dart';
@@ -74,21 +73,67 @@ class _RegistrationPaymentScreenState extends State<RegistrationPaymentScreen> {
     }
   }
 
+  Future<void> _handleVisaPayment() async {
+    setState(() => _isLoading = true);
+
+    final user = FirebaseAuth.instance.currentUser;
+    final String reference = 'VISA_${DateTime.now().millisecondsSinceEpoch}';
+
+    try {
+      final response = await http.post(
+        Uri.parse(
+          'https://us-central1-helperapp-46849.cloudfunctions.net/requestCardSession',
+        ),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'userId': user?.uid,
+          'amount': 25000,
+          'reference': reference,
+          'description': 'Helper App Registration',
+        }),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (data['success'] == true) {
+        final String paymentUrl = data['payment_url'];
+        if (await canLaunchUrl(Uri.parse(paymentUrl))) {
+          await launchUrl(
+            Uri.parse(paymentUrl),
+            mode: LaunchMode.externalApplication,
+          );
+
+          _listenForCompletion(reference);
+        }
+      } else {
+        throw Exception(data['message'] ?? 'Payment initiation failed');
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
   void _listenForCompletion(String reference) {
     FirebaseFirestore.instance
         .collection('Payment Data')
         .doc(reference)
         .snapshots()
         .listen((snapshot) {
-      if (snapshot.exists && snapshot.data()?['status'] == 'COMPLETED') {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const SelectWorkerTypeScreen(),
-          ),
-        );
-      }
-    });
+          if (snapshot.exists && snapshot.data()?['status'] == 'COMPLETED') {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const SelectWorkerTypeScreen(),
+              ),
+            );
+          }
+        });
   }
 
   @override
@@ -351,15 +396,7 @@ class _RegistrationPaymentScreenState extends State<RegistrationPaymentScreen> {
                         ),
                         SizedBox(height: screenHeight * 0.02),
                         GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    const VisaPaymentMethodScreen(),
-                              ),
-                            );
-                          },
+                          onTap: _isLoading ? null : _handleVisaPayment,
                           child: Container(
                             width: screenWidth * 0.91,
                             height: screenHeight * 0.091,

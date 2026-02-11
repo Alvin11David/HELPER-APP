@@ -110,6 +110,20 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
     }
   }
 
+  Future<bool> _hasEmployerData() async {
+    try {
+      User? user = FirebaseAuth.instance.currentUser;
+      if (user == null) return false;
+      DocumentSnapshot doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+      return doc.exists;
+    } catch (e) {
+      return false;
+    }
+  }
+
   Future<void> _switchRole(String newRole) async {
     try {
       User? user = FirebaseAuth.instance.currentUser;
@@ -454,10 +468,15 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                           ),
                           const SizedBox(height: 20),
                           // Switch role row
-                          FutureBuilder<bool>(
-                            future: _hasWorkerData(),
+                          FutureBuilder<List<bool>>(
+                            future: Future.wait([
+                              _hasWorkerData(),
+                              _hasEmployerData(),
+                            ]),
                             builder: (context, snapshot) {
-                              bool hasWorker = snapshot.data ?? false;
+                              List<bool> data = snapshot.data ?? [false, false];
+                              bool hasWorker = data[0];
+                              bool hasEmployer = data[1];
                               if (_userRole == 'employer' && hasWorker) {
                                 return GestureDetector(
                                   onTap: () async {
@@ -493,7 +512,7 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                                     ),
                                   ),
                                 );
-                              } else if (_userRole == 'worker') {
+                              } else if (_userRole == 'worker' && hasEmployer) {
                                 return GestureDetector(
                                   onTap: () async {
                                     // Switch to employer
@@ -772,7 +791,8 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                                 ],
                               ),
                             ),
-                          ),                          if (_userRole != 'employer')
+                          ),
+                          if (_userRole != 'employer')
                             FutureBuilder<bool?>(
                               future: _fetchVerifiedStatus(),
                               builder: (context, snapshot) {
@@ -783,7 +803,10 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                                 bool isVerified = snapshot.data ?? false;
                                 if (!isVerified) {
                                   return Padding(
-                                    padding: const EdgeInsets.only(left: 8, right: 8),
+                                    padding: const EdgeInsets.only(
+                                      left: 8,
+                                      right: 8,
+                                    ),
                                     child: Text(
                                       "Tap the Verified Row to Re upload the valid documents",
                                       style: TextStyle(
@@ -797,7 +820,8 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                                 }
                                 return const SizedBox.shrink();
                               },
-                            ),                        ],
+                            ),
+                        ],
                       ),
                     ],
                   ),
