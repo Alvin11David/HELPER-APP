@@ -200,12 +200,6 @@ class _WorkerEarningsScreenState extends State<WorkerEarningsScreen> {
                         active: _tab == 0,
                         onTap: () => _setTab(0),
                       ),
-                      SizedBox(width: w * 0.04),
-                      _TabChip(
-                        text: "Custom",
-                        active: _tab == 3,
-                        onTap: () => _setTab(3),
-                      ),
                     ],
                   ),
                 ),
