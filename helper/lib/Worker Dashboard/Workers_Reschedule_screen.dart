@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:helper/Components/Worker_Notifications.dart';
+import 'package:helper/Worker%20Dashboard/Workers_Notifications.dart';
 
 class WorkerJobRescheduleScreen extends StatefulWidget {
   final String bookingId;
@@ -438,23 +439,29 @@ class _WorkerJobRescheduleScreenState extends State<WorkerJobRescheduleScreen> {
                     const SizedBox(width: 10),
                     Stack(
                       children: [
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: const BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.notifications,
-                            color: Colors.black,
-                          ),
-                        ),
-                        Positioned(
-                          right: 0,
-                          top: 0,
-                          child: WorkerNotificationsBadge(),
-                        ),
+                        GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          const WorkerNotifications(),
+                                    ),
+                                  );
+                                },
+                                child: Container(
+                                  width: 40,
+                                  height: 40,
+                                  decoration: const BoxDecoration(
+                                    color: Colors.white,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.notifications,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                              ),
                       ],
                     ),
                   ],
