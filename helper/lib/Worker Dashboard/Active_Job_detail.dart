@@ -14,7 +14,6 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'package:helper/Escrow/Cancellation_Code_Screen.dart';
-import 'package:helper/Escrow/Finished_Job_Code_Screen.dart';
 
 class ActiveJobScreen extends StatefulWidget {
   final String? bookingId;

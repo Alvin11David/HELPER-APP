@@ -5,7 +5,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:helper/Verfication/SelectWorkerTypeVerification.dart';
 import 'package:http/http.dart' as http;
-import 'package:helper/Document%20Upload/Select_Worker_Type_Screen.dart';
 
 class AirtelPaymentMethodVerificationScreen extends StatefulWidget {
   const AirtelPaymentMethodVerificationScreen({super.key});

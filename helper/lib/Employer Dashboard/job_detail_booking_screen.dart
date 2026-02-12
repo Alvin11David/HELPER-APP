@@ -168,7 +168,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
             _checkWalletBalance(forceFetch: false);
             return;
           }
-          final data = doc.data() as Map<String, dynamic>?;
+          final data = doc.data();
           final raw = data?['amount'];
           if (raw is int) {
             _walletBalance = raw;
@@ -717,7 +717,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
         if (!employerSnap.exists) {
           throw Exception('Employer wallet not found.');
         }
-        final employerData = employerSnap.data() as Map<String, dynamic>?;
+        final employerData = employerSnap.data();
         final rawAmount = employerData?['amount'];
         final currentBalance = rawAmount is int
             ? rawAmount

@@ -10,7 +10,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:helper/Intro/Role_Selection_Screen.dart';
-import 'package:helper/Payments/Registration_Payment_Screen.dart';
 import 'package:helper/Amount.dart';
 import 'Sign_In_Screen.dart';
 

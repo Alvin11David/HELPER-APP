@@ -8,7 +8,6 @@ import 'package:helper/Document%20Upload/Academic_Certificate_Upload_Screen.dart
 import 'package:helper/Document%20Upload/Professional_License_Upload.dart';
 import 'package:helper/Document%20Upload/Selfie_Verification_Upload.dart';
 import 'package:helper/Worker%20Dashboard/Workers_Dashboard_Screen.dart';
-import 'package:helper/Worker%20Dashboard/Workers_skills_and_Job_Details.dart';
 import 'package:rxdart/rxdart.dart';
 
 class DocumentUploadVerificationScreen extends StatefulWidget {
