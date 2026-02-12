@@ -399,43 +399,39 @@ class _WorkerEarningsScreenState extends State<WorkerEarningsScreen> {
                                         ),
                                       ),
                                     ),
-                                    Text(
-                                      'Amount',
-                                      style: TextStyle(
-                                        color: Colors.black.withOpacity(0.75),
-                                        fontFamily: 'Inter',
-                                        fontWeight: FontWeight.w900,
-                                        fontSize: w * 0.032,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Padding(
-                                padding: EdgeInsets.symmetric(
-                                  vertical: h * 0.006,
-                                ),
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                      child: Text(
-                                        'Processing',
-                                        style: TextStyle(
-                                          color: Colors.black,
-                                          fontFamily: 'Inter',
-                                          fontWeight: FontWeight.w900,
-                                          fontSize: w * 0.032,
-                                        ),
-                                      ),
-                                    ),
-                                    Text(
-                                      'Amount',
-                                      style: TextStyle(
-                                        color: Colors.black.withOpacity(0.75),
-                                        fontFamily: 'Inter',
-                                        fontWeight: FontWeight.w900,
-                                        fontSize: w * 0.032,
-                                      ),
+                                    StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                                      stream:
+                                          FirebaseAuth.instance.currentUser == null
+                                              ? null
+                                              : FirebaseFirestore.instance
+                                                  .collection('Escrow')
+                                                  .where(
+                                                    'inEscrow',
+                                                    isEqualTo: true,
+                                                  )
+                                                  .where(
+                                                    'workerUid',
+                                                    isEqualTo: FirebaseAuth
+                                                        .instance
+                                                        .currentUser!
+                                                        .uid,
+                                                  )
+                                                  .snapshots(),
+                                      builder: (context, snapshot) {
+                                        final total = snapshot.hasData
+                                            ? _sumEscrowAmount(snapshot.data!)
+                                            : 0;
+                                        return Text(
+                                          _formatAmount(total),
+                                          style: TextStyle(
+                                            color:
+                                                Colors.black.withOpacity(0.75),
+                                            fontFamily: 'Inter',
+                                            fontWeight: FontWeight.w900,
+                                            fontSize: w * 0.032,
+                                          ),
+                                        );
+                                      },
                                     ),
                                   ],
                                 ),
