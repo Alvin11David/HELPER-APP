@@ -20,12 +20,23 @@ class _WorkerEarningsScreenState extends State<WorkerEarningsScreen> {
   // Fake totals (replace later)
   final String _platformFee = "UGX/DOLLARS";
 
-  // Fake summary (replace later)
-  final _summaryRows = const [
-    _KeyVal("Release Fee", "Amount"),
-    _KeyVal("Pending (Escrow) Fee", "Amount"),
-    _KeyVal("Processing", "Amount"),
-  ];
+  String _formatAmount(num amount) {
+    return 'UGX ${NumberFormat('#,###').format(amount)}';
+  }
+
+  num _sumEscrowAmount(QuerySnapshot<Map<String, dynamic>> snap) {
+    num total = 0;
+    for (final doc in snap.docs) {
+      final data = doc.data();
+      final raw = data['amount'];
+      if (raw is num) {
+        total += raw;
+      } else if (raw is String) {
+        total += num.tryParse(raw) ?? 0;
+      }
+    }
+    return total;
+  }
 
   // Fake jobs list (replace later)
   final List<_EarningJobItem> _jobs = List.generate(
@@ -317,35 +328,116 @@ class _WorkerEarningsScreenState extends State<WorkerEarningsScreen> {
                                 color: Colors.black.withOpacity(0.18),
                               ),
                               SizedBox(height: h * 0.012),
-                              ..._summaryRows.map(
-                                (r) => Padding(
-                                  padding: EdgeInsets.symmetric(
-                                    vertical: h * 0.006,
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Expanded(
-                                        child: Text(
-                                          r.k,
-                                          style: TextStyle(
-                                            color: Colors.black,
-                                            fontFamily: 'Inter',
-                                            fontWeight: FontWeight.w900,
-                                            fontSize: w * 0.032,
-                                          ),
-                                        ),
-                                      ),
-                                      Text(
-                                        r.v,
+                              Padding(
+                                padding: EdgeInsets.symmetric(
+                                  vertical: h * 0.006,
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        'Release Fee',
                                         style: TextStyle(
-                                          color: Colors.black.withOpacity(0.75),
+                                          color: Colors.black,
                                           fontFamily: 'Inter',
                                           fontWeight: FontWeight.w900,
                                           fontSize: w * 0.032,
                                         ),
                                       ),
-                                    ],
-                                  ),
+                                    ),
+                                    StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                                      stream:
+                                          FirebaseAuth.instance.currentUser == null
+                                              ? null
+                                              : FirebaseFirestore.instance
+                                                  .collection('Escrow')
+                                                  .where(
+                                                    'inEscrow',
+                                                    isEqualTo: true,
+                                                  )
+                                                  .where(
+                                                    'workerUid',
+                                                    isEqualTo: FirebaseAuth
+                                                        .instance
+                                                        .currentUser!
+                                                        .uid,
+                                                  )
+                                                  .snapshots(),
+                                      builder: (context, snapshot) {
+                                        final total = snapshot.hasData
+                                            ? _sumEscrowAmount(snapshot.data!)
+                                            : 0;
+                                        return Text(
+                                          _formatAmount(total),
+                                          style: TextStyle(
+                                            color:
+                                                Colors.black.withOpacity(0.75),
+                                            fontFamily: 'Inter',
+                                            fontWeight: FontWeight.w900,
+                                            fontSize: w * 0.032,
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Padding(
+                                padding: EdgeInsets.symmetric(
+                                  vertical: h * 0.006,
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        'Pending (Escrow) Fee',
+                                        style: TextStyle(
+                                          color: Colors.black,
+                                          fontFamily: 'Inter',
+                                          fontWeight: FontWeight.w900,
+                                          fontSize: w * 0.032,
+                                        ),
+                                      ),
+                                    ),
+                                    Text(
+                                      'Amount',
+                                      style: TextStyle(
+                                        color: Colors.black.withOpacity(0.75),
+                                        fontFamily: 'Inter',
+                                        fontWeight: FontWeight.w900,
+                                        fontSize: w * 0.032,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Padding(
+                                padding: EdgeInsets.symmetric(
+                                  vertical: h * 0.006,
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        'Processing',
+                                        style: TextStyle(
+                                          color: Colors.black,
+                                          fontFamily: 'Inter',
+                                          fontWeight: FontWeight.w900,
+                                          fontSize: w * 0.032,
+                                        ),
+                                      ),
+                                    ),
+                                    Text(
+                                      'Amount',
+                                      style: TextStyle(
+                                        color: Colors.black.withOpacity(0.75),
+                                        fontFamily: 'Inter',
+                                        fontWeight: FontWeight.w900,
+                                        fontSize: w * 0.032,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ],
