@@ -185,16 +185,7 @@ class _WorkerEarningsScreenState extends State<WorkerEarningsScreen> {
                       ),
                     ),
                     SizedBox(width: w * 0.03),
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.person, color: Colors.black),
-                    ),
-                    const SizedBox(width: 10),
+                    
                     GestureDetector(
                       onTap: () {
                         Navigator.push(
