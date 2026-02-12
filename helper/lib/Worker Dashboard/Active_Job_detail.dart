@@ -14,6 +14,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'package:helper/Escrow/Cancellation_Code_Screen.dart';
+import 'package:helper/Escrow/Finished_Job_Code_Screen.dart';
 
 class ActiveJobScreen extends StatefulWidget {
   final String? bookingId;
@@ -61,6 +62,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
   String amount = "Amount";
 
   bool _hasActiveJob = false;
+  String? _resolvedBookingId;
 
   /// Get current user position
   Future<LatLng?> _getCurrentLocation() async {
@@ -417,6 +419,23 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
   Future<void> _handleJobCompleted() async {
     try {
       _countdownTimer?.cancel();
+      _showBookingIdSnackbar();
+
+      final bookingId = _resolvedBookingId ??
+          (bookingData['id'] ?? bookingData['bookingId'])?.toString();
+      if (bookingId == null || bookingId.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text(
+              'Missing booking ID for job completion',
+              style: TextStyle(fontFamily: 'Inter'),
+            ),
+            backgroundColor: Colors.black.withOpacity(0.85),
+          ),
+        );
+        return;
+      }
+
       setState(() {
         status = 'Completed (Awaiting Employer)';
       });
@@ -447,51 +466,21 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
         'updatedAt': FieldValue.serverTimestamp(),
       });
 
-      // Update booking status to completed pending employer confirmation
-      if (widget.bookingId != null && widget.bookingId!.isNotEmpty) {
-        final employerId = (bookingData['employerId'] ?? '').toString();
-        await FirebaseFirestore.instance
-            .collection('bookings')
-            .doc(widget.bookingId)
-            .update({
-              'status': 'completed_pending',
-              'completion.status': 'pending',
-              'completion.requestedById': uid,
-              'completion.requestedAt': FieldValue.serverTimestamp(),
-              'updatedAt': FieldValue.serverTimestamp(),
-            });
-
-        await FirebaseFirestore.instance.collection('workerNotifications').add({
-          'workerId': uid,
-          'title': 'Completion sent',
-          'message': 'Your completion request was sent to the employer.',
-          'type': 'completion_requested',
-          'bookingId': widget.bookingId,
-          'read': false,
-          'timestamp': FieldValue.serverTimestamp(),
-        });
-
-        if (employerId.isNotEmpty) {
-          await FirebaseFirestore.instance.collection('notifications').add({
-            'type': 'job_completed_request',
-            'toUserId': employerId,
-            'fromUserId': uid,
-            'bookingId': widget.bookingId,
-            'read': false,
-            'createdAt': FieldValue.serverTimestamp(),
-            'title': 'Job completion request',
-            'message': 'Worker marked the job as completed. Please confirm.',
-          });
-        }
-      }
+      // Call finishJobWithEscrow function
+      await _finishJobWithEscrow(bookingId);
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Completion sent to employer for confirmation'),
-          duration: Duration(seconds: 2),
+        SnackBar(
+          content: const Text(
+            'Job finished! Waiting for employer verification.',
+            style: TextStyle(fontFamily: 'Inter'),
+          ),
+          backgroundColor: Colors.green.withOpacity(0.85),
         ),
       );
+      // The finishJobWithEscrow cloud function handles all the necessary updates
+      // and sends the completion code to the employer
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -505,11 +494,32 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
 
   StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _bookingSub;
 
+  void _showBookingIdSnackbar() {
+    final bookingId = _resolvedBookingId ??
+        (bookingData['id'] ?? bookingData['bookingId'])?.toString();
+    if (bookingId == null || bookingId.isEmpty) {
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Booking ID: $bookingId',
+          style: const TextStyle(fontFamily: 'Inter'),
+        ),
+        backgroundColor: Colors.black.withOpacity(0.85),
+      ),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
-     _avatarWidget = UserAvatarCircle();
+    _avatarWidget = UserAvatarCircle();
     bookingData = widget.bookingData ?? <String, dynamic>{};
+    _resolvedBookingId = (widget.bookingId ?? '').isNotEmpty
+      ? widget.bookingId
+      : (widget.bookingData?['id'] ?? widget.bookingData?['bookingId'])
+        ?.toString();
 
     final statusValue = (bookingData['status'] ?? '').toString();
     final startReached = _isScheduleTimeReached();
@@ -532,11 +542,11 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
 
     // Extract employer location from booking
     if (_hasActiveJob &&
-        widget.bookingId != null &&
-        widget.bookingId!.isNotEmpty) {
+        _resolvedBookingId != null &&
+        _resolvedBookingId!.isNotEmpty) {
       final docRef = FirebaseFirestore.instance
           .collection('bookings')
-          .doc(widget.bookingId);
+          .doc(_resolvedBookingId);
       _bookingSub = docRef.snapshots().listen((snap) {
         if (snap.exists) {
           final data = snap.data();
@@ -714,28 +724,27 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                     ),
                     const SizedBox(width: 10),
                     GestureDetector(
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) =>
-                                          const WorkerNotifications(),
-                                    ),
-                                  );
-                                },
-                                child: Container(
-                                  width: 40,
-                                  height: 40,
-                                  decoration: const BoxDecoration(
-                                    color: Colors.white,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: const Icon(
-                                    Icons.notifications,
-                                    color: Colors.black,
-                                  ),
-                                ),
-                              ),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const WorkerNotifications(),
+                          ),
+                        );
+                      },
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.notifications,
+                          color: Colors.black,
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -960,7 +969,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                 ),
               ),
               child: Text(
-                'Job Completed',
+                'Finished Job',
                 style: TextStyle(
                   color: Colors.black,
                   fontSize: w * 0.045,
@@ -1009,7 +1018,10 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
             height: h * 0.065,
             child: OutlinedButton(
               onPressed: () {
-                final bookingId = widget.bookingId;
+                _showBookingIdSnackbar();
+                final bookingId = _resolvedBookingId ??
+                    (bookingData['id'] ?? bookingData['bookingId'])
+                        ?.toString();
                 if (bookingId == null || bookingId.isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
@@ -1113,7 +1125,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                 ),
               ),
               child: Text(
-                'Job Completed',
+                'Finished Job',
                 style: TextStyle(
                   color: Colors.black,
                   fontSize: w * 0.045,
@@ -1162,7 +1174,10 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
             height: h * 0.065,
             child: OutlinedButton(
               onPressed: () {
-                final bookingId = widget.bookingId;
+                _showBookingIdSnackbar();
+                final bookingId = _resolvedBookingId ??
+                    (bookingData['id'] ?? bookingData['bookingId'])
+                        ?.toString();
                 if (bookingId == null || bookingId.isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
@@ -1277,7 +1292,11 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                           child: ElevatedButton(
                             onPressed: () async {
                               Navigator.pop(ctx);
-                              final bookingId = widget.bookingId;
+                              _showBookingIdSnackbar();
+                              final bookingId = _resolvedBookingId ??
+                                  (bookingData['id'] ??
+                                          bookingData['bookingId'])
+                                      ?.toString();
                               if (bookingId == null || bookingId.isEmpty) {
                                 if (!mounted) return;
                                 ScaffoldMessenger.of(context).showSnackBar(
@@ -1296,11 +1315,14 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
 
                               await _cancelBookingWithEscrow(bookingId);
                               if (!mounted) return;
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => CancellationCodeScreen(
-                                    bookingId: bookingId,
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: const Text(
+                                    'Cancellation requested. Employer will enter the code.',
+                                    style: TextStyle(fontFamily: 'Inter'),
+                                  ),
+                                  backgroundColor: Colors.black.withOpacity(
+                                    0.85,
                                   ),
                                 ),
                               );
@@ -1357,6 +1379,26 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
         SnackBar(
           content: Text(
             'Failed to cancel booking: $e',
+            style: const TextStyle(fontFamily: 'Inter'),
+          ),
+          backgroundColor: Colors.black.withOpacity(0.85),
+        ),
+      );
+    }
+  }
+
+  Future<void> _finishJobWithEscrow(String bookingId) async {
+    try {
+      final callable = FirebaseFunctions.instance.httpsCallable(
+        'finishJobWithEscrow',
+      );
+      await callable.call({'bookingId': bookingId});
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Failed to finish job: $e',
             style: const TextStyle(fontFamily: 'Inter'),
           ),
           backgroundColor: Colors.black.withOpacity(0.85),

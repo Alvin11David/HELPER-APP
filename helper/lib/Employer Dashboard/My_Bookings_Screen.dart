@@ -5,6 +5,7 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:helper/Escrow/Cancellation_Code_Screen.dart';
+import 'package:helper/Escrow/Finished_Job_Code_Screen.dart';
 
 class MyBookingsScreen extends StatefulWidget {
   const MyBookingsScreen({super.key});
@@ -107,8 +108,20 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) =>
-                        CancellationCodeScreen(bookingId: bookingId),
+                    builder: (_) => CancellationCodeScreen(
+                      bookingId: bookingId,
+                    ),
+                  ),
+                );
+              }
+            : null,
+        onVerifyCompletion: tab == 2
+            ? () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => FinishedJobCodeScreen(bookingId: bookingId),
                   ),
                 );
               }
@@ -141,12 +154,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
     if (shouldTerminate == true) {
       await _cancelBooking(bookingId);
       if (!mounted) return;
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => CancellationCodeScreen(bookingId: bookingId),
-        ),
-      );
+      _toast('Cancellation requested. Worker will enter the code to confirm.');
     }
   }
 
@@ -526,6 +534,7 @@ class _BookingDetailsSheet extends StatelessWidget {
   final VoidCallback? onCancelPending;
   final VoidCallback? onTerminateActive;
   final VoidCallback? onVerifyCancellation;
+  final VoidCallback? onVerifyCompletion;
 
   const _BookingDetailsSheet({
     required this.bookingId,
@@ -536,6 +545,7 @@ class _BookingDetailsSheet extends StatelessWidget {
     this.onCancelPending,
     this.onTerminateActive,
     this.onVerifyCancellation,
+    this.onVerifyCompletion,
   });
 
   @override
@@ -735,6 +745,34 @@ class _BookingDetailsSheet extends StatelessWidget {
                           ),
                           child: Text(
                             'Enter Cancellation Code',
+                            style: TextStyle(
+                              color: accent,
+                              fontFamily: 'Inter',
+                              fontWeight: FontWeight.w900,
+                              fontSize: w * 0.035,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                    if (tab == 2 && onVerifyCompletion != null) ...[
+                      SizedBox(height: h * 0.012),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton(
+                          onPressed: onVerifyCompletion,
+                          style: OutlinedButton.styleFrom(
+                            side: BorderSide(
+                              color: accent.withOpacity(0.9),
+                              width: 1.5,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            padding: EdgeInsets.symmetric(vertical: h * 0.016),
+                          ),
+                          child: Text(
+                            'Enter Completion Code',
                             style: TextStyle(
                               color: accent,
                               fontFamily: 'Inter',

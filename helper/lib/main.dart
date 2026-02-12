@@ -141,6 +141,26 @@ void main() async {
         message.notification?.body ?? 'You received a cancellation code.',
         platformChannelSpecifics,
       );
+    } else if (message.data['type'] == 'job_completion_code') {
+      const AndroidNotificationDetails androidPlatformChannelSpecifics =
+          AndroidNotificationDetails(
+            'default',
+            'Default Notifications',
+            channelDescription: 'Default notification channel',
+            importance: Importance.max,
+            priority: Priority.high,
+            showWhen: false,
+          );
+      const NotificationDetails platformChannelSpecifics = NotificationDetails(
+        android: androidPlatformChannelSpecifics,
+      );
+
+      await flutterLocalNotificationsPlugin.show(
+        DateTime.now().millisecondsSinceEpoch ~/ 1000,
+        message.notification?.title ?? 'Job Completion Code',
+        message.notification?.body ?? 'You received a job completion code.',
+        platformChannelSpecifics,
+      );
     } else if (message.data['type'] == 'support_reply') {
       // Show local notification for support reply
       const AndroidNotificationDetails androidPlatformChannelSpecifics =

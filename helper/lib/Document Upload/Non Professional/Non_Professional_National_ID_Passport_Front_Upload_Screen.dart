@@ -636,17 +636,21 @@ class _NonProfessionalNationalIdPassportFrontUploadScreenState
                         child: Stack(
                           children: [
                             Center(
-                              child: _isAlreadyUploaded
+                              child: _isAlreadyUploaded &&
+                                      _uploadedUrl != null &&
+                                      _uploadedUrl!.isNotEmpty
                                   ? Image.network(
                                       _uploadedUrl!,
                                       fit: BoxFit.contain,
                                       width: screenWidth * 0.8,
                                     )
-                                  : Image.file(
+                                  : _selectedImage != null
+                                  ? Image.file(
                                       File(_selectedImage!.path),
                                       fit: BoxFit.contain,
                                       width: screenWidth * 0.8,
-                                    ),
+                                    )
+                                  : const SizedBox.shrink(),
                             ),
                             Positioned(
                               top: 8,
@@ -684,11 +688,14 @@ class _NonProfessionalNationalIdPassportFrontUploadScreenState
                           child: Stack(
                             children: [
                               Center(
-                                child: Image.network(
-                                  _backUrl!,
-                                  fit: BoxFit.contain,
-                                  width: screenWidth * 0.8,
-                                ),
+                                child: _backUrl != null &&
+                                        _backUrl!.isNotEmpty
+                                    ? Image.network(
+                                        _backUrl!,
+                                        fit: BoxFit.contain,
+                                        width: screenWidth * 0.8,
+                                      )
+                                    : const SizedBox.shrink(),
                               ),
                               Positioned(
                                 top: 8,

@@ -851,6 +851,123 @@ export const sendBookingRequestNotification = onDocumentCreated(
   },
 );
 
+// Notify employer when a worker accepts a booking
+export const sendBookingAcceptedNotification = onDocumentUpdated(
+  "bookings/{bookingId}",
+  async (event) => {
+    const before = event.data?.before.data();
+    const after = event.data?.after.data();
+    if (!before || !after) {
+      return;
+    }
+
+    const beforeStatus = String(before.status || "");
+    const afterStatus = String(after.status || "");
+    if (beforeStatus === afterStatus || afterStatus !== "confirmed") {
+      return;
+    }
+
+    const employerId = (after.employerId as string | undefined) ?? "";
+    const workerUid = (after.workerUid as string | undefined) ?? "";
+    if (!employerId.trim()) {
+      logger.info("Booking accepted notification skipped: missing employerId");
+      return;
+    }
+
+    const db = admin.firestore();
+
+    let workerName = "Worker";
+    if (workerUid.trim()) {
+      try {
+        const workerDoc = await db.collection("Sign Up").doc(workerUid).get();
+        if (workerDoc.exists) {
+          const fullName = workerDoc.data()?.fullName;
+          if (typeof fullName === "string" && fullName.trim()) {
+            workerName = fullName.trim();
+          }
+        }
+      } catch (error) {
+        logger.info("ERROR fetching worker name:", error);
+      }
+    }
+
+    let employerFcmToken: string | undefined;
+    const employerUsersDoc = await db.collection("users").doc(employerId).get();
+    if (employerUsersDoc.exists) {
+      employerFcmToken = employerUsersDoc.data()?.fcmToken as
+        | string
+        | undefined;
+    }
+
+    if (!employerFcmToken) {
+      const employerSignUpDoc = await db
+        .collection("Sign Up")
+        .doc(employerId)
+        .get();
+      if (employerSignUpDoc.exists) {
+        employerFcmToken = employerSignUpDoc.data()?.fcmToken as
+          | string
+          | undefined;
+      }
+    }
+
+    await db.collection("notifications").add({
+      toUserId: employerId,
+      fromUserId: workerUid || "system",
+      title: "Booking accepted",
+      message: `${workerName} accepted your booking request.`,
+      type: "booking_accepted",
+      bookingId: event.params.bookingId,
+      read: false,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    if (!employerFcmToken) {
+      logger.info("Booking accepted push skipped: no FCM token", {
+        employerId,
+      });
+      return;
+    }
+
+    try {
+      await admin.messaging().send({
+        token: employerFcmToken,
+        notification: {
+          title: "Booking accepted",
+          body: `${workerName} accepted your booking request.`,
+        },
+        data: {
+          type: "booking_accepted",
+          bookingId: event.params.bookingId,
+        },
+        android: {
+          priority: "high",
+          notification: {
+            channelId: "bookings",
+            priority: "high",
+            sound: "default",
+          },
+        },
+        apns: {
+          payload: {
+            aps: {
+              sound: "default",
+              badge: 1,
+            },
+          },
+        },
+      });
+
+      logger.info("SUCCESS: Booking accepted notification sent", {
+        bookingId: event.params.bookingId,
+        employerId,
+      });
+    } catch (error) {
+      logger.info("ERROR sending booking accepted notification:", error);
+    }
+  },
+);
+
 // Cancel booking with escrow refund and cancellation fee
 export const cancelBookingWithEscrow = onCall(async (request) => {
   logger.info("DEBUG: cancelBookingWithEscrow called", {
@@ -908,25 +1025,62 @@ export const cancelBookingWithEscrow = onCall(async (request) => {
       );
     }
 
+    const addRoleNotification = async (
+      role: "employer" | "worker",
+      userId: string,
+      title: string,
+      message: string,
+      type: string,
+    ) => {
+      const collectionName =
+        role === "employer" ? "EmployerNotifications" : "WorkerNotifications";
+      const userKey = role === "employer" ? "employerId" : "workerId";
+      await db.collection(collectionName).add({
+        [userKey]: userId,
+        title,
+        message,
+        type,
+        bookingId,
+        read: false,
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      });
+    };
+
     const notifyCancellationCode = async (code: string) => {
       const targets = [employerId, workerUid].filter(Boolean);
       for (const userId of targets) {
         const userDoc = await db.collection("Sign Up").doc(userId).get();
         const fcmToken = userDoc.data()?.fcmToken as string | undefined;
-        if (!fcmToken) continue;
-        await admin.messaging().send({
-          token: fcmToken,
-          notification: {
-            title: "Cancellation Code",
-            body: `Your cancellation code is ${code}`,
-          },
-          data: {
-            type: "escrow_cancellation_code",
-            bookingId,
-            cancellationCode: code,
-          },
-        });
+        if (fcmToken) {
+          await admin.messaging().send({
+            token: fcmToken,
+            notification: {
+              title: "Cancellation Code",
+              body: `Your cancellation code is ${code}`,
+            },
+            data: {
+              type: "escrow_cancellation_code",
+              bookingId,
+              cancellationCode: code,
+            },
+          });
+        }
       }
+
+      await addRoleNotification(
+        "employer",
+        employerId,
+        "Cancellation Code",
+        `Your cancellation code is ${code}`,
+        "escrow_cancellation_code",
+      );
+      await addRoleNotification(
+        "worker",
+        workerUid,
+        "Cancellation Code",
+        `Your cancellation code is ${code}`,
+        "escrow_cancellation_code",
+      );
     };
 
     let escrowRef: admin.firestore.DocumentReference | null = null;
@@ -965,8 +1119,6 @@ export const cancelBookingWithEscrow = onCall(async (request) => {
     const feeAmount = Math.round(escrowAmount * 0.005);
     const refundAmount = Math.max(0, escrowAmount - feeAmount);
 
-    const employerRef = db.collection("Sign Up").doc(employerId);
-
     const existingStatus = (escrowData.cancellationStatus ?? "").toString();
     const existingCode = (escrowData.cancellationCode ?? "").toString();
     if (existingStatus === "pending" && existingCode) {
@@ -1001,10 +1153,6 @@ export const cancelBookingWithEscrow = onCall(async (request) => {
         throw new HttpsError("failed-precondition", "Escrow already released");
       }
 
-      tx.update(employerRef, {
-        amount: admin.firestore.FieldValue.increment(refundAmount),
-      });
-
       tx.update(escrowRef as admin.firestore.DocumentReference, {
         feeAmount: feeAmount,
         refundAmount: refundAmount,
@@ -1018,8 +1166,7 @@ export const cancelBookingWithEscrow = onCall(async (request) => {
       });
 
       tx.update(bookingRef, {
-        status: "cancelled",
-        cancelledAt: admin.firestore.FieldValue.serverTimestamp(),
+        status: "cancellation_pending",
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         cancelledBy: callerId,
         cancellationFee: feeAmount,
@@ -1027,98 +1174,9 @@ export const cancelBookingWithEscrow = onCall(async (request) => {
       });
     });
 
-    if (feeAmount <= 0) {
-      await notifyCancellationCode(cancellationCode);
-      return { success: true, feeAmount, refundAmount };
-    }
+    await notifyCancellationCode(cancellationCode);
 
-    const employerDoc = await employerRef.get();
-    if (!employerDoc.exists) {
-      throw new HttpsError("not-found", "Employer not found");
-    }
-
-    const employerData = employerDoc.data() as {
-      phoneNumber?: string;
-      phone?: string;
-      msisdn?: string;
-    };
-    const rawPhone =
-      employerData.phoneNumber ||
-      employerData.phone ||
-      employerData.msisdn ||
-      booking.employerPhone;
-    if (!rawPhone) {
-      throw new HttpsError(
-        "failed-precondition",
-        "Employer phone number missing",
-      );
-    }
-
-    let normalizedMsisdn = rawPhone.replace(/\D/g, "");
-    if (normalizedMsisdn.startsWith("0")) {
-      normalizedMsisdn = "256" + normalizedMsisdn.slice(1);
-    } else if (!normalizedMsisdn.startsWith("256")) {
-      normalizedMsisdn = "256" + normalizedMsisdn;
-    }
-
-    const apiUrl = `${process.env.RELWORX_BASE_URL}/mobile-money/request-payment`;
-    const apiKey = process.env.RELWORX_API_KEY;
-    const accountNo = process.env.RELWORX_ACCOUNT_NO;
-
-    const baseRef = `ESCROW-FEE-${bookingId}`;
-    const finalReference =
-      baseRef.length < 8 ? baseRef.padEnd(10, "0") : baseRef.substring(0, 36);
-
-    const requestData = {
-      account_no: accountNo,
-      reference: finalReference,
-      msisdn: normalizedMsisdn,
-      currency: "UGX",
-      amount: feeAmount,
-      description: "Booking cancellation fee (0.5%)",
-      webhook_url: process.env.RELWORX_WEBHOOK_URL,
-    };
-
-    try {
-      const response = await axios.post(apiUrl, requestData, {
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/vnd.relworx.v2",
-          Authorization: `Bearer ${apiKey}`,
-        },
-      });
-
-      await (escrowRef as admin.firestore.DocumentReference).update({
-        relworx_reference: finalReference,
-        relworx_response: response.data,
-        feeStatus: "PENDING_USER_CONFIRMATION",
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      });
-
-      await notifyCancellationCode(cancellationCode);
-
-      return {
-        success: true,
-        feeAmount,
-        refundAmount,
-        relworx_data: response.data,
-      };
-    } catch (error: any) {
-      const errorDetails = error.response?.data || error.message;
-      logger.error("Escrow fee Relworx error:", errorDetails);
-
-      await (escrowRef as admin.firestore.DocumentReference).update({
-        relworx_reference: finalReference,
-        relworx_error: errorDetails,
-        feeStatus: "FAILED",
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      });
-
-      throw new HttpsError(
-        "internal",
-        "Cancellation fee request failed. Please try again.",
-      );
-    }
+    return { success: true, feeAmount, refundAmount };
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error";
@@ -1159,6 +1217,7 @@ export const verifyEscrowCancellationCode = onCall(async (request) => {
     }
 
     const booking = bookingSnap.data() as {
+      amount: any;
       employerId?: string;
       workerUid?: string;
       escrowId?: string;
@@ -1207,6 +1266,9 @@ export const verifyEscrowCancellationCode = onCall(async (request) => {
     const storedCode = (escrowData.cancellationCode ?? "").toString();
     const status = (escrowData.cancellationStatus ?? "").toString();
     const receiverId = (escrowData.cancellationReceiverId ?? "").toString();
+    const cancellationRequestedBy = (
+      escrowData.cancellationRequestedBy ?? ""
+    ).toString();
 
     if (status === "verified") {
       return { success: true, message: "Cancellation already verified" };
@@ -1223,6 +1285,14 @@ export const verifyEscrowCancellationCode = onCall(async (request) => {
       throw new HttpsError("invalid-argument", "Invalid cancellation code");
     }
 
+    const escrowAmountRaw = escrowData.amount ?? booking.amount ?? 0;
+    const escrowAmount = Math.max(0, Math.round(Number(escrowAmountRaw)));
+    const feeAmount = Math.round(escrowAmount * 0.005);
+    const refundAmount = Math.max(0, escrowAmount - feeAmount);
+
+    const employerRef = db.collection("Sign Up").doc(employerId);
+    const penaltiesRef = db.collection("Penalties").doc();
+
     await db.runTransaction(async (tx) => {
       const snap = await tx.get(escrowRef as admin.firestore.DocumentReference);
       if (!snap.exists) {
@@ -1232,17 +1302,75 @@ export const verifyEscrowCancellationCode = onCall(async (request) => {
       tx.update(escrowRef as admin.firestore.DocumentReference, {
         inEscrow: false,
         isPaid: false,
+        amount: refundAmount,
         cancellationStatus: "verified",
         cancellationVerifiedBy: callerId,
         cancellationVerifiedAt: admin.firestore.FieldValue.serverTimestamp(),
         cancellationCode: admin.firestore.FieldValue.delete(),
+        feeAmount: feeAmount,
+        refundAmount: refundAmount,
+        penaltyAmount: feeAmount,
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
 
       tx.update(bookingRef, {
+        status: "cancelled",
+        cancelledAt: admin.firestore.FieldValue.serverTimestamp(),
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        inEscrow: false,
+      });
+
+      tx.update(employerRef, {
+        amount: admin.firestore.FieldValue.increment(refundAmount),
+      });
+
+      tx.set(penaltiesRef, {
+        bookingId: bookingId,
+        escrowId: escrowRef?.id ?? "",
+        employerId: employerId,
+        workerUid: workerUid,
+        amount: feeAmount,
+        reason: "cancellation_penalty",
+        cancellationRequestedBy: cancellationRequestedBy,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
       });
     });
+
+    const addRoleNotification = async (
+      role: "employer" | "worker",
+      userId: string,
+      title: string,
+      message: string,
+      type: string,
+    ) => {
+      const collectionName =
+        role === "employer" ? "EmployerNotifications" : "WorkerNotifications";
+      const userKey = role === "employer" ? "employerId" : "workerId";
+      await db.collection(collectionName).add({
+        [userKey]: userId,
+        title,
+        message,
+        type,
+        bookingId,
+        read: false,
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      });
+    };
+
+    await addRoleNotification(
+      "employer",
+      employerId,
+      "Cancellation Verified",
+      "Cancellation completed. Escrow refunded to employer.",
+      "escrow_cancellation_verified",
+    );
+    await addRoleNotification(
+      "worker",
+      workerUid,
+      "Cancellation Verified",
+      "Cancellation completed. Escrow refunded to employer.",
+      "escrow_cancellation_verified",
+    );
 
     return { success: true };
   } catch (error) {
@@ -2411,3 +2539,318 @@ export const applyReferralRewards = onCall(
     }
   },
 );
+
+// Finish job with escrow - worker completes job, sends code to employer for verification
+export const finishJobWithEscrow = onCall(async (request) => {
+  try {
+    const { bookingId } = request.data;
+    if (!bookingId) {
+      throw new HttpsError("invalid-argument", "bookingId is required");
+    }
+
+    const callerId = request.auth?.uid as string | undefined;
+    if (!callerId) {
+      throw new HttpsError("unauthenticated", "User must be authenticated");
+    }
+
+    const db = admin.firestore();
+    const bookingRef = db.collection("bookings").doc(bookingId);
+    const bookingSnap = await bookingRef.get();
+    if (!bookingSnap.exists) {
+      throw new HttpsError("not-found", "Booking not found");
+    }
+
+    const booking = bookingSnap.data() as {
+      employerId?: string;
+      workerUid?: string;
+      status?: string;
+      amount?: number;
+      escrowId?: string;
+    };
+
+    const employerId = (booking.employerId ?? "").toString();
+    const workerUid = (booking.workerUid ?? "").toString();
+    if (!employerId || !workerUid) {
+      throw new HttpsError(
+        "failed-precondition",
+        "Booking missing employer or worker",
+      );
+    }
+
+    // Only worker can finish the job
+    if (callerId !== workerUid) {
+      throw new HttpsError(
+        "permission-denied",
+        "Only the worker can finish this job",
+      );
+    }
+
+    const escrowId = (booking.escrowId ?? "").toString();
+    if (!escrowId) {
+      throw new HttpsError("failed-precondition", "Escrow ID is missing");
+    }
+
+    const escrowRef = db.collection("Escrow").doc(escrowId);
+    const escrowSnap = await escrowRef.get();
+    if (!escrowSnap.exists) {
+      throw new HttpsError("not-found", "Escrow record not found");
+    }
+
+    // Generate 6-digit completion code
+    const completionCode = Math.floor(
+      100000 + Math.random() * 900000,
+    ).toString();
+
+    const addRoleNotification = async (
+      role: "employer" | "worker",
+      userId: string,
+      title: string,
+      message: string,
+      type: string,
+    ) => {
+      const collectionName =
+        role === "employer" ? "EmployerNotifications" : "WorkerNotifications";
+      const userKey = role === "employer" ? "employerId" : "workerId";
+      await db.collection(collectionName).add({
+        [userKey]: userId,
+        title,
+        message,
+        type,
+        bookingId,
+        read: false,
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      });
+    };
+
+    // Notify employer with completion code
+    const notifyCompletionCode = async (code: string) => {
+      const employerDocSnap = await db
+        .collection("Sign Up")
+        .doc(employerId)
+        .get();
+      const fcmToken = employerDocSnap.data()?.fcmToken as string | undefined;
+
+      if (fcmToken) {
+        await admin.messaging().send({
+          token: fcmToken,
+          notification: {
+            title: "Job Completion Code",
+            body: `Worker has completed the job. Your code is ${code}`,
+          },
+          data: {
+            type: "job_completion_code",
+            bookingId,
+            completionCode: code,
+          },
+        });
+      } else {
+        logger.warn(`No FCM token found for employer ${employerId}`);
+      }
+
+      await addRoleNotification(
+        "employer",
+        employerId,
+        "Job Completion Code",
+        `Worker completed the job. Your code is ${code}`,
+        "job_completion_code",
+      );
+      await addRoleNotification(
+        "worker",
+        workerUid,
+        "Completion Requested",
+        "Completion code sent to employer.",
+        "job_completion_code_sent",
+      );
+    };
+
+    // Update Escrow with completion code and status
+    await escrowRef.update({
+      completionCode: completionCode,
+      completionStatus: "pending",
+      completionRequestedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    // Send code notification to employer
+    await notifyCompletionCode(completionCode);
+
+    return {
+      success: true,
+      message: "Completion code sent to employer",
+      completionCode: completionCode, // For testing only, should not be returned in production
+    };
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+    logger.error("finishJobWithEscrow error:", errorMessage);
+
+    if (error instanceof HttpsError) {
+      throw error;
+    }
+
+    throw new HttpsError("internal", `Failed to finish job: ${errorMessage}`);
+  }
+});
+
+// Verify job completion code - employer verifies code to release escrow to worker
+export const verifyJobCompletionCode = onCall(async (request) => {
+  try {
+    const { bookingId, code } = request.data;
+    if (!bookingId || !code) {
+      throw new HttpsError(
+        "invalid-argument",
+        "bookingId and code are required",
+      );
+    }
+
+    const callerId = request.auth?.uid as string | undefined;
+    if (!callerId) {
+      throw new HttpsError("unauthenticated", "User must be authenticated");
+    }
+
+    const db = admin.firestore();
+    const bookingRef = db.collection("bookings").doc(bookingId);
+    const bookingSnap = await bookingRef.get();
+    if (!bookingSnap.exists) {
+      throw new HttpsError("not-found", "Booking not found");
+    }
+
+    const booking = bookingSnap.data() as {
+      employerId?: string;
+      workerUid?: string;
+      amount?: number;
+      escrowId?: string;
+    };
+
+    const employerId = (booking.employerId ?? "").toString();
+    const workerUid = (booking.workerUid ?? "").toString();
+    if (!employerId || !workerUid) {
+      throw new HttpsError(
+        "failed-precondition",
+        "Booking missing employer or worker",
+      );
+    }
+
+    // Only employer can verify the completion
+    if (callerId !== employerId) {
+      throw new HttpsError(
+        "permission-denied",
+        "Only the employer can verify job completion",
+      );
+    }
+
+    const escrowId = (booking.escrowId ?? "").toString();
+    if (!escrowId) {
+      throw new HttpsError("failed-precondition", "Escrow ID is missing");
+    }
+
+    const escrowRef = db.collection("Escrow").doc(escrowId);
+    const escrowSnap = await escrowRef.get();
+    if (!escrowSnap.exists) {
+      throw new HttpsError("not-found", "Escrow record not found");
+    }
+
+    const escrow = escrowSnap.data() as {
+      completionCode?: string;
+      completionStatus?: string;
+      amount?: number;
+      inEscrow?: boolean;
+      isPaid?: boolean;
+    };
+
+    // Verify code
+    if (escrow.completionCode !== code) {
+      throw new HttpsError("invalid-argument", "Incorrect completion code");
+    }
+
+    if (escrow.completionStatus === "completed") {
+      return { success: true, message: "Job already completed" };
+    }
+
+    const amount = escrow.amount || booking.amount || 0;
+
+    // Release escrow to worker - update both Escrow record and worker's Sign Up amount
+    await db.runTransaction(async (tx) => {
+      // Update Escrow record
+      tx.update(escrowRef, {
+        inEscrow: false,
+        isPaid: true,
+        completionStatus: "completed",
+        completedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      // Add amount to worker's balance in Sign Up collection
+      const workerRef = db.collection("Sign Up").doc(workerUid);
+      tx.update(workerRef, {
+        amount: admin.firestore.FieldValue.increment(amount),
+      });
+
+      // Update booking status to completed
+      tx.update(bookingRef, {
+        status: "completed",
+        completedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+    });
+
+    const addRoleNotification = async (
+      role: "employer" | "worker",
+      userId: string,
+      title: string,
+      message: string,
+      type: string,
+    ) => {
+      const collectionName =
+        role === "employer" ? "EmployerNotifications" : "WorkerNotifications";
+      const userKey = role === "employer" ? "employerId" : "workerId";
+      await db.collection(collectionName).add({
+        [userKey]: userId,
+        title,
+        message,
+        type,
+        bookingId,
+        read: false,
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      });
+    };
+
+    await addRoleNotification(
+      "employer",
+      employerId,
+      "Job Completed",
+      "Job completion verified. Payment released to worker.",
+      "job_completed",
+    );
+    await addRoleNotification(
+      "worker",
+      workerUid,
+      "Job Completed",
+      "Job completion verified. Payment released to you.",
+      "job_completed",
+    );
+
+    logger.info(
+      `Job completed and escrow released for booking ${bookingId}. Amount ${amount} added to worker ${workerUid}`,
+    );
+
+    return {
+      success: true,
+      message: "Job completion verified. Amount released to worker.",
+      amount: amount,
+    };
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+    logger.error("verifyJobCompletionCode error:", errorMessage);
+
+    if (error instanceof HttpsError) {
+      throw error;
+    }
+
+    throw new HttpsError(
+      "internal",
+      `Failed to verify completion code: ${errorMessage}`,
+    );
+  }
+});
