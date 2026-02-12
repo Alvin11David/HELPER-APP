@@ -1,5 +1,8 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:intl/intl.dart';
 import 'Worker_Notifications.dart';
 
 class WorkerEarningsScreen extends StatefulWidget {
@@ -15,7 +18,6 @@ class _WorkerEarningsScreenState extends State<WorkerEarningsScreen> {
   int _tab = 0; // 0 today, 1 week, 2 month, 3 custom
 
   // Fake totals (replace later)
-  final String _totalEarnings = "UGX/DOLLARS";
   final String _platformFee = "UGX/DOLLARS";
 
   // Fake summary (replace later)
@@ -200,18 +202,6 @@ class _WorkerEarningsScreenState extends State<WorkerEarningsScreen> {
                       ),
                       SizedBox(width: w * 0.04),
                       _TabChip(
-                        text: "This week",
-                        active: _tab == 1,
-                        onTap: () => _setTab(1),
-                      ),
-                      SizedBox(width: w * 0.04),
-                      _TabChip(
-                        text: "This Month",
-                        active: _tab == 2,
-                        onTap: () => _setTab(2),
-                      ),
-                      SizedBox(width: w * 0.04),
-                      _TabChip(
                         text: "Custom",
                         active: _tab == 3,
                         onTap: () => _setTab(3),
@@ -228,13 +218,33 @@ class _WorkerEarningsScreenState extends State<WorkerEarningsScreen> {
                     padding: EdgeInsets.only(bottom: h * 0.02),
                     children: [
                       // Total earnings bar
-                      _MetricBar(
-                        w: w,
-                        bg: _brandOrange,
-                        leftIcon: Icons.account_balance_wallet_outlined,
-                        leftText: "Total Earnings:",
-                        rightText: _totalEarnings,
-                        rightBold: true,
+                      StreamBuilder<DocumentSnapshot>(
+                        stream: FirebaseAuth.instance.currentUser != null
+                            ? FirebaseFirestore.instance
+                                .collection('Sign Up')
+                                .doc(FirebaseAuth.instance.currentUser!.uid)
+                                .snapshots()
+                            : null,
+                        builder: (context, snapshot) {
+                          int amount = 0;
+                          if (snapshot.hasData && snapshot.data!.exists) {
+                            final data =
+                                snapshot.data!.data() as Map<String, dynamic>?;
+                            amount = data?['amount'] ?? 0;
+                          }
+
+                          final totalText =
+                              'UGX ${NumberFormat('#,###').format(amount)}';
+
+                          return _MetricBar(
+                            w: w,
+                            bg: _brandOrange,
+                            leftIcon: Icons.account_balance_wallet_outlined,
+                            leftText: "Total Earnings:",
+                            rightText: totalText,
+                            rightBold: true,
+                          );
+                        },
                       ),
                       SizedBox(height: h * 0.01),
                       Align(
