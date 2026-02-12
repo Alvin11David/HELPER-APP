@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:intl/intl.dart';
 import 'package:helper/Components/User_Name.dart';
-import 'package:helper/Components/UnreadMessagesBadge.dart';
 import 'package:helper/Components/IncomingCallDialog.dart';
 import '../Components/Side_Bar.dart';
 import 'package:helper/Components/user_avatar_circle.dart';
@@ -13,6 +13,8 @@ import 'Worker_Jobs_Hub_Screen.dart';
 import 'Active_Job_detail.dart';
 import 'Worker_Details_Screen.dart';
 import 'Workers_skills_and_Job_Details.dart';
+import 'Worker_Notifications.dart';
+import 'Workers_Earning_Detail_Screen.dart';
 import 'package:helper/Wallet/Wallet_Cancelled_screen.dart';
 
 class WorkersDashboardScreen extends StatefulWidget {
@@ -26,12 +28,14 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
   final TextEditingController _controller = TextEditingController();
   final FocusNode _focusNode = FocusNode();
   final GlobalKey<SideBarState> _sidebarKey = GlobalKey();
+  late final UserAvatarCircle _avatarWidget;
 
-  String workerStatus = 'Available'; // Can be 'Available', 'On Job', 'Not Available'
+  String workerStatus =
+      'Available'; // Can be 'Available', 'On Job', 'Not Available'
   bool _isCallDialogShowing = false;
   Map<String, dynamic>? activeJobData; // Store active job details for display
   String? _activeServiceProviderId;
-  
+
   // Next job countdown
   Timer? _nextJobTimer;
   String _nextJobCountdown = '00:00:00';
@@ -40,6 +44,7 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
   @override
   void initState() {
     super.initState();
+     _avatarWidget = UserAvatarCircle();
     print('=== WORKER DASHBOARD INIT STATE ===');
 
     // Request notification permissions
@@ -109,7 +114,7 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
     }
 
     print('Setting up FCM listeners...');
-    
+
     // Start next job countdown timer
     _startNextJobCountdownTimer();
 
@@ -265,7 +270,6 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                   ).then((_) => _isCallDialogShowing = false);
                 });
               }
-
             }
           });
 
@@ -296,18 +300,18 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
     }
     super.dispose();
   }
-  
+
   void _startNextJobCountdownTimer() {
     _nextJobTimer?.cancel();
     _nextJobTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       _updateNextJobCountdown();
     });
   }
-  
+
   void _updateNextJobCountdown() async {
     final workerUid = FirebaseAuth.instance.currentUser?.uid;
     if (workerUid == null) return;
-    
+
     try {
       // If there is an active job, do not count down
       final activeSnap = await FirebaseFirestore.instance
@@ -324,26 +328,31 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
       final snap = await FirebaseFirestore.instance
           .collection('bookings')
           .where('workerUid', isEqualTo: workerUid)
-          .where('status', whereIn: const ['confirmed', 'in_progress', 'started'])
+          .where(
+            'status',
+            whereIn: const ['confirmed', 'in_progress', 'started'],
+          )
           .orderBy('startDateTime')
           .limit(1)
           .get();
-      
+
       if (snap.docs.isEmpty) {
         _setNextJobCountdown('00:00:00', false);
         return;
       }
-      
+
       final nextJob = snap.docs.first.data();
       final startDt = nextJob['startDateTime'];
-      
+
       if (startDt == null) return;
-      
-      final startDateTime = (startDt is Timestamp) ? startDt.toDate() : (startDt as DateTime?);
+
+      final startDateTime = (startDt is Timestamp)
+          ? startDt.toDate()
+          : (startDt as DateTime?);
       if (startDateTime == null) return;
-      
+
       final now = DateTime.now();
-      
+
       if (now.isAfter(startDateTime)) {
         // Job has started
         _setNextJobCountdown('00:00:00', true);
@@ -353,8 +362,9 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
         final hours = remaining.inHours;
         final minutes = (remaining.inMinutes % 60);
         final seconds = (remaining.inSeconds % 60);
-        final formattedTime = '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
-        
+        final formattedTime =
+            '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+
         _setNextJobCountdown(formattedTime, false);
       }
     } catch (e) {
@@ -406,7 +416,8 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
           );
         }
 
-        final hasActive = _activeServiceProviderId != null &&
+        final hasActive =
+            _activeServiceProviderId != null &&
             docs.any((d) => d.id == _activeServiceProviderId);
         if (!hasActive) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -442,11 +453,7 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                       border: Border.all(color: Colors.black12),
                     ),
                     child: const Center(
-                      child: Icon(
-                        Icons.add,
-                        color: Colors.black,
-                        size: 28,
-                      ),
+                      child: Icon(Icons.add, color: Colors.black, size: 28),
                     ),
                   ),
                 );
@@ -563,11 +570,11 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
           .collection('bookings')
           .doc(bookingId)
           .update({
-        'status': 'confirmed',
-        'updatedAt': FieldValue.serverTimestamp(),
-        'acceptedAt': FieldValue.serverTimestamp(),
-        'workerAcceptedBy': workerId,
-      });
+            'status': 'confirmed',
+            'updatedAt': FieldValue.serverTimestamp(),
+            'acceptedAt': FieldValue.serverTimestamp(),
+            'workerAcceptedBy': workerId,
+          });
 
       await FirebaseFirestore.instance.collection('workerNotifications').add({
         'workerId': workerId,
@@ -604,9 +611,9 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
           .collection('bookings')
           .doc(bookingId)
           .update({
-        'status': 'cancelled',
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
+            'status': 'cancelled',
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
 
       if (workerId != null) {
         await FirebaseFirestore.instance.collection('workerNotifications').add({
@@ -674,9 +681,15 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
 
     if (startDt == null || endDt == null) return '00:00:00';
 
-    final startDateTime = (startDt is Timestamp) ? startDt.toDate() : (startDt as DateTime?);
-    final endDateTime = (endDt is Timestamp) ? endDt.toDate() : (endDt as DateTime?);
-    final startedAt = (startedAtDt is Timestamp) ? startedAtDt.toDate() : (startedAtDt as DateTime?);
+    final startDateTime = (startDt is Timestamp)
+        ? startDt.toDate()
+        : (startDt as DateTime?);
+    final endDateTime = (endDt is Timestamp)
+        ? endDt.toDate()
+        : (endDt as DateTime?);
+    final startedAt = (startedAtDt is Timestamp)
+        ? startedAtDt.toDate()
+        : (startedAtDt as DateTime?);
 
     if (startDateTime == null || endDateTime == null) return '00:00:00';
 
@@ -684,7 +697,8 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
     final elapsedStart = startedAt ?? startDateTime;
     final elapsedDuration = DateTime.now().difference(elapsedStart);
 
-    final remainingDuration = totalDuration.inSeconds > elapsedDuration.inSeconds
+    final remainingDuration =
+        totalDuration.inSeconds > elapsedDuration.inSeconds
         ? Duration(seconds: totalDuration.inSeconds - elapsedDuration.inSeconds)
         : Duration.zero;
 
@@ -920,31 +934,25 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                               ),
                               const SizedBox(width: 10),
                               GestureDetector(
-                                onTap: _showNotifications,
-                                child: SizedBox(
-                                  width: 50, // Increased to accommodate badge
-                                  height: 50, // Increased to accommodate badge
-                                  child: Stack(
-                                    alignment: Alignment.center,
-                                    children: [
-                                      Container(
-                                        width: 40,
-                                        height: 40,
-                                        decoration: const BoxDecoration(
-                                          color: Colors.white,
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: const Icon(
-                                          Icons.notifications,
-                                          color: Colors.black,
-                                        ),
-                                      ),
-                                      Positioned(
-                                        right: 0,
-                                        top: 0,
-                                        child: UnreadMessagesBadge(),
-                                      ),
-                                    ],
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          const WorkerNotifications(),
+                                    ),
+                                  );
+                                },
+                                child: Container(
+                                  width: 40,
+                                  height: 40,
+                                  decoration: const BoxDecoration(
+                                    color: Colors.white,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.notifications,
+                                    color: Colors.black,
                                   ),
                                 ),
                               ),
@@ -1078,14 +1086,19 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                                   StreamBuilder<QuerySnapshot>(
                                     stream: FirebaseFirestore.instance
                                         .collection('bookings')
-                                      .where('workerUid',
-                                        isEqualTo: workerUid)
-                                        .where('status',
-                                            whereIn: ['in_progress', 'started'])
+                                        .where(
+                                          'workerUid',
+                                          isEqualTo: workerUid,
+                                        )
+                                        .where(
+                                          'status',
+                                          whereIn: ['in_progress', 'started'],
+                                        )
                                         .limit(1)
                                         .snapshots(),
                                     builder: (ctx, snap) {
-                                      if (snap.hasData && snap.data!.docs.isNotEmpty) {
+                                      if (snap.hasData &&
+                                          snap.data!.docs.isNotEmpty) {
                                         return const Text(
                                           'On Job',
                                           style: TextStyle(
@@ -1176,172 +1189,204 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(25),
                               ),
-                              child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                                stream: () {
-                                  if (workerUid == null) return null;
-                                  return FirebaseFirestore.instance
-                                      .collection('bookings')
-                                      .where('workerUid', isEqualTo: workerUid)
-                                      .where('status', isEqualTo: 'pending')
-                                      .orderBy('createdAt', descending: true)
-                                      .limit(1)
-                                      .snapshots();
-                                }(),
-                                builder: (context, snap) {
-                                  if (snap.connectionState == ConnectionState.waiting) {
-                                    return const Center(
-                                      child: CircularProgressIndicator(strokeWidth: 2),
-                                    );
-                                  }
+                              child:
+                                  StreamBuilder<
+                                    QuerySnapshot<Map<String, dynamic>>
+                                  >(
+                                    stream: () {
+                                      if (workerUid == null) return null;
+                                      return FirebaseFirestore.instance
+                                          .collection('bookings')
+                                          .where(
+                                            'workerUid',
+                                            isEqualTo: workerUid,
+                                          )
+                                          .where('status', isEqualTo: 'pending')
+                                          .orderBy(
+                                            'createdAt',
+                                            descending: true,
+                                          )
+                                          .limit(1)
+                                          .snapshots();
+                                    }(),
+                                    builder: (context, snap) {
+                                      if (snap.connectionState ==
+                                          ConnectionState.waiting) {
+                                        return const Center(
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                          ),
+                                        );
+                                      }
 
-                                  final docs = snap.data?.docs ?? [];
-                                  if (docs.isEmpty) {
-                                    return const Center(
-                                      child: Text(
-                                        'You have no new job requests',
-                                        style: TextStyle(
-                                          color: Colors.black,
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    );
-                                  }
-
-                                  final doc = docs.first;
-                                  final d = doc.data();
-                                  final bookingId = doc.id;
-                                  final employerName = (d['employerName'] ?? 'Employer').toString();
-                                  final jobCategory = (d['jobCategoryName'] ?? 'Job').toString();
-                                  final jobLocation = (d['jobLocationText'] ?? 'Unknown').toString();
-
-                                  return Stack(
-                                    children: [
-                                      Positioned(
-                                        top: 10,
-                                        left: 10,
-                                        child: Row(
-                                          children: [
-                                            Container(
-                                              width: 40,
-                                              height: 40,
-                                              decoration: BoxDecoration(
-                                                color: Colors.white,
-                                                shape: BoxShape.circle,
-                                                boxShadow: [
-                                                  BoxShadow(
-                                                    color: Colors.black.withOpacity(0.2),
-                                                    blurRadius: 4,
-                                                    offset: Offset(0, 2),
-                                                  ),
-                                                ],
-                                              ),
-                                              child: const Icon(
-                                                Icons.person,
-                                                color: Colors.black,
-                                              ),
+                                      final docs = snap.data?.docs ?? [];
+                                      if (docs.isEmpty) {
+                                        return const Center(
+                                          child: Text(
+                                            'You have no new job requests',
+                                            style: TextStyle(
+                                              color: Colors.black,
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w600,
                                             ),
-                                            const SizedBox(width: 10),
-                                            Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                          ),
+                                        );
+                                      }
+
+                                      final doc = docs.first;
+                                      final d = doc.data();
+                                      final bookingId = doc.id;
+                                      final employerName =
+                                          (d['employerName'] ?? 'Employer')
+                                              .toString();
+                                      final jobCategory =
+                                          (d['jobCategoryName'] ?? 'Job')
+                                              .toString();
+                                      final jobLocation =
+                                          (d['jobLocationText'] ?? 'Unknown')
+                                              .toString();
+
+                                      return Stack(
+                                        children: [
+                                          Positioned(
+                                            top: 10,
+                                            left: 10,
+                                            child: Row(
                                               children: [
-                                                Text(
-                                                  employerName,
-                                                  style: const TextStyle(
-                                                    color: Colors.black,
-                                                    fontSize: 14,
-                                                    fontWeight: FontWeight.bold,
+                                                Container(
+                                                  width: 40,
+                                                  height: 40,
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.white,
+                                                    shape: BoxShape.circle,
+                                                    boxShadow: [
+                                                      BoxShadow(
+                                                        color: Colors.black
+                                                            .withOpacity(0.2),
+                                                        blurRadius: 4,
+                                                        offset: Offset(0, 2),
+                                                      ),
+                                                    ],
                                                   ),
+                                                  child: _avatarWidget,
                                                 ),
-                                                Text(
-                                                  jobCategory,
-                                                  style: const TextStyle(
-                                                    color: Colors.black,
-                                                    fontSize: 12,
-                                                  ),
-                                                ),
-                                                Text(
-                                                  jobLocation,
-                                                  style: const TextStyle(
-                                                    color: Colors.black54,
-                                                    fontSize: 11,
-                                                  ),
+                                                const SizedBox(width: 10),
+                                                Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    Text(
+                                                      employerName,
+                                                      style: const TextStyle(
+                                                        color: Colors.black,
+                                                        fontSize: 14,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                      ),
+                                                    ),
+                                                    Text(
+                                                      jobCategory,
+                                                      style: const TextStyle(
+                                                        color: Colors.black,
+                                                        fontSize: 12,
+                                                      ),
+                                                    ),
+                                                    Text(
+                                                      jobLocation,
+                                                      style: const TextStyle(
+                                                        color: Colors.black54,
+                                                        fontSize: 11,
+                                                      ),
+                                                    ),
+                                                  ],
                                                 ),
                                               ],
                                             ),
-                                          ],
-                                        ),
-                                      ),
-                                      Positioned(
-                                        top: 10,
-                                        right: 10,
-                                        child: Text(
-                                          time,
-                                          style: const TextStyle(
-                                            color: Colors.black,
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.bold,
                                           ),
-                                        ),
-                                      ),
-                                      Positioned(
-                                        top: screenWidth * 0.2,
-                                        right: screenWidth * 0.09,
-                                        child: Align(
-                                          alignment: Alignment.center,
-                                          child: Row(
-                                            children: [
-                                              GestureDetector(
-                                                onTap: () => _declinePendingBooking(bookingId),
-                                                child: Container(
-                                                  width: screenWidth * 0.35,
-                                                  height: 40,
-                                                  decoration: BoxDecoration(
-                                                    color: Colors.red,
-                                                    borderRadius: BorderRadius.circular(20),
-                                                  ),
-                                                  child: const Center(
-                                                    child: Text(
-                                                      'Decline',
-                                                      style: TextStyle(
-                                                        color: Colors.white,
-                                                        fontSize: 14,
-                                                        fontWeight: FontWeight.bold,
+                                          Positioned(
+                                            top: 10,
+                                            right: 10,
+                                            child: Text(
+                                              time,
+                                              style: const TextStyle(
+                                                color: Colors.black,
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                          Positioned(
+                                            top: screenWidth * 0.2,
+                                            right: screenWidth * 0.09,
+                                            child: Align(
+                                              alignment: Alignment.center,
+                                              child: Row(
+                                                children: [
+                                                  GestureDetector(
+                                                    onTap: () =>
+                                                        _declinePendingBooking(
+                                                          bookingId,
+                                                        ),
+                                                    child: Container(
+                                                      width: screenWidth * 0.35,
+                                                      height: 40,
+                                                      decoration: BoxDecoration(
+                                                        color: Colors.red,
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                              20,
+                                                            ),
+                                                      ),
+                                                      child: const Center(
+                                                        child: Text(
+                                                          'Decline',
+                                                          style: TextStyle(
+                                                            color: Colors.white,
+                                                            fontSize: 14,
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                          ),
+                                                        ),
                                                       ),
                                                     ),
                                                   ),
-                                                ),
-                                              ),
-                                              const SizedBox(width: 10),
-                                              GestureDetector(
-                                                onTap: () => _acceptPendingBooking(bookingId),
-                                                child: Container(
-                                                  width: screenWidth * 0.35,
-                                                  height: 40,
-                                                  decoration: BoxDecoration(
-                                                    color: Colors.green,
-                                                    borderRadius: BorderRadius.circular(20),
-                                                  ),
-                                                  child: const Center(
-                                                    child: Text(
-                                                      'Accept',
-                                                      style: TextStyle(
-                                                        color: Colors.white,
-                                                        fontSize: 14,
-                                                        fontWeight: FontWeight.bold,
+                                                  const SizedBox(width: 10),
+                                                  GestureDetector(
+                                                    onTap: () =>
+                                                        _acceptPendingBooking(
+                                                          bookingId,
+                                                        ),
+                                                    child: Container(
+                                                      width: screenWidth * 0.35,
+                                                      height: 40,
+                                                      decoration: BoxDecoration(
+                                                        color: Colors.green,
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                              20,
+                                                            ),
+                                                      ),
+                                                      child: const Center(
+                                                        child: Text(
+                                                          'Accept',
+                                                          style: TextStyle(
+                                                            color: Colors.white,
+                                                            fontSize: 14,
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                          ),
+                                                        ),
                                                       ),
                                                     ),
                                                   ),
-                                                ),
+                                                ],
                                               ),
-                                            ],
+                                            ),
                                           ),
-                                        ),
-                                      ),
-                                    ],
-                                  );
-                                },
-                              ),
+                                        ],
+                                      );
+                                    },
+                                  ),
                             ),
                           ),
                           SizedBox(height: 20),
@@ -1359,7 +1404,9 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     Text(
-                                      _nextJobStarted ? '🚀 Job has began!' : 'Time to Next Job',
+                                      _nextJobStarted
+                                          ? '🚀 Job has began!'
+                                          : 'Time to Next Job',
                                       style: const TextStyle(
                                         color: Colors.black,
                                         fontSize: 13,
@@ -1370,7 +1417,9 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                                     Text(
                                       _nextJobCountdown,
                                       style: TextStyle(
-                                        color: _nextJobStarted ? Colors.green : Colors.black,
+                                        color: _nextJobStarted
+                                            ? Colors.green
+                                            : Colors.black,
                                         fontSize: 24,
                                         fontWeight: FontWeight.bold,
                                         fontFamily: 'Courier',
@@ -1400,7 +1449,9 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                                   onTap: () {
                                     // Fetch active job and pass data to Active Job Screen
                                     if (workerUid == null) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
                                         const SnackBar(
                                           content: Text('Not signed in'),
                                         ),
@@ -1410,33 +1461,41 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
 
                                     FirebaseFirestore.instance
                                         .collection('bookings')
-                                        .where('workerUid', isEqualTo: workerUid)
-                                        .where('status', whereIn: ['in_progress', 'started'])
+                                        .where(
+                                          'workerUid',
+                                          isEqualTo: workerUid,
+                                        )
+                                        .where(
+                                          'status',
+                                          whereIn: ['in_progress', 'started'],
+                                        )
                                         .limit(1)
                                         .get()
                                         .then((snap) {
-                                      if (snap.docs.isNotEmpty) {
-                                        final bookingDoc = snap.docs.first;
-                                        final bookingId = bookingDoc.id;
-                                        final bookingData = bookingDoc.data();
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (_) => ActiveJobScreen(
-                                              bookingId: bookingId,
-                                              bookingData: bookingData,
-                                            ),
-                                          ),
-                                        );
-                                      } else {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (_) => const ActiveJobScreen(),
-                                          ),
-                                        );
-                                      }
-                                    });
+                                          if (snap.docs.isNotEmpty) {
+                                            final bookingDoc = snap.docs.first;
+                                            final bookingId = bookingDoc.id;
+                                            final bookingData = bookingDoc
+                                                .data();
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (_) => ActiveJobScreen(
+                                                  bookingId: bookingId,
+                                                  bookingData: bookingData,
+                                                ),
+                                              ),
+                                            );
+                                          } else {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (_) =>
+                                                    const ActiveJobScreen(),
+                                              ),
+                                            );
+                                          }
+                                        });
                                   },
                                   child: Container(
                                     padding: EdgeInsets.symmetric(
@@ -1467,22 +1526,28 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                               ),
                               child: StreamBuilder<QuerySnapshot>(
                                 stream: workerUid == null
-                                  ? null
-                                  : FirebaseFirestore.instance
-                                    .collection('bookings')
-                                    .where('workerUid',
-                                      isEqualTo: workerUid)
-                                    .where('status',
-                                      whereIn: ['in_progress', 'started'])
-                                    .limit(1)
-                                    .snapshots(),
+                                    ? null
+                                    : FirebaseFirestore.instance
+                                          .collection('bookings')
+                                          .where(
+                                            'workerUid',
+                                            isEqualTo: workerUid,
+                                          )
+                                          .where(
+                                            'status',
+                                            whereIn: ['in_progress', 'started'],
+                                          )
+                                          .limit(1)
+                                          .snapshots(),
                                 builder: (ctx, snap) {
-                                  if (!snap.hasData || snap.data!.docs.isEmpty) {
+                                  if (!snap.hasData ||
+                                      snap.data!.docs.isEmpty) {
                                     return Padding(
                                       padding: const EdgeInsets.all(14),
                                       child: Center(
                                         child: Column(
-                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
                                           children: const [
                                             Text(
                                               'No active job currently',
@@ -1508,7 +1573,9 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                                     );
                                   }
 
-                                  final data = snap.data!.docs.first.data() as Map<String, dynamic>;
+                                  final data =
+                                      snap.data!.docs.first.data()
+                                          as Map<String, dynamic>;
                                   return Padding(
                                     padding: const EdgeInsets.all(10),
                                     child: Column(
@@ -1526,7 +1593,8 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                                             const Spacer(),
                                             Expanded(
                                               child: Text(
-                                                data['employerName'] ?? 'Unknown',
+                                                data['employerName'] ??
+                                                    'Unknown',
                                                 style: const TextStyle(
                                                   color: Color(0xFFFFA10D),
                                                   fontSize: 13,
@@ -1552,7 +1620,8 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                                             const Spacer(),
                                             Expanded(
                                               child: Text(
-                                                data['pricingType'] ?? 'Unknown',
+                                                data['pricingType'] ??
+                                                    'Unknown',
                                                 style: const TextStyle(
                                                   color: Color(0xFFFFA10D),
                                                   fontSize: 13,
@@ -1578,7 +1647,8 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                                             const Spacer(),
                                             Expanded(
                                               child: Text(
-                                                data['jobLocationText'] ?? 'Unknown',
+                                                data['jobLocationText'] ??
+                                                    'Unknown',
                                                 style: const TextStyle(
                                                   color: Color(0xFFFFA10D),
                                                   fontSize: 13,
@@ -1621,9 +1691,8 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                                             ),
                                             decoration: BoxDecoration(
                                               color: const Color(0xFFFFA10D),
-                                              borderRadius: BorderRadius.circular(
-                                                20,
-                                              ),
+                                              borderRadius:
+                                                  BorderRadius.circular(20),
                                             ),
                                             child: Row(
                                               mainAxisAlignment:
@@ -1662,24 +1731,35 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
-                                  'Today’s Earnings Summary',
+                                  'Your Earnings Summary',
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontSize: w * 0.045,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
-                                Container(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 5,
-                                  ),
-                                  child: Text(
-                                    'View All',
-                                    style: TextStyle(
-                                      color: Color(0xFFF79F1A),
-                                      fontSize: w * 0.04,
-                                      fontWeight: FontWeight.bold,
+                                GestureDetector(
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) =>
+                                            const WorkerEarningsScreen(),
+                                      ),
+                                    );
+                                  },
+                                  child: Container(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 5,
+                                    ),
+                                    child: Text(
+                                      'View All',
+                                      style: TextStyle(
+                                        color: Color(0xFFF79F1A),
+                                        fontSize: w * 0.04,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -1710,13 +1790,41 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                                           ),
                                         ),
                                         const Spacer(),
-                                        Text(
-                                          'Amount',
-                                          style: TextStyle(
-                                            color: Color(0xFFFFA10D),
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w300,
-                                          ),
+                                        StreamBuilder<DocumentSnapshot>(
+                                          stream:
+                                              FirebaseAuth
+                                                      .instance
+                                                      .currentUser !=
+                                                  null
+                                              ? FirebaseFirestore.instance
+                                                    .collection('Sign Up')
+                                                    .doc(
+                                                      FirebaseAuth
+                                                          .instance
+                                                          .currentUser!
+                                                          .uid,
+                                                    )
+                                                    .snapshots()
+                                              : null,
+                                          builder: (ctx, snap) {
+                                            int amount = 0;
+                                            if (snap.hasData &&
+                                                snap.data!.exists) {
+                                              final data =
+                                                  snap.data!.data()
+                                                      as Map<String, dynamic>?;
+                                              amount = data?['amount'] ?? 0;
+                                            }
+
+                                            return Text(
+                                              'UGX ${NumberFormat('#,###').format(amount)}',
+                                              style: const TextStyle(
+                                                color: Color(0xFFFFA10D),
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.w300,
+                                              ),
+                                            );
+                                          },
                                         ),
                                       ],
                                     ),
@@ -1735,11 +1843,20 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                                         StreamBuilder<DocumentSnapshot>(
                                           stream: FirebaseFirestore.instance
                                               .collection('users')
-                                              .doc(FirebaseAuth.instance.currentUser?.uid)
+                                              .doc(
+                                                FirebaseAuth
+                                                    .instance
+                                                    .currentUser
+                                                    ?.uid,
+                                              )
                                               .snapshots(),
                                           builder: (ctx, snap) {
-                                            final data = snap.data?.data() as Map<String, dynamic>?;
-                                            final jobsCompleted = (data?['jobsCompleted'] ?? 0).toString();
+                                            final data =
+                                                snap.data?.data()
+                                                    as Map<String, dynamic>?;
+                                            final jobsCompleted =
+                                                (data?['jobsCompleted'] ?? 0)
+                                                    .toString();
                                             return Text(
                                               jobsCompleted,
                                               style: const TextStyle(
@@ -1767,13 +1884,25 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                                         StreamBuilder<DocumentSnapshot>(
                                           stream: FirebaseFirestore.instance
                                               .collection('users')
-                                              .doc(FirebaseAuth.instance.currentUser?.uid)
+                                              .doc(
+                                                FirebaseAuth
+                                                    .instance
+                                                    .currentUser
+                                                    ?.uid,
+                                              )
                                               .snapshots(),
                                           builder: (ctx, snap) {
-                                            final data = snap.data?.data() as Map<String, dynamic>?;
-                                            final seconds = (data?['hoursWorkedSeconds'] ?? 0) as int;
+                                            final data =
+                                                snap.data?.data()
+                                                    as Map<String, dynamic>?;
+                                            final seconds =
+                                                (data?['hoursWorkedSeconds'] ??
+                                                        0)
+                                                    as int;
                                             return Text(
-                                              _formatDuration(Duration(seconds: seconds)),
+                                              _formatDuration(
+                                                Duration(seconds: seconds),
+                                              ),
                                               style: const TextStyle(
                                                 color: Color(0xFFFFA10D),
                                                 fontSize: 13,

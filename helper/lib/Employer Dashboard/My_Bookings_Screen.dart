@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:helper/Escrow/Cancellation_Code_Screen.dart';
 
 class MyBookingsScreen extends StatefulWidget {
   const MyBookingsScreen({super.key});
@@ -100,6 +101,18 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                 _confirmTerminate(bookingId);
               }
             : null,
+        onVerifyCancellation: (tab == 1 || tab == 3)
+            ? () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        CancellationCodeScreen(bookingId: bookingId),
+                  ),
+                );
+              }
+            : null,
       ),
     );
   }
@@ -127,6 +140,13 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
 
     if (shouldTerminate == true) {
       await _cancelBooking(bookingId);
+      if (!mounted) return;
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => CancellationCodeScreen(bookingId: bookingId),
+        ),
+      );
     }
   }
 
@@ -505,6 +525,7 @@ class _BookingDetailsSheet extends StatelessWidget {
   final VoidCallback onViewLocation;
   final VoidCallback? onCancelPending;
   final VoidCallback? onTerminateActive;
+  final VoidCallback? onVerifyCancellation;
 
   const _BookingDetailsSheet({
     required this.bookingId,
@@ -514,6 +535,7 @@ class _BookingDetailsSheet extends StatelessWidget {
     required this.onViewLocation,
     this.onCancelPending,
     this.onTerminateActive,
+    this.onVerifyCancellation,
   });
 
   @override
@@ -694,6 +716,35 @@ class _BookingDetailsSheet extends StatelessWidget {
                         ),
                       ),
                     ),
+                    if ((tab == 1 || tab == 3) &&
+                        onVerifyCancellation != null) ...[
+                      SizedBox(height: h * 0.012),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton(
+                          onPressed: onVerifyCancellation,
+                          style: OutlinedButton.styleFrom(
+                            side: BorderSide(
+                              color: accent.withOpacity(0.9),
+                              width: 1.5,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            padding: EdgeInsets.symmetric(vertical: h * 0.016),
+                          ),
+                          child: Text(
+                            'Enter Cancellation Code',
+                            style: TextStyle(
+                              color: accent,
+                              fontFamily: 'Inter',
+                              fontWeight: FontWeight.w900,
+                              fontSize: w * 0.035,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
                 ],
               ),

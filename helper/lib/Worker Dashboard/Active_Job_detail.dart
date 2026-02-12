@@ -4,12 +4,16 @@ import 'dart:async';
 import 'dart:ui';
 import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:helper/Components/user_avatar_circle.dart';
+import 'package:helper/Worker%20Dashboard/Workers_Notifications.dart';
 import 'package:intl/intl.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
+import 'package:helper/Escrow/Cancellation_Code_Screen.dart';
 
 class ActiveJobScreen extends StatefulWidget {
   final String? bookingId;
@@ -23,6 +27,7 @@ class ActiveJobScreen extends StatefulWidget {
 
 class _ActiveJobScreenState extends State<ActiveJobScreen> {
   static const _brandOrange = Color(0xFFFFA10D);
+  late Widget _avatarWidget;
   static const String _googleApiKey = 'AIzaSyBUJXjLSEFn_8OfVkaaLAIHYGUcGJEDD9w';
 
   int _phase = 0; // 0 = summary, 1 = time & payment
@@ -68,7 +73,9 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Location services are disabled. Please enable them.'),
+            content: Text(
+              'Location services are disabled. Please enable them.',
+            ),
           ),
         );
       }
@@ -132,9 +139,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
           markerId: const MarkerId('user'),
           position: _userPosition!,
           infoWindow: const InfoWindow(title: 'Your Location'),
-          icon: BitmapDescriptor.defaultMarkerWithHue(
-            BitmapDescriptor.hueBlue,
-          ),
+          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
         ),
       );
     }
@@ -146,9 +151,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
           markerId: const MarkerId('employer'),
           position: _employerPosition!,
           infoWindow: const InfoWindow(title: 'Job Location'),
-          icon: BitmapDescriptor.defaultMarkerWithHue(
-            BitmapDescriptor.hueRed,
-          ),
+          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
         ),
       );
     }
@@ -191,9 +194,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
   Future<void> _showDirections() async {
     if (_userPosition == null || _employerPosition == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Location data not available'),
-        ),
+        const SnackBar(content: Text('Location data not available')),
       );
       return;
     }
@@ -241,45 +242,48 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
             southwest: LatLng(minLat, minLng),
             northeast: LatLng(maxLat, maxLng),
           );
-          _mapController!.animateCamera(CameraUpdate.newLatLngBounds(bounds, 50));
+          _mapController!.animateCamera(
+            CameraUpdate.newLatLngBounds(bounds, 50),
+          );
         }
 
         // Start location tracking
         _positionStream?.cancel();
-        _positionStream = Geolocator.getPositionStream(
-          locationSettings: const LocationSettings(
-            accuracy: LocationAccuracy.high,
-            distanceFilter: 5, // Update every 5 meters
-          ),
-        ).listen((Position position) {
-          final current = LatLng(position.latitude, position.longitude);
-          setState(() {
-            _userPosition = current;
-            _updateMapMarkers();
-          });
+        _positionStream =
+            Geolocator.getPositionStream(
+              locationSettings: const LocationSettings(
+                accuracy: LocationAccuracy.high,
+                distanceFilter: 5, // Update every 5 meters
+              ),
+            ).listen((Position position) {
+              final current = LatLng(position.latitude, position.longitude);
+              setState(() {
+                _userPosition = current;
+                _updateMapMarkers();
+              });
 
-          if (_mapController != null) {
-            _mapController!.animateCamera(CameraUpdate.newLatLng(current));
-          }
+              if (_mapController != null) {
+                _mapController!.animateCamera(CameraUpdate.newLatLng(current));
+              }
 
-          // Check distance to destination
-          if (_employerPosition != null) {
-            final distance = Geolocator.distanceBetween(
-              current.latitude,
-              current.longitude,
-              _employerPosition!.latitude,
-              _employerPosition!.longitude,
-            );
-            if (distance < 50) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('You have reached the destination!'),
-                  duration: Duration(seconds: 2),
-                ),
-              );
-            }
-          }
-        });
+              // Check distance to destination
+              if (_employerPosition != null) {
+                final distance = Geolocator.distanceBetween(
+                  current.latitude,
+                  current.longitude,
+                  _employerPosition!.latitude,
+                  _employerPosition!.longitude,
+                );
+                if (distance < 50) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('You have reached the destination!'),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                }
+              }
+            });
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -290,9 +294,9 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
     } catch (e) {
       print('Error fetching directions: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
   }
@@ -333,9 +337,15 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
     if (startDt == null || endDt == null) return;
 
     // Convert Timestamps to DateTime
-    final startDateTime = (startDt is Timestamp) ? startDt.toDate() : (startDt as DateTime?);
-    final endDateTime = (endDt is Timestamp) ? endDt.toDate() : (endDt as DateTime?);
-    final startedAt = (startedAtDt is Timestamp) ? startedAtDt.toDate() : (startedAtDt as DateTime?);
+    final startDateTime = (startDt is Timestamp)
+        ? startDt.toDate()
+        : (startDt as DateTime?);
+    final endDateTime = (endDt is Timestamp)
+        ? endDt.toDate()
+        : (endDt as DateTime?);
+    final startedAt = (startedAtDt is Timestamp)
+        ? startedAtDt.toDate()
+        : (startedAtDt as DateTime?);
 
     if (startDateTime == null || endDateTime == null) return;
 
@@ -352,7 +362,8 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
 
     // Countdown: endDateTime - startDateTime (same as total time, counts down as elapsed time increases)
     // This aligns with total time so they always match
-    final remainingDuration = totalDuration.inSeconds > elapsedDuration.inSeconds
+    final remainingDuration =
+        totalDuration.inSeconds > elapsedDuration.inSeconds
         ? totalDuration - elapsedDuration
         : Duration.zero;
     final remainingStr = _formatDuration(remainingDuration);
@@ -367,26 +378,30 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
   /// Check if job scheduled start time has been reached
   bool _isScheduleTimeReached() {
     if (bookingData.isEmpty) return false;
-    
+
     final startDt = bookingData['startDateTime'];
     if (startDt == null) return true;
-    
-    final startDateTime = (startDt is Timestamp) ? startDt.toDate() : (startDt as DateTime?);
+
+    final startDateTime = (startDt is Timestamp)
+        ? startDt.toDate()
+        : (startDt as DateTime?);
     if (startDateTime == null) return true;
-    
+
     return DateTime.now().isAfter(startDateTime);
   }
 
   /// Get formatted scheduled start time for warning message
   String _getScheduledStartTime() {
     if (bookingData.isEmpty) return 'Unknown';
-    
+
     final startDt = bookingData['startDateTime'];
     if (startDt == null) return 'Unknown';
-    
-    final startDateTime = (startDt is Timestamp) ? startDt.toDate() : (startDt as DateTime?);
+
+    final startDateTime = (startDt is Timestamp)
+        ? startDt.toDate()
+        : (startDt as DateTime?);
     if (startDateTime == null) return 'Unknown';
-    
+
     return DateFormat('MMM d, yyyy at h:mm a').format(startDateTime);
   }
 
@@ -419,7 +434,8 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
       }
 
       final now = DateTime.now();
-      final elapsedSeconds = (startDateTime != null && now.isAfter(startDateTime))
+      final elapsedSeconds =
+          (startDateTime != null && now.isAfter(startDateTime))
           ? now.difference(startDateTime).inSeconds
           : 0;
 
@@ -492,6 +508,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
   @override
   void initState() {
     super.initState();
+     _avatarWidget = UserAvatarCircle();
     bookingData = widget.bookingData ?? <String, dynamic>{};
 
     final statusValue = (bookingData['status'] ?? '').toString();
@@ -501,7 +518,8 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
       bookingData = <String, dynamic>{};
     }
 
-    if ((statusValue == 'in_progress' || statusValue == 'started') && startReached) {
+    if ((statusValue == 'in_progress' || statusValue == 'started') &&
+        startReached) {
       _hasActiveJob = true;
       status = 'On Job';
     } else if (statusValue == 'completed_pending') {
@@ -511,10 +529,14 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
     } else {
       status = 'Available';
     }
-    
+
     // Extract employer location from booking
-    if (_hasActiveJob && widget.bookingId != null && widget.bookingId!.isNotEmpty) {
-      final docRef = FirebaseFirestore.instance.collection('bookings').doc(widget.bookingId);
+    if (_hasActiveJob &&
+        widget.bookingId != null &&
+        widget.bookingId!.isNotEmpty) {
+      final docRef = FirebaseFirestore.instance
+          .collection('bookings')
+          .doc(widget.bookingId);
       _bookingSub = docRef.snapshots().listen((snap) {
         if (snap.exists) {
           final data = snap.data();
@@ -533,16 +555,20 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
               } else {
                 status = 'Available';
               }
-              
+
               // Extract employer location
               final jobLatLng = data['jobLatLng'] as GeoPoint?;
               if (jobLatLng != null) {
-                _employerPosition = LatLng(jobLatLng.latitude, jobLatLng.longitude);
+                _employerPosition = LatLng(
+                  jobLatLng.latitude,
+                  jobLatLng.longitude,
+                );
               }
             });
             // Start/restart the countdown timer when booking data updates
             final statusValue = (data['status'] ?? '').toString();
-            if (statusValue == 'completed_pending' || statusValue == 'completed') {
+            if (statusValue == 'completed_pending' ||
+                statusValue == 'completed') {
               _countdownTimer?.cancel();
             } else {
               _startCountdownTimer();
@@ -556,7 +582,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
       if (_hasActiveJob) {
         type = bookingData['pricingType'] ?? 'Unknown';
       }
-      
+
       // Extract employer location from initial booking data
       if (_hasActiveJob) {
         final jobLatLng = bookingData['jobLatLng'] as GeoPoint?;
@@ -564,7 +590,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
           _employerPosition = LatLng(jobLatLng.latitude, jobLatLng.longitude);
         }
       }
-      
+
       final statusValue = (bookingData['status'] ?? '').toString();
       if (statusValue != 'completed_pending' && statusValue != 'completed') {
         if (_hasActiveJob) {
@@ -572,13 +598,12 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
         }
       }
     }
-    
+
     // Get user's current location
     if (_hasActiveJob) {
       _getCurrentLocation();
     }
   }
-
 
   @override
   void dispose() {
@@ -588,6 +613,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
     _mapController?.dispose();
     super.dispose();
   }
+
   @override
   Widget build(BuildContext context) {
     // Populate display fields from bookingData if provided
@@ -684,21 +710,32 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                         color: Colors.white,
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.person, color: Colors.black),
+                      child: _avatarWidget,
                     ),
                     const SizedBox(width: 10),
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.notifications,
-                        color: Colors.black,
-                      ),
-                    ),
+                    GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          const WorkerNotifications(),
+                                    ),
+                                  );
+                                },
+                                child: Container(
+                                  width: 40,
+                                  height: 40,
+                                  decoration: const BoxDecoration(
+                                    color: Colors.white,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.notifications,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                              ),
                   ],
                 ),
               ),
@@ -778,7 +815,10 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
           // Show warning if job hasn't started yet
           if (_hasActiveJob && !_isScheduleTimeReached())
             Container(
-              padding: EdgeInsets.symmetric(horizontal: w * 0.04, vertical: h * 0.015),
+              padding: EdgeInsets.symmetric(
+                horizontal: w * 0.04,
+                vertical: h * 0.015,
+              ),
               decoration: BoxDecoration(
                 color: Colors.orange.withOpacity(0.2),
                 border: Border.all(color: Colors.orange, width: 1.5),
@@ -818,7 +858,8 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
               ),
             ),
 
-          if (_hasActiveJob && !_isScheduleTimeReached()) SizedBox(height: h * 0.018),
+          if (_hasActiveJob && !_isScheduleTimeReached())
+            SizedBox(height: h * 0.018),
 
           _sectionTitle('Employer & Job Summary', w),
           SizedBox(height: h * 0.012),
@@ -832,16 +873,6 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                 SizedBox(height: h * 0.012),
                 Row(
                   children: [
-                    Expanded(
-                      child: _OrangeMiniButton(
-                        text: 'Call Now',
-                        icon: Icons.call,
-                        onTap: () {
-                          // TODO: show incoming/outgoing call UI
-                        },
-                      ),
-                    ),
-                    SizedBox(width: w * 0.04),
                     Expanded(
                       child: _OrangeMiniButton(
                         text: 'Message',
@@ -969,6 +1000,53 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
               ),
             ),
           ),
+
+          SizedBox(height: h * 0.015),
+
+          // Enter cancellation code
+          SizedBox(
+            width: double.infinity,
+            height: h * 0.065,
+            child: OutlinedButton(
+              onPressed: () {
+                final bookingId = widget.bookingId;
+                if (bookingId == null || bookingId.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: const Text(
+                        'Missing booking ID for verification',
+                        style: TextStyle(fontFamily: 'Inter'),
+                      ),
+                      backgroundColor: Colors.black.withOpacity(0.85),
+                    ),
+                  );
+                  return;
+                }
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        CancellationCodeScreen(bookingId: bookingId),
+                  ),
+                );
+              },
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(color: _brandOrange.withOpacity(0.9)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(28),
+                ),
+              ),
+              child: Text(
+                'Enter Cancellation Code',
+                style: TextStyle(
+                  color: _brandOrange,
+                  fontSize: w * 0.04,
+                  fontFamily: 'Inter',
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -1075,6 +1153,53 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
               ),
             ),
           ),
+
+          SizedBox(height: h * 0.015),
+
+          // Enter cancellation code
+          SizedBox(
+            width: double.infinity,
+            height: h * 0.065,
+            child: OutlinedButton(
+              onPressed: () {
+                final bookingId = widget.bookingId;
+                if (bookingId == null || bookingId.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: const Text(
+                        'Missing booking ID for verification',
+                        style: TextStyle(fontFamily: 'Inter'),
+                      ),
+                      backgroundColor: Colors.black.withOpacity(0.85),
+                    ),
+                  );
+                  return;
+                }
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        CancellationCodeScreen(bookingId: bookingId),
+                  ),
+                );
+              },
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(color: _brandOrange.withOpacity(0.9)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(28),
+                ),
+              ),
+              child: Text(
+                'Enter Cancellation Code',
+                style: TextStyle(
+                  color: _brandOrange,
+                  fontSize: w * 0.04,
+                  fontFamily: 'Inter',
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -1112,7 +1237,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                     ),
                     const SizedBox(height: 10),
                     Text(
-                      'This will end the active job. You can hook the real termination API later.',
+                      'This will end the active job and cancel the booking with escrow. Continue?',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: Colors.white.withOpacity(0.8),
@@ -1150,16 +1275,32 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: ElevatedButton(
-                            onPressed: () {
+                            onPressed: () async {
                               Navigator.pop(ctx);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: const Text(
-                                    'Terminated (hook API later)',
-                                    style: TextStyle(fontFamily: 'Inter'),
+                              final bookingId = widget.bookingId;
+                              if (bookingId == null || bookingId.isEmpty) {
+                                if (!mounted) return;
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: const Text(
+                                      'Missing booking ID for termination',
+                                      style: TextStyle(fontFamily: 'Inter'),
+                                    ),
+                                    backgroundColor: Colors.black.withOpacity(
+                                      0.85,
+                                    ),
                                   ),
-                                  backgroundColor: Colors.black.withOpacity(
-                                    0.85,
+                                );
+                                return;
+                              }
+
+                              await _cancelBookingWithEscrow(bookingId);
+                              if (!mounted) return;
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => CancellationCodeScreen(
+                                    bookingId: bookingId,
                                   ),
                                 ),
                               );
@@ -1192,6 +1333,36 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
         );
       },
     );
+  }
+
+  Future<void> _cancelBookingWithEscrow(String bookingId) async {
+    try {
+      final callable = FirebaseFunctions.instance.httpsCallable(
+        'cancelBookingWithEscrow',
+      );
+      await callable.call({'bookingId': bookingId});
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text(
+            'Booking cancelled successfully',
+            style: TextStyle(fontFamily: 'Inter'),
+          ),
+          backgroundColor: Colors.black.withOpacity(0.85),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Failed to cancel booking: $e',
+            style: const TextStyle(fontFamily: 'Inter'),
+          ),
+          backgroundColor: Colors.black.withOpacity(0.85),
+        ),
+      );
+    }
   }
 
   Text _sectionTitle(String t, double w) {

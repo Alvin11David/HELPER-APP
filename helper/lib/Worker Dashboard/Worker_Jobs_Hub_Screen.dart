@@ -4,6 +4,8 @@ import 'dart:async';
 import 'dart:ui';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:helper/Components/user_avatar_circle.dart';
+import 'package:helper/Worker%20Dashboard/Workers_Notifications.dart';
 import 'Workers_Reschedule_screen.dart';
 import 'Active_Job_detail.dart';
 
@@ -20,6 +22,8 @@ class WorkerJobsHubScreen extends StatefulWidget {
 
 class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
   static const _brandOrange = Color(0xFFFFA10D);
+  late Widget _avatarWidget;
+  
 
   int _tab = 0; // 0 pending, 1 active, 2 completed, 3 cancelled
 
@@ -34,6 +38,7 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
   @override
   void initState() {
     super.initState();
+    _avatarWidget = UserAvatarCircle();
     _tab = widget.initialTab;
     _listenConflictsBadge();
     // Auto-start disabled: job should only start when scheduled time is reached
@@ -1409,27 +1414,31 @@ class _TopAvatar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Container(
-          width: 40,
-          height: 40,
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            shape: BoxShape.circle,
-          ),
-          child: const Icon(Icons.person, color: Colors.black),
-        ),
-        const SizedBox(width: 10),
         Stack(
           children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.notifications, color: Colors.black),
-            ),
+            GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          const WorkerNotifications(),
+                                    ),
+                                  );
+                                },
+                                child: Container(
+                                  width: 40,
+                                  height: 40,
+                                  decoration: const BoxDecoration(
+                                    color: Colors.white,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.notifications,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                              ),
           ],
         ),
       ],

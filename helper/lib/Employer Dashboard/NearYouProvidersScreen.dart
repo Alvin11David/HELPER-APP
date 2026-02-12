@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:helper/Components/user_avatar_circle.dart';
 import 'package:intl/intl.dart';
 import 'package:helper/Components/User_Name.dart';
 import 'package:helper/Components/Side_Bar.dart';
@@ -20,6 +21,7 @@ class _NearYouProvidersScreenState extends State<NearYouProvidersScreen> {
   final GlobalKey<SideBarState> _sidebarKey = GlobalKey();
 
   Position? _currentPos;
+  late Widget _avatarWidget;
   bool _locLoading = true;
   String? _locError;
 
@@ -32,6 +34,7 @@ class _NearYouProvidersScreenState extends State<NearYouProvidersScreen> {
   @override
   void initState() {
     super.initState();
+     _avatarWidget = UserAvatarCircle();
     _focusNode = FocusNode();
     _controller = TextEditingController();
     _focusNode.addListener(() {
@@ -227,10 +230,7 @@ class _NearYouProvidersScreenState extends State<NearYouProvidersScreen> {
                                   color: Colors.white,
                                   shape: BoxShape.circle,
                                 ),
-                                child: const Icon(
-                                  Icons.person,
-                                  color: Colors.black,
-                                ),
+                                child: _avatarWidget,
                               ),
                             ],
                           ),

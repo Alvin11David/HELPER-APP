@@ -1,6 +1,9 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:helper/Components/Worker_Notifications.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:intl/intl.dart';
+import 'Worker_Notifications.dart';
 
 class WorkerEarningsScreen extends StatefulWidget {
   const WorkerEarningsScreen({super.key});
@@ -15,36 +18,89 @@ class _WorkerEarningsScreenState extends State<WorkerEarningsScreen> {
   int _tab = 0; // 0 today, 1 week, 2 month, 3 custom
 
   // Fake totals (replace later)
-  final String _totalEarnings = "UGX/DOLLARS";
   final String _platformFee = "UGX/DOLLARS";
 
-  // Fake summary (replace later)
-  final _summaryRows = const [
-    _KeyVal("Release Fee", "Amount"),
-    _KeyVal("Pending (Escrow) Fee", "Amount"),
-    _KeyVal("Processing", "Amount"),
-  ];
+  String _formatAmount(num amount) {
+    return 'UGX ${NumberFormat('#,###').format(amount)}';
+  }
 
-  // Fake jobs list (replace later)
-  final List<_EarningJobItem> _jobs = List.generate(
-    4,
-    (i) => _EarningJobItem(
-      employerName: "Employer Name",
-      jobCategory: "Job Category",
-      grossAmount: "Gross Amount",
-      commissionDeducted: "Commission Deducted",
-      amountEarned: "Amount Earned",
-      jobLocation: "Location",
-      duration: "Duration",
-      status: "Status",
-      employerNotes: "Notes",
-      jobDescription: "Description",
-      grossEarnings: "Amount",
-      platformCommission: "Amount",
-      netEarnings: "Amount",
-      referralRewards: "Amount",
-    ),
-  );
+  num _sumEscrowAmount(QuerySnapshot<Map<String, dynamic>> snap) {
+    num total = 0;
+    for (final doc in snap.docs) {
+      final data = doc.data();
+      final raw = data['amount'];
+      if (raw is num) {
+        total += raw;
+      } else if (raw is String) {
+        total += num.tryParse(raw) ?? 0;
+      }
+    }
+    return total;
+  }
+
+  Future<_EarningJobItem> _buildJobItemFromEscrowDoc(
+    QueryDocumentSnapshot<Map<String, dynamic>> doc,
+  ) async {
+    final data = doc.data();
+    final amount = (data['amount'] as num?) ?? 0;
+    final bookingId = data['bookingId']?.toString() ?? '';
+
+    Map<String, dynamic> bookingData = {};
+    if (bookingId.isNotEmpty) {
+      final bookingSnap = await FirebaseFirestore.instance
+          .collection('bookings')
+          .doc(bookingId)
+          .get();
+      if (bookingSnap.exists) {
+        bookingData = bookingSnap.data() as Map<String, dynamic>? ?? {};
+      }
+    }
+
+    final employerName = (bookingData['employerName'] ?? '').toString();
+    final jobCategory = (bookingData['jobCategoryName'] ?? 'Job').toString();
+    final jobLocation = (bookingData['jobLocationText'] ?? 'Location')
+        .toString();
+    final jobDescription =
+        (bookingData['jobDescription'] ?? 'No description').toString();
+    final employerNotes =
+        (bookingData['employerNotes'] ?? bookingData['notes'] ?? 'None')
+            .toString();
+    final status = (bookingData['status'] ?? 'completed').toString();
+
+    String duration = 'N/A';
+    final start = bookingData['startDateTime'];
+    final end = bookingData['endDateTime'];
+    if (start is Timestamp && end is Timestamp) {
+      final diff = end.toDate().difference(start.toDate());
+      if (diff.inMinutes < 60) {
+        duration = '${diff.inMinutes}m';
+      } else if (diff.inHours < 24) {
+        duration = '${diff.inHours}h';
+      } else {
+        duration = '${diff.inDays}d';
+      }
+    }
+
+    final commission = amount * 0.05;
+    final net = amount - commission;
+
+    return _EarningJobItem(
+      employerName: employerName.isEmpty ? 'Employer' : employerName,
+      jobCategory: jobCategory.isEmpty ? 'Job' : jobCategory,
+      grossAmount: _formatAmount(amount),
+      commissionDeducted: _formatAmount(commission),
+      amountEarned: _formatAmount(net),
+      jobLocation: jobLocation.isEmpty ? 'Location' : jobLocation,
+      duration: duration,
+      status: status.isEmpty ? 'completed' : status,
+      employerNotes: employerNotes.isEmpty ? 'None' : employerNotes,
+      jobDescription: jobDescription.isEmpty ? 'No description' : jobDescription,
+      grossEarnings: _formatAmount(amount),
+      platformCommission: _formatAmount(commission),
+      netEarnings: _formatAmount(net),
+      referralRewards: _formatAmount(0),
+    );
+  }
 
   void _setTab(int i) => setState(() => _tab = i);
 
@@ -129,36 +185,28 @@ class _WorkerEarningsScreenState extends State<WorkerEarningsScreen> {
                       ),
                     ),
                     SizedBox(width: w * 0.03),
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
+                    
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const WorkerNotifications(),
+                          ),
+                        );
+                      },
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.notifications,
+                          color: Colors.black,
+                        ),
                       ),
-                      child: const Icon(Icons.person, color: Colors.black),
-                    ),
-                    const SizedBox(width: 10),
-                    Stack(
-                      children: [
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: const BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.notifications,
-                            color: Colors.black,
-                          ),
-                        ),
-                        Positioned(
-                          right: 0,
-                          top: 0,
-                          child: WorkerNotificationsBadge(),
-                        ),
-                      ],
                     ),
                   ],
                 ),
@@ -197,24 +245,6 @@ class _WorkerEarningsScreenState extends State<WorkerEarningsScreen> {
                         active: _tab == 0,
                         onTap: () => _setTab(0),
                       ),
-                      SizedBox(width: w * 0.04),
-                      _TabChip(
-                        text: "This week",
-                        active: _tab == 1,
-                        onTap: () => _setTab(1),
-                      ),
-                      SizedBox(width: w * 0.04),
-                      _TabChip(
-                        text: "This Month",
-                        active: _tab == 2,
-                        onTap: () => _setTab(2),
-                      ),
-                      SizedBox(width: w * 0.04),
-                      _TabChip(
-                        text: "Custom",
-                        active: _tab == 3,
-                        onTap: () => _setTab(3),
-                      ),
                     ],
                   ),
                 ),
@@ -227,13 +257,33 @@ class _WorkerEarningsScreenState extends State<WorkerEarningsScreen> {
                     padding: EdgeInsets.only(bottom: h * 0.02),
                     children: [
                       // Total earnings bar
-                      _MetricBar(
-                        w: w,
-                        bg: _brandOrange,
-                        leftIcon: Icons.account_balance_wallet_outlined,
-                        leftText: "Total Earnings:",
-                        rightText: _totalEarnings,
-                        rightBold: true,
+                      StreamBuilder<DocumentSnapshot>(
+                        stream: FirebaseAuth.instance.currentUser != null
+                            ? FirebaseFirestore.instance
+                                .collection('Sign Up')
+                                .doc(FirebaseAuth.instance.currentUser!.uid)
+                                .snapshots()
+                            : null,
+                        builder: (context, snapshot) {
+                          int amount = 0;
+                          if (snapshot.hasData && snapshot.data!.exists) {
+                            final data =
+                                snapshot.data!.data() as Map<String, dynamic>?;
+                            amount = data?['amount'] ?? 0;
+                          }
+
+                          final totalText =
+                              'UGX ${NumberFormat('#,###').format(amount)}';
+
+                          return _MetricBar(
+                            w: w,
+                            bg: _brandOrange,
+                            leftIcon: Icons.account_balance_wallet_outlined,
+                            leftText: "Total Earnings:",
+                            rightText: totalText,
+                            rightBold: true,
+                          );
+                        },
                       ),
                       SizedBox(height: h * 0.01),
                       Align(
@@ -312,35 +362,112 @@ class _WorkerEarningsScreenState extends State<WorkerEarningsScreen> {
                                 color: Colors.black.withOpacity(0.18),
                               ),
                               SizedBox(height: h * 0.012),
-                              ..._summaryRows.map(
-                                (r) => Padding(
-                                  padding: EdgeInsets.symmetric(
-                                    vertical: h * 0.006,
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Expanded(
-                                        child: Text(
-                                          r.k,
-                                          style: TextStyle(
-                                            color: Colors.black,
-                                            fontFamily: 'Inter',
-                                            fontWeight: FontWeight.w900,
-                                            fontSize: w * 0.032,
-                                          ),
-                                        ),
-                                      ),
-                                      Text(
-                                        r.v,
+                              Padding(
+                                padding: EdgeInsets.symmetric(
+                                  vertical: h * 0.006,
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        'Release Fee',
                                         style: TextStyle(
-                                          color: Colors.black.withOpacity(0.75),
+                                          color: Colors.black,
                                           fontFamily: 'Inter',
                                           fontWeight: FontWeight.w900,
                                           fontSize: w * 0.032,
                                         ),
                                       ),
-                                    ],
-                                  ),
+                                    ),
+                                    StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                                      stream:
+                                          FirebaseAuth.instance.currentUser == null
+                                              ? null
+                                              : FirebaseFirestore.instance
+                                                  .collection('Escrow')
+                                                  .where(
+                                                    'inEscrow',
+                                                    isEqualTo: true,
+                                                  )
+                                                  .where(
+                                                    'workerUid',
+                                                    isEqualTo: FirebaseAuth
+                                                        .instance
+                                                        .currentUser!
+                                                        .uid,
+                                                  )
+                                                  .snapshots(),
+                                      builder: (context, snapshot) {
+                                        final total = snapshot.hasData
+                                            ? _sumEscrowAmount(snapshot.data!)
+                                            : 0;
+                                        return Text(
+                                          _formatAmount(total),
+                                          style: TextStyle(
+                                            color:
+                                                Colors.black.withOpacity(0.75),
+                                            fontFamily: 'Inter',
+                                            fontWeight: FontWeight.w900,
+                                            fontSize: w * 0.032,
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Padding(
+                                padding: EdgeInsets.symmetric(
+                                  vertical: h * 0.006,
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        'Pending (Escrow) Fee',
+                                        style: TextStyle(
+                                          color: Colors.black,
+                                          fontFamily: 'Inter',
+                                          fontWeight: FontWeight.w900,
+                                          fontSize: w * 0.032,
+                                        ),
+                                      ),
+                                    ),
+                                    StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                                      stream:
+                                          FirebaseAuth.instance.currentUser == null
+                                              ? null
+                                              : FirebaseFirestore.instance
+                                                  .collection('Escrow')
+                                                  .where(
+                                                    'inEscrow',
+                                                    isEqualTo: true,
+                                                  )
+                                                  .where(
+                                                    'workerUid',
+                                                    isEqualTo: FirebaseAuth
+                                                        .instance
+                                                        .currentUser!
+                                                        .uid,
+                                                  )
+                                                  .snapshots(),
+                                      builder: (context, snapshot) {
+                                        final total = snapshot.hasData
+                                            ? _sumEscrowAmount(snapshot.data!)
+                                            : 0;
+                                        return Text(
+                                          _formatAmount(total),
+                                          style: TextStyle(
+                                            color:
+                                                Colors.black.withOpacity(0.75),
+                                            fontFamily: 'Inter',
+                                            fontWeight: FontWeight.w900,
+                                            fontSize: w * 0.032,
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ],
                                 ),
                               ),
                             ],
@@ -362,15 +489,61 @@ class _WorkerEarningsScreenState extends State<WorkerEarningsScreen> {
                       ),
                       SizedBox(height: h * 0.012),
 
-                      // Jobs list cards
-                      ..._jobs.map(
-                        (job) => Padding(
-                          padding: EdgeInsets.only(bottom: h * 0.012),
-                          child: _EarningJobCard(
-                            job: job,
-                            onMore: () => _openJobDetails(job),
-                          ),
-                        ),
+                      StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                        stream: FirebaseAuth.instance.currentUser == null
+                            ? null
+                            : FirebaseFirestore.instance
+                                .collection('Escrow')
+                                .where('isPaid', isEqualTo: true)
+                                .where(
+                                  'workerUid',
+                                  isEqualTo:
+                                      FirebaseAuth.instance.currentUser!.uid,
+                                )
+                                .snapshots(),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return const Center(
+                              child: CircularProgressIndicator(),
+                            );
+                          }
+
+                          final docs = snapshot.data?.docs ?? [];
+                          if (docs.isEmpty) {
+                            return Text(
+                              'No paid escrow jobs yet',
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.75),
+                                fontFamily: 'Inter',
+                                fontWeight: FontWeight.w700,
+                                fontSize: w * 0.03,
+                              ),
+                            );
+                          }
+
+                          return Column(
+                            children: docs.map((doc) {
+                              return FutureBuilder<_EarningJobItem>(
+                                future: _buildJobItemFromEscrowDoc(doc),
+                                builder: (context, jobSnapshot) {
+                                  if (!jobSnapshot.hasData) {
+                                    return const SizedBox.shrink();
+                                  }
+                                  final job = jobSnapshot.data!;
+                                  return Padding(
+                                    padding:
+                                        EdgeInsets.only(bottom: h * 0.012),
+                                    child: _EarningJobCard(
+                                      job: job,
+                                      onMore: () => _openJobDetails(job),
+                                    ),
+                                  );
+                                },
+                              );
+                            }).toList(),
+                          );
+                        },
                       ),
                     ],
                   ),
@@ -385,12 +558,6 @@ class _WorkerEarningsScreenState extends State<WorkerEarningsScreen> {
 }
 
 // ------------------------------ Data ------------------------------
-
-class _KeyVal {
-  final String k;
-  final String v;
-  const _KeyVal(this.k, this.v);
-}
 
 class _EarningJobItem {
   final String employerName;

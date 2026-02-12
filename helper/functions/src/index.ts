@@ -644,21 +644,36 @@ export const sendReviewNotification = onDocumentCreated(
     logger.info("Provider ID:", providerId);
 
     try {
-      logger.info("Fetching provider document from Firestore...");
-      const providerDoc = await admin
-        .firestore()
-        .collection("users")
+      logger.info("Resolving provider user for notification...");
+      const db = admin.firestore();
+      let targetUid = providerId as string;
+
+      const serviceProviderDoc = await db
+        .collection("serviceProviders")
         .doc(providerId)
         .get();
-
-      if (!providerDoc.exists) {
-        logger.info("ERROR: Provider document does not exist");
-        return;
+      if (serviceProviderDoc.exists) {
+        const workerUid = (
+          serviceProviderDoc.data()?.workerUid ?? ""
+        ).toString();
+        if (workerUid) {
+          targetUid = workerUid;
+        }
       }
 
-      const fcmToken = providerDoc.data()?.fcmToken;
+      let fcmToken: string | undefined;
+      const signUpDoc = await db.collection("Sign Up").doc(targetUid).get();
+      if (signUpDoc.exists) {
+        fcmToken = signUpDoc.data()?.fcmToken as string | undefined;
+      }
+
       if (!fcmToken) {
-        logger.info("ERROR: No FCM token found for user", providerId);
+        const usersDoc = await db.collection("users").doc(targetUid).get();
+        fcmToken = usersDoc.data()?.fcmToken as string | undefined;
+      }
+
+      if (!fcmToken) {
+        logger.info("ERROR: No FCM token found for user", targetUid);
         return;
       }
 
@@ -714,7 +729,7 @@ export const sendReviewNotification = onDocumentCreated(
         .firestore()
         .collection("workerNotifications")
         .add({
-          workerId: providerId,
+          workerId: targetUid,
           type: "review",
           title: "New Review Received",
           message: `${reviewerName} gave you ${rating} stars`,
@@ -863,22 +878,56 @@ export const cancelBookingWithEscrow = onCall(async (request) => {
 
     const booking = bookingSnap.data() as {
       employerId?: string;
+      workerUid?: string;
       status?: string;
       amount?: number;
       escrowId?: string;
       employerPhone?: string;
     };
 
-    if ((booking.employerId ?? "") !== callerId) {
+    const employerId = (booking.employerId ?? "").toString();
+    const workerUid = (booking.workerUid ?? "").toString();
+    if (!employerId || !workerUid) {
+      throw new HttpsError(
+        "failed-precondition",
+        "Booking missing employer or worker",
+      );
+    }
+    if (callerId !== employerId && callerId !== workerUid) {
       throw new HttpsError(
         "permission-denied",
         "You are not allowed to cancel this booking",
       );
     }
 
-    if ((booking.status ?? "") === "cancelled") {
-      return { success: true, message: "Booking already cancelled" };
+    const receiverId = callerId === employerId ? workerUid : employerId;
+    if (!receiverId) {
+      throw new HttpsError(
+        "failed-precondition",
+        "Receiver is missing for this booking",
+      );
     }
+
+    const notifyCancellationCode = async (code: string) => {
+      const targets = [employerId, workerUid].filter(Boolean);
+      for (const userId of targets) {
+        const userDoc = await db.collection("Sign Up").doc(userId).get();
+        const fcmToken = userDoc.data()?.fcmToken as string | undefined;
+        if (!fcmToken) continue;
+        await admin.messaging().send({
+          token: fcmToken,
+          notification: {
+            title: "Cancellation Code",
+            body: `Your cancellation code is ${code}`,
+          },
+          data: {
+            type: "escrow_cancellation_code",
+            bookingId,
+            cancellationCode: code,
+          },
+        });
+      }
+    };
 
     let escrowRef: admin.firestore.DocumentReference | null = null;
     let escrowData: admin.firestore.DocumentData | undefined;
@@ -916,7 +965,26 @@ export const cancelBookingWithEscrow = onCall(async (request) => {
     const feeAmount = Math.round(escrowAmount * 0.005);
     const refundAmount = Math.max(0, escrowAmount - feeAmount);
 
-    const employerRef = db.collection("Sign Up").doc(callerId);
+    const employerRef = db.collection("Sign Up").doc(employerId);
+
+    const existingStatus = (escrowData.cancellationStatus ?? "").toString();
+    const existingCode = (escrowData.cancellationCode ?? "").toString();
+    if (existingStatus === "pending" && existingCode) {
+      await notifyCancellationCode(existingCode);
+      return {
+        success: true,
+        message: "Cancellation already pending",
+        cancellationCode: existingCode,
+      };
+    }
+
+    if (existingStatus === "verified") {
+      return { success: true, message: "Cancellation already verified" };
+    }
+
+    const cancellationCode = Math.floor(
+      100000 + Math.random() * 900000,
+    ).toString();
 
     await db.runTransaction(async (tx) => {
       const escrowSnap = await tx.get(
@@ -938,11 +1006,14 @@ export const cancelBookingWithEscrow = onCall(async (request) => {
       });
 
       tx.update(escrowRef as admin.firestore.DocumentReference, {
-        inEscrow: false,
-        isPaid: false,
         feeAmount: feeAmount,
         refundAmount: refundAmount,
         feeStatus: feeAmount > 0 ? "PENDING" : "NOT_REQUIRED",
+        cancellationCode: cancellationCode,
+        cancellationStatus: "pending",
+        cancellationRequestedBy: callerId,
+        cancellationReceiverId: receiverId,
+        cancellationRequestedAt: admin.firestore.FieldValue.serverTimestamp(),
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
 
@@ -957,6 +1028,7 @@ export const cancelBookingWithEscrow = onCall(async (request) => {
     });
 
     if (feeAmount <= 0) {
+      await notifyCancellationCode(cancellationCode);
       return { success: true, feeAmount, refundAmount };
     }
 
@@ -1023,6 +1095,8 @@ export const cancelBookingWithEscrow = onCall(async (request) => {
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
 
+      await notifyCancellationCode(cancellationCode);
+
       return {
         success: true,
         feeAmount,
@@ -1057,6 +1131,132 @@ export const cancelBookingWithEscrow = onCall(async (request) => {
     throw new HttpsError(
       "internal",
       `Failed to cancel booking: ${errorMessage}`,
+    );
+  }
+});
+
+// Verify cancellation code and release escrow
+export const verifyEscrowCancellationCode = onCall(async (request) => {
+  try {
+    const { bookingId, code } = request.data;
+    if (!bookingId || !code) {
+      throw new HttpsError(
+        "invalid-argument",
+        "bookingId and code are required",
+      );
+    }
+
+    const callerId = request.auth?.uid as string | undefined;
+    if (!callerId) {
+      throw new HttpsError("unauthenticated", "User must be authenticated");
+    }
+
+    const db = admin.firestore();
+    const bookingRef = db.collection("bookings").doc(bookingId);
+    const bookingSnap = await bookingRef.get();
+    if (!bookingSnap.exists) {
+      throw new HttpsError("not-found", "Booking not found");
+    }
+
+    const booking = bookingSnap.data() as {
+      employerId?: string;
+      workerUid?: string;
+      escrowId?: string;
+    };
+
+    const employerId = (booking.employerId ?? "").toString();
+    const workerUid = (booking.workerUid ?? "").toString();
+    if (callerId !== employerId && callerId !== workerUid) {
+      throw new HttpsError(
+        "permission-denied",
+        "You are not allowed to verify this booking",
+      );
+    }
+
+    let escrowRef: admin.firestore.DocumentReference | null = null;
+    let escrowData: admin.firestore.DocumentData | undefined;
+
+    const escrowId = (booking.escrowId ?? "").toString();
+    if (escrowId.trim()) {
+      escrowRef = db.collection("Escrow").doc(escrowId);
+      const escrowSnap = await escrowRef.get();
+      if (escrowSnap.exists) {
+        escrowData = escrowSnap.data();
+      }
+    }
+
+    if (!escrowData) {
+      const escrowQuery = await db
+        .collection("Escrow")
+        .where("bookingId", "==", bookingId)
+        .limit(1)
+        .get();
+      if (!escrowQuery.empty) {
+        escrowRef = escrowQuery.docs[0].ref;
+        escrowData = escrowQuery.docs[0].data();
+      }
+    }
+
+    if (!escrowRef || !escrowData) {
+      throw new HttpsError(
+        "failed-precondition",
+        "Escrow record not found for this booking",
+      );
+    }
+
+    const storedCode = (escrowData.cancellationCode ?? "").toString();
+    const status = (escrowData.cancellationStatus ?? "").toString();
+    const receiverId = (escrowData.cancellationReceiverId ?? "").toString();
+
+    if (status === "verified") {
+      return { success: true, message: "Cancellation already verified" };
+    }
+
+    if (receiverId && receiverId !== callerId) {
+      throw new HttpsError(
+        "permission-denied",
+        "You are not the intended recipient of this code",
+      );
+    }
+
+    if (!storedCode || storedCode !== String(code)) {
+      throw new HttpsError("invalid-argument", "Invalid cancellation code");
+    }
+
+    await db.runTransaction(async (tx) => {
+      const snap = await tx.get(escrowRef as admin.firestore.DocumentReference);
+      if (!snap.exists) {
+        throw new HttpsError("failed-precondition", "Escrow record not found");
+      }
+
+      tx.update(escrowRef as admin.firestore.DocumentReference, {
+        inEscrow: false,
+        isPaid: false,
+        cancellationStatus: "verified",
+        cancellationVerifiedBy: callerId,
+        cancellationVerifiedAt: admin.firestore.FieldValue.serverTimestamp(),
+        cancellationCode: admin.firestore.FieldValue.delete(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      tx.update(bookingRef, {
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+    });
+
+    return { success: true };
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+    logger.error("verifyEscrowCancellationCode error:", errorMessage);
+
+    if (error instanceof HttpsError) {
+      throw error;
+    }
+
+    throw new HttpsError(
+      "internal",
+      `Failed to verify cancellation code: ${errorMessage}`,
     );
   }
 });

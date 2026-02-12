@@ -334,6 +334,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
 
     _checkingWallet = true;
     try {
+      final prevInsufficient = _walletInsufficient;
       if (_walletBalance == null || forceFetch) {
         final doc = await FirebaseFirestore.instance
             .collection('Sign Up')
@@ -368,6 +369,9 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
       } else {
         _walletInsufficient = false;
         _lastInsufficientTotal = null;
+      }
+      if (mounted && prevInsufficient != _walletInsufficient) {
+        setState(() {});
       }
     } catch (_) {
       // Ignore wallet check failures to avoid blocking the flow.
