@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:helper/Components/user_avatar_circle.dart';
 import 'package:helper/Employer%20Dashboard/Employer_Notifications.dart';
 import 'package:helper/Payments/Registration_Payment_Screen.dart';
 import 'package:intl/intl.dart';
@@ -30,6 +31,7 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
   int _selectedIndex = 0;
   final GlobalKey<SideBarState> _sidebarKey = GlobalKey();
   Map<String, String>? _headers;
+  late Widget _avatarWidget;
 
   void _onItemTapped(int index) async {
     setState(() {
@@ -73,6 +75,7 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
   @override
   void initState() {
     super.initState();
+     _avatarWidget = UserAvatarCircle();
     _focusNode = FocusNode();
     _controller = TextEditingController();
     _focusNode.addListener(() {
@@ -805,7 +808,7 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                             color: Colors.white,
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.person, color: Colors.black),
+                          child: _avatarWidget,
                         ),
                         const SizedBox(width: 10),
                         GestureDetector(
