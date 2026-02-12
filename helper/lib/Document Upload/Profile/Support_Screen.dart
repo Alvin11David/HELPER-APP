@@ -108,262 +108,261 @@ class _SupportScreenState extends State<SupportScreen> {
               fit: BoxFit.cover,
             ),
           ),
-          child: Stack(
-            children: [
-              Positioned(
-                top: screenHeight * 0.04,
-                left: screenWidth * 0.04,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    GestureDetector(
-                      onTap: () => Navigator.of(context).maybePop(),
-                      child: Container(
-                        width: screenWidth * 0.13,
-                        height: screenWidth * 0.13,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFFFFFF),
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                        child: Center(
-                          child: Icon(
-                            Icons.chevron_left,
-                            color: Colors.black,
-                            size: screenWidth * 0.10,
-                          ),
-                        ),
-                      ),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return SingleChildScrollView(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minHeight: constraints.maxHeight,
+                  ),
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: screenWidth * 0.04,
                     ),
-                    SizedBox(width: screenWidth * 0.06),
-                    Text(
-                      'Support/Help',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: screenWidth * 0.07,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'Poppins', // ✅ per your instruction
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Positioned(
-                top: screenHeight * 0.12, // Adjust position below the header
-                left: 0,
-                right: 0,
-                child: Column(
-                  children: [
-                    SizedBox(height: screenHeight * 0.02),
-                    Center(
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(30),
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                          child: Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: screenWidth * 0.06,
-                              vertical: screenHeight * 0.006,
-                            ),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                colors: [
-                                  Colors.white.withOpacity(0.25),
-                                  Colors.white.withOpacity(0.15),
-                                ],
-                              ),
-                              borderRadius: BorderRadius.circular(30),
-                              border: Border.all(
-                                color: Colors.white.withOpacity(0.4),
-                                width: 2,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.white.withOpacity(0.1),
-                                  blurRadius: 15,
-                                  spreadRadius: 2,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(height: screenHeight * 0.04),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            GestureDetector(
+                              onTap: () => Navigator.of(context).maybePop(),
+                              child: Container(
+                                width: screenWidth * 0.13,
+                                height: screenWidth * 0.13,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFFFFFF),
+                                  borderRadius: BorderRadius.circular(15),
                                 ),
-                              ],
+                                child: Center(
+                                  child: Icon(
+                                    Icons.chevron_left,
+                                    color: Colors.black,
+                                    size: screenWidth * 0.10,
+                                  ),
+                                ),
+                              ),
                             ),
-                            child: Text(
-                              'We\'re here to help with jobs, payments or\ntechnical issues.',
+                            SizedBox(width: screenWidth * 0.06),
+                            Text(
+                              'Support/Help',
                               style: TextStyle(
                                 color: Colors.white,
-                                fontSize: screenWidth * 0.04,
-                                fontWeight: FontWeight.w500,
+                                fontSize: screenWidth * 0.07,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'Poppins', // ✅ per your instruction
                               ),
-                              textAlign: TextAlign.center,
                             ),
-                          ),
+                          ],
                         ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Positioned(
-                top: screenHeight * 0.25, // Adjust position for the form
-                left: screenWidth * 0.04,
-                right: screenWidth * 0.04,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(height: screenHeight * 0.018),
-                    Text(
-                      'Issue title',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: screenWidth * 0.040,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'Inter',
-                      ),
-                    ),
-                    SizedBox(height: screenHeight * 0.012),
-                    _PillInput(
-                      controller: issueTitleCtrl,
-                      hint: 'Enter Your Issue Title',
-                      icon: Icons.title,
-                      keyboardType: TextInputType.text,
-                      contentFontSize: screenWidth * 0.038,
-                      validator: (v) {
-                        final t = (v ?? '');
-                        if (t.trim().isEmpty) return 'Issue title is required';
-                        return null;
-                      }, obscure: false,
-                    ),
-                    SizedBox(height: screenHeight * 0.018),
-                    Text(
-                      'Issue Description',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: screenWidth * 0.040,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'Inter',
-                      ),
-                    ),
-                    SizedBox(height: screenHeight * 0.012),
-                    _PillInput(
-                      controller: issueDescCtrl,
-                      hint: 'Enter Your Issue Description',
-                      icon: Icons.description,
-                      keyboardType: TextInputType.multiline,
-                      contentFontSize: screenWidth * 0.038,
-                      maxLines: 5, // Increased from 3 to 5 for taller field
-                      validator: (v) {
-                        final t = (v ?? '');
-                        if (t.trim().isEmpty) {
-                          return 'Issue description is required';
-                        }
-                        return null;
-                      }, obscure: false,
-                    ),
-                    SizedBox(height: screenHeight * 0.02),
-                    Row(
-                      children: [
-                        SizedBox(width: screenWidth * 0.06),
-                        Expanded(
-                          child: SizedBox(
-                            height: screenHeight * 0.060,
-                            child: ElevatedButton(
-                              onPressed: _isLoading
-                                  ? null
-                                  : _submit, // Disable when loading
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: _brandOrange,
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(30),
+                        SizedBox(height: screenHeight * 0.05),
+                        Center(
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(30),
+                            child: BackdropFilter(
+                              filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                              child: Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: screenWidth * 0.06,
+                                  vertical: screenHeight * 0.006,
                                 ),
-                              ),
-                              child: _isLoading
-                                  ? const CircularProgressIndicator(
-                                      color: Colors.white,
-                                    )
-                                  : Text(
-                                      'Submit',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontFamily: 'Inter',
-                                        fontWeight: FontWeight.w900,
-                                        fontSize: screenWidth * 0.040,
-                                      ),
-                                    ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: screenHeight * 0.02),
-                    Center(
-                      child: Text(
-                        'OR',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: screenWidth * 0.04,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: screenHeight * 0.02),
-                    Row(
-                      children: [
-                        SizedBox(width: screenWidth * 0.06),
-                        Expanded(
-                          child: SizedBox(
-                            height: screenHeight * 0.060,
-                            child: ElevatedButton(
-                              onPressed: () async {
-                                const phoneNumber =
-                                    'tel:+256705428245'; // Replace with actual support number
-                                if (await canLaunch(phoneNumber)) {
-                                  await launch(phoneNumber);
-                                } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                        'Could not launch phone app',
-                                      ),
-                                    ),
-                                  );
-                                }
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: _brandOrange,
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [
+                                      Colors.white.withOpacity(0.25),
+                                      Colors.white.withOpacity(0.15),
+                                    ],
+                                  ),
                                   borderRadius: BorderRadius.circular(30),
+                                  border: Border.all(
+                                    color: Colors.white.withOpacity(0.4),
+                                    width: 2,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.white.withOpacity(0.1),
+                                      blurRadius: 15,
+                                      spreadRadius: 2,
+                                    ),
+                                  ],
                                 ),
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.call,
+                                child: Text(
+                                  'We\'re here to help with jobs, payments or\ntechnical issues.',
+                                  style: TextStyle(
                                     color: Colors.white,
-                                    size: screenWidth * 0.05,
+                                    fontSize: screenWidth * 0.04,
+                                    fontWeight: FontWeight.w500,
                                   ),
-                                  SizedBox(width: screenWidth * 0.03),
-                                  Text(
-                                    'Call Now',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontFamily: 'Inter',
-                                      fontWeight: FontWeight.w900,
-                                      fontSize: screenWidth * 0.040,
-                                    ),
-                                  ),
-                                ],
+                                  textAlign: TextAlign.center,
+                                ),
                               ),
                             ),
                           ),
                         ),
+                        SizedBox(height: screenHeight * 0.05),
+                        Text(
+                          'Issue title',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: screenWidth * 0.040,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'Inter',
+                          ),
+                        ),
+                        SizedBox(height: screenHeight * 0.012),
+                        _PillInput(
+                          controller: issueTitleCtrl,
+                          hint: 'Enter Your Issue Title',
+                          icon: Icons.title,
+                          keyboardType: TextInputType.text,
+                          contentFontSize: screenWidth * 0.038,
+                          validator: (v) {
+                            final t = (v ?? '');
+                            if (t.trim().isEmpty) {
+                              return 'Issue title is required';
+                            }
+                            return null;
+                          },
+                          obscure: false,
+                        ),
+                        SizedBox(height: screenHeight * 0.018),
+                        Text(
+                          'Issue Description',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: screenWidth * 0.040,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'Inter',
+                          ),
+                        ),
+                        SizedBox(height: screenHeight * 0.012),
+                        _PillInput(
+                          controller: issueDescCtrl,
+                          hint: 'Enter Your Issue Description',
+                          icon: Icons.description,
+                          keyboardType: TextInputType.multiline,
+                          contentFontSize: screenWidth * 0.038,
+                          maxLines: 5, // Increased from 3 to 5 for taller field
+                          validator: (v) {
+                            final t = (v ?? '');
+                            if (t.trim().isEmpty) {
+                              return 'Issue description is required';
+                            }
+                            return null;
+                          },
+                          obscure: false,
+                        ),
+                        SizedBox(height: screenHeight * 0.02),
+                        Row(
+                          children: [
+                            SizedBox(width: screenWidth * 0.06),
+                            Expanded(
+                              child: SizedBox(
+                                height: screenHeight * 0.060,
+                                child: ElevatedButton(
+                                  onPressed: _isLoading ? null : _submit,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: _brandOrange,
+                                    elevation: 0,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(30),
+                                    ),
+                                  ),
+                                  child: _isLoading
+                                      ? const CircularProgressIndicator(
+                                          color: Colors.white,
+                                        )
+                                      : Text(
+                                          'Submit',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontFamily: 'Inter',
+                                            fontWeight: FontWeight.w900,
+                                            fontSize: screenWidth * 0.040,
+                                          ),
+                                        ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: screenHeight * 0.02),
+                        Center(
+                          child: Text(
+                            'OR',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: screenWidth * 0.04,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: screenHeight * 0.02),
+                        Row(
+                          children: [
+                            SizedBox(width: screenWidth * 0.06),
+                            Expanded(
+                              child: SizedBox(
+                                height: screenHeight * 0.060,
+                                child: ElevatedButton(
+                                  onPressed: () async {
+                                    const phoneNumber =
+                                        'tel:+256705428245'; // Replace with actual support number
+                                    if (await canLaunch(phoneNumber)) {
+                                      await launch(phoneNumber);
+                                    } else {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                            'Could not launch phone app',
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: _brandOrange,
+                                    elevation: 0,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(30),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.call,
+                                        color: Colors.white,
+                                        size: screenWidth * 0.05,
+                                      ),
+                                      SizedBox(width: screenWidth * 0.03),
+                                      Text(
+                                        'Call Now',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontFamily: 'Inter',
+                                          fontWeight: FontWeight.w900,
+                                          fontSize: screenWidth * 0.040,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: screenHeight * 0.04),
                       ],
                     ),
-                  ],
+                  ),
                 ),
-              ),
-            ],
+              );
+            },
           ),
         ),
       ),

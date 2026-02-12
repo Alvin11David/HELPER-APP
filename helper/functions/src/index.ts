@@ -653,7 +653,9 @@ export const sendReviewNotification = onDocumentCreated(
         .doc(providerId)
         .get();
       if (serviceProviderDoc.exists) {
-        const workerUid = (serviceProviderDoc.data()?.workerUid ?? "").toString();
+        const workerUid = (
+          serviceProviderDoc.data()?.workerUid ?? ""
+        ).toString();
         if (workerUid) {
           targetUid = workerUid;
         }
