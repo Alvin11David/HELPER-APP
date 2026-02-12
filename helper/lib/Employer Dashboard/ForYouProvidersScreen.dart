@@ -184,10 +184,7 @@ class _ForYouProvidersScreenState extends State<ForYouProvidersScreen> {
                                   color: Colors.white,
                                   shape: BoxShape.circle,
                                 ),
-                                child: const Icon(
-                                  Icons.person,
-                                  color: Colors.black,
-                                ),
+                                child: _avatarWidget,
                               ),
                             ],
                           ),
