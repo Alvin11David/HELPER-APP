@@ -38,26 +38,69 @@ class _WorkerEarningsScreenState extends State<WorkerEarningsScreen> {
     return total;
   }
 
-  // Fake jobs list (replace later)
-  final List<_EarningJobItem> _jobs = List.generate(
-    4,
-    (i) => _EarningJobItem(
-      employerName: "Employer Name",
-      jobCategory: "Job Category",
-      grossAmount: "Gross Amount",
-      commissionDeducted: "Commission Deducted",
-      amountEarned: "Amount Earned",
-      jobLocation: "Location",
-      duration: "Duration",
-      status: "Status",
-      employerNotes: "Notes",
-      jobDescription: "Description",
-      grossEarnings: "Amount",
-      platformCommission: "Amount",
-      netEarnings: "Amount",
-      referralRewards: "Amount",
-    ),
-  );
+  Future<_EarningJobItem> _buildJobItemFromEscrowDoc(
+    QueryDocumentSnapshot<Map<String, dynamic>> doc,
+  ) async {
+    final data = doc.data();
+    final amount = (data['amount'] as num?) ?? 0;
+    final bookingId = data['bookingId']?.toString() ?? '';
+
+    Map<String, dynamic> bookingData = {};
+    if (bookingId.isNotEmpty) {
+      final bookingSnap = await FirebaseFirestore.instance
+          .collection('bookings')
+          .doc(bookingId)
+          .get();
+      if (bookingSnap.exists) {
+        bookingData = bookingSnap.data() as Map<String, dynamic>? ?? {};
+      }
+    }
+
+    final employerName = (bookingData['employerName'] ?? '').toString();
+    final jobCategory = (bookingData['jobCategoryName'] ?? 'Job').toString();
+    final jobLocation = (bookingData['jobLocationText'] ?? 'Location')
+        .toString();
+    final jobDescription =
+        (bookingData['jobDescription'] ?? 'No description').toString();
+    final employerNotes =
+        (bookingData['employerNotes'] ?? bookingData['notes'] ?? 'None')
+            .toString();
+    final status = (bookingData['status'] ?? 'completed').toString();
+
+    String duration = 'N/A';
+    final start = bookingData['startDateTime'];
+    final end = bookingData['endDateTime'];
+    if (start is Timestamp && end is Timestamp) {
+      final diff = end.toDate().difference(start.toDate());
+      if (diff.inMinutes < 60) {
+        duration = '${diff.inMinutes}m';
+      } else if (diff.inHours < 24) {
+        duration = '${diff.inHours}h';
+      } else {
+        duration = '${diff.inDays}d';
+      }
+    }
+
+    final commission = amount * 0.05;
+    final net = amount - commission;
+
+    return _EarningJobItem(
+      employerName: employerName.isEmpty ? 'Employer' : employerName,
+      jobCategory: jobCategory.isEmpty ? 'Job' : jobCategory,
+      grossAmount: _formatAmount(amount),
+      commissionDeducted: _formatAmount(commission),
+      amountEarned: _formatAmount(net),
+      jobLocation: jobLocation.isEmpty ? 'Location' : jobLocation,
+      duration: duration,
+      status: status.isEmpty ? 'completed' : status,
+      employerNotes: employerNotes.isEmpty ? 'None' : employerNotes,
+      jobDescription: jobDescription.isEmpty ? 'No description' : jobDescription,
+      grossEarnings: _formatAmount(amount),
+      platformCommission: _formatAmount(commission),
+      netEarnings: _formatAmount(net),
+      referralRewards: _formatAmount(0),
+    );
+  }
 
   void _setTab(int i) => setState(() => _tab = i);
 
@@ -455,15 +498,61 @@ class _WorkerEarningsScreenState extends State<WorkerEarningsScreen> {
                       ),
                       SizedBox(height: h * 0.012),
 
-                      // Jobs list cards
-                      ..._jobs.map(
-                        (job) => Padding(
-                          padding: EdgeInsets.only(bottom: h * 0.012),
-                          child: _EarningJobCard(
-                            job: job,
-                            onMore: () => _openJobDetails(job),
-                          ),
-                        ),
+                      StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                        stream: FirebaseAuth.instance.currentUser == null
+                            ? null
+                            : FirebaseFirestore.instance
+                                .collection('Escrow')
+                                .where('isPaid', isEqualTo: true)
+                                .where(
+                                  'workerUid',
+                                  isEqualTo:
+                                      FirebaseAuth.instance.currentUser!.uid,
+                                )
+                                .snapshots(),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return const Center(
+                              child: CircularProgressIndicator(),
+                            );
+                          }
+
+                          final docs = snapshot.data?.docs ?? [];
+                          if (docs.isEmpty) {
+                            return Text(
+                              'No paid escrow jobs yet',
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.75),
+                                fontFamily: 'Inter',
+                                fontWeight: FontWeight.w700,
+                                fontSize: w * 0.03,
+                              ),
+                            );
+                          }
+
+                          return Column(
+                            children: docs.map((doc) {
+                              return FutureBuilder<_EarningJobItem>(
+                                future: _buildJobItemFromEscrowDoc(doc),
+                                builder: (context, jobSnapshot) {
+                                  if (!jobSnapshot.hasData) {
+                                    return const SizedBox.shrink();
+                                  }
+                                  final job = jobSnapshot.data!;
+                                  return Padding(
+                                    padding:
+                                        EdgeInsets.only(bottom: h * 0.012),
+                                    child: _EarningJobCard(
+                                      job: job,
+                                      onMore: () => _openJobDetails(job),
+                                    ),
+                                  );
+                                },
+                              );
+                            }).toList(),
+                          );
+                        },
                       ),
                     ],
                   ),
@@ -478,12 +567,6 @@ class _WorkerEarningsScreenState extends State<WorkerEarningsScreen> {
 }
 
 // ------------------------------ Data ------------------------------
-
-class _KeyVal {
-  final String k;
-  final String v;
-  const _KeyVal(this.k, this.v);
-}
 
 class _EarningJobItem {
   final String employerName;
