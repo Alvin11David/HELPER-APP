@@ -4,6 +4,7 @@ import 'dart:async';
 import 'dart:ui';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:helper/Worker%20Dashboard/Workers_Notifications.dart';
 import 'Workers_Reschedule_screen.dart';
 import 'Active_Job_detail.dart';
 
@@ -1421,15 +1422,29 @@ class _TopAvatar extends StatelessWidget {
         const SizedBox(width: 10),
         Stack(
           children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.notifications, color: Colors.black),
-            ),
+            GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          const WorkerNotifications(),
+                                    ),
+                                  );
+                                },
+                                child: Container(
+                                  width: 40,
+                                  height: 40,
+                                  decoration: const BoxDecoration(
+                                    color: Colors.white,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.notifications,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                              ),
           ],
         ),
       ],
