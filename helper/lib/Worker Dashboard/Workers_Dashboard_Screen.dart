@@ -28,6 +28,7 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
   final TextEditingController _controller = TextEditingController();
   final FocusNode _focusNode = FocusNode();
   final GlobalKey<SideBarState> _sidebarKey = GlobalKey();
+  late final UserAvatarCircle _avatarWidget;
 
   String workerStatus =
       'Available'; // Can be 'Available', 'On Job', 'Not Available'
@@ -43,6 +44,7 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
   @override
   void initState() {
     super.initState();
+     _avatarWidget = UserAvatarCircle();
     print('=== WORKER DASHBOARD INIT STATE ===');
 
     // Request notification permissions
@@ -1266,10 +1268,7 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                                                       ),
                                                     ],
                                                   ),
-                                                  child: const Icon(
-                                                    Icons.person,
-                                                    color: Colors.black,
-                                                  ),
+                                                  child: _avatarWidget,
                                                 ),
                                                 const SizedBox(width: 10),
                                                 Column(
