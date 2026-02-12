@@ -5,7 +5,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:intl/intl.dart';
 import 'package:helper/Components/User_Name.dart';
-import 'package:helper/Components/UnreadMessagesBadge.dart';
 import 'package:helper/Components/IncomingCallDialog.dart';
 import '../Components/Side_Bar.dart';
 import 'package:helper/Components/user_avatar_circle.dart';
@@ -14,6 +13,8 @@ import 'Worker_Jobs_Hub_Screen.dart';
 import 'Active_Job_detail.dart';
 import 'Worker_Details_Screen.dart';
 import 'Workers_skills_and_Job_Details.dart';
+import 'Worker_Notifications.dart';
+import 'Workers_Earning_Detail_Screen.dart';
 import 'package:helper/Wallet/Wallet_Cancelled_screen.dart';
 
 class WorkersDashboardScreen extends StatefulWidget {
@@ -931,31 +932,25 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                               ),
                               const SizedBox(width: 10),
                               GestureDetector(
-                                onTap: _showNotifications,
-                                child: SizedBox(
-                                  width: 50, // Increased to accommodate badge
-                                  height: 50, // Increased to accommodate badge
-                                  child: Stack(
-                                    alignment: Alignment.center,
-                                    children: [
-                                      Container(
-                                        width: 40,
-                                        height: 40,
-                                        decoration: const BoxDecoration(
-                                          color: Colors.white,
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: const Icon(
-                                          Icons.notifications,
-                                          color: Colors.black,
-                                        ),
-                                      ),
-                                      Positioned(
-                                        right: 0,
-                                        top: 0,
-                                        child: UnreadMessagesBadge(),
-                                      ),
-                                    ],
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          const WorkerNotifications(),
+                                    ),
+                                  );
+                                },
+                                child: Container(
+                                  width: 40,
+                                  height: 40,
+                                  decoration: const BoxDecoration(
+                                    color: Colors.white,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.notifications,
+                                    color: Colors.black,
                                   ),
                                 ),
                               ),
@@ -1744,17 +1739,28 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
-                                Container(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 5,
-                                  ),
-                                  child: Text(
-                                    'View All',
-                                    style: TextStyle(
-                                      color: Color(0xFFF79F1A),
-                                      fontSize: w * 0.04,
-                                      fontWeight: FontWeight.bold,
+                                GestureDetector(
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) =>
+                                            const WorkerEarningsScreen(),
+                                      ),
+                                    );
+                                  },
+                                  child: Container(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 5,
+                                    ),
+                                    child: Text(
+                                      'View All',
+                                      style: TextStyle(
+                                        color: Color(0xFFF79F1A),
+                                        fontSize: w * 0.04,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   ),
                                 ),

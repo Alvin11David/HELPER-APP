@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'dart:ui'; // Add this import for ImageFilter
-import 'package:flutter/services.dart'; // Add this import for TextInputFormatter
+import 'dart:ui'; 
+import 'package:flutter/services.dart'; 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:helper/Components/Bottom_Nav_Bar.dart';
-import 'package:url_launcher/url_launcher.dart'; // Add this import for launching calls
+import 'package:url_launcher/url_launcher.dart'; 
 
 class SupportScreen extends StatefulWidget {
   const SupportScreen({super.key});
