@@ -1647,6 +1647,10 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                                             'started',
                                           ],
                                         )
+                                        .orderBy(
+                                          'updatedAt',
+                                          descending: true,
+                                        )
                                         .limit(1)
                                         .get()
                                         .then((snap) {
@@ -1665,13 +1669,57 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                                               ),
                                             );
                                           } else {
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (_) =>
-                                                    const ActiveJobScreen(),
-                                              ),
-                                            );
+                                            FirebaseFirestore.instance
+                                                .collection('bookings')
+                                                .where(
+                                                  'workerAcceptedBy',
+                                                  isEqualTo: workerUid,
+                                                )
+                                                .where(
+                                                  'status',
+                                                  whereIn: [
+                                                    'confirmed',
+                                                    'in_progress',
+                                                    'started',
+                                                  ],
+                                                )
+                                                .orderBy(
+                                                  'updatedAt',
+                                                  descending: true,
+                                                )
+                                                .limit(1)
+                                                .get()
+                                                .then((acceptedSnap) {
+                                                  if (acceptedSnap
+                                                      .docs.isNotEmpty) {
+                                                    final bookingDoc =
+                                                        acceptedSnap
+                                                            .docs.first;
+                                                    final bookingId =
+                                                        bookingDoc.id;
+                                                    final bookingData =
+                                                        bookingDoc.data();
+                                                    Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                        builder: (_) =>
+                                                            ActiveJobScreen(
+                                                          bookingId: bookingId,
+                                                          bookingData:
+                                                              bookingData,
+                                                        ),
+                                                      ),
+                                                    );
+                                                    return;
+                                                  }
+                                                  Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                      builder: (_) =>
+                                                          const ActiveJobScreen(),
+                                                    ),
+                                                  );
+                                                });
                                           }
                                         });
                                   },

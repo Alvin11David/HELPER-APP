@@ -557,19 +557,35 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
           .collection('bookings')
           .where('workerUid', isEqualTo: uid)
           .where('status', whereIn: ['confirmed', 'in_progress', 'started'])
+          .orderBy('updatedAt', descending: true)
           .limit(1)
           .get();
 
-      if (snap.docs.isEmpty) {
+      QueryDocumentSnapshot<Map<String, dynamic>>? doc;
+      if (snap.docs.isNotEmpty) {
+        doc = snap.docs.first;
+      } else {
+        final acceptedSnap = await FirebaseFirestore.instance
+            .collection('bookings')
+            .where('workerAcceptedBy', isEqualTo: uid)
+            .where('status', whereIn: ['confirmed', 'in_progress', 'started'])
+            .orderBy('updatedAt', descending: true)
+            .limit(1)
+            .get();
+        if (acceptedSnap.docs.isNotEmpty) {
+          doc = acceptedSnap.docs.first;
+        }
+      }
+
+      if (doc == null) {
         _debugSnack('No active booking found');
         return;
       }
 
-      final doc = snap.docs.first;
       final data = doc.data();
       if (!mounted) return;
       setState(() {
-        _resolvedBookingId = doc.id;
+        _resolvedBookingId = doc!.id;
         _hasActiveJob = true;
         _applyBookingData(data);
       });
