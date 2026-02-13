@@ -1467,7 +1467,11 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                                         )
                                         .where(
                                           'status',
-                                          whereIn: ['in_progress', 'started'],
+                                          whereIn: [
+                                            'confirmed',
+                                            'in_progress',
+                                            'started',
+                                          ],
                                         )
                                         .limit(1)
                                         .get()
@@ -1535,7 +1539,11 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                                           )
                                           .where(
                                             'status',
-                                            whereIn: ['in_progress', 'started'],
+                                            whereIn: [
+                                              'confirmed',
+                                              'in_progress',
+                                              'started',
+                                            ],
                                           )
                                           .limit(1)
                                           .snapshots(),
@@ -1699,13 +1707,13 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                                                   MainAxisAlignment.center,
                                               children: [
                                                 const Icon(
-                                                  Icons.phone,
+                                                  Icons.chat_bubble_outline,
                                                   color: Colors.white,
                                                   size: 20,
                                                 ),
                                                 const SizedBox(width: 8),
                                                 const Text(
-                                                  'Call Now',
+                                                  'Message',
                                                   style: TextStyle(
                                                     color: Colors.white,
                                                     fontSize: 14,
