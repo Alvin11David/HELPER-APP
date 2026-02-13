@@ -465,6 +465,63 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
     });
   }
 
+  Future<void> _openChatFromBooking() async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    Map<String, dynamic> data = bookingData;
+
+    String providerId =
+        (data['serviceProviderId'] ?? data['workerUid'] ?? '').toString();
+    String employerId = (data['employerId'] ?? '').toString();
+
+    if (providerId.isEmpty || employerId.isEmpty) {
+      final bookingId = _resolvedBookingId ??
+          (bookingData['id'] ?? bookingData['bookingId'])?.toString();
+      if (bookingId != null && bookingId.isNotEmpty) {
+        try {
+          final snap = await FirebaseFirestore.instance
+              .collection('bookings')
+              .doc(bookingId)
+              .get();
+          final fetched = snap.data();
+          if (fetched != null) {
+            data = fetched;
+            providerId = (data['serviceProviderId'] ??
+                    data['workerUid'] ??
+                    '')
+                .toString();
+            employerId = (data['employerId'] ?? '').toString();
+          }
+        } catch (_) {}
+      }
+    }
+
+    if (providerId.isEmpty) {
+      providerId = currentUser?.uid ?? '';
+    }
+
+    if (providerId.isEmpty || employerId.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Unable to open chat.'),
+        ),
+      );
+      return;
+    }
+
+    final chatName = (data['employerName'] ?? employerName).toString();
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ChatScreen(
+          chatPartnerName: chatName.isNotEmpty ? chatName : 'Employer',
+          providerId: providerId,
+          employerId: employerId,
+        ),
+      ),
+    );
+  }
+
   Future<void> _loadActiveBookingFallback() async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) {
@@ -1011,49 +1068,6 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                 _InfoRow(label: 'Job Category:', value: jobCategory),
                 _InfoRow(label: 'Job Location:', value: jobLocation),
                 _InfoRow(label: 'Job Description:', value: jobDescription),
-                SizedBox(height: h * 0.012),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _OrangeMiniButton(
-                        text: 'Message',
-                        icon: Icons.chat_bubble_outline_rounded,
-                        onTap: () {
-                          final currentUser =
-                              FirebaseAuth.instance.currentUser;
-                          final providerId =
-                              (bookingData['serviceProviderId'] ??
-                                      bookingData['workerUid'] ??
-                                      currentUser?.uid ??
-                                      '')
-                                  .toString();
-                          final employerId =
-                              (bookingData['employerId'] ?? '').toString();
-                          if (providerId.isEmpty || employerId.isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Unable to open chat.'),
-                              ),
-                            );
-                            return;
-                          }
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => ChatScreen(
-                                chatPartnerName: employerName.isNotEmpty
-                                    ? employerName
-                                    : 'Employer',
-                                providerId: providerId,
-                                employerId: employerId,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                ),
               ],
             ),
           ),
