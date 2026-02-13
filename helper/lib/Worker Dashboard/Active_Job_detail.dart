@@ -12,6 +12,7 @@ import 'package:intl/intl.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:helper/Escrow/Cancellation_Code_Screen.dart';
 import 'package:helper/Escrow/Finished_Job_Code_Screen.dart';
 import 'package:helper/Chats/Chat_Screen.dart';
@@ -632,7 +633,19 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
         'updatedAt': FieldValue.serverTimestamp(),
       });
 
-      await _releaseEscrowToWorker(bookingId);
+      await FirebaseFirestore.instance
+          .collection('bookings')
+          .doc(bookingId)
+          .update({
+            'status': 'completed_pending',
+            'completedPendingAt': FieldValue.serverTimestamp(),
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+
+      final callable = FirebaseFunctions.instance.httpsCallable(
+        'finishJobWithEscrow',
+      );
+      await callable.call({'bookingId': bookingId});
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
