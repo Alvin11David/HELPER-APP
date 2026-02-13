@@ -12,6 +12,7 @@ import 'package:helper/Components/Bottom_Nav_Bar.dart';
 import 'Worker_Jobs_Hub_Screen.dart';
 import 'Active_Job_detail.dart';
 import 'Worker_Details_Screen.dart';
+import 'package:helper/Chats/Chat_Screen.dart';
 import 'Workers_skills_and_Job_Details.dart';
 import 'Worker_Notifications.dart';
 import 'Workers_Earning_Detail_Screen.dart';
@@ -1692,35 +1693,81 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                                         ),
                                         const SizedBox(height: 10),
                                         Center(
-                                          child: Container(
-                                            width: screenWidth * 0.4,
-                                            padding: const EdgeInsets.symmetric(
-                                              vertical: 10,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: const Color(0xFFFFA10D),
-                                              borderRadius:
-                                                  BorderRadius.circular(20),
-                                            ),
-                                            child: Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.center,
-                                              children: [
-                                                const Icon(
-                                                  Icons.chat_bubble_outline,
-                                                  color: Colors.white,
-                                                  size: 20,
-                                                ),
-                                                const SizedBox(width: 8),
-                                                const Text(
-                                                  'Message',
-                                                  style: TextStyle(
-                                                    color: Colors.white,
-                                                    fontSize: 14,
-                                                    fontWeight: FontWeight.bold,
+                                          child: GestureDetector(
+                                            onTap: () {
+                                              final businessName =
+                                                  (data['employerName'] ??
+                                                          'Employer')
+                                                      .toString();
+                                              final providerId =
+                                                  (data['serviceProviderId'] ??
+                                                          data['workerUid'] ??
+                                                          FirebaseAuth
+                                                              .instance
+                                                              .currentUser
+                                                              ?.uid ??
+                                                          '')
+                                                      .toString();
+                                              final employerId =
+                                                  (data['employerId'] ?? '')
+                                                      .toString();
+                                              if (providerId.isEmpty ||
+                                                  employerId.isEmpty) {
+                                                ScaffoldMessenger.of(context)
+                                                    .showSnackBar(
+                                                  const SnackBar(
+                                                    content: Text(
+                                                      'Unable to open chat.',
+                                                    ),
+                                                  ),
+                                                );
+                                                return;
+                                              }
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      ChatScreen(
+                                                    chatPartnerName:
+                                                        businessName,
+                                                    providerId: providerId,
+                                                    employerId: employerId,
                                                   ),
                                                 ),
-                                              ],
+                                              );
+                                            },
+                                            child: Container(
+                                              width: screenWidth * 0.4,
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                vertical: 10,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xFFFFA10D),
+                                                borderRadius:
+                                                    BorderRadius.circular(20),
+                                              ),
+                                              child: Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.center,
+                                                children: [
+                                                  const Icon(
+                                                    Icons.chat_bubble_outline,
+                                                    color: Colors.white,
+                                                    size: 20,
+                                                  ),
+                                                  const SizedBox(width: 8),
+                                                  const Text(
+                                                    'Message',
+                                                    style: TextStyle(
+                                                      color: Colors.white,
+                                                      fontSize: 14,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
                                             ),
                                           ),
                                         ),

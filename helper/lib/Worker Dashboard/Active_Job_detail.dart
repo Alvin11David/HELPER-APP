@@ -14,6 +14,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'package:helper/Escrow/Cancellation_Code_Screen.dart';
 import 'package:helper/Escrow/Finished_Job_Code_Screen.dart';
+import 'package:helper/Chats/Chat_Screen.dart';
 
 class ActiveJobScreen extends StatefulWidget {
   final String? bookingId;
@@ -1018,7 +1019,36 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                         text: 'Message',
                         icon: Icons.chat_bubble_outline_rounded,
                         onTap: () {
-                          // TODO: open chat
+                          final currentUser =
+                              FirebaseAuth.instance.currentUser;
+                          final providerId =
+                              (bookingData['serviceProviderId'] ??
+                                      bookingData['workerUid'] ??
+                                      currentUser?.uid ??
+                                      '')
+                                  .toString();
+                          final employerId =
+                              (bookingData['employerId'] ?? '').toString();
+                          if (providerId.isEmpty || employerId.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Unable to open chat.'),
+                              ),
+                            );
+                            return;
+                          }
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ChatScreen(
+                                chatPartnerName: employerName.isNotEmpty
+                                    ? employerName
+                                    : 'Employer',
+                                providerId: providerId,
+                                employerId: employerId,
+                              ),
+                            ),
+                          );
                         },
                       ),
                     ),

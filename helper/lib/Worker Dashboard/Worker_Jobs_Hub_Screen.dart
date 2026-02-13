@@ -145,6 +145,7 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
     required String bookingId,
     required Map<String, dynamic> bookingData,
     required int tab,
+    bool allowAccept = true,
   }) {
     showModalBottomSheet(
       context: context,
@@ -159,10 +160,12 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
           _toast("Open location screen (hook maps later)");
         },
         onAcceptPending: tab == 0
-            ? () {
-                Navigator.pop(context);
-                _acceptBooking(bookingId, bookingData);
-              }
+            ? (allowAccept
+                  ? () {
+                      Navigator.pop(context);
+                      _acceptBooking(bookingId, bookingData);
+                    }
+                  : null)
             : null,
         onDeletePending: tab == 0
             ? () {
@@ -426,15 +429,26 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
 
   Widget _pendingJobsStream(double w, double h) {
     final workerId = widget.providerId;
+    final activeJobStream = FirebaseFirestore.instance
+        .collection('bookings')
+        .where('workerUid', isEqualTo: workerId)
+        .where('status', whereIn: const ['confirmed', 'in_progress', 'started'])
+        .limit(1)
+        .snapshots();
 
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-      stream: FirebaseFirestore.instance
-              .collection('bookings')
-              .where('workerUid', isEqualTo: workerId)
-          .where('status', isEqualTo: 'pending')
-          .orderBy('createdAt', descending: true)
-          .snapshots(),
-      builder: (context, snap) {
+      stream: activeJobStream,
+      builder: (context, activeSnap) {
+        final hasActiveJob =
+            activeSnap.hasData && activeSnap.data!.docs.isNotEmpty;
+        return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+          stream: FirebaseFirestore.instance
+                  .collection('bookings')
+                  .where('workerUid', isEqualTo: workerId)
+              .where('status', isEqualTo: 'pending')
+              .orderBy('createdAt', descending: true)
+              .snapshots(),
+          builder: (context, snap) {
         if (snap.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
@@ -487,12 +501,17 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
                 bookingId: bookingId,
                 bookingData: d,
                 tab: 0,
+                allowAccept: !hasActiveJob,
               ),
-              onAccept: () async => await _acceptBooking(bookingId, d),
+              onAccept: hasActiveJob
+                  ? null
+                  : () async => await _acceptBooking(bookingId, d),
               onDelete: () async => await _cancelBooking(bookingId),
               onResume: () => _toast('Resume (hook API later)'),
               onPause: () => _toast('Pause (hook API later)'),
             );
+          },
+        );
           },
         );
       },
@@ -580,7 +599,7 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
               ),
               onResume: () => _toast('Resume not implemented yet'),
               onPause: () => _toast('Pause not implemented yet'),
-              onAccept: () async {},
+              onAccept: null,
               onDelete: () async => await _cancelBooking(bookingId),
             );
           },
@@ -655,7 +674,7 @@ class _WorkerJobsHubScreenState extends State<WorkerJobsHubScreen> {
               ),
               onResume: () => _toast('Resume not implemented yet'),
               onPause: () => _toast('Pause not implemented yet'),
-              onAccept: () async {},
+              onAccept: null,
               onDelete: () async => await _cancelBooking(bookingId),
             );
           },
@@ -1151,7 +1170,7 @@ class _JobCard extends StatelessWidget {
   final int tab;
   final _JobItem job;
   final VoidCallback onTap;
-  final VoidCallback onAccept;
+  final VoidCallback? onAccept;
   final VoidCallback onDelete;
   final VoidCallback onResume;
   final VoidCallback onPause;
@@ -1285,7 +1304,7 @@ class _TinyPillButton extends StatelessWidget {
   final Color bg;
   final String text;
   final IconData icon;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   const _TinyPillButton({
     required this.w,
@@ -1297,26 +1316,28 @@ class _TinyPillButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final enabled = onTap != null;
+    final fg = Colors.white.withOpacity(enabled ? 1 : 0.6);
     return GestureDetector(
-      onTap: onTap,
+      onTap: enabled ? onTap : null,
       child: Container(
         padding: EdgeInsets.symmetric(
           horizontal: w * 0.035,
           vertical: w * 0.012,
         ),
         decoration: BoxDecoration(
-          color: bg,
+          color: enabled ? bg : bg.withOpacity(0.35),
           borderRadius: BorderRadius.circular(999),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: Colors.white, size: w * 0.04),
+            Icon(icon, color: fg, size: w * 0.04),
             SizedBox(width: w * 0.012),
             Text(
               text,
               style: TextStyle(
-                color: Colors.white,
+                color: fg,
                 fontFamily: 'Inter',
                 fontWeight: FontWeight.w900,
                 fontSize: w * 0.028,
