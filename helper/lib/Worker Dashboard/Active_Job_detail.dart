@@ -747,16 +747,10 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
     }
 
     final statusValue = (bookingData['status'] ?? '').toString();
-    final startReached = _isScheduleTimeReached();
 
-    if (!startReached) {
-      bookingData = <String, dynamic>{};
-    }
-
-    if ((statusValue == 'confirmed' ||
-            statusValue == 'in_progress' ||
-            statusValue == 'started') &&
-        startReached) {
+    if (statusValue == 'confirmed' ||
+        statusValue == 'in_progress' ||
+        statusValue == 'started') {
       _hasActiveJob = true;
       status = 'On Job';
     } else if (statusValue == 'completed_pending') {
