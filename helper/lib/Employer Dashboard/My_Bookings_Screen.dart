@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -92,7 +93,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
         onCancelPending: tab == 0
             ? () {
                 Navigator.pop(context);
-                _toast('Cancellation is disabled for now.');
+                _cancelBooking(bookingId);
               }
             : null,
         onTerminateActive: tab == 1
@@ -150,12 +151,31 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
     );
 
     if (shouldTerminate == true) {
-      _toast('Termination is disabled for now.');
+      await _requestCancellation(bookingId);
     }
   }
 
   Future<void> _cancelBooking(String bookingId) async {
-    _toast('Cancellation is disabled for now.');
+    await _requestCancellation(bookingId);
+  }
+
+  Future<void> _requestCancellation(String bookingId) async {
+    try {
+      final callable = FirebaseFunctions.instance.httpsCallable(
+        'cancelBookingWithEscrow',
+      );
+      await callable.call({'bookingId': bookingId});
+      if (!mounted) return;
+      _toast(
+        'Cancellation started. The worker was sent a 6-digit code to confirm.',
+      );
+    } on FirebaseFunctionsException catch (e) {
+      if (!mounted) return;
+      _toast('Cancellation failed: ${e.message ?? e.code}');
+    } catch (e) {
+      if (!mounted) return;
+      _toast('Cancellation failed: $e');
+    }
   }
 
   Widget _pendingBookingsStream(double w, double h) {

@@ -14,6 +14,7 @@ import '../Worker Dashboard/Worker_Ratings_Reviews_Screen.dart';
 import '../Document Upload/Profile/Support_Screen.dart';
 import '../Intro/Role_Selection_Screen.dart';
 import '../Escrow/Finished_Job_Code_Screen.dart';
+import '../Escrow/Cancellation_Code_Screen.dart';
 
 class SideBar extends StatefulWidget {
   const SideBar({super.key});
@@ -216,6 +217,64 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to load completion code: $e')),
+      );
+    }
+  }
+
+  Future<void> _openLatestCancellationCode() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    try {
+      // Query Escrow collection for pending cancellations where user is the receiver
+      final snap = await FirebaseFirestore.instance
+          .collection('Escrow')
+          .where('cancellationStatus', isEqualTo: 'pending')
+          .where('cancellationReceiverId', isEqualTo: user.uid)
+          .get();
+
+      if (snap.docs.isEmpty) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No pending cancellations.')),
+        );
+        return;
+      }
+
+      // Sort by cancellationRequestedAt in-memory
+      final sortedDocs = snap.docs.toList()
+        ..sort((a, b) {
+          final aTime = (a.data()['cancellationRequestedAt'] as Timestamp?)
+              ?.toDate();
+          final bTime = (b.data()['cancellationRequestedAt'] as Timestamp?)
+              ?.toDate();
+          if (aTime == null && bTime == null) return 0;
+          if (aTime == null) return 1;
+          if (bTime == null) return -1;
+          return bTime.compareTo(aTime); // descending
+        });
+
+      final bookingId = sortedDocs.first.data()['bookingId'] as String?;
+      if (bookingId == null || bookingId.isEmpty) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Invalid booking ID.')));
+        return;
+      }
+
+      if (!mounted) return;
+      toggleDrawer();
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => CancellationCodeScreen(bookingId: bookingId),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load cancellation code: $e')),
       );
     }
   }
@@ -481,6 +540,41 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                             ),
                             const SizedBox(height: 20),
                           ],
+                          if (_userRole == 'worker')
+                            GestureDetector(
+                              onTap: () {
+                                setState(() => _selectedIndex = 3);
+                                _openLatestCancellationCode();
+                              },
+                              child: Padding(
+                                padding: EdgeInsets.only(left: 8, right: 8),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.cancel_outlined,
+                                      color: _selectedIndex == 3
+                                          ? Colors.orange
+                                          : Colors.black.withOpacity(0.6),
+                                    ),
+                                    SizedBox(width: 15),
+                                    Flexible(
+                                      child: Text(
+                                        'Enter Cancellation Code',
+                                        style: TextStyle(
+                                          color: _selectedIndex == 3
+                                              ? Colors.orange
+                                              : Colors.black,
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          if (_userRole == 'worker') const SizedBox(height: 20),
                           GestureDetector(
                             onTap: () async {
                               try {
@@ -631,8 +725,7 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                                 ),
                               ),
                             ),
-                          const SizedBox(height: 20),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 15),
                           if (_userRole == 'worker') ...[
                             GestureDetector(
                               onTap: () => setState(() => _selectedIndex = 1),
@@ -663,7 +756,7 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                             ),
                             const SizedBox(height: 20),
                           ],
-                          if (_userRole == 'worker') const SizedBox(height: 15),
+                          if (_userRole == 'worker') const SizedBox(height: 10),
                           if (_userRole == 'worker')
                             GestureDetector(
                               onTap: () => setState(() => _selectedIndex = 2),

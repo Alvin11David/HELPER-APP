@@ -70,6 +70,18 @@ class _EmployerNotificationsState extends State<EmployerNotifications> {
       }
     }
 
+    final roleNotifQuery = await FirebaseFirestore.instance
+        .collection('EmployerNotifications')
+        .where('employerId', isEqualTo: currentUser.uid)
+        .get();
+
+    for (var doc in roleNotifQuery.docs) {
+      final data = doc.data();
+      if (data['read'] != true) {
+        batch.update(doc.reference, {'read': true});
+      }
+    }
+
     await batch.commit();
   }
 
@@ -103,227 +115,267 @@ class _EmployerNotificationsState extends State<EmployerNotifications> {
 
           return StreamBuilder<QuerySnapshot>(
             stream: FirebaseFirestore.instance
-                .collection('notifications')
-                .where('toUserId', isEqualTo: currentUser.uid)
+                .collection('EmployerNotifications')
+                .where('employerId', isEqualTo: currentUser.uid)
                 .snapshots(),
-            builder: (context, employerNotifSnapshot) {
+            builder: (context, roleNotifSnapshot) {
               return StreamBuilder<QuerySnapshot>(
                 stream: FirebaseFirestore.instance
-                    .collection('Notifications')
-                    .where('audience', whereIn: ['all', 'employers'])
+                    .collection('notifications')
+                    .where('toUserId', isEqualTo: currentUser.uid)
                     .snapshots(),
-                builder: (context, notifSnapshot) {
+                builder: (context, employerNotifSnapshot) {
                   return StreamBuilder<QuerySnapshot>(
                     stream: FirebaseFirestore.instance
-                        .collection('Escrow')
-                        .where('employerId', isEqualTo: currentUser.uid)
-                        .where('cancellationStatus', isEqualTo: 'pending')
+                        .collection('Notifications')
+                        .where('audience', whereIn: ['all', 'employers'])
                         .snapshots(),
-                    builder: (context, escrowSnapshot) {
+                    builder: (context, notifSnapshot) {
                       return StreamBuilder<QuerySnapshot>(
                         stream: FirebaseFirestore.instance
                             .collection('Escrow')
                             .where('employerId', isEqualTo: currentUser.uid)
-                            .where('completionStatus', isEqualTo: 'pending')
+                            .where('cancellationStatus', isEqualTo: 'pending')
                             .snapshots(),
-                        builder: (context, completionSnapshot) {
-                          List<Map<String, dynamic>> allMessages = [];
+                        builder: (context, escrowSnapshot) {
+                          return StreamBuilder<QuerySnapshot>(
+                            stream: FirebaseFirestore.instance
+                                .collection('Escrow')
+                                .where('employerId', isEqualTo: currentUser.uid)
+                                .where('completionStatus', isEqualTo: 'pending')
+                                .snapshots(),
+                            builder: (context, completionSnapshot) {
+                              List<Map<String, dynamic>> allMessages = [];
 
-                          for (var doc in docs) {
-                            final data = doc.data() as Map<String, dynamic>?;
-                            final messages =
-                                (data != null ? data['messages'] : null)
-                                    as List<dynamic>? ??
-                                [];
-                            for (var msg in messages) {
-                              if (msg is Map<String, dynamic> &&
-                                  (msg['sender'] == 'admin' ||
-                                      msg['sender'] == 'system')) {
-                                allMessages.add(msg);
+                              for (var doc in docs) {
+                                final data =
+                                    doc.data() as Map<String, dynamic>?;
+                                final messages =
+                                    (data != null ? data['messages'] : null)
+                                        as List<dynamic>? ??
+                                    [];
+                                for (var msg in messages) {
+                                  if (msg is Map<String, dynamic> &&
+                                      (msg['sender'] == 'admin' ||
+                                          msg['sender'] == 'system')) {
+                                    allMessages.add(msg);
+                                  }
+                                }
                               }
-                            }
-                          }
 
-                          if (employerNotifSnapshot.hasData) {
-                            for (var doc in employerNotifSnapshot.data!.docs) {
-                              final data = doc.data() as Map<String, dynamic>;
-                              allMessages.add({
-                                'message': data['title'] != null
-                                    ? '${data['title']}: ${data['message'] ?? ''}'
-                                    : data['message'] ?? '',
-                                'sender': 'system',
-                                'senderId': data['fromUserId'] ?? 'system',
-                                'senderName': 'Employer Notification',
-                                'timestamp': data['createdAt'],
-                                'read': data['read'] ?? false,
-                                'status': data['type'] ?? 'info',
+                              if (employerNotifSnapshot.hasData) {
+                                for (var doc
+                                    in employerNotifSnapshot.data!.docs) {
+                                  final data =
+                                      doc.data() as Map<String, dynamic>;
+                                  allMessages.add({
+                                    'message': data['title'] != null
+                                        ? '${data['title']}: ${data['message'] ?? ''}'
+                                        : data['message'] ?? '',
+                                    'sender': 'system',
+                                    'senderId': data['fromUserId'] ?? 'system',
+                                    'senderName': 'Employer Notification',
+                                    'timestamp': data['createdAt'],
+                                    'read': data['read'] ?? false,
+                                    'status': data['type'] ?? 'info',
+                                  });
+                                }
+                              }
+
+                              if (roleNotifSnapshot.hasData) {
+                                for (var doc in roleNotifSnapshot.data!.docs) {
+                                  final data =
+                                      doc.data() as Map<String, dynamic>;
+                                  allMessages.add({
+                                    'message': data['title'] != null
+                                        ? '${data['title']}: ${data['message'] ?? ''}'
+                                        : data['message'] ?? '',
+                                    'sender': 'system',
+                                    'senderId': data['workerUid'] ?? 'system',
+                                    'senderName': 'Employer Notification',
+                                    'timestamp': data['timestamp'],
+                                    'read': data['read'] ?? false,
+                                    'status': data['type'] ?? 'info',
+                                  });
+                                }
+                              }
+
+                              if (notifSnapshot.hasData) {
+                                for (var doc in notifSnapshot.data!.docs) {
+                                  final data =
+                                      doc.data() as Map<String, dynamic>;
+                                  allMessages.add({
+                                    'message': data['title'] != null
+                                        ? '${data['title']}: ${data['message'] ?? ''}'
+                                        : data['message'] ?? '',
+                                    'sender': 'system',
+                                    'senderId': data['sentBy'] ?? 'system',
+                                    'senderName': 'Push Notification',
+                                    'timestamp': data['sentAt'],
+                                    'read': data['read'] ?? false,
+                                    'status': 'info',
+                                  });
+                                }
+                              }
+
+                              if (escrowSnapshot.hasData) {
+                                for (var doc in escrowSnapshot.data!.docs) {
+                                  final data =
+                                      doc.data() as Map<String, dynamic>;
+                                  final code = (data['cancellationCode'] ?? '')
+                                      .toString();
+                                  if (code.isEmpty) continue;
+                                  allMessages.add({
+                                    'message': 'Cancellation code: $code',
+                                    'sender': 'system',
+                                    'senderId':
+                                        data['cancellationRequestedBy'] ??
+                                        'system',
+                                    'senderName': 'Escrow Cancellation',
+                                    'timestamp':
+                                        data['cancellationRequestedAt'] ??
+                                        data['updatedAt'],
+                                    'read': false,
+                                    'status': 'info',
+                                  });
+                                }
+                              }
+
+                              if (completionSnapshot.hasData) {
+                                for (var doc in completionSnapshot.data!.docs) {
+                                  final data =
+                                      doc.data() as Map<String, dynamic>;
+                                  final code = (data['completionCode'] ?? '')
+                                      .toString();
+                                  if (code.isEmpty) continue;
+                                  allMessages.add({
+                                    'message': 'Completion code: $code',
+                                    'sender': 'system',
+                                    'senderId': data['workerUid'] ?? 'system',
+                                    'senderName': 'Job Completion',
+                                    'timestamp':
+                                        data['completionRequestedAt'] ??
+                                        data['updatedAt'],
+                                    'read': false,
+                                    'status': 'info',
+                                  });
+                                }
+                              }
+
+                              allMessages.sort((a, b) {
+                                final aTime = a['timestamp'] as Timestamp?;
+                                final bTime = b['timestamp'] as Timestamp?;
+                                if (aTime == null || bTime == null) return 0;
+                                return bTime.compareTo(aTime); // descending
                               });
-                            }
-                          }
 
-                          if (notifSnapshot.hasData) {
-                            for (var doc in notifSnapshot.data!.docs) {
-                              final data = doc.data() as Map<String, dynamic>;
-                              allMessages.add({
-                                'message': data['title'] != null
-                                    ? '${data['title']}: ${data['message'] ?? ''}'
-                                    : data['message'] ?? '',
-                                'sender': 'system',
-                                'senderId': data['sentBy'] ?? 'system',
-                                'senderName': 'Push Notification',
-                                'timestamp': data['sentAt'],
-                                'read': data['read'] ?? false,
-                                'status': 'info',
-                              });
-                            }
-                          }
+                              if (allMessages.isEmpty) {
+                                return const Center(
+                                  child: Text('No notifications'),
+                                );
+                              }
 
-                          if (escrowSnapshot.hasData) {
-                            for (var doc in escrowSnapshot.data!.docs) {
-                              final data = doc.data() as Map<String, dynamic>;
-                              final code = (data['cancellationCode'] ?? '')
-                                  .toString();
-                              if (code.isEmpty) continue;
-                              allMessages.add({
-                                'message': 'Cancellation code: $code',
-                                'sender': 'system',
-                                'senderId':
-                                    data['cancellationRequestedBy'] ?? 'system',
-                                'senderName': 'Escrow Cancellation',
-                                'timestamp':
-                                    data['cancellationRequestedAt'] ??
-                                    data['updatedAt'],
-                                'read': false,
-                                'status': 'info',
-                              });
-                            }
-                          }
+                              return ListView.builder(
+                                itemCount: allMessages.length,
+                                itemBuilder: (context, index) {
+                                  final messageData = allMessages[index];
+                                  final message = messageData['message'] ?? '';
+                                  final sender = messageData['sender'] ?? '';
+                                  final senderId =
+                                      messageData['senderId'] ?? '';
+                                  final senderName =
+                                      messageData['senderName'] ?? '';
+                                  final timestamp = messageData['timestamp'];
+                                  final status = messageData['status'] ?? '';
 
-                          if (completionSnapshot.hasData) {
-                            for (var doc in completionSnapshot.data!.docs) {
-                              final data = doc.data() as Map<String, dynamic>;
-                              final code = (data['completionCode'] ?? '')
-                                  .toString();
-                              if (code.isEmpty) continue;
-                              allMessages.add({
-                                'message': 'Completion code: $code',
-                                'sender': 'system',
-                                'senderId': data['workerUid'] ?? 'system',
-                                'senderName': 'Job Completion',
-                                'timestamp':
-                                    data['completionRequestedAt'] ??
-                                    data['updatedAt'],
-                                'read': false,
-                                'status': 'info',
-                              });
-                            }
-                          }
+                                  String formattedTime = '';
+                                  if (timestamp != null &&
+                                      timestamp is Timestamp) {
+                                    final dateTime = timestamp.toDate();
+                                    formattedTime = DateFormat(
+                                      'MMMM d, yyyy \'at\' h:mm:ss a \'UTC\'z',
+                                    ).format(dateTime);
+                                  }
 
-                          allMessages.sort((a, b) {
-                            final aTime = a['timestamp'] as Timestamp?;
-                            final bTime = b['timestamp'] as Timestamp?;
-                            if (aTime == null || bTime == null) return 0;
-                            return bTime.compareTo(aTime); // descending
-                          });
-
-                          if (allMessages.isEmpty) {
-                            return const Center(
-                              child: Text('No notifications'),
-                            );
-                          }
-
-                          return ListView.builder(
-                            itemCount: allMessages.length,
-                            itemBuilder: (context, index) {
-                              final messageData = allMessages[index];
-                              final message = messageData['message'] ?? '';
-                              final sender = messageData['sender'] ?? '';
-                              final senderId = messageData['senderId'] ?? '';
-                              final senderName = messageData['senderName'] ?? '';
-                              final timestamp = messageData['timestamp'];
-                              final status = messageData['status'] ?? '';
-
-                          String formattedTime = '';
-                          if (timestamp != null && timestamp is Timestamp) {
-                            final dateTime = timestamp.toDate();
-                            formattedTime = DateFormat(
-                              'MMMM d, yyyy \'at\' h:mm:ss a \'UTC\'z',
-                            ).format(dateTime);
-                          }
-
-                              return Card(
-                                margin: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 8,
-                                ),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(16),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
+                                  return Card(
+                                    margin: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 8,
+                                    ),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(16),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
-                                          Icon(
-                                            sender == 'admin'
-                                                ? Icons.admin_panel_settings
-                                                : Icons.info,
-                                            color: const Color(0xFFFFA10D),
-                                          ),
-                                          const SizedBox(width: 8),
-                                          Expanded(
-                                            child: Text(
-                                              senderName,
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 12,
+                                          Row(
+                                            children: [
+                                              Icon(
+                                                sender == 'admin'
+                                                    ? Icons.admin_panel_settings
+                                                    : Icons.info,
+                                                color: const Color(0xFFFFA10D),
                                               ),
+                                              const SizedBox(width: 8),
+                                              Expanded(
+                                                child: Text(
+                                                  senderName,
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                  style: const TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 12,
+                                                  ),
+                                                ),
+                                              ),
+                                              const SizedBox(width: 8),
+                                              Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 8,
+                                                      vertical: 4,
+                                                    ),
+                                                decoration: BoxDecoration(
+                                                  color: status == 'resolved'
+                                                      ? Colors.green
+                                                      : status == 'info'
+                                                      ? Colors.blue
+                                                      : Colors.orange,
+                                                  borderRadius:
+                                                      BorderRadius.circular(12),
+                                                ),
+                                                child: Text(
+                                                  status.toUpperCase(),
+                                                  style: const TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            message,
+                                            style: const TextStyle(
+                                              fontSize: 12,
                                             ),
                                           ),
-                                          const SizedBox(width: 8),
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 8,
-                                              vertical: 4,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: status == 'resolved'
-                                                  ? Colors.green
-                                                  : status == 'info'
-                                                  ? Colors.blue
-                                                  : Colors.orange,
-                                              borderRadius:
-                                                  BorderRadius.circular(12),
-                                            ),
-                                            child: Text(
-                                              status.toUpperCase(),
-                                              style: const TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.bold,
-                                              ),
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            formattedTime,
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.grey[600],
                                             ),
                                           ),
                                         ],
                                       ),
-                                      const SizedBox(height: 8),
-                                      Text(
-                                        message,
-                                        style: const TextStyle(fontSize: 12),
-                                      ),
-                                      const SizedBox(height: 8),
-                                      Text(
-                                        formattedTime,
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.grey[600],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
+                                    ),
+                                  );
+                                },
                               );
                             },
                           );
