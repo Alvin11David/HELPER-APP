@@ -413,14 +413,17 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                                           : Colors.black.withOpacity(0.6),
                                     ),
                                     SizedBox(width: 15),
-                                    Text(
-                                      'Enter Completion Code',
-                                      style: TextStyle(
-                                        color: _selectedIndex == 2
-                                            ? Colors.orange
-                                            : Colors.black,
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w600,
+                                    Flexible(
+                                      child: Text(
+                                        'Enter Completion Code',
+                                        style: TextStyle(
+                                          color: _selectedIndex == 2
+                                              ? Colors.orange
+                                              : Colors.black,
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
                                       ),
                                     ),
                                   ],
