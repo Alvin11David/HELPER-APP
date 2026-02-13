@@ -572,6 +572,9 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
         return;
       }
 
+      // Ensure the latest total is used before escrow deduction.
+      _recalcAmount();
+
       // ✅ build start/end DateTime
       final sDay = DateTime(
         _startDate!.year,

@@ -4,7 +4,6 @@ import 'dart:async';
 import 'dart:ui';
 import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:helper/Components/user_avatar_circle.dart';
@@ -416,6 +415,92 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
     });
   }
 
+  void _applyBookingData(Map<String, dynamic> data) {
+    bookingData.addAll(data);
+    jobId = (data['id'] ?? data['bookingId'] ?? jobId).toString();
+    type = data['pricingType'] ?? 'Unknown';
+    final liveStatus = (data['status'] ?? '').toString();
+    if (liveStatus == 'in_progress' || liveStatus == 'started') {
+      status = 'On Job';
+    } else if (liveStatus == 'completed_pending') {
+      status = 'Completed (Awaiting Employer)';
+    } else if (liveStatus == 'completed') {
+      status = 'Completed';
+    } else {
+      status = 'Available';
+    }
+
+    final jobLatLng = data['jobLatLng'] as GeoPoint?;
+    if (jobLatLng != null) {
+      _employerPosition = LatLng(jobLatLng.latitude, jobLatLng.longitude);
+    }
+  }
+
+  void _listenToBooking(String bookingId) {
+    _bookingSub?.cancel();
+    final docRef = FirebaseFirestore.instance
+        .collection('bookings')
+        .doc(bookingId);
+    _bookingSub = docRef.snapshots().listen((snap) {
+      if (snap.exists) {
+        final data = snap.data();
+        if (data != null) {
+          _debugSnack('Booking data fetched: ${data['status'] ?? 'no status'}');
+          setState(() {
+            _applyBookingData(data);
+          });
+          final statusValue = (data['status'] ?? '').toString();
+          if (statusValue == 'completed_pending' ||
+              statusValue == 'completed') {
+            _countdownTimer?.cancel();
+          } else {
+            _startCountdownTimer();
+          }
+          _updateMapMarkers();
+        }
+      } else {
+        _debugSnack('Booking doc not found for $bookingId');
+      }
+    });
+  }
+
+  Future<void> _loadActiveBookingFallback() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) {
+      _debugSnack('User not authenticated');
+      return;
+    }
+
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection('bookings')
+          .where('workerUid', isEqualTo: uid)
+          .where('status', whereIn: ['confirmed', 'in_progress', 'started'])
+          .limit(1)
+          .get();
+
+      if (snap.docs.isEmpty) {
+        _debugSnack('No active booking found');
+        return;
+      }
+
+      final doc = snap.docs.first;
+      final data = doc.data();
+      if (!mounted) return;
+      setState(() {
+        _resolvedBookingId = doc.id;
+        _hasActiveJob = true;
+        _applyBookingData(data);
+      });
+      _debugSnack('Booking ID loaded: ${doc.id}');
+      _listenToBooking(doc.id);
+      _startCountdownTimer();
+      _updateMapMarkers();
+    } catch (e) {
+      _debugSnack('Failed to load booking: $e');
+    }
+  }
+
   Future<void> _handleJobCompleted() async {
     try {
       _countdownTimer?.cancel();
@@ -467,8 +552,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
         'updatedAt': FieldValue.serverTimestamp(),
       });
 
-      // Call finishJobWithEscrow function
-      await _finishJobWithEscrow(bookingId);
+      await _releaseEscrowToWorker(bookingId);
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -491,6 +575,82 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
         ),
       );
     }
+  }
+
+  int _coerceAmount(dynamic raw) {
+    if (raw is int) return raw;
+    if (raw is num) return raw.toInt();
+    return int.tryParse((raw ?? '0').toString()) ?? 0;
+  }
+
+  Future<DocumentReference<Map<String, dynamic>>?> _resolveEscrowRef(
+    String bookingId,
+    String? escrowId,
+  ) async {
+    if (escrowId != null && escrowId.trim().isNotEmpty) {
+      return FirebaseFirestore.instance.collection('Escrow').doc(escrowId);
+    }
+
+    final escrowQuery = await FirebaseFirestore.instance
+        .collection('Escrow')
+        .where('bookingId', isEqualTo: bookingId)
+        .limit(1)
+        .get();
+
+    if (escrowQuery.docs.isEmpty) return null;
+    return escrowQuery.docs.first.reference;
+  }
+
+  Future<void> _releaseEscrowToWorker(String bookingId) async {
+    final workerUid = FirebaseAuth.instance.currentUser?.uid;
+    if (workerUid == null) {
+      throw Exception('Worker not authenticated.');
+    }
+
+    final escrowId = bookingData['escrowId']?.toString();
+    final escrowRef = await _resolveEscrowRef(bookingId, escrowId);
+    if (escrowRef == null) {
+      throw Exception('Escrow record not found for this booking.');
+    }
+
+    final bookingAmount = _coerceAmount(bookingData['amount']);
+
+    await FirebaseFirestore.instance.runTransaction((tx) async {
+      final escrowSnap = await tx.get(escrowRef);
+      if (!escrowSnap.exists) {
+        throw Exception('Escrow record not found.');
+      }
+
+      final escrowData = escrowSnap.data() as Map<String, dynamic>? ?? {};
+      final alreadyPaid = escrowData['isPaid'] == true;
+      if (alreadyPaid) return;
+
+      final escrowAmount = _coerceAmount(escrowData['amount']);
+      final payoutAmount = bookingAmount > 0 ? bookingAmount : escrowAmount;
+      if (payoutAmount <= 0) {
+        throw Exception('Escrow amount is missing.');
+      }
+
+      final workerRef = FirebaseFirestore.instance
+          .collection('Sign Up')
+          .doc(workerUid);
+      final bookingRef = FirebaseFirestore.instance
+          .collection('bookings')
+          .doc(bookingId);
+
+      tx.update(workerRef, {'amount': FieldValue.increment(payoutAmount)});
+      tx.update(escrowRef, {
+        'inEscrow': false,
+        'isPaid': true,
+        'updatedAt': FieldValue.serverTimestamp(),
+        'paidAt': FieldValue.serverTimestamp(),
+      });
+      tx.update(bookingRef, {
+        'status': 'completed',
+        'completedAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    });
   }
 
   StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _bookingSub;
@@ -522,6 +682,11 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
         ? widget.bookingId
         : (widget.bookingData?['id'] ?? widget.bookingData?['bookingId'])
               ?.toString();
+    if ((_resolvedBookingId ?? '').isNotEmpty) {
+      _debugSnack('Booking ID resolved: $_resolvedBookingId');
+    } else {
+      _debugSnack('Booking ID missing on init');
+    }
 
     final statusValue = (bookingData['status'] ?? '').toString();
     final startReached = _isScheduleTimeReached();
@@ -530,7 +695,9 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
       bookingData = <String, dynamic>{};
     }
 
-    if ((statusValue == 'in_progress' || statusValue == 'started') &&
+    if ((statusValue == 'confirmed' ||
+            statusValue == 'in_progress' ||
+            statusValue == 'started') &&
         startReached) {
       _hasActiveJob = true;
       status = 'On Job';
@@ -546,51 +713,9 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
     if (_hasActiveJob &&
         _resolvedBookingId != null &&
         _resolvedBookingId!.isNotEmpty) {
-      final docRef = FirebaseFirestore.instance
-          .collection('bookings')
-          .doc(_resolvedBookingId);
-      _bookingSub = docRef.snapshots().listen((snap) {
-        if (snap.exists) {
-          final data = snap.data();
-          if (data != null) {
-            setState(() {
-              bookingData.addAll(data);
-              // Update type from pricingType
-              type = data['pricingType'] ?? 'Unknown';
-              final liveStatus = (data['status'] ?? '').toString();
-              if (liveStatus == 'in_progress' || liveStatus == 'started') {
-                status = 'On Job';
-              } else if (liveStatus == 'completed_pending') {
-                status = 'Completed (Awaiting Employer)';
-              } else if (liveStatus == 'completed') {
-                status = 'Completed';
-              } else {
-                status = 'Available';
-              }
-
-              // Extract employer location
-              final jobLatLng = data['jobLatLng'] as GeoPoint?;
-              if (jobLatLng != null) {
-                _employerPosition = LatLng(
-                  jobLatLng.latitude,
-                  jobLatLng.longitude,
-                );
-              }
-            });
-            // Start/restart the countdown timer when booking data updates
-            final statusValue = (data['status'] ?? '').toString();
-            if (statusValue == 'completed_pending' ||
-                statusValue == 'completed') {
-              _countdownTimer?.cancel();
-            } else {
-              _startCountdownTimer();
-            }
-            // Update markers
-            _updateMapMarkers();
-          }
-        }
-      });
+      _listenToBooking(_resolvedBookingId!);
     } else if (widget.bookingData != null && widget.bookingData!.isNotEmpty) {
+      _debugSnack('Using booking data passed from caller');
       if (_hasActiveJob) {
         type = bookingData['pricingType'] ?? 'Unknown';
       }
@@ -609,6 +734,10 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
           _startCountdownTimer();
         }
       }
+    }
+
+    if ((_resolvedBookingId ?? '').isEmpty) {
+      _loadActiveBookingFallback();
     }
 
     // Get user's current location
@@ -1318,16 +1447,8 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
 
                               await _cancelBookingWithEscrow(bookingId);
                               if (!mounted) return;
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: const Text(
-                                    'Cancellation requested. Employer will enter the code.',
-                                    style: TextStyle(fontFamily: 'Inter'),
-                                  ),
-                                  backgroundColor: Colors.black.withOpacity(
-                                    0.85,
-                                  ),
-                                ),
+                              _toastDisabled(
+                                'Termination is disabled for now.',
                               );
                             },
                             style: ElevatedButton.styleFrom(
@@ -1360,50 +1481,85 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
     );
   }
 
+  void _toastDisabled(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg, style: const TextStyle(fontFamily: 'Inter')),
+        backgroundColor: Colors.black.withOpacity(0.85),
+      ),
+    );
+  }
+
+  void _debugSnack(String msg) {
+    if (!mounted) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(msg, style: const TextStyle(fontFamily: 'Inter')),
+          backgroundColor: Colors.black.withOpacity(0.85),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    });
+  }
+
   Future<void> _cancelBookingWithEscrow(String bookingId) async {
     try {
-      final callable = FirebaseFunctions.instance.httpsCallable(
-        'cancelBookingWithEscrow',
-      );
-      await callable.call({'bookingId': bookingId});
+      _countdownTimer?.cancel();
+
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid == null) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text(
+              'User not authenticated',
+              style: TextStyle(fontFamily: 'Inter'),
+            ),
+            backgroundColor: Colors.black.withOpacity(0.85),
+          ),
+        );
+        return;
+      }
+
+      // Update booking status to cancelled
+      await FirebaseFirestore.instance
+          .collection('bookings')
+          .doc(bookingId)
+          .update({
+            'status': 'cancelled_by_worker',
+            'cancelledAt': FieldValue.serverTimestamp(),
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+
+      // Update worker status to Available
+      await FirebaseFirestore.instance.collection('users').doc(uid).update({
+        'status': 'Available',
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
       if (!mounted) return;
+      setState(() {
+        status = 'Available';
+      });
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text(
-            'Booking cancelled successfully',
+            'Job cancelled successfully',
             style: TextStyle(fontFamily: 'Inter'),
           ),
-          backgroundColor: Colors.black.withOpacity(0.85),
+          backgroundColor: Colors.orange.withOpacity(0.85),
         ),
       );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Failed to cancel booking: $e',
-            style: const TextStyle(fontFamily: 'Inter'),
-          ),
-          backgroundColor: Colors.black.withOpacity(0.85),
-        ),
-      );
-    }
-  }
 
-  Future<void> _finishJobWithEscrow(String bookingId) async {
-    try {
-      final callable = FirebaseFunctions.instance.httpsCallable(
-        'finishJobWithEscrow',
-      );
-      await callable.call({'bookingId': bookingId});
+      Navigator.of(context).pop();
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            'Failed to finish job: $e',
-            style: const TextStyle(fontFamily: 'Inter'),
-          ),
+          content: Text('Failed to cancel job: $e'),
           backgroundColor: Colors.black.withOpacity(0.85),
         ),
       );
@@ -1460,28 +1616,34 @@ class _InfoRow extends StatelessWidget {
         children: [
           _BulletIcon(size: w * 0.055),
           const SizedBox(width: 10),
-          Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: Colors.black,
-              fontFamily: 'Inter',
-              fontWeight: FontWeight.w900,
-              fontSize: w * 0.033,
+          Expanded(
+            flex: 3,
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: Colors.black,
+                fontFamily: 'Inter',
+                fontWeight: FontWeight.w900,
+                fontSize: w * 0.033,
+              ),
             ),
           ),
-          const Spacer(),
-          Text(
-            value,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.right,
-            style: TextStyle(
-              color: valueColor ?? Colors.black.withOpacity(0.85),
-              fontFamily: 'Inter',
-              fontWeight: FontWeight.normal,
-              fontSize: w * 0.032,
+          const SizedBox(width: 8),
+          Expanded(
+            flex: 4,
+            child: Text(
+              value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.right,
+              style: TextStyle(
+                color: valueColor ?? Colors.black.withOpacity(0.85),
+                fontFamily: 'Inter',
+                fontWeight: FontWeight.normal,
+                fontSize: w * 0.032,
+              ),
             ),
           ),
         ],
