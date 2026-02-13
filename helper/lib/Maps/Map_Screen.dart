@@ -16,7 +16,16 @@ import '../Employer Dashboard/job_detail_booking_screen.dart';
 
 class MapScreen extends StatefulWidget {
   final Map<String, dynamic>? worker;
-  const MapScreen({super.key, this.worker});
+  final GeoPoint? destinationLatLng;
+  final String? destinationLabel;
+  final bool startNavigation;
+  const MapScreen({
+    super.key,
+    this.worker,
+    this.destinationLatLng,
+    this.destinationLabel,
+    this.startNavigation = false,
+  });
 
   @override
   State<MapScreen> createState() => _MapScreenState();
@@ -933,6 +942,146 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
+  Future<void> _handleDestinationNavigation() async {
+    final dest = widget.destinationLatLng;
+    if (dest == null) return;
+    LatLng? origin = _currentPosition;
+    if (origin == null) {
+      origin = await _getCurrentLocation();
+    }
+    if (origin == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Location data not available')),
+      );
+      return;
+    }
+
+    final destLatLng = LatLng(dest.latitude, dest.longitude);
+    setState(() {
+      _markers.add(
+        Marker(
+          markerId: const MarkerId('destination'),
+          position: destLatLng,
+          infoWindow: InfoWindow(
+            title: widget.destinationLabel ?? 'Destination',
+          ),
+        ),
+      );
+    });
+
+    try {
+      final url =
+          'https://maps.googleapis.com/maps/api/directions/json?origin=${origin.latitude},${origin.longitude}&destination=${dest.latitude},${dest.longitude}&key=$_googleApiKey';
+      final response = await http.get(Uri.parse(url));
+      final data = json.decode(response.body);
+      if (data['status'] == 'OK') {
+        final route = data['routes'][0];
+        final legs = route['legs'][0];
+        final steps = legs['steps'] as List;
+        final polylinePoints = _decodePolyline(
+          route['overview_polyline']['points'],
+        );
+
+        double minLat = double.infinity;
+        double maxLat = -double.infinity;
+        double minLng = double.infinity;
+        double maxLng = -double.infinity;
+        for (var point in polylinePoints) {
+          if (point.latitude < minLat) minLat = point.latitude;
+          if (point.latitude > maxLat) maxLat = point.latitude;
+          if (point.longitude < minLng) minLng = point.longitude;
+          if (point.longitude > maxLng) maxLng = point.longitude;
+        }
+
+        setState(() {
+          _polylines.clear();
+          _polylines.add(
+            Polyline(
+              polylineId: const PolylineId('route'),
+              points: polylinePoints,
+              color: Colors.orange,
+              width: 5,
+            ),
+          );
+          _currentSteps = steps;
+          _destination = destLatLng;
+        });
+
+        final bounds = LatLngBounds(
+          southwest: LatLng(minLat, minLng),
+          northeast: LatLng(maxLat, maxLng),
+        );
+        mapController.animateCamera(CameraUpdate.newLatLngBounds(bounds, 50));
+
+        _positionStream?.cancel();
+        _positionStream =
+            Geolocator.getPositionStream(
+              locationSettings: const LocationSettings(
+                accuracy: LocationAccuracy.high,
+                distanceFilter: 5,
+              ),
+            ).listen((Position position) {
+              final current = LatLng(position.latitude, position.longitude);
+              setState(() {
+                _currentPosition = current;
+                _markers.removeWhere(
+                  (m) => m.markerId.value == 'currentLocation',
+                );
+                _markers.add(
+                  Marker(
+                    markerId: const MarkerId('currentLocation'),
+                    position: current,
+                    infoWindow: const InfoWindow(title: 'Your Location'),
+                  ),
+                );
+              });
+              mapController.animateCamera(CameraUpdate.newLatLng(current));
+              if (_destination != null) {
+                final distance = Geolocator.distanceBetween(
+                  current.latitude,
+                  current.longitude,
+                  _destination!.latitude,
+                  _destination!.longitude,
+                );
+                if (distance < 50) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('You have reached the destination!'),
+                    ),
+                  );
+                  _positionStream?.cancel();
+                  _positionStream = null;
+                  setState(() {
+                    _polylines.clear();
+                    _currentSteps = null;
+                    _destination = null;
+                  });
+                }
+              }
+            });
+
+        if (widget.startNavigation && _currentSteps != null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            _showStepsModal();
+          });
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Failed to get directions: ${data['status']} ${data['error_message'] ?? ''}',
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error fetching directions')),
+      );
+    }
+  }
+
   void _showStepsModal() {
     showModalBottomSheet(
       context: context,
@@ -973,7 +1122,9 @@ class _MapScreenState extends State<MapScreen> {
     _focusNode = FocusNode();
     _controller.addListener(_onSearchChanged);
     _getCurrentLocation().then((_) {
-      if (widget.worker != null) {
+      if (widget.destinationLatLng != null) {
+        _handleDestinationNavigation();
+      } else if (widget.worker != null) {
         _handleWorkerNavigation();
       } else {
         _loadWorkers();

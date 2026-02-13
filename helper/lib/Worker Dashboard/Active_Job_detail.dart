@@ -15,6 +15,7 @@ import 'package:http/http.dart' as http;
 import 'package:helper/Escrow/Cancellation_Code_Screen.dart';
 import 'package:helper/Escrow/Finished_Job_Code_Screen.dart';
 import 'package:helper/Chats/Chat_Screen.dart';
+import 'package:helper/Maps/Map_Screen.dart';
 
 class ActiveJobScreen extends StatefulWidget {
   final String? bookingId;
@@ -305,6 +306,27 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
 
   void _onMapCreated(GoogleMapController controller) {
     _mapController = controller;
+  }
+
+  void _openMapNavigation() {
+    final jobLatLng = bookingData['jobLatLng'] as GeoPoint?;
+    if (jobLatLng == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Job location not available.')),
+      );
+      return;
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => MapScreen(
+          destinationLatLng: jobLatLng,
+          destinationLabel: jobLocation,
+          startNavigation: true,
+        ),
+      ),
+    );
   }
 
   void _back() {
@@ -1080,6 +1102,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
             mapPolylines: _polylines,
             onMapCreated: _onMapCreated,
             onNavigate: _showDirections,
+            onMapTap: _openMapNavigation,
           ),
 
           SizedBox(height: h * 0.018),
@@ -1763,6 +1786,7 @@ class _MapCard extends StatelessWidget {
   final Set<Polyline> mapPolylines;
   final Function(GoogleMapController) onMapCreated;
   final VoidCallback onNavigate;
+  final VoidCallback? onMapTap;
 
   const _MapCard({
     required this.w,
@@ -1773,6 +1797,7 @@ class _MapCard extends StatelessWidget {
     required this.mapPolylines,
     required this.onMapCreated,
     required this.onNavigate,
+    this.onMapTap,
   });
 
   @override
@@ -1800,6 +1825,7 @@ class _MapCard extends StatelessWidget {
               markers: mapMarkers,
               polylines: mapPolylines,
               onMapCreated: onMapCreated,
+              onTap: (_) => onMapTap?.call(),
               zoomControlsEnabled: false,
               myLocationButtonEnabled: false,
             ),
