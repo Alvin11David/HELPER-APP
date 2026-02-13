@@ -4,7 +4,6 @@ import 'dart:async';
 import 'dart:ui';
 import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:helper/Components/user_avatar_circle.dart';
@@ -13,7 +12,11 @@ import 'package:intl/intl.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:helper/Escrow/Cancellation_Code_Screen.dart';
+import 'package:helper/Escrow/Finished_Job_Code_Screen.dart';
+import 'package:helper/Chats/Chat_Screen.dart';
+import 'package:helper/Maps/Map_Screen.dart';
 
 class ActiveJobScreen extends StatefulWidget {
   final String? bookingId;
@@ -306,6 +309,27 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
     _mapController = controller;
   }
 
+  void _openMapNavigation() {
+    final jobLatLng = bookingData['jobLatLng'] as GeoPoint?;
+    if (jobLatLng == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Job location not available.')),
+      );
+      return;
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => MapScreen(
+          destinationLatLng: jobLatLng,
+          destinationLabel: jobLocation,
+          startNavigation: true,
+        ),
+      ),
+    );
+  }
+
   void _back() {
     if (_phase == 0) {
       Navigator.of(context).maybePop();
@@ -415,12 +439,172 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
     });
   }
 
+  void _applyBookingData(Map<String, dynamic> data) {
+    bookingData.addAll(data);
+    jobId = (data['id'] ?? data['bookingId'] ?? jobId).toString();
+    type = data['pricingType'] ?? 'Unknown';
+    final liveStatus = (data['status'] ?? '').toString();
+    if (liveStatus == 'in_progress' || liveStatus == 'started') {
+      status = 'On Job';
+    } else if (liveStatus == 'completed_pending') {
+      status = 'Completed (Awaiting Employer)';
+    } else if (liveStatus == 'completed') {
+      status = 'Completed';
+    } else {
+      status = 'Available';
+    }
+
+    final jobLatLng = data['jobLatLng'] as GeoPoint?;
+    if (jobLatLng != null) {
+      _employerPosition = LatLng(jobLatLng.latitude, jobLatLng.longitude);
+    }
+  }
+
+  void _listenToBooking(String bookingId) {
+    _bookingSub?.cancel();
+    final docRef = FirebaseFirestore.instance
+        .collection('bookings')
+        .doc(bookingId);
+    _bookingSub = docRef.snapshots().listen((snap) {
+      if (snap.exists) {
+        final data = snap.data();
+        if (data != null) {
+          _debugSnack('Booking data fetched: ${data['status'] ?? 'no status'}');
+          setState(() {
+            _applyBookingData(data);
+          });
+          final statusValue = (data['status'] ?? '').toString();
+          if (statusValue == 'completed_pending' ||
+              statusValue == 'completed') {
+            _countdownTimer?.cancel();
+          } else {
+            _startCountdownTimer();
+          }
+          _updateMapMarkers();
+        }
+      } else {
+        _debugSnack('Booking doc not found for $bookingId');
+      }
+    });
+  }
+
+  Future<void> _openChatFromBooking() async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    Map<String, dynamic> data = bookingData;
+
+    String providerId =
+        (data['serviceProviderId'] ?? data['workerUid'] ?? '').toString();
+    String employerId = (data['employerId'] ?? '').toString();
+
+    if (providerId.isEmpty || employerId.isEmpty) {
+      final bookingId = _resolvedBookingId ??
+          (bookingData['id'] ?? bookingData['bookingId'])?.toString();
+      if (bookingId != null && bookingId.isNotEmpty) {
+        try {
+          final snap = await FirebaseFirestore.instance
+              .collection('bookings')
+              .doc(bookingId)
+              .get();
+          final fetched = snap.data();
+          if (fetched != null) {
+            data = fetched;
+            providerId = (data['serviceProviderId'] ??
+                    data['workerUid'] ??
+                    '')
+                .toString();
+            employerId = (data['employerId'] ?? '').toString();
+          }
+        } catch (_) {}
+      }
+    }
+
+    if (providerId.isEmpty) {
+      providerId = currentUser?.uid ?? '';
+    }
+
+    if (providerId.isEmpty || employerId.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Unable to open chat.'),
+        ),
+      );
+      return;
+    }
+
+    final chatName = (data['employerName'] ?? employerName).toString();
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ChatScreen(
+          chatPartnerName: chatName.isNotEmpty ? chatName : 'Employer',
+          providerId: providerId,
+          employerId: employerId,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _loadActiveBookingFallback() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) {
+      _debugSnack('User not authenticated');
+      return;
+    }
+
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection('bookings')
+          .where('workerUid', isEqualTo: uid)
+          .where('status', whereIn: ['confirmed', 'in_progress', 'started'])
+          .orderBy('updatedAt', descending: true)
+          .limit(1)
+          .get();
+
+      QueryDocumentSnapshot<Map<String, dynamic>>? doc;
+      if (snap.docs.isNotEmpty) {
+        doc = snap.docs.first;
+      } else {
+        final acceptedSnap = await FirebaseFirestore.instance
+            .collection('bookings')
+            .where('workerAcceptedBy', isEqualTo: uid)
+            .where('status', whereIn: ['confirmed', 'in_progress', 'started'])
+            .orderBy('updatedAt', descending: true)
+            .limit(1)
+            .get();
+        if (acceptedSnap.docs.isNotEmpty) {
+          doc = acceptedSnap.docs.first;
+        }
+      }
+
+      if (doc == null) {
+        _debugSnack('No active booking found');
+        return;
+      }
+
+      final data = doc.data();
+      if (!mounted) return;
+      setState(() {
+        _resolvedBookingId = doc!.id;
+        _hasActiveJob = true;
+        _applyBookingData(data);
+      });
+      _debugSnack('Booking ID loaded: ${doc.id}');
+      _listenToBooking(doc.id);
+      _startCountdownTimer();
+      _updateMapMarkers();
+    } catch (e) {
+      _debugSnack('Failed to load booking: $e');
+    }
+  }
+
   Future<void> _handleJobCompleted() async {
     try {
       _countdownTimer?.cancel();
       _showBookingIdSnackbar();
 
-      final bookingId = _resolvedBookingId ??
+      final bookingId =
+          _resolvedBookingId ??
           (bookingData['id'] ?? bookingData['bookingId'])?.toString();
       if (bookingId == null || bookingId.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -465,8 +649,19 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
         'updatedAt': FieldValue.serverTimestamp(),
       });
 
-      // Call finishJobWithEscrow function
-      await _finishJobWithEscrow(bookingId);
+      await FirebaseFirestore.instance
+          .collection('bookings')
+          .doc(bookingId)
+          .update({
+            'status': 'completed_pending',
+            'completedPendingAt': FieldValue.serverTimestamp(),
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+
+      final callable = FirebaseFunctions.instance.httpsCallable(
+        'finishJobWithEscrow',
+      );
+      await callable.call({'bookingId': bookingId});
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -491,10 +686,87 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
     }
   }
 
+  int _coerceAmount(dynamic raw) {
+    if (raw is int) return raw;
+    if (raw is num) return raw.toInt();
+    return int.tryParse((raw ?? '0').toString()) ?? 0;
+  }
+
+  Future<DocumentReference<Map<String, dynamic>>?> _resolveEscrowRef(
+    String bookingId,
+    String? escrowId,
+  ) async {
+    if (escrowId != null && escrowId.trim().isNotEmpty) {
+      return FirebaseFirestore.instance.collection('Escrow').doc(escrowId);
+    }
+
+    final escrowQuery = await FirebaseFirestore.instance
+        .collection('Escrow')
+        .where('bookingId', isEqualTo: bookingId)
+        .limit(1)
+        .get();
+
+    if (escrowQuery.docs.isEmpty) return null;
+    return escrowQuery.docs.first.reference;
+  }
+
+  Future<void> _releaseEscrowToWorker(String bookingId) async {
+    final workerUid = FirebaseAuth.instance.currentUser?.uid;
+    if (workerUid == null) {
+      throw Exception('Worker not authenticated.');
+    }
+
+    final escrowId = bookingData['escrowId']?.toString();
+    final escrowRef = await _resolveEscrowRef(bookingId, escrowId);
+    if (escrowRef == null) {
+      throw Exception('Escrow record not found for this booking.');
+    }
+
+    final bookingAmount = _coerceAmount(bookingData['amount']);
+
+    await FirebaseFirestore.instance.runTransaction((tx) async {
+      final escrowSnap = await tx.get(escrowRef);
+      if (!escrowSnap.exists) {
+        throw Exception('Escrow record not found.');
+      }
+
+      final escrowData = escrowSnap.data() as Map<String, dynamic>? ?? {};
+      final alreadyPaid = escrowData['isPaid'] == true;
+      if (alreadyPaid) return;
+
+      final escrowAmount = _coerceAmount(escrowData['amount']);
+      final payoutAmount = bookingAmount > 0 ? bookingAmount : escrowAmount;
+      if (payoutAmount <= 0) {
+        throw Exception('Escrow amount is missing.');
+      }
+
+      final workerRef = FirebaseFirestore.instance
+          .collection('Sign Up')
+          .doc(workerUid);
+      final bookingRef = FirebaseFirestore.instance
+          .collection('bookings')
+          .doc(bookingId);
+
+      tx.update(workerRef, {'amount': FieldValue.increment(payoutAmount)});
+      tx.update(escrowRef, {
+        'inEscrow': false,
+        'isPaid': true,
+        'updatedAt': FieldValue.serverTimestamp(),
+        'paidAt': FieldValue.serverTimestamp(),
+      });
+      tx.update(bookingRef, {
+        'status': 'completed',
+        'completedAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    });
+  }
+
   StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _bookingSub;
 
   void _showBookingIdSnackbar() {
-    final bookingId = _resolvedBookingId ??
+    final bookingId =
+        _resolvedBookingId ??
         (bookingData['id'] ?? bookingData['bookingId'])?.toString();
     if (bookingId == null || bookingId.isEmpty) {
       return;
@@ -516,19 +788,20 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
     _avatarWidget = UserAvatarCircle();
     bookingData = widget.bookingData ?? <String, dynamic>{};
     _resolvedBookingId = (widget.bookingId ?? '').isNotEmpty
-      ? widget.bookingId
-      : (widget.bookingData?['id'] ?? widget.bookingData?['bookingId'])
-        ?.toString();
-
-    final statusValue = (bookingData['status'] ?? '').toString();
-    final startReached = _isScheduleTimeReached();
-
-    if (!startReached) {
-      bookingData = <String, dynamic>{};
+        ? widget.bookingId
+        : (widget.bookingData?['id'] ?? widget.bookingData?['bookingId'])
+              ?.toString();
+    if ((_resolvedBookingId ?? '').isNotEmpty) {
+      _debugSnack('Booking ID resolved: $_resolvedBookingId');
+    } else {
+      _debugSnack('Booking ID missing on init');
     }
 
-    if ((statusValue == 'in_progress' || statusValue == 'started') &&
-        startReached) {
+    final statusValue = (bookingData['status'] ?? '').toString();
+
+    if (statusValue == 'confirmed' ||
+        statusValue == 'in_progress' ||
+        statusValue == 'started') {
       _hasActiveJob = true;
       status = 'On Job';
     } else if (statusValue == 'completed_pending') {
@@ -543,51 +816,9 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
     if (_hasActiveJob &&
         _resolvedBookingId != null &&
         _resolvedBookingId!.isNotEmpty) {
-      final docRef = FirebaseFirestore.instance
-          .collection('bookings')
-          .doc(_resolvedBookingId);
-      _bookingSub = docRef.snapshots().listen((snap) {
-        if (snap.exists) {
-          final data = snap.data();
-          if (data != null) {
-            setState(() {
-              bookingData.addAll(data);
-              // Update type from pricingType
-              type = data['pricingType'] ?? 'Unknown';
-              final liveStatus = (data['status'] ?? '').toString();
-              if (liveStatus == 'in_progress' || liveStatus == 'started') {
-                status = 'On Job';
-              } else if (liveStatus == 'completed_pending') {
-                status = 'Completed (Awaiting Employer)';
-              } else if (liveStatus == 'completed') {
-                status = 'Completed';
-              } else {
-                status = 'Available';
-              }
-
-              // Extract employer location
-              final jobLatLng = data['jobLatLng'] as GeoPoint?;
-              if (jobLatLng != null) {
-                _employerPosition = LatLng(
-                  jobLatLng.latitude,
-                  jobLatLng.longitude,
-                );
-              }
-            });
-            // Start/restart the countdown timer when booking data updates
-            final statusValue = (data['status'] ?? '').toString();
-            if (statusValue == 'completed_pending' ||
-                statusValue == 'completed') {
-              _countdownTimer?.cancel();
-            } else {
-              _startCountdownTimer();
-            }
-            // Update markers
-            _updateMapMarkers();
-          }
-        }
-      });
+      _listenToBooking(_resolvedBookingId!);
     } else if (widget.bookingData != null && widget.bookingData!.isNotEmpty) {
+      _debugSnack('Using booking data passed from caller');
       if (_hasActiveJob) {
         type = bookingData['pricingType'] ?? 'Unknown';
       }
@@ -606,6 +837,10 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
           _startCountdownTimer();
         }
       }
+    }
+
+    if ((_resolvedBookingId ?? '').isEmpty) {
+      _loadActiveBookingFallback();
     }
 
     // Get user's current location
@@ -878,20 +1113,6 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                 _InfoRow(label: 'Job Category:', value: jobCategory),
                 _InfoRow(label: 'Job Location:', value: jobLocation),
                 _InfoRow(label: 'Job Description:', value: jobDescription),
-                SizedBox(height: h * 0.012),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _OrangeMiniButton(
-                        text: 'Message',
-                        icon: Icons.chat_bubble_outline_rounded,
-                        onTap: () {
-                          // TODO: open chat
-                        },
-                      ),
-                    ),
-                  ],
-                ),
               ],
             ),
           ),
@@ -910,6 +1131,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
             mapPolylines: _polylines,
             onMapCreated: _onMapCreated,
             onNavigate: _showDirections,
+            onMapTap: _openMapNavigation,
           ),
 
           SizedBox(height: h * 0.018),
@@ -1018,9 +1240,9 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
             child: OutlinedButton(
               onPressed: () {
                 _showBookingIdSnackbar();
-                final bookingId = _resolvedBookingId ??
-                    (bookingData['id'] ?? bookingData['bookingId'])
-                        ?.toString();
+                final bookingId =
+                    _resolvedBookingId ??
+                    (bookingData['id'] ?? bookingData['bookingId'])?.toString();
                 if (bookingId == null || bookingId.isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
@@ -1174,9 +1396,9 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
             child: OutlinedButton(
               onPressed: () {
                 _showBookingIdSnackbar();
-                final bookingId = _resolvedBookingId ??
-                    (bookingData['id'] ?? bookingData['bookingId'])
-                        ?.toString();
+                final bookingId =
+                    _resolvedBookingId ??
+                    (bookingData['id'] ?? bookingData['bookingId'])?.toString();
                 if (bookingId == null || bookingId.isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
@@ -1292,7 +1514,8 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                             onPressed: () async {
                               Navigator.pop(ctx);
                               _showBookingIdSnackbar();
-                              final bookingId = _resolvedBookingId ??
+                              final bookingId =
+                                  _resolvedBookingId ??
                                   (bookingData['id'] ??
                                           bookingData['bookingId'])
                                       ?.toString();
@@ -1314,16 +1537,8 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
 
                               await _cancelBookingWithEscrow(bookingId);
                               if (!mounted) return;
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: const Text(
-                                    'Cancellation requested. Employer will enter the code.',
-                                    style: TextStyle(fontFamily: 'Inter'),
-                                  ),
-                                  backgroundColor: Colors.black.withOpacity(
-                                    0.85,
-                                  ),
-                                ),
+                              _toastDisabled(
+                                'Termination is disabled for now.',
                               );
                             },
                             style: ElevatedButton.styleFrom(
@@ -1356,50 +1571,85 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
     );
   }
 
+  void _toastDisabled(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg, style: const TextStyle(fontFamily: 'Inter')),
+        backgroundColor: Colors.black.withOpacity(0.85),
+      ),
+    );
+  }
+
+  void _debugSnack(String msg) {
+    if (!mounted) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(msg, style: const TextStyle(fontFamily: 'Inter')),
+          backgroundColor: Colors.black.withOpacity(0.85),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    });
+  }
+
   Future<void> _cancelBookingWithEscrow(String bookingId) async {
     try {
-      final callable = FirebaseFunctions.instance.httpsCallable(
-        'cancelBookingWithEscrow',
-      );
-      await callable.call({'bookingId': bookingId});
+      _countdownTimer?.cancel();
+
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid == null) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text(
+              'User not authenticated',
+              style: TextStyle(fontFamily: 'Inter'),
+            ),
+            backgroundColor: Colors.black.withOpacity(0.85),
+          ),
+        );
+        return;
+      }
+
+      // Update booking status to cancelled
+      await FirebaseFirestore.instance
+          .collection('bookings')
+          .doc(bookingId)
+          .update({
+            'status': 'cancelled_by_worker',
+            'cancelledAt': FieldValue.serverTimestamp(),
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+
+      // Update worker status to Available
+      await FirebaseFirestore.instance.collection('users').doc(uid).update({
+        'status': 'Available',
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
       if (!mounted) return;
+      setState(() {
+        status = 'Available';
+      });
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text(
-            'Booking cancelled successfully',
+            'Job cancelled successfully',
             style: TextStyle(fontFamily: 'Inter'),
           ),
-          backgroundColor: Colors.black.withOpacity(0.85),
+          backgroundColor: Colors.orange.withOpacity(0.85),
         ),
       );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Failed to cancel booking: $e',
-            style: const TextStyle(fontFamily: 'Inter'),
-          ),
-          backgroundColor: Colors.black.withOpacity(0.85),
-        ),
-      );
-    }
-  }
 
-  Future<void> _finishJobWithEscrow(String bookingId) async {
-    try {
-      final callable = FirebaseFunctions.instance.httpsCallable(
-        'finishJobWithEscrow',
-      );
-      await callable.call({'bookingId': bookingId});
+      Navigator.of(context).pop();
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            'Failed to finish job: $e',
-            style: const TextStyle(fontFamily: 'Inter'),
-          ),
+          content: Text('Failed to cancel job: $e'),
           backgroundColor: Colors.black.withOpacity(0.85),
         ),
       );
@@ -1456,28 +1706,34 @@ class _InfoRow extends StatelessWidget {
         children: [
           _BulletIcon(size: w * 0.055),
           const SizedBox(width: 10),
-          Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: Colors.black,
-              fontFamily: 'Inter',
-              fontWeight: FontWeight.w900,
-              fontSize: w * 0.033,
+          Expanded(
+            flex: 3,
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: Colors.black,
+                fontFamily: 'Inter',
+                fontWeight: FontWeight.w900,
+                fontSize: w * 0.033,
+              ),
             ),
           ),
-          const Spacer(),
-          Text(
-            value,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.right,
-            style: TextStyle(
-              color: valueColor ?? Colors.black.withOpacity(0.85),
-              fontFamily: 'Inter',
-              fontWeight: FontWeight.normal,
-              fontSize: w * 0.032,
+          const SizedBox(width: 8),
+          Expanded(
+            flex: 4,
+            child: Text(
+              value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.right,
+              style: TextStyle(
+                color: valueColor ?? Colors.black.withOpacity(0.85),
+                fontFamily: 'Inter',
+                fontWeight: FontWeight.normal,
+                fontSize: w * 0.032,
+              ),
             ),
           ),
         ],
@@ -1559,6 +1815,7 @@ class _MapCard extends StatelessWidget {
   final Set<Polyline> mapPolylines;
   final Function(GoogleMapController) onMapCreated;
   final VoidCallback onNavigate;
+  final VoidCallback? onMapTap;
 
   const _MapCard({
     required this.w,
@@ -1569,6 +1826,7 @@ class _MapCard extends StatelessWidget {
     required this.mapPolylines,
     required this.onMapCreated,
     required this.onNavigate,
+    this.onMapTap,
   });
 
   @override
@@ -1596,6 +1854,7 @@ class _MapCard extends StatelessWidget {
               markers: mapMarkers,
               polylines: mapPolylines,
               onMapCreated: onMapCreated,
+              onTap: (_) => onMapTap?.call(),
               zoomControlsEnabled: false,
               myLocationButtonEnabled: false,
             ),

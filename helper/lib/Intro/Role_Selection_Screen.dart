@@ -153,18 +153,6 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                               'activeRole': 'worker',
                               'workerType': '',
                             });
-                        final signUpData =
-                            (await FirebaseFirestore.instance
-                                    .collection('Sign Up')
-                                    .doc(user.uid)
-                                    .get())
-                                .data();
-                        if (signUpData != null) {
-                          await FirebaseFirestore.instance
-                              .collection('User Roles')
-                              .doc('${user.uid}_worker')
-                              .set(signUpData);
-                        }
                       }
                       Navigator.of(context).push(
                         MaterialPageRoute(
@@ -281,18 +269,6 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                               'role': 'employer',
                               'activeRole': 'employer',
                             });
-                        final signUpData =
-                            (await FirebaseFirestore.instance
-                                    .collection('Sign Up')
-                                    .doc(user.uid)
-                                    .get())
-                                .data();
-                        if (signUpData != null) {
-                          await FirebaseFirestore.instance
-                              .collection('User Roles')
-                              .doc('${user.uid}_employer')
-                              .set(signUpData);
-                        }
                       }
                       Navigator.of(context).push(
                         MaterialPageRoute(
