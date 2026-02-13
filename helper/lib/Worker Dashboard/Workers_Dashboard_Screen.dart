@@ -44,7 +44,7 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
   @override
   void initState() {
     super.initState();
-     _avatarWidget = UserAvatarCircle();
+    _avatarWidget = UserAvatarCircle();
     print('=== WORKER DASHBOARD INIT STATE ===');
 
     // Request notification permissions
