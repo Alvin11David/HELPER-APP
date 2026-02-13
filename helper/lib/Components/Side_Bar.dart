@@ -13,6 +13,7 @@ import '../Worker Dashboard/Workers_Dashboard_Screen.dart';
 import '../Worker Dashboard/Worker_Ratings_Reviews_Screen.dart';
 import '../Document Upload/Profile/Support_Screen.dart';
 import '../Intro/Role_Selection_Screen.dart';
+import '../Escrow/Finished_Job_Code_Screen.dart';
 
 class SideBar extends StatefulWidget {
   const SideBar({super.key});
@@ -157,6 +158,65 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
       return null;
     } catch (e) {
       return null;
+    }
+  }
+
+  Future<void> _openLatestCompletionCode() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    try {
+      // Temporary: fetch all completed_pending jobs and sort in-memory
+      // Once the Firestore index is built, you can revert to the commented query below
+      final snap = await FirebaseFirestore.instance
+          .collection('bookings')
+          .where('employerId', isEqualTo: user.uid)
+          .where('status', isEqualTo: 'completed_pending')
+          .get();
+
+      if (snap.docs.isEmpty) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No jobs awaiting completion code.')),
+        );
+        return;
+      }
+
+      // Sort by updatedAt in-memory
+      final sortedDocs = snap.docs.toList()
+        ..sort((a, b) {
+          final aTime = (a.data()['updatedAt'] as Timestamp?)?.toDate();
+          final bTime = (b.data()['updatedAt'] as Timestamp?)?.toDate();
+          if (aTime == null && bTime == null) return 0;
+          if (aTime == null) return 1;
+          if (bTime == null) return -1;
+          return bTime.compareTo(aTime); // descending
+        });
+
+      final bookingId = sortedDocs.first.id;
+      if (!mounted) return;
+      toggleDrawer();
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => FinishedJobCodeScreen(bookingId: bookingId),
+        ),
+      );
+
+      /* Original query (requires index):
+      final snap = await FirebaseFirestore.instance
+          .collection('bookings')
+          .where('employerId', isEqualTo: user.uid)
+          .where('status', isEqualTo: 'completed_pending')
+          .orderBy('updatedAt', descending: true)
+          .limit(1)
+          .get();
+      */
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load completion code: $e')),
+      );
     }
   }
 
@@ -324,6 +384,39 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                                       "My Bookings",
                                       style: TextStyle(
                                         color: _selectedIndex == 1
+                                            ? Colors.orange
+                                            : Colors.black,
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          if (_userRole == 'employer')
+                            const SizedBox(height: 20),
+                          if (_userRole == 'employer')
+                            GestureDetector(
+                              onTap: () {
+                                setState(() => _selectedIndex = 2);
+                                _openLatestCompletionCode();
+                              },
+                              child: Padding(
+                                padding: EdgeInsets.only(left: 8, right: 8),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.verified,
+                                      color: _selectedIndex == 2
+                                          ? Colors.orange
+                                          : Colors.black.withOpacity(0.6),
+                                    ),
+                                    SizedBox(width: 15),
+                                    Text(
+                                      'Enter Completion Code',
+                                      style: TextStyle(
+                                        color: _selectedIndex == 2
                                             ? Colors.orange
                                             : Colors.black,
                                         fontSize: 15,

@@ -446,12 +446,16 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
     final liveStatus = (data['status'] ?? '').toString();
     if (liveStatus == 'in_progress' || liveStatus == 'started') {
       status = 'On Job';
+      _hasActiveJob = true;
     } else if (liveStatus == 'completed_pending') {
       status = 'Completed (Awaiting Employer)';
+      _hasActiveJob = true;
     } else if (liveStatus == 'completed') {
       status = 'Completed';
+      _hasActiveJob = false;
     } else {
       status = 'Available';
+      _hasActiveJob = false;
     }
 
     final jobLatLng = data['jobLatLng'] as GeoPoint?;
@@ -477,6 +481,10 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
           if (statusValue == 'completed_pending' ||
               statusValue == 'completed') {
             _countdownTimer?.cancel();
+            if (statusValue == 'completed') {
+              _bookingSub?.cancel();
+              _clearActiveJobData();
+            }
           } else {
             _startCountdownTimer();
           }
@@ -486,6 +494,24 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
         _debugSnack('Booking doc not found for $bookingId');
       }
     });
+  }
+
+  void _clearActiveJobData() {
+    _hasActiveJob = false;
+    bookingData = <String, dynamic>{};
+    jobId = 'ID Number';
+    jobCountdown = '00:00:00';
+    elapsedTime = '00:00:00';
+    totalTime = '00:00:00';
+    employerName = 'Name';
+    jobCategory = 'Category';
+    jobLocation = 'Location';
+    jobDescription = 'Description';
+    type = 'Hour/Fixed';
+    amount = 'Amount';
+    _employerPosition = null;
+    _polylines.clear();
+    _mapMarkers.clear();
   }
 
   Future<void> _openChatFromBooking() async {
