@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:helper/Escrow/Cancellation_Code_Screen.dart';
@@ -93,7 +92,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
         onCancelPending: tab == 0
             ? () {
                 Navigator.pop(context);
-                _cancelBooking(bookingId);
+                _toast('Cancellation is disabled for now.');
               }
             : null,
         onTerminateActive: tab == 1
@@ -108,9 +107,8 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => CancellationCodeScreen(
-                      bookingId: bookingId,
-                    ),
+                    builder: (_) =>
+                        CancellationCodeScreen(bookingId: bookingId),
                   ),
                 );
               }
@@ -152,22 +150,12 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
     );
 
     if (shouldTerminate == true) {
-      await _cancelBooking(bookingId);
-      if (!mounted) return;
-      _toast('Cancellation requested. Worker will enter the code to confirm.');
+      _toast('Termination is disabled for now.');
     }
   }
 
   Future<void> _cancelBooking(String bookingId) async {
-    try {
-      final callable = FirebaseFunctions.instance.httpsCallable(
-        'cancelBookingWithEscrow',
-      );
-      await callable.call({'bookingId': bookingId});
-      _toast('Booking cancelled successfully');
-    } catch (e) {
-      _toast('Failed to cancel booking: $e');
-    }
+    _toast('Cancellation is disabled for now.');
   }
 
   Widget _pendingBookingsStream(double w, double h) {
@@ -839,7 +827,7 @@ class _BookingCard extends StatelessWidget {
   final int tab;
   final _BookingItem booking;
   final VoidCallback onTap;
-  final VoidCallback onCancel;
+  final VoidCallback? onCancel;
 
   const _BookingCard({
     required this.w,
@@ -915,13 +903,13 @@ class _BookingCard extends StatelessWidget {
               ),
             ),
             SizedBox(width: w * 0.03),
-            if (tab == 0) ...[
+            if (tab == 0 && onCancel != null) ...[
               _TinyPillButton(
                 w: w,
                 bg: const Color(0xFFE93B2F),
                 text: 'Cancel',
                 icon: Icons.cancel_outlined,
-                onTap: onCancel,
+                onTap: onCancel!,
               ),
             ] else ...[
               Padding(

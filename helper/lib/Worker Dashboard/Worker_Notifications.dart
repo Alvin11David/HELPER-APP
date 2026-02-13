@@ -60,7 +60,7 @@ class _WorkerNotificationsState extends State<WorkerNotifications> {
     }
 
     final workerNotifQuery = await FirebaseFirestore.instance
-        .collection('workerNotifications')
+        .collection('WorkerNotifications')
         .where('workerId', isEqualTo: currentUser.uid)
         .get();
 
@@ -99,7 +99,7 @@ class _WorkerNotificationsState extends State<WorkerNotifications> {
 
         return StreamBuilder<QuerySnapshot>(
           stream: FirebaseFirestore.instance
-              .collection('workerNotifications')
+              .collection('WorkerNotifications')
               .where('workerId', isEqualTo: currentUser.uid)
               .snapshots(),
           builder: (context, workerNotifSnapshot) {
@@ -231,11 +231,12 @@ class _WorkerNotificationsState extends State<WorkerNotifications> {
 
                         // Count unread messages
                         final unreadCount = allMessages
-                          .where((msg) => msg['read'] == false)
-                          .length;
+                            .where((msg) => msg['read'] == false)
+                            .length;
 
                         final shouldShowBadge =
-                          unreadCount > 0 && unreadCount > _badgeDismissedAtCount;
+                            unreadCount > 0 &&
+                            unreadCount > _badgeDismissedAtCount;
 
                         if (allMessages.isEmpty) {
                           return Scaffold(
@@ -267,8 +268,9 @@ class _WorkerNotificationsState extends State<WorkerNotifications> {
                                         padding: const EdgeInsets.all(4),
                                         decoration: BoxDecoration(
                                           color: Colors.red,
-                                          borderRadius:
-                                              BorderRadius.circular(10),
+                                          borderRadius: BorderRadius.circular(
+                                            10,
+                                          ),
                                         ),
                                         constraints: const BoxConstraints(
                                           minWidth: 20,

@@ -12,10 +12,12 @@ class RoleSelectionVerificationScreen extends StatefulWidget {
   const RoleSelectionVerificationScreen({super.key});
 
   @override
-  State<RoleSelectionVerificationScreen> createState() => _RoleSelectionVerificationScreenState();
+  State<RoleSelectionVerificationScreen> createState() =>
+      _RoleSelectionVerificationScreenState();
 }
 
-class _RoleSelectionVerificationScreenState extends State<RoleSelectionVerificationScreen> {
+class _RoleSelectionVerificationScreenState
+    extends State<RoleSelectionVerificationScreen> {
   String? _selectedRole; // 'worker' or 'employer'
 
   @override
@@ -154,18 +156,6 @@ class _RoleSelectionVerificationScreenState extends State<RoleSelectionVerificat
                               'activeRole': 'worker',
                               'workerType': '',
                             });
-                        final signUpData =
-                            (await FirebaseFirestore.instance
-                                    .collection('Sign Up')
-                                    .doc(user.uid)
-                                    .get())
-                                .data();
-                        if (signUpData != null) {
-                          await FirebaseFirestore.instance
-                              .collection('User Roles')
-                              .doc('${user.uid}_worker')
-                              .set(signUpData);
-                        }
                       }
                       Navigator.of(context).push(
                         MaterialPageRoute(
@@ -282,18 +272,6 @@ class _RoleSelectionVerificationScreenState extends State<RoleSelectionVerificat
                               'role': 'employer',
                               'activeRole': 'employer',
                             });
-                        final signUpData =
-                            (await FirebaseFirestore.instance
-                                    .collection('Sign Up')
-                                    .doc(user.uid)
-                                    .get())
-                                .data();
-                        if (signUpData != null) {
-                          await FirebaseFirestore.instance
-                              .collection('User Roles')
-                              .doc('${user.uid}_employer')
-                              .set(signUpData);
-                        }
                       }
                       Navigator.of(context).push(
                         MaterialPageRoute(
