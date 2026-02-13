@@ -310,142 +310,346 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                     topRight: Radius.circular(40),
                     bottomRight: Radius.circular(40),
                   ),
-                  child: Column(
-                    children: [
-                      // Add your sidebar content here
-                      // Replace the black circle Container with UserAvatarCircle
-                      Padding(
-                        padding: EdgeInsets.only(
-                          top: 20,
-                          right: screenWidth * 0.40, // adjust if needed
-                        ),
-                        child: Container(
-                          width: 80, // increased width
-                          height: 80, // increased height
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.4),
-                                blurRadius: 16,
-                                offset: Offset(0, 6),
-                              ),
-                            ],
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        // Add your sidebar content here
+                        // Replace the black circle Container with UserAvatarCircle
+                        Padding(
+                          padding: EdgeInsets.only(
+                            top: 20,
+                            right: screenWidth * 0.40, // adjust if needed
                           ),
-                          child: UserAvatarCircle(role: _userRole),
-                        ),
-                      ),
-                      // Add Worker's Name text below the circle
-                      const SizedBox(height: 12),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Padding(
-                            padding: EdgeInsets.only(left: 8),
-                            child: UserName(role: _userRole),
-                          ),
-                          const SizedBox(height: 2),
-                          Padding(
-                            padding: EdgeInsets.only(left: 8),
-                            child: Row(
-                              children: [
-                                Text(
-                                  "Referral ID:",
-                                  style: TextStyle(
-                                    color: Colors.black,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                          child: Container(
+                            width: 80, // increased width
+                            height: 80, // increased height
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.4),
+                                  blurRadius: 16,
+                                  offset: Offset(0, 6),
                                 ),
-                                SizedBox(
-                                  width: 16,
-                                ), // space between label and ID
-                                FutureBuilder<String?>(
-                                  future: _fetchReferralCode(),
-                                  builder: (context, snapshot) {
-                                    if (snapshot.connectionState ==
-                                        ConnectionState.waiting) {
+                              ],
+                            ),
+                            child: UserAvatarCircle(role: _userRole),
+                          ),
+                        ),
+                        // Add Worker's Name text below the circle
+                        const SizedBox(height: 12),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Padding(
+                              padding: EdgeInsets.only(left: 8),
+                              child: UserName(role: _userRole),
+                            ),
+                            const SizedBox(height: 2),
+                            Padding(
+                              padding: EdgeInsets.only(left: 8),
+                              child: Row(
+                                children: [
+                                  Text(
+                                    "Referral ID:",
+                                    style: TextStyle(
+                                      color: Colors.black,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  SizedBox(
+                                    width: 16,
+                                  ), // space between label and ID
+                                  FutureBuilder<String?>(
+                                    future: _fetchReferralCode(),
+                                    builder: (context, snapshot) {
+                                      if (snapshot.connectionState ==
+                                          ConnectionState.waiting) {
+                                        return Text(
+                                          'Loading...',
+                                          style: TextStyle(
+                                            color: Colors.orange,
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.normal,
+                                          ),
+                                        );
+                                      }
                                       return Text(
-                                        'Loading...',
+                                        snapshot.data ?? 'No ID',
                                         style: TextStyle(
                                           color: Colors.orange,
                                           fontSize: 14,
                                           fontWeight: FontWeight.normal,
                                         ),
                                       );
-                                    }
-                                    return Text(
-                                      snapshot.data ?? 'No ID',
-                                      style: TextStyle(
-                                        color: Colors.orange,
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.normal,
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Padding(
-                            padding: EdgeInsets.only(left: 8),
-                            child: FutureBuilder<String?>(
-                              future: _fetchUserRole(),
-                              builder: (context, snapshot) {
-                                if (snapshot.connectionState ==
-                                    ConnectionState.waiting) {
-                                  return const SizedBox.shrink();
-                                }
-                                if (snapshot.hasData &&
-                                    snapshot.data == 'worker') {
-                                  return WorkerProfession();
-                                }
-                                return const SizedBox.shrink();
-                              },
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          Container(
-                            width: double.infinity,
-                            height: 1,
-                            margin: EdgeInsets.symmetric(
-                              horizontal: 0,
-                            ), // touches left and right
-                            color: Colors.black,
-                          ),
-                          const SizedBox(height: 20),
-                          if (_userRole == 'employer')
-                            GestureDetector(
-                              onTap: () {
-                                setState(() => _selectedIndex = 1);
-                                toggleDrawer();
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        const MyBookingsScreen(),
+                                    },
                                   ),
-                                );
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Padding(
+                              padding: EdgeInsets.only(left: 8),
+                              child: FutureBuilder<String?>(
+                                future: _fetchUserRole(),
+                                builder: (context, snapshot) {
+                                  if (snapshot.connectionState ==
+                                      ConnectionState.waiting) {
+                                    return const SizedBox.shrink();
+                                  }
+                                  if (snapshot.hasData &&
+                                      snapshot.data == 'worker') {
+                                    return WorkerProfession();
+                                  }
+                                  return const SizedBox.shrink();
+                                },
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Container(
+                              width: double.infinity,
+                              height: 1,
+                              margin: EdgeInsets.symmetric(
+                                horizontal: 0,
+                              ), // touches left and right
+                              color: Colors.black,
+                            ),
+                            const SizedBox(height: 20),
+                            if (_userRole == 'employer')
+                              GestureDetector(
+                                onTap: () {
+                                  setState(() => _selectedIndex = 1);
+                                  toggleDrawer();
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const MyBookingsScreen(),
+                                    ),
+                                  );
+                                },
+                                child: Padding(
+                                  padding: EdgeInsets.only(left: 8, right: 8),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.book_online,
+                                        color: _selectedIndex == 1
+                                            ? Colors.orange
+                                            : Colors.black.withOpacity(0.6),
+                                      ),
+                                      SizedBox(width: 15),
+                                      Text(
+                                        "My Bookings",
+                                        style: TextStyle(
+                                          color: _selectedIndex == 1
+                                              ? Colors.orange
+                                              : Colors.black,
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            if (_userRole == 'employer')
+                              const SizedBox(height: 20),
+                            if (_userRole == 'employer')
+                              GestureDetector(
+                                onTap: () {
+                                  setState(() => _selectedIndex = 2);
+                                  _openLatestCompletionCode();
+                                },
+                                child: Padding(
+                                  padding: EdgeInsets.only(left: 8, right: 8),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.verified,
+                                        color: _selectedIndex == 2
+                                            ? Colors.orange
+                                            : Colors.black.withOpacity(0.6),
+                                      ),
+                                      SizedBox(width: 15),
+                                      Flexible(
+                                        child: Text(
+                                          'Enter Completion Code',
+                                          style: TextStyle(
+                                            color: _selectedIndex == 2
+                                                ? Colors.orange
+                                                : Colors.black,
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            if (_userRole == 'employer')
+                              const SizedBox(height: 20),
+                            if (_userRole != 'employer') ...[
+                              FutureBuilder<bool?>(
+                                future: _fetchVerifiedStatus(),
+                                builder: (context, snapshot) {
+                                  bool isVerified = snapshot.data ?? false;
+                                  return GestureDetector(
+                                    onTap: !isVerified
+                                        ? () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    RoleSelectionVerificationScreen(),
+                                              ),
+                                            );
+                                          }
+                                        : null,
+                                    child: Padding(
+                                      padding: EdgeInsets.only(
+                                        left: 8,
+                                        right: 8,
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Text(
+                                            "Verified?",
+                                            style: TextStyle(
+                                              color: Colors.black,
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                          Spacer(),
+                                          Text(
+                                            snapshot.connectionState ==
+                                                    ConnectionState.waiting
+                                                ? 'Loading...'
+                                                : (isVerified ? 'Yes' : 'No'),
+                                            style: TextStyle(
+                                              color: Colors.green,
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                              const SizedBox(height: 20),
+                            ],
+                            if (_userRole == 'worker')
+                              GestureDetector(
+                                onTap: () {
+                                  setState(() => _selectedIndex = 3);
+                                  _openLatestCancellationCode();
+                                },
+                                child: Padding(
+                                  padding: EdgeInsets.only(left: 8, right: 8),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.cancel_outlined,
+                                        color: _selectedIndex == 3
+                                            ? Colors.orange
+                                            : Colors.black.withOpacity(0.6),
+                                      ),
+                                      SizedBox(width: 15),
+                                      Flexible(
+                                        child: Text(
+                                          'Enter Cancellation Code',
+                                          style: TextStyle(
+                                            color: _selectedIndex == 3
+                                                ? Colors.orange
+                                                : Colors.black,
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            if (_userRole == 'worker')
+                              const SizedBox(height: 20),
+                            GestureDetector(
+                              onTap: () async {
+                                try {
+                                  User? user =
+                                      FirebaseAuth.instance.currentUser;
+                                  if (user != null) {
+                                    DocumentSnapshot doc =
+                                        await FirebaseFirestore.instance
+                                            .collection('Sign Up')
+                                            .doc(user.uid)
+                                            .get();
+                                    if (doc.exists && doc.data() != null) {
+                                      final data =
+                                          doc.data() as Map<String, dynamic>;
+                                      String role = data['role'] ?? '';
+                                      toggleDrawer();
+                                      if (role == 'employer') {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                EmployerDashboardScreen(),
+                                          ),
+                                        );
+                                      } else if (role == 'worker') {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                WorkersDashboardScreen(),
+                                          ),
+                                        );
+                                      } else {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            content: Text('Role not found'),
+                                          ),
+                                        );
+                                      }
+                                    }
+                                  }
+                                } catch (e) {
+                                  print('Error fetching role: $e');
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Error loading dashboard'),
+                                    ),
+                                  );
+                                }
                               },
                               child: Padding(
                                 padding: EdgeInsets.only(left: 8, right: 8),
                                 child: Row(
                                   children: [
                                     Icon(
-                                      Icons.book_online,
-                                      color: _selectedIndex == 1
+                                      Icons.home,
+                                      color: _selectedIndex == 0
                                           ? Colors.orange
                                           : Colors.black.withOpacity(0.6),
                                     ),
                                     SizedBox(width: 15),
                                     Text(
-                                      "My Bookings",
+                                      "Home",
                                       style: TextStyle(
-                                        color: _selectedIndex == 1
+                                        color: _selectedIndex == 0
                                             ? Colors.orange
                                             : Colors.black,
-                                        fontSize: 15,
+                                        fontSize: 13,
                                         fontWeight: FontWeight.w600,
                                       ),
                                     ),
@@ -453,347 +657,189 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                                 ),
                               ),
                             ),
-                          if (_userRole == 'employer')
                             const SizedBox(height: 20),
-                          if (_userRole == 'employer')
-                            GestureDetector(
-                              onTap: () {
-                                setState(() => _selectedIndex = 2);
-                                _openLatestCompletionCode();
-                              },
-                              child: Padding(
-                                padding: EdgeInsets.only(left: 8, right: 8),
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      Icons.verified,
-                                      color: _selectedIndex == 2
-                                          ? Colors.orange
-                                          : Colors.black.withOpacity(0.6),
+                            // Switch role row
+                            if (_userRole == 'employer')
+                              GestureDetector(
+                                onTap: () async {
+                                  // Switch to worker
+                                  final didSwitch = await _switchRole('worker');
+                                  if (!didSwitch || !mounted) return;
+                                  toggleDrawer();
+                                  Navigator.pushReplacement(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const WorkersDashboardScreen(),
                                     ),
-                                    SizedBox(width: 15),
-                                    Flexible(
-                                      child: Text(
-                                        'Enter Completion Code',
+                                  );
+                                },
+                                child: Padding(
+                                  padding: EdgeInsets.only(left: 8, right: 8),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.swap_horiz,
+                                        color: Colors.black.withOpacity(0.6),
+                                      ),
+                                      SizedBox(width: 15),
+                                      Text(
+                                        "Switch to Worker",
+                                        style: TextStyle(
+                                          color: Colors.black,
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              )
+                            else if (_userRole == 'worker')
+                              GestureDetector(
+                                onTap: () async {
+                                  // Switch to employer
+                                  final didSwitch = await _switchRole(
+                                    'employer',
+                                  );
+                                  if (!didSwitch || !mounted) return;
+                                  toggleDrawer();
+                                  Navigator.pushReplacement(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const EmployerDashboardScreen(),
+                                    ),
+                                  );
+                                },
+                                child: Padding(
+                                  padding: EdgeInsets.only(left: 8, right: 8),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.swap_horiz,
+                                        color: Colors.black.withOpacity(0.6),
+                                      ),
+                                      SizedBox(width: 15),
+                                      Text(
+                                        "Switch to Employer",
+                                        style: TextStyle(
+                                          color: Colors.black,
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            const SizedBox(height: 15),
+                            if (_userRole == 'worker') ...[
+                              GestureDetector(
+                                onTap: () => setState(() => _selectedIndex = 1),
+                                child: Padding(
+                                  padding: EdgeInsets.only(left: 8, right: 8),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.receipt_long,
+                                        color: _selectedIndex == 1
+                                            ? Colors.orange
+                                            : Colors.black.withOpacity(0.6),
+                                      ),
+                                      SizedBox(width: 15),
+                                      Text(
+                                        "My Jobs",
+                                        style: TextStyle(
+                                          color: _selectedIndex == 1
+                                              ? Colors.orange
+                                              : Colors.black,
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                            ],
+                            if (_userRole == 'worker')
+                              const SizedBox(height: 10),
+                            if (_userRole == 'worker')
+                              GestureDetector(
+                                onTap: () => setState(() => _selectedIndex = 2),
+                                child: Padding(
+                                  padding: EdgeInsets.only(left: 8, right: 8),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.calendar_today_rounded,
+                                        color: _selectedIndex == 2
+                                            ? Colors.orange
+                                            : Colors.black.withOpacity(0.6),
+                                      ),
+                                      SizedBox(width: 15),
+                                      Text(
+                                        "Availability &\nSchedule",
                                         style: TextStyle(
                                           color: _selectedIndex == 2
                                               ? Colors.orange
                                               : Colors.black,
-                                          fontSize: 15,
+                                          fontSize: 13,
                                           fontWeight: FontWeight.w600,
                                         ),
-                                        overflow: TextOverflow.ellipsis,
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
                               ),
-                            ),
-                          if (_userRole == 'employer')
-                            const SizedBox(height: 20),
-                          if (_userRole != 'employer') ...[
-                            FutureBuilder<bool?>(
-                              future: _fetchVerifiedStatus(),
-                              builder: (context, snapshot) {
-                                bool isVerified = snapshot.data ?? false;
-                                return GestureDetector(
-                                  onTap: !isVerified
-                                      ? () {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) =>
-                                                  RoleSelectionVerificationScreen(),
-                                            ),
-                                          );
-                                        }
-                                      : null,
-                                  child: Padding(
-                                    padding: EdgeInsets.only(left: 8, right: 8),
-                                    child: Row(
-                                      children: [
-                                        Text(
-                                          "Verified?",
-                                          style: TextStyle(
-                                            color: Colors.black,
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                        Spacer(),
-                                        Text(
-                                          snapshot.connectionState ==
-                                                  ConnectionState.waiting
-                                              ? 'Loading...'
-                                              : (isVerified ? 'Yes' : 'No'),
-                                          style: TextStyle(
-                                            color: Colors.green,
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                      ],
+                            if (_userRole == 'worker')
+                              const SizedBox(height: 20),
+                            if (_userRole == 'worker')
+                              GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const WorkerRatingsReviewsScreen(),
                                     ),
-                                  ),
-                                );
-                              },
-                            ),
-                            const SizedBox(height: 20),
-                          ],
-                          if (_userRole == 'worker')
-                            GestureDetector(
-                              onTap: () {
-                                setState(() => _selectedIndex = 3);
-                                _openLatestCancellationCode();
-                              },
-                              child: Padding(
-                                padding: EdgeInsets.only(left: 8, right: 8),
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      Icons.cancel_outlined,
-                                      color: _selectedIndex == 3
-                                          ? Colors.orange
-                                          : Colors.black.withOpacity(0.6),
-                                    ),
-                                    SizedBox(width: 15),
-                                    Flexible(
-                                      child: Text(
-                                        'Enter Cancellation Code',
+                                  );
+                                },
+                                child: Padding(
+                                  padding: EdgeInsets.only(left: 8, right: 8),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.star,
+                                        color: _selectedIndex == 3
+                                            ? Colors.orange
+                                            : Colors.black.withOpacity(0.6),
+                                      ),
+                                      SizedBox(width: 15),
+                                      Text(
+                                        "Ratings & Reviews",
                                         style: TextStyle(
                                           color: _selectedIndex == 3
                                               ? Colors.orange
                                               : Colors.black,
-                                          fontSize: 15,
+                                          fontSize: 13,
                                           fontWeight: FontWeight.w600,
                                         ),
-                                        overflow: TextOverflow.ellipsis,
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
                               ),
-                            ),
-                          if (_userRole == 'worker') const SizedBox(height: 20),
-                          GestureDetector(
-                            onTap: () async {
-                              try {
-                                User? user = FirebaseAuth.instance.currentUser;
-                                if (user != null) {
-                                  DocumentSnapshot doc = await FirebaseFirestore
-                                      .instance
-                                      .collection('Sign Up')
-                                      .doc(user.uid)
-                                      .get();
-                                  if (doc.exists && doc.data() != null) {
-                                    final data =
-                                        doc.data() as Map<String, dynamic>;
-                                    String role = data['role'] ?? '';
-                                    toggleDrawer();
-                                    if (role == 'employer') {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              EmployerDashboardScreen(),
-                                        ),
-                                      );
-                                    } else if (role == 'worker') {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              WorkersDashboardScreen(),
-                                        ),
-                                      );
-                                    } else {
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        SnackBar(
-                                          content: Text('Role not found'),
-                                        ),
-                                      );
-                                    }
-                                  }
-                                }
-                              } catch (e) {
-                                print('Error fetching role: $e');
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('Error loading dashboard'),
-                                  ),
-                                );
-                              }
-                            },
-                            child: Padding(
-                              padding: EdgeInsets.only(left: 8, right: 8),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    Icons.home,
-                                    color: _selectedIndex == 0
-                                        ? Colors.orange
-                                        : Colors.black.withOpacity(0.6),
-                                  ),
-                                  SizedBox(width: 15),
-                                  Text(
-                                    "Home",
-                                    style: TextStyle(
-                                      color: _selectedIndex == 0
-                                          ? Colors.orange
-                                          : Colors.black,
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          // Switch role row
-                          if (_userRole == 'employer')
-                            GestureDetector(
-                              onTap: () async {
-                                // Switch to worker
-                                final didSwitch = await _switchRole('worker');
-                                if (!didSwitch || !mounted) return;
-                                toggleDrawer();
-                                Navigator.pushReplacement(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        const WorkersDashboardScreen(),
-                                  ),
-                                );
-                              },
-                              child: Padding(
-                                padding: EdgeInsets.only(left: 8, right: 8),
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      Icons.swap_horiz,
-                                      color: Colors.black.withOpacity(0.6),
-                                    ),
-                                    SizedBox(width: 15),
-                                    Text(
-                                      "Switch to Worker",
-                                      style: TextStyle(
-                                        color: Colors.black,
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            )
-                          else if (_userRole == 'worker')
-                            GestureDetector(
-                              onTap: () async {
-                                // Switch to employer
-                                final didSwitch = await _switchRole('employer');
-                                if (!didSwitch || !mounted) return;
-                                toggleDrawer();
-                                Navigator.pushReplacement(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        const EmployerDashboardScreen(),
-                                  ),
-                                );
-                              },
-                              child: Padding(
-                                padding: EdgeInsets.only(left: 8, right: 8),
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      Icons.swap_horiz,
-                                      color: Colors.black.withOpacity(0.6),
-                                    ),
-                                    SizedBox(width: 15),
-                                    Text(
-                                      "Switch to Employer",
-                                      style: TextStyle(
-                                        color: Colors.black,
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          const SizedBox(height: 15),
-                          if (_userRole == 'worker') ...[
-                            GestureDetector(
-                              onTap: () => setState(() => _selectedIndex = 1),
-                              child: Padding(
-                                padding: EdgeInsets.only(left: 8, right: 8),
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      Icons.receipt_long,
-                                      color: _selectedIndex == 1
-                                          ? Colors.orange
-                                          : Colors.black.withOpacity(0.6),
-                                    ),
-                                    SizedBox(width: 15),
-                                    Text(
-                                      "My Jobs",
-                                      style: TextStyle(
-                                        color: _selectedIndex == 1
-                                            ? Colors.orange
-                                            : Colors.black,
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 20),
-                          ],
-                          if (_userRole == 'worker') const SizedBox(height: 10),
-                          if (_userRole == 'worker')
-                            GestureDetector(
-                              onTap: () => setState(() => _selectedIndex = 2),
-                              child: Padding(
-                                padding: EdgeInsets.only(left: 8, right: 8),
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      Icons.calendar_today_rounded,
-                                      color: _selectedIndex == 2
-                                          ? Colors.orange
-                                          : Colors.black.withOpacity(0.6),
-                                    ),
-                                    SizedBox(width: 15),
-                                    Text(
-                                      "Availability &\nSchedule",
-                                      style: TextStyle(
-                                        color: _selectedIndex == 2
-                                            ? Colors.orange
-                                            : Colors.black,
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          if (_userRole == 'worker') const SizedBox(height: 20),
-                          if (_userRole == 'worker')
+                            if (_userRole == 'worker')
+                              const SizedBox(height: 15),
                             GestureDetector(
                               onTap: () {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) =>
-                                        const WorkerRatingsReviewsScreen(),
+                                    builder: (context) => const SupportScreen(),
                                   ),
                                 );
                               },
@@ -802,19 +848,19 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                                 child: Row(
                                   children: [
                                     Icon(
-                                      Icons.star,
-                                      color: _selectedIndex == 3
+                                      Icons.support_agent,
+                                      color: _selectedIndex == 4
                                           ? Colors.orange
                                           : Colors.black.withOpacity(0.6),
                                     ),
                                     SizedBox(width: 15),
                                     Text(
-                                      "Ratings & Reviews",
+                                      "Support",
                                       style: TextStyle(
-                                        color: _selectedIndex == 3
+                                        color: _selectedIndex == 4
                                             ? Colors.orange
                                             : Colors.black,
-                                        fontSize: 15,
+                                        fontSize: 13,
                                         fontWeight: FontWeight.w600,
                                       ),
                                     ),
@@ -822,182 +868,148 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                                 ),
                               ),
                             ),
-                          if (_userRole == 'worker') const SizedBox(height: 15),
-                          GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const SupportScreen(),
-                                ),
-                              );
-                            },
-                            child: Padding(
-                              padding: EdgeInsets.only(left: 8, right: 8),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    Icons.support_agent,
-                                    color: _selectedIndex == 4
-                                        ? Colors.orange
-                                        : Colors.black.withOpacity(0.6),
+                            const SizedBox(height: 20),
+                            GestureDetector(
+                              onTap: () async {
+                                setState(() => _selectedIndex = 7);
+                                toggleDrawer();
+                                await FirebaseAuth.instance.signOut();
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) => const ProfileScreen(),
                                   ),
-                                  SizedBox(width: 15),
-                                  Text(
-                                    "Support",
-                                    style: TextStyle(
-                                      color: _selectedIndex == 4
-                                          ? Colors.orange
-                                          : Colors.black,
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          GestureDetector(
-                            onTap: () async {
-                              setState(() => _selectedIndex = 7);
-                              toggleDrawer();
-                              await FirebaseAuth.instance.signOut();
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (context) => const ProfileScreen(),
-                                ),
-                              );
-                            },
-                            child: Padding(
-                              padding: EdgeInsets.only(left: 8, right: 8),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    Icons.person,
-                                    color: _selectedIndex == 5
-                                        ? Colors.orange
-                                        : Colors.black.withOpacity(0.6),
-                                  ),
-                                  SizedBox(width: 15),
-                                  Text(
-                                    "Profile",
-                                    style: TextStyle(
+                                );
+                              },
+                              child: Padding(
+                                padding: EdgeInsets.only(left: 8, right: 8),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.person,
                                       color: _selectedIndex == 5
                                           ? Colors.orange
-                                          : Colors.black,
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w600,
+                                          : Colors.black.withOpacity(0.6),
                                     ),
-                                  ),
-                                ],
+                                    SizedBox(width: 15),
+                                    Text(
+                                      "Profile",
+                                      style: TextStyle(
+                                        color: _selectedIndex == 5
+                                            ? Colors.orange
+                                            : Colors.black,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
-                          const SizedBox(height: 20),
-                          GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const ProfileScreen(),
-                                ),
-                              );
-                            },
-                            child: Padding(
-                              padding: EdgeInsets.only(left: 8, right: 8),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    Icons.receipt,
-                                    color: _selectedIndex == 6
-                                        ? Colors.orange
-                                        : Colors.black.withOpacity(0.6),
+                            const SizedBox(height: 20),
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const ProfileScreen(),
                                   ),
-                                  SizedBox(width: 15),
-                                  Text(
-                                    "Privacy Policy",
-                                    style: TextStyle(
+                                );
+                              },
+                              child: Padding(
+                                padding: EdgeInsets.only(left: 8, right: 8),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.receipt,
                                       color: _selectedIndex == 6
                                           ? Colors.orange
-                                          : Colors.black,
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w600,
+                                          : Colors.black.withOpacity(0.6),
                                     ),
-                                  ),
-                                ],
+                                    SizedBox(width: 15),
+                                    Text(
+                                      "Privacy Policy",
+                                      style: TextStyle(
+                                        color: _selectedIndex == 6
+                                            ? Colors.orange
+                                            : Colors.black,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
-                          const SizedBox(height: 20),
-                          GestureDetector(
-                            onTap: () async {
-                              setState(() => _selectedIndex = 7);
-                              toggleDrawer();
-                              await FirebaseAuth.instance.signOut();
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (context) => const SignInScreen(),
-                                ),
-                              );
-                            },
-                            child: Padding(
-                              padding: EdgeInsets.only(left: 8, right: 8),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    Icons.logout,
-                                    color: _selectedIndex == 7
-                                        ? Colors.orange
-                                        : Colors.black.withOpacity(0.6),
+                            const SizedBox(height: 20),
+                            GestureDetector(
+                              onTap: () async {
+                                setState(() => _selectedIndex = 7);
+                                toggleDrawer();
+                                await FirebaseAuth.instance.signOut();
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) => const SignInScreen(),
                                   ),
-                                  SizedBox(width: 15),
-                                  Text(
-                                    "Log Out",
-                                    style: TextStyle(
+                                );
+                              },
+                              child: Padding(
+                                padding: EdgeInsets.only(left: 8, right: 8),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.logout,
                                       color: _selectedIndex == 7
                                           ? Colors.orange
-                                          : Colors.black,
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w600,
+                                          : Colors.black.withOpacity(0.6),
                                     ),
-                                  ),
-                                ],
+                                    SizedBox(width: 15),
+                                    Text(
+                                      "Log Out",
+                                      style: TextStyle(
+                                        color: _selectedIndex == 7
+                                            ? Colors.orange
+                                            : Colors.black,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
-                          if (_userRole != 'employer')
-                            FutureBuilder<bool?>(
-                              future: _fetchVerifiedStatus(),
-                              builder: (context, snapshot) {
-                                if (snapshot.connectionState ==
-                                    ConnectionState.waiting) {
-                                  return const SizedBox.shrink();
-                                }
-                                bool isVerified = snapshot.data ?? false;
-                                if (!isVerified) {
-                                  return Padding(
-                                    padding: const EdgeInsets.only(
-                                      left: 8,
-                                      right: 8,
-                                    ),
-                                    child: Text(
-                                      "Tap the Verified Row to Re upload the valid documents",
-                                      style: TextStyle(
-                                        color: Colors.red,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w400,
+                            if (_userRole != 'employer')
+                              FutureBuilder<bool?>(
+                                future: _fetchVerifiedStatus(),
+                                builder: (context, snapshot) {
+                                  if (snapshot.connectionState ==
+                                      ConnectionState.waiting) {
+                                    return const SizedBox.shrink();
+                                  }
+                                  bool isVerified = snapshot.data ?? false;
+                                  if (!isVerified) {
+                                    return Padding(
+                                      padding: const EdgeInsets.only(
+                                        left: 8,
+                                        right: 8,
                                       ),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                  );
-                                }
-                                return const SizedBox.shrink();
-                              },
-                            ),
-                        ],
-                      ),
-                    ],
+                                      child: Text(
+                                        "Tap the Verified Row to Re upload the valid documents",
+                                        style: TextStyle(
+                                          color: Colors.red,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w400,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    );
+                                  }
+                                  return const SizedBox.shrink();
+                                },
+                              ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               );
