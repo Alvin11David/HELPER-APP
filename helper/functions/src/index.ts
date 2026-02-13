@@ -1047,36 +1047,37 @@ export const cancelBookingWithEscrow = onCall(async (request) => {
     };
 
     const notifyCancellationCode = async (code: string) => {
-      const targets = [employerId, workerUid].filter(Boolean);
-      for (const userId of targets) {
-        const userDoc = await db.collection("Sign Up").doc(userId).get();
-        const fcmToken = userDoc.data()?.fcmToken as string | undefined;
-        if (fcmToken) {
-          await admin.messaging().send({
-            token: fcmToken,
-            notification: {
-              title: "Cancellation Code",
-              body: `Your cancellation code is ${code}`,
-            },
-            data: {
-              type: "escrow_cancellation_code",
-              bookingId,
-              cancellationCode: code,
-            },
-          });
-        }
+      const receiverDoc = await db.collection("Sign Up").doc(receiverId).get();
+      const fcmToken = receiverDoc.data()?.fcmToken as string | undefined;
+      if (fcmToken) {
+        await admin.messaging().send({
+          token: fcmToken,
+          notification: {
+            title: "Cancellation Code",
+            body: `Your cancellation code is ${code}`,
+          },
+          data: {
+            type: "escrow_cancellation_code",
+            bookingId,
+            cancellationCode: code,
+          },
+        });
       }
 
+      const requesterRole = callerId === employerId ? "employer" : "worker";
+      const receiverRole = requesterRole === "employer" ? "worker" : "employer";
+      const requesterId = callerId === employerId ? employerId : workerUid;
+
       await addRoleNotification(
-        "employer",
-        employerId,
-        "Cancellation Code",
-        `Your cancellation code is ${code}`,
-        "escrow_cancellation_code",
+        requesterRole,
+        requesterId,
+        "Cancellation Requested",
+        "Cancellation requested. Waiting for code entry.",
+        "escrow_cancellation_requested",
       );
       await addRoleNotification(
-        "worker",
-        workerUid,
+        receiverRole,
+        receiverId,
         "Cancellation Code",
         `Your cancellation code is ${code}`,
         "escrow_cancellation_code",

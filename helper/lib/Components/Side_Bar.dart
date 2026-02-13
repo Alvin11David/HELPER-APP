@@ -125,35 +125,21 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
     }
   }
 
-  Future<void> _switchRole(String newRole) async {
+  Future<bool> _switchRole(String newRole) async {
     try {
       User? user = FirebaseAuth.instance.currentUser;
-      if (user != null) {
-        // Update fields based on the new role
-        Map<String, dynamic> updates = {'activeRole': newRole};
-        if (newRole == 'worker') {
-          updates.addAll({
-            'fullName': 'Drena',
-            'email': 'drenajennie@gmail.com',
-            'referralCode': 'UG863UP963',
-            // Add other fields if needed
-          });
-        } else if (newRole == 'employer') {
-          updates.addAll({
-            'fullName': 'Lilian',
-            'email': 'liliannabulya3@gmail.com',
-            'referralCode': 'UG864MX537',
-            // Add other fields if needed
-          });
-        }
-        await FirebaseFirestore.instance
-            .collection('Sign Up')
-            .doc(user.uid)
-            .update(updates);
-      }
+      if (user == null) return false;
+      Map<String, dynamic> updates = {'activeRole': newRole, 'role': newRole};
+      await FirebaseFirestore.instance
+          .collection('Sign Up')
+          .doc(user.uid)
+          .update(updates);
+      if (!mounted) return false;
       setState(() => _userRole = newRole);
+      return true;
     } catch (e) {
       print('Error switching role: $e');
+      return false;
     }
   }
 
@@ -481,7 +467,8 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                             GestureDetector(
                               onTap: () async {
                                 // Switch to worker
-                                await _switchRole('worker');
+                                final didSwitch = await _switchRole('worker');
+                                if (!didSwitch || !mounted) return;
                                 toggleDrawer();
                                 Navigator.pushReplacement(
                                   context,
@@ -516,7 +503,8 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                             GestureDetector(
                               onTap: () async {
                                 // Switch to employer
-                                await _switchRole('employer');
+                                final didSwitch = await _switchRole('employer');
+                                if (!didSwitch || !mounted) return;
                                 toggleDrawer();
                                 Navigator.pushReplacement(
                                   context,

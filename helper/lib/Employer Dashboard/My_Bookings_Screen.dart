@@ -108,9 +108,8 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => CancellationCodeScreen(
-                      bookingId: bookingId,
-                    ),
+                    builder: (_) =>
+                        CancellationCodeScreen(bookingId: bookingId),
                   ),
                 );
               }
@@ -164,7 +163,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
         'cancelBookingWithEscrow',
       );
       await callable.call({'bookingId': bookingId});
-      _toast('Booking cancelled successfully');
+      _toast('Cancellation requested. Code sent to the other party.');
     } catch (e) {
       _toast('Failed to cancel booking: $e');
     }
@@ -839,7 +838,7 @@ class _BookingCard extends StatelessWidget {
   final int tab;
   final _BookingItem booking;
   final VoidCallback onTap;
-  final VoidCallback onCancel;
+  final VoidCallback? onCancel;
 
   const _BookingCard({
     required this.w,
@@ -915,13 +914,13 @@ class _BookingCard extends StatelessWidget {
               ),
             ),
             SizedBox(width: w * 0.03),
-            if (tab == 0) ...[
+            if (tab == 0 && onCancel != null) ...[
               _TinyPillButton(
                 w: w,
                 bg: const Color(0xFFE93B2F),
                 text: 'Cancel',
                 icon: Icons.cancel_outlined,
-                onTap: onCancel,
+                onTap: onCancel!,
               ),
             ] else ...[
               Padding(

@@ -421,7 +421,8 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
       _countdownTimer?.cancel();
       _showBookingIdSnackbar();
 
-      final bookingId = _resolvedBookingId ??
+      final bookingId =
+          _resolvedBookingId ??
           (bookingData['id'] ?? bookingData['bookingId'])?.toString();
       if (bookingId == null || bookingId.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -495,7 +496,8 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
   StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _bookingSub;
 
   void _showBookingIdSnackbar() {
-    final bookingId = _resolvedBookingId ??
+    final bookingId =
+        _resolvedBookingId ??
         (bookingData['id'] ?? bookingData['bookingId'])?.toString();
     if (bookingId == null || bookingId.isEmpty) {
       return;
@@ -517,9 +519,9 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
     _avatarWidget = UserAvatarCircle();
     bookingData = widget.bookingData ?? <String, dynamic>{};
     _resolvedBookingId = (widget.bookingId ?? '').isNotEmpty
-      ? widget.bookingId
-      : (widget.bookingData?['id'] ?? widget.bookingData?['bookingId'])
-        ?.toString();
+        ? widget.bookingId
+        : (widget.bookingData?['id'] ?? widget.bookingData?['bookingId'])
+              ?.toString();
 
     final statusValue = (bookingData['status'] ?? '').toString();
     final startReached = _isScheduleTimeReached();
@@ -1019,9 +1021,9 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
             child: OutlinedButton(
               onPressed: () {
                 _showBookingIdSnackbar();
-                final bookingId = _resolvedBookingId ??
-                    (bookingData['id'] ?? bookingData['bookingId'])
-                        ?.toString();
+                final bookingId =
+                    _resolvedBookingId ??
+                    (bookingData['id'] ?? bookingData['bookingId'])?.toString();
                 if (bookingId == null || bookingId.isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
@@ -1175,9 +1177,9 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
             child: OutlinedButton(
               onPressed: () {
                 _showBookingIdSnackbar();
-                final bookingId = _resolvedBookingId ??
-                    (bookingData['id'] ?? bookingData['bookingId'])
-                        ?.toString();
+                final bookingId =
+                    _resolvedBookingId ??
+                    (bookingData['id'] ?? bookingData['bookingId'])?.toString();
                 if (bookingId == null || bookingId.isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
@@ -1293,7 +1295,8 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                             onPressed: () async {
                               Navigator.pop(ctx);
                               _showBookingIdSnackbar();
-                              final bookingId = _resolvedBookingId ??
+                              final bookingId =
+                                  _resolvedBookingId ??
                                   (bookingData['id'] ??
                                           bookingData['bookingId'])
                                       ?.toString();
