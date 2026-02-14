@@ -36,6 +36,8 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
   bool _isCallDialogShowing = false;
   Map<String, dynamic>? activeJobData; // Store active job details for display
   String? _activeServiceProviderId;
+  String? _selectedBookingId;
+  Map<String, dynamic>? _selectedBookingData;
 
   // Next job countdown
   Timer? _nextJobTimer;
@@ -382,6 +384,58 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
     });
   }
 
+  bool _isSelectableBookingStatus(String s) {
+    final v = s.toLowerCase();
+    return v == 'confirmed' || v == 'started' || v == 'in_progress';
+  }
+
+  int _bookingPriority(Map<String, dynamic> d) {
+    // lower = higher priority
+    final s = (d['status'] ?? '').toString().toLowerCase();
+    if (s == 'started' || s == 'in_progress') return 0; // active first
+    if (s == 'confirmed') return 1; // upcoming next
+    return 9;
+  }
+
+  void _ensureSelectedBooking(
+    List<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
+  ) {
+    if (docs.isEmpty) {
+      _selectedBookingId = null;
+      _selectedBookingData = null;
+      return;
+    }
+
+    // sort so active job is first, then confirmed
+    docs.sort((a, b) {
+      final pa = _bookingPriority(a.data());
+      final pb = _bookingPriority(b.data());
+      if (pa != pb) return pa.compareTo(pb);
+
+      final aStart = a.data()['startDateTime'];
+      final bStart = b.data()['startDateTime'];
+      DateTime? ad = aStart is Timestamp ? aStart.toDate() : aStart as DateTime?;
+      DateTime? bd = bStart is Timestamp ? bStart.toDate() : bStart as DateTime?;
+      if (ad == null || bd == null) return 0;
+      return ad.compareTo(bd);
+    });
+
+    // if nothing selected yet OR selected not found anymore => pick first
+    final stillExists =
+        _selectedBookingId != null &&
+        docs.any((d) => d.id == _selectedBookingId);
+
+    if (!stillExists) {
+      _selectedBookingId = docs.first.id;
+      _selectedBookingData = docs.first.data();
+      return;
+    }
+
+    // keep selection data fresh
+    final selected = docs.firstWhere((d) => d.id == _selectedBookingId);
+    _selectedBookingData = selected.data();
+  }
+
   Widget _buildActiveJobCard(Map<String, dynamic> data, double screenWidth) {
     return Padding(
       padding: const EdgeInsets.all(10),
@@ -545,6 +599,113 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMultiActiveJobCard(
+    List<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
+    double screenWidth,
+  ) {
+    // Ensure selection + selection data
+    _ensureSelectedBooking(docs);
+
+    if (_selectedBookingData == null) {
+      return const Center(
+        child: Text(
+          'No active job currently',
+          style: TextStyle(
+            color: Colors.black,
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      );
+    }
+
+    final selectedId = _selectedBookingId!;
+    final selectedData = _selectedBookingData!;
+
+    return Padding(
+      padding: const EdgeInsets.all(10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // --- selector chips ---
+          SizedBox(
+            height: 38,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: docs.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              itemBuilder: (context, i) {
+                final doc = docs[i];
+                final d = doc.data();
+                final isSelected = doc.id == selectedId;
+
+                final employer = (d['employerName'] ?? 'Employer').toString();
+                final status = (d['status'] ?? '').toString();
+
+                return GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _selectedBookingId = doc.id;
+                      _selectedBookingData = d;
+                    });
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color:
+                          isSelected
+                              ? const Color(0xFFFFA10D)
+                              : Colors.grey.shade200,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color:
+                            isSelected
+                                ? const Color(0xFFFFA10D)
+                                : Colors.black12,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          employer.length > 14
+                              ? employer.substring(0, 14)
+                              : employer,
+                          style: TextStyle(
+                            color: isSelected ? Colors.white : Colors.black,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          status,
+                          style: TextStyle(
+                            color:
+                                isSelected ? Colors.white : Colors.black54,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+
+          const SizedBox(height: 10),
+
+          // --- your existing short detail card UI ---
+          _buildActiveJobCard(selectedData, screenWidth),
         ],
       ),
     );
@@ -743,6 +904,7 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
             'updatedAt': FieldValue.serverTimestamp(),
             'acceptedAt': FieldValue.serverTimestamp(),
             'workerAcceptedBy': workerId,
+            'workerUid': workerId,
           });
 
       await FirebaseFirestore.instance.collection('workerNotifications').add({
@@ -1616,105 +1778,29 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                                 ),
                                 GestureDetector(
                                   onTap: () {
-                                    // Fetch active job and pass data to Active Job Screen
-                                    if (workerUid == null) {
-                                      ScaffoldMessenger.of(
+                                    final id = _selectedBookingId;
+                                    final data = _selectedBookingData;
+
+                                    if (id == null || data == null) {
+                                      Navigator.push(
                                         context,
-                                      ).showSnackBar(
-                                        const SnackBar(
-                                          content: Text('Not signed in'),
+                                        MaterialPageRoute(
+                                          builder: (_) =>
+                                              const ActiveJobScreen(),
                                         ),
                                       );
                                       return;
                                     }
 
-                                    FirebaseFirestore.instance
-                                        .collection('bookings')
-                                        .where(
-                                          'workerUid',
-                                          isEqualTo: workerUid,
-                                        )
-                                        .where(
-                                          'status',
-                                          whereIn: [
-                                            'confirmed',
-                                            'in_progress',
-                                            'started',
-                                          ],
-                                        )
-                                        .orderBy('updatedAt', descending: true)
-                                        .limit(1)
-                                        .get()
-                                        .then((snap) {
-                                          if (snap.docs.isNotEmpty) {
-                                            final bookingDoc = snap.docs.first;
-                                            final bookingId = bookingDoc.id;
-                                            final bookingData = bookingDoc
-                                                .data();
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (_) => ActiveJobScreen(
-                                                  bookingId: bookingId,
-                                                  bookingData: bookingData,
-                                                ),
-                                              ),
-                                            );
-                                          } else {
-                                            FirebaseFirestore.instance
-                                                .collection('bookings')
-                                                .where(
-                                                  'workerAcceptedBy',
-                                                  isEqualTo: workerUid,
-                                                )
-                                                .where(
-                                                  'status',
-                                                  whereIn: [
-                                                    'confirmed',
-                                                    'in_progress',
-                                                    'started',
-                                                  ],
-                                                )
-                                                .orderBy(
-                                                  'updatedAt',
-                                                  descending: true,
-                                                )
-                                                .limit(1)
-                                                .get()
-                                                .then((acceptedSnap) {
-                                                  if (acceptedSnap
-                                                      .docs
-                                                      .isNotEmpty) {
-                                                    final bookingDoc =
-                                                        acceptedSnap.docs.first;
-                                                    final bookingId =
-                                                        bookingDoc.id;
-                                                    final bookingData =
-                                                        bookingDoc.data();
-                                                    Navigator.push(
-                                                      context,
-                                                      MaterialPageRoute(
-                                                        builder: (_) =>
-                                                            ActiveJobScreen(
-                                                              bookingId:
-                                                                  bookingId,
-                                                              bookingData:
-                                                                  bookingData,
-                                                            ),
-                                                      ),
-                                                    );
-                                                    return;
-                                                  }
-                                                  Navigator.push(
-                                                    context,
-                                                    MaterialPageRoute(
-                                                      builder: (_) =>
-                                                          const ActiveJobScreen(),
-                                                    ),
-                                                  );
-                                                });
-                                          }
-                                        });
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => ActiveJobScreen(
+                                          bookingId: id,
+                                          bookingData: data,
+                                        ),
+                                      ),
+                                    );
                                   },
                                   child: Container(
                                     padding: EdgeInsets.symmetric(
@@ -1743,39 +1829,17 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(25),
                               ),
-                              child: StreamBuilder<QuerySnapshot>(
-                                stream: workerUid == null
-                                    ? null
-                                    : FirebaseFirestore.instance
-                                          .collection('bookings')
-                                          .where(
-                                            'workerUid',
-                                            isEqualTo: workerUid,
-                                          )
-                                          .where(
-                                            'status',
-                                            whereIn: [
-                                              'confirmed',
-                                              'in_progress',
-                                              'started',
-                                            ],
-                                          )
-                                          .orderBy(
-                                            'updatedAt',
-                                            descending: true,
-                                          )
-                                          .limit(1)
-                                          .snapshots(),
-                                builder: (ctx, snap) {
-                                  if (!snap.hasData ||
-                                      snap.data!.docs.isEmpty) {
-                                    return StreamBuilder<QuerySnapshot>(
-                                      stream: workerUid == null
-                                          ? null
-                                          : FirebaseFirestore.instance
+                              child:
+                                  StreamBuilder<
+                                    QuerySnapshot<Map<String, dynamic>>
+                                  >(
+                                    stream:
+                                        workerUid == null
+                                            ? null
+                                            : FirebaseFirestore.instance
                                                 .collection('bookings')
                                                 .where(
-                                                  'workerAcceptedBy',
+                                                  'workerUid',
                                                   isEqualTo: workerUid,
                                                 )
                                                 .where(
@@ -1790,61 +1854,56 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                                                   'updatedAt',
                                                   descending: true,
                                                 )
-                                                .limit(1)
                                                 .snapshots(),
-                                      builder: (context, acceptedSnap) {
-                                        if (!acceptedSnap.hasData ||
-                                            acceptedSnap.data!.docs.isEmpty) {
-                                          return Padding(
-                                            padding: const EdgeInsets.all(14),
-                                            child: Center(
-                                              child: Column(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.center,
-                                                children: const [
-                                                  Text(
-                                                    'No active job currently',
-                                                    style: TextStyle(
-                                                      color: Colors.black,
-                                                      fontSize: 14,
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                    ),
-                                                  ),
-                                                  SizedBox(height: 6),
-                                                  Text(
-                                                    'Job details will appear here when the job day starts.',
-                                                    textAlign: TextAlign.center,
-                                                    style: TextStyle(
-                                                      color: Colors.black54,
-                                                      fontSize: 12,
-                                                      fontWeight:
-                                                          FontWeight.w400,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          );
-                                        }
-
-                                        final data =
-                                            acceptedSnap.data!.docs.first.data()
-                                                as Map<String, dynamic>;
-                                        return _buildActiveJobCard(
-                                          data,
-                                          screenWidth,
+                                    builder: (ctx, snap) {
+                                      if (snap.connectionState ==
+                                          ConnectionState.waiting) {
+                                        return const Center(
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                          ),
                                         );
-                                      },
-                                    );
-                                  }
+                                      }
 
-                                  final data =
-                                      snap.data!.docs.first.data()
-                                          as Map<String, dynamic>;
-                                  return _buildActiveJobCard(data, screenWidth);
-                                },
-                              ),
+                                      final docs = snap.data?.docs ?? [];
+                                      if (docs.isEmpty) {
+                                        return Padding(
+                                          padding: const EdgeInsets.all(14),
+                                          child: Center(
+                                            child: Column(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              children: const [
+                                                Text(
+                                                  'No active job currently',
+                                                  style: TextStyle(
+                                                    color: Colors.black,
+                                                    fontSize: 14,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                                SizedBox(height: 6),
+                                                Text(
+                                                  'Job details will appear here when the job day starts.',
+                                                  textAlign: TextAlign.center,
+                                                  style: TextStyle(
+                                                    color: Colors.black54,
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.w400,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        );
+                                      }
+
+                                      return _buildMultiActiveJobCard(
+                                        docs,
+                                        screenWidth,
+                                      );
+                                    },
+                                  ),
                             ),
                           ),
                           SizedBox(height: 20),
