@@ -444,14 +444,28 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
     jobId = (data['id'] ?? data['bookingId'] ?? jobId).toString();
     type = data['pricingType'] ?? 'Unknown';
     final liveStatus = (data['status'] ?? '').toString();
-    if (liveStatus == 'in_progress' || liveStatus == 'started') {
+    
+    // Check if booking has been cancelled
+    if (liveStatus == 'cancelled' ||
+        liveStatus == 'cancelled_by_worker' ||
+        liveStatus == 'cancelled_by_employer' ||
+        liveStatus.contains('cancelled')) {
+      status = 'Cancelled';
+      _hasActiveJob = false;
+    } else if (liveStatus == 'confirmed' || 
+               liveStatus == 'in_progress' || 
+               liveStatus == 'started') {
       status = 'On Job';
+      _hasActiveJob = true;
     } else if (liveStatus == 'completed_pending') {
       status = 'Completed (Awaiting Employer)';
+      _hasActiveJob = true;
     } else if (liveStatus == 'completed') {
       status = 'Completed';
+      _hasActiveJob = false;
     } else {
       status = 'Available';
+      _hasActiveJob = false;
     }
 
     final jobLatLng = data['jobLatLng'] as GeoPoint?;
@@ -470,13 +484,43 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
         final data = snap.data();
         if (data != null) {
           _debugSnack('Booking data fetched: ${data['status'] ?? 'no status'}');
+          final statusValue = (data['status'] ?? '').toString();
+          
+          // Check if booking has been cancelled or terminated
+          if (statusValue == 'cancelled' ||
+              statusValue == 'cancelled_by_worker' ||
+              statusValue == 'cancelled_by_employer' ||
+              statusValue.contains('cancelled')) {
+            _countdownTimer?.cancel();
+            _bookingSub?.cancel();
+            _clearActiveJobData();
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: const Text(
+                    'This job has been cancelled.',
+                    style: TextStyle(fontFamily: 'Inter'),
+                  ),
+                  backgroundColor: Colors.orange.withOpacity(0.85),
+                ),
+              );
+              // Navigate back to previous screen
+              Navigator.of(context).pop();
+            }
+            return;
+          }
+          
           setState(() {
             _applyBookingData(data);
           });
-          final statusValue = (data['status'] ?? '').toString();
+          
           if (statusValue == 'completed_pending' ||
               statusValue == 'completed') {
             _countdownTimer?.cancel();
+            if (statusValue == 'completed') {
+              _bookingSub?.cancel();
+              _clearActiveJobData();
+            }
           } else {
             _startCountdownTimer();
           }
@@ -486,6 +530,25 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
         _debugSnack('Booking doc not found for $bookingId');
       }
     });
+  }
+
+  void _clearActiveJobData() {
+    _hasActiveJob = false;
+    bookingData = <String, dynamic>{};
+    jobId = 'ID Number';
+    jobCountdown = '00:00:00';
+    elapsedTime = '00:00:00';
+    totalTime = '00:00:00';
+    employerName = 'Name';
+    jobCategory = 'Category';
+    jobLocation = 'Location';
+    jobDescription = 'Description';
+    type = 'Hour/Fixed';
+    amount = 'Amount';
+    status = 'Available';
+    _employerPosition = null;
+    _polylines.clear();
+    _mapMarkers.clear();
   }
 
   Future<void> _openChatFromBooking() async {
@@ -799,13 +862,21 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
 
     final statusValue = (bookingData['status'] ?? '').toString();
 
-    if (statusValue == 'confirmed' ||
+    // Don't show cancelled bookings
+    if (statusValue == 'cancelled' ||
+        statusValue == 'cancelled_by_worker' ||
+        statusValue == 'cancelled_by_employer' ||
+        statusValue.contains('cancelled')) {
+      _hasActiveJob = false;
+      status = 'Cancelled';
+    } else if (statusValue == 'confirmed' ||
         statusValue == 'in_progress' ||
         statusValue == 'started') {
       _hasActiveJob = true;
       status = 'On Job';
     } else if (statusValue == 'completed_pending') {
       status = 'Completed (Awaiting Employer)';
+      _hasActiveJob = true;
     } else if (statusValue == 'completed') {
       status = 'Completed';
     } else {

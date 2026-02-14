@@ -21,15 +21,15 @@ class WorkerProfession extends StatelessWidget {
         String? workerType = userData['workerType'] as String?;
 
         if (workerType == 'Non-Professional Worker') {
-          // Fetch profession from serviceProviders collection as jobCategoryName
-          DocumentSnapshot serviceProviderDoc = await FirebaseFirestore.instance
+          // Query serviceProviders collection where workerUid == user.uid
+          QuerySnapshot query = await FirebaseFirestore.instance
               .collection('serviceProviders')
-              .doc(user.uid)
+              .where('workerUid', isEqualTo: user.uid)
+              .limit(1)
               .get();
-
-          if (serviceProviderDoc.exists && serviceProviderDoc.data() != null) {
+          if (query.docs.isNotEmpty && query.docs.first.data() != null) {
             Map<String, dynamic> providerData =
-                serviceProviderDoc.data() as Map<String, dynamic>;
+                query.docs.first.data() as Map<String, dynamic>;
             return providerData['jobCategoryName'] as String?;
           }
         } else {

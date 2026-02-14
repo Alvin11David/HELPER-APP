@@ -382,10 +382,7 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
     });
   }
 
-  Widget _buildActiveJobCard(
-    Map<String, dynamic> data,
-    double screenWidth,
-  ) {
+  Widget _buildActiveJobCard(Map<String, dynamic> data, double screenWidth) {
     return Padding(
       padding: const EdgeInsets.all(10),
       child: Column(
@@ -493,8 +490,8 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
           Center(
             child: GestureDetector(
               onTap: () {
-                final businessName =
-                    (data['employerName'] ?? 'Employer').toString();
+                final businessName = (data['employerName'] ?? 'Employer')
+                    .toString();
                 final providerId =
                     (data['serviceProviderId'] ??
                             data['workerUid'] ??
@@ -504,9 +501,7 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                 final employerId = (data['employerId'] ?? '').toString();
                 if (providerId.isEmpty || employerId.isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Unable to open chat.'),
-                    ),
+                    const SnackBar(content: Text('Unable to open chat.')),
                   );
                   return;
                 }
@@ -1647,10 +1642,7 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                                             'started',
                                           ],
                                         )
-                                        .orderBy(
-                                          'updatedAt',
-                                          descending: true,
-                                        )
+                                        .orderBy('updatedAt', descending: true)
                                         .limit(1)
                                         .get()
                                         .then((snap) {
@@ -1691,10 +1683,10 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                                                 .get()
                                                 .then((acceptedSnap) {
                                                   if (acceptedSnap
-                                                      .docs.isNotEmpty) {
+                                                      .docs
+                                                      .isNotEmpty) {
                                                     final bookingDoc =
-                                                        acceptedSnap
-                                                            .docs.first;
+                                                        acceptedSnap.docs.first;
                                                     final bookingId =
                                                         bookingDoc.id;
                                                     final bookingData =
@@ -1704,10 +1696,11 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                                                       MaterialPageRoute(
                                                         builder: (_) =>
                                                             ActiveJobScreen(
-                                                          bookingId: bookingId,
-                                                          bookingData:
-                                                              bookingData,
-                                                        ),
+                                                              bookingId:
+                                                                  bookingId,
+                                                              bookingData:
+                                                                  bookingData,
+                                                            ),
                                                       ),
                                                     );
                                                     return;
@@ -1835,9 +1828,9 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                                           );
                                         }
 
-                                        final data = acceptedSnap
-                                                .data!.docs.first.data()
-                                            as Map<String, dynamic>;
+                                        final data =
+                                            acceptedSnap.data!.docs.first.data()
+                                                as Map<String, dynamic>;
                                         return _buildActiveJobCard(
                                           data,
                                           screenWidth,
@@ -1849,10 +1842,7 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                                   final data =
                                       snap.data!.docs.first.data()
                                           as Map<String, dynamic>;
-                                  return _buildActiveJobCard(
-                                    data,
-                                    screenWidth,
-                                  );
+                                  return _buildActiveJobCard(data, screenWidth);
                                 },
                               ),
                             ),

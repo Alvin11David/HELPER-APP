@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:helper/Employer%20Dashboard/Create_Wallet_PIN_Screen.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../Wallet/Wallet_Cancelled_screen.dart';
@@ -128,22 +127,76 @@ class _BottomNavBarState extends State<BottomNavBar> {
                                   pin = value;
                                 });
                                 if (pin.length == 4) {
-                                  SharedPreferences prefs =
-                                      await SharedPreferences.getInstance();
-                                  String? savedPin =
-                                      prefs.getString('wallet_pin');
-                                  if (savedPin == pin) {
-                                    Navigator.pop(context);
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => WalletFlowScreen(),
-                                      ),
-                                    );
-                                  } else {
+                                  try {
+                                    final user = FirebaseAuth.instance.currentUser;
+                                    if (user == null) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text('User not logged in'),
+                                          backgroundColor: Colors.red,
+                                        ),
+                                      );
+                                      setState(() {
+                                        pin = '';
+                                      });
+                                      return;
+                                    }
+
+                                    final doc = await FirebaseFirestore.instance
+                                        .collection('Sign Up')
+                                        .doc(user.uid)
+                                        .get();
+
+                                    if (!doc.exists || doc.data() == null) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text('User data not found'),
+                                          backgroundColor: Colors.red,
+                                        ),
+                                      );
+                                      setState(() {
+                                        pin = '';
+                                      });
+                                      return;
+                                    }
+
+                                    final data = doc.data() as Map<String, dynamic>;
+                                    final savedPin = data['wallet_pin']?.toString();
+
+                                    if (savedPin == null || savedPin.isEmpty) {
+                                      Navigator.pop(context);
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => CreateWalletPINScreen(),
+                                        ),
+                                      );
+                                      return;
+                                    }
+
+                                    if (savedPin == pin) {
+                                      Navigator.pop(context);
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => WalletFlowScreen(),
+                                        ),
+                                      );
+                                    } else {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text('Incorrect PIN'),
+                                          backgroundColor: Colors.red,
+                                        ),
+                                      );
+                                      setState(() {
+                                        pin = '';
+                                      });
+                                    }
+                                  } catch (e) {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
-                                        content: Text('Incorrect PIN'),
+                                        content: Text('Error validating PIN: $e'),
                                         backgroundColor: Colors.red,
                                       ),
                                     );
@@ -211,12 +264,36 @@ class _BottomNavBarState extends State<BottomNavBar> {
             onTap: () async {
               if (index == 2) {
                 try {
-                  SharedPreferences prefs =
-                      await SharedPreferences.getInstance();
-                  bool pinSet = prefs.getBool('wallet_pin_set') ?? false;
-                  String? savedPin = prefs.getString('wallet_pin');
-                  print('pinSet: $pinSet, savedPin: $savedPin');
-                  if (!pinSet) {
+                  final user = FirebaseAuth.instance.currentUser;
+                  if (user == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Please log in to access wallet'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                    return;
+                  }
+
+                  final doc = await FirebaseFirestore.instance
+                      .collection('Sign Up')
+                      .doc(user.uid)
+                      .get();
+
+                  if (!doc.exists || doc.data() == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('User data not found'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                    return;
+                  }
+
+                  final data = doc.data() as Map<String, dynamic>;
+                  final savedPin = data['wallet_pin']?.toString();
+
+                  if (savedPin == null || savedPin.isEmpty) {
                     print('Navigating to CreateWalletPINScreen');
                     Navigator.push(
                       context,
@@ -230,6 +307,12 @@ class _BottomNavBarState extends State<BottomNavBar> {
                   }
                 } catch (e) {
                   print('Error in wallet tap: $e');
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Error accessing wallet'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
                 }
               } else if (index == 1) {
                 Navigator.push(
