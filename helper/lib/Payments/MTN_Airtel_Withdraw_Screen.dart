@@ -778,7 +778,11 @@ class _MtnAirtelWithdrawScreenState extends State<MtnAirtelWithdrawScreen> {
                           width: double.infinity,
                           height: screenHeight * 0.062,
                           child: ElevatedButton(
-                            onPressed: _isLoading ? null : _processPayment,
+                            onPressed: _isLoading
+                                ? null
+                                : () {
+                                    Navigator.of(context).pop();
+                                  },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFFDF8800),
                               disabledBackgroundColor: const Color(
@@ -805,7 +809,7 @@ class _MtnAirtelWithdrawScreenState extends State<MtnAirtelWithdrawScreen> {
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
                                         Text(
-                                          'Withdraw',
+                                          'Back',
                                           style: TextStyle(
                                             fontSize: screenWidth * 0.045,
                                             fontWeight: FontWeight.bold,
