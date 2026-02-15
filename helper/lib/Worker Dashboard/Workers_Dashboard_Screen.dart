@@ -78,7 +78,6 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                 'fcmToken': token,
               });
               print('FCM token saved to Firestore successfully');
-
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(

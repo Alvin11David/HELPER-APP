@@ -24,9 +24,50 @@ class _RegistrationPaymentScreenState extends State<RegistrationPaymentScreen> {
   final bool _isMtnCardSelected = false;
   final bool _isAirtelCardSelected = false;
   bool _isLoading = false;
+  int? _registrationFee;
+  int? _registrationFeeUSD;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRegistrationFee();
+  }
+
+  Future<void> _loadRegistrationFee() async {
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('System Settings')
+          .doc('default')
+          .get();
+      if (doc.exists && doc.data() != null) {
+        final data = doc.data() as Map<String, dynamic>;
+        setState(() {
+          _registrationFee = data['registrationFee'] is int
+              ? data['registrationFee']
+              : int.tryParse(data['registrationFee'].toString());
+          _registrationFeeUSD = data['registrationFeeUSD'] is int
+              ? data['registrationFeeUSD']
+              : int.tryParse(data['registrationFeeUSD'].toString());
+        });
+      }
+    } catch (e) {
+      print('Error loading registration fee: $e');
+    }
+  }
 
   Future<void> _handleMasterCardPayment() async {
     setState(() => _isLoading = true);
+
+    if (_registrationFee == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Registration fee not loaded'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      setState(() => _isLoading = false);
+      return;
+    }
 
     final user = FirebaseAuth.instance.currentUser;
     final String reference = 'MC_${DateTime.now().millisecondsSinceEpoch}';
@@ -39,7 +80,7 @@ class _RegistrationPaymentScreenState extends State<RegistrationPaymentScreen> {
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'userId': user?.uid,
-          'amount': 25000,
+          'amount': _registrationFee,
           'reference': reference,
           'description': 'Helper App Registration',
         }),
@@ -74,6 +115,17 @@ class _RegistrationPaymentScreenState extends State<RegistrationPaymentScreen> {
   Future<void> _handleVisaPayment() async {
     setState(() => _isLoading = true);
 
+    if (_registrationFee == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Registration fee not loaded'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      setState(() => _isLoading = false);
+      return;
+    }
+
     final user = FirebaseAuth.instance.currentUser;
     final String reference = 'VISA_${DateTime.now().millisecondsSinceEpoch}';
 
@@ -85,7 +137,7 @@ class _RegistrationPaymentScreenState extends State<RegistrationPaymentScreen> {
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'userId': user?.uid,
-          'amount': 25000,
+          'amount': _registrationFee,
           'reference': reference,
           'description': 'Helper App Registration',
         }),
@@ -139,6 +191,9 @@ class _RegistrationPaymentScreenState extends State<RegistrationPaymentScreen> {
     final double screenWidth = MediaQuery.of(context).size.width;
     final double screenHeight = MediaQuery.of(context).size.height;
 
+    if (_registrationFee == null) {
+      return Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
     return Scaffold(
       body: SafeArea(
         child: Container(
@@ -259,7 +314,7 @@ class _RegistrationPaymentScreenState extends State<RegistrationPaymentScreen> {
                         SizedBox(height: screenHeight * 0.015),
                         Center(
                           child: Text(
-                            'UGX 25,000',
+                            'UGX ${_registrationFee?.toString().replaceAllMapped(RegExp(r"(\d{1,3})(?=(\d{3})+(?!\d))"), (Match m) => "${m[1]},") ?? ''}',
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: screenWidth * 0.06,
@@ -298,7 +353,7 @@ class _RegistrationPaymentScreenState extends State<RegistrationPaymentScreen> {
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Text(
-                                      'Outside World: \$10',
+                                      'Outside World: \$${_registrationFeeUSD ?? ''}',
                                       style: TextStyle(
                                         color: Colors.black,
                                         fontSize: screenWidth * 0.04,
