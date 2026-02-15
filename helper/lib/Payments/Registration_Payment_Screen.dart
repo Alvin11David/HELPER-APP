@@ -25,6 +25,7 @@ class _RegistrationPaymentScreenState extends State<RegistrationPaymentScreen> {
   final bool _isAirtelCardSelected = false;
   bool _isLoading = false;
   int? _registrationFee;
+  int? _registrationFeeUSD;
 
   @override
   void initState() {
@@ -44,6 +45,9 @@ class _RegistrationPaymentScreenState extends State<RegistrationPaymentScreen> {
           _registrationFee = data['registrationFee'] is int
               ? data['registrationFee']
               : int.tryParse(data['registrationFee'].toString());
+          _registrationFeeUSD = data['registrationFeeUSD'] is int
+              ? data['registrationFeeUSD']
+              : int.tryParse(data['registrationFeeUSD'].toString());
         });
       }
     } catch (e) {
@@ -349,7 +353,7 @@ class _RegistrationPaymentScreenState extends State<RegistrationPaymentScreen> {
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Text(
-                                      'Outside World: \$10',
+                                      'Outside World: \$${_registrationFeeUSD ?? ''}',
                                       style: TextStyle(
                                         color: Colors.black,
                                         fontSize: screenWidth * 0.04,
