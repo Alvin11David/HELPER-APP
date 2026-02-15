@@ -210,12 +210,24 @@ class _BottomNavBarState extends State<BottomNavBar> {
                           ),
                         ),
                         SizedBox(height: 0),
-                        Text(
-                          'Forgot PIN?',
-                          style: TextStyle(
-                            color: Color(0xFFFFA10D),
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.pop(context);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => CreateWalletPINScreen(),
+                              ),
+                            );
+                          },
+                          child: Text(
+                            'Forgot PIN?',
+                            style: TextStyle(
+                              color: Color(0xFFFFA10D),
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              decoration: TextDecoration.underline,
+                            ),
                           ),
                         ),
                         SizedBox(height: 5),
