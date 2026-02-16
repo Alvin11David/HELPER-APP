@@ -290,8 +290,8 @@ class _ProfessionalLicenseUploadScreenState
                                     _customLicense != null
                                         ? _customLicense!
                                         : _selectedType == null
-                                            ? 'Selected license type will appear here'
-                                            : _selectedType!,
+                                        ? 'Selected license type will appear here'
+                                        : _selectedType!,
                                     overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
                                       color: Colors.black,
@@ -329,7 +329,9 @@ class _ProfessionalLicenseUploadScreenState
                               ),
                               child: DropdownButtonHideUnderline(
                                 child: DropdownButton<String>(
-                                  value: _customLicense == null ? _selectedType : null,
+                                  value: _customLicense == null
+                                      ? _selectedType
+                                      : null,
                                   icon: const Icon(Icons.keyboard_arrow_down),
                                   isExpanded: true,
                                   borderRadius: BorderRadius.circular(20),
@@ -677,7 +679,7 @@ class _ProfessionalLicenseUploadScreenState
                                             ),
                                       )
                                     : Text(
-                                        'Continue →',
+                                        'Confirm Upload →',
                                         style: TextStyle(
                                           color:
                                               _loading ||
@@ -793,8 +795,12 @@ class _ProfessionalLicenseUploadScreenState
                                                             child: ElevatedButton(
                                                               onPressed: () {
                                                                 setState(() {
-                                                                  _customLicense = _professionController.text.trim();
-                                                                  _selectedType = null;
+                                                                  _customLicense =
+                                                                      _professionController
+                                                                          .text
+                                                                          .trim();
+                                                                  _selectedType =
+                                                                      null;
                                                                 });
                                                                 Navigator.pop(
                                                                   context,
