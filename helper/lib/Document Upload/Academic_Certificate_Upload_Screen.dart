@@ -850,7 +850,7 @@ class _AcademicCertificateUploadScreenState
                           : Text(
                               _isAlreadyUploaded
                                   ? 'Already Uploaded'
-                                  : 'Upload',
+                                  : 'Confirm Upload',
                               style: TextStyle(
                                 color: Colors.black,
                                 fontSize: 16,
