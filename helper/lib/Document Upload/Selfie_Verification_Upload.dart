@@ -34,17 +34,13 @@ class _SelfieCaptureScreenState extends State<SelfieCaptureScreen> {
           .collection('users')
           .doc(user.uid)
           .collection('documents')
-          .doc('selfie')
+          .doc('Professional Workers')
           .get();
       if (doc.exists) {
         final data = doc.data() as Map<String, dynamic>;
-        // Only load if the storage path matches the new format
-        if (data['storagePath'] != null &&
-            data['storagePath'].startsWith(
-              'users/${user.uid}/documents/Professional Workers/',
-            )) {
+        if (data['selfie'] != null && data['selfie']['url'] != null) {
           setState(() {
-            _existingImageUrl = data['url'];
+            _existingImageUrl = data['selfie']['url'];
           });
         }
       }
@@ -95,20 +91,20 @@ class _SelfieCaptureScreenState extends State<SelfieCaptureScreen> {
       final uploadTask = await ref.putFile(file);
       final downloadUrl = await uploadTask.ref.getDownloadURL();
 
-      // Save to Firestore under user's collection
+      // Save to Firestore under user's collection (Professional Workers doc, selfie field)
       await FirebaseFirestore.instance
           .collection('users')
           .doc(user.uid)
           .collection('documents')
-          .doc('selfie')
+          .doc('Professional Workers')
           .set({
-            'url': downloadUrl,
-            'uploadedAt': FieldValue.serverTimestamp(),
-            'type': 'selfie',
-            'workerType': 'Professional Workers',
-            'storagePath':
-                'users/${user.uid}/documents/Professional Workers/selfieimage.jpg',
-          });
+            'selfie': {
+              'url': downloadUrl,
+              'uploadedAt': FieldValue.serverTimestamp(),
+              'storagePath':
+                  'users/${user.uid}/documents/Professional Workers/selfieimage.jpg',
+            },
+          }, SetOptions(merge: true));
 
       setState(() => _isUploading = false);
       ScaffoldMessenger.of(context).showSnackBar(
