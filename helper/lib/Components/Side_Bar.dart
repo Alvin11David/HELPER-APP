@@ -11,10 +11,12 @@ import '../Employer Dashboard/Employer_Dashboard_Screen.dart';
 import '../Employer Dashboard/My_Bookings_Screen.dart';
 import '../Worker Dashboard/Workers_Dashboard_Screen.dart';
 import '../Worker Dashboard/Worker_Ratings_Reviews_Screen.dart';
+import '../Worker Dashboard/Worker_Jobs_Screen.dart';
 import '../Document Upload/Profile/Support_Screen.dart';
 import '../Intro/Role_Selection_Screen.dart';
 import '../Escrow/Finished_Job_Code_Screen.dart';
 import '../Escrow/Cancellation_Code_Screen.dart';
+import '../Document Upload/Privacy_Policy_Screen.dart';
 
 class SideBar extends StatefulWidget {
   const SideBar({super.key});
@@ -736,7 +738,16 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                             const SizedBox(height: 15),
                             if (_userRole == 'worker') ...[
                               GestureDetector(
-                                onTap: () => setState(() => _selectedIndex = 1),
+                                onTap: () {
+                                  setState(() => _selectedIndex = 1);
+                                  toggleDrawer();
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => WorkerJobsScreen(),
+                                    ),
+                                  );
+                                },
                                 child: Padding(
                                   padding: EdgeInsets.only(left: 8, right: 8),
                                   child: Row(
@@ -768,36 +779,6 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                               const SizedBox(height: 10),
                             if (_userRole == 'worker')
                               GestureDetector(
-                                onTap: () => setState(() => _selectedIndex = 2),
-                                child: Padding(
-                                  padding: EdgeInsets.only(left: 8, right: 8),
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        Icons.calendar_today_rounded,
-                                        color: _selectedIndex == 2
-                                            ? Colors.orange
-                                            : Colors.black.withOpacity(0.6),
-                                      ),
-                                      SizedBox(width: 15),
-                                      Text(
-                                        "Availability &\nSchedule",
-                                        style: TextStyle(
-                                          color: _selectedIndex == 2
-                                              ? Colors.orange
-                                              : Colors.black,
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            if (_userRole == 'worker')
-                              const SizedBox(height: 20),
-                            if (_userRole == 'worker')
-                              GestureDetector(
                                 onTap: () {
                                   Navigator.push(
                                     context,
@@ -813,7 +794,7 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                                     children: [
                                       Icon(
                                         Icons.star,
-                                        color: _selectedIndex == 3
+                                        color: _selectedIndex == 2
                                             ? Colors.orange
                                             : Colors.black.withOpacity(0.6),
                                       ),
@@ -821,7 +802,7 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                                       Text(
                                         "Ratings & Reviews",
                                         style: TextStyle(
-                                          color: _selectedIndex == 3
+                                          color: _selectedIndex == 2
                                               ? Colors.orange
                                               : Colors.black,
                                           fontSize: 13,
@@ -849,7 +830,7 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                                   children: [
                                     Icon(
                                       Icons.support_agent,
-                                      color: _selectedIndex == 4
+                                      color: _selectedIndex == 3
                                           ? Colors.orange
                                           : Colors.black.withOpacity(0.6),
                                     ),
@@ -857,7 +838,7 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                                     Text(
                                       "Support",
                                       style: TextStyle(
-                                        color: _selectedIndex == 4
+                                        color: _selectedIndex == 3
                                             ? Colors.orange
                                             : Colors.black,
                                         fontSize: 13,
@@ -870,10 +851,9 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                             ),
                             const SizedBox(height: 20),
                             GestureDetector(
-                              onTap: () async {
-                                setState(() => _selectedIndex = 7);
+                              onTap: () {
+                                setState(() => _selectedIndex = 4);
                                 toggleDrawer();
-                                await FirebaseAuth.instance.signOut();
                                 Navigator.of(context).push(
                                   MaterialPageRoute(
                                     builder: (context) => const ProfileScreen(),
@@ -886,7 +866,7 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                                   children: [
                                     Icon(
                                       Icons.person,
-                                      color: _selectedIndex == 5
+                                      color: _selectedIndex == 4
                                           ? Colors.orange
                                           : Colors.black.withOpacity(0.6),
                                     ),
@@ -894,7 +874,7 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                                     Text(
                                       "Profile",
                                       style: TextStyle(
-                                        color: _selectedIndex == 5
+                                        color: _selectedIndex == 4
                                             ? Colors.orange
                                             : Colors.black,
                                         fontSize: 13,
@@ -911,7 +891,8 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => const ProfileScreen(),
+                                    builder: (context) =>
+                                        const PrivacyPolicyScreen(),
                                   ),
                                 );
                               },
@@ -921,7 +902,7 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                                   children: [
                                     Icon(
                                       Icons.receipt,
-                                      color: _selectedIndex == 6
+                                      color: _selectedIndex == 5
                                           ? Colors.orange
                                           : Colors.black.withOpacity(0.6),
                                     ),
@@ -929,7 +910,7 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                                     Text(
                                       "Privacy Policy",
                                       style: TextStyle(
-                                        color: _selectedIndex == 6
+                                        color: _selectedIndex == 5
                                             ? Colors.orange
                                             : Colors.black,
                                         fontSize: 13,
@@ -943,7 +924,7 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                             const SizedBox(height: 20),
                             GestureDetector(
                               onTap: () async {
-                                setState(() => _selectedIndex = 7);
+                                setState(() => _selectedIndex = 6);
                                 toggleDrawer();
                                 await FirebaseAuth.instance.signOut();
                                 Navigator.of(context).push(
@@ -958,7 +939,7 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                                   children: [
                                     Icon(
                                       Icons.logout,
-                                      color: _selectedIndex == 7
+                                      color: _selectedIndex == 6
                                           ? Colors.orange
                                           : Colors.black.withOpacity(0.6),
                                     ),
@@ -966,7 +947,7 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                                     Text(
                                       "Log Out",
                                       style: TextStyle(
-                                        color: _selectedIndex == 7
+                                        color: _selectedIndex == 6
                                             ? Colors.orange
                                             : Colors.black,
                                         fontSize: 13,
