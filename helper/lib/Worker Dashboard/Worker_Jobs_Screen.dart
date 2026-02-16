@@ -31,13 +31,13 @@ class _WorkerJobsScreenState extends State<WorkerJobsScreen> {
     if (status == 'completed') {
       return FirebaseFirestore.instance
           .collection('bookings')
-          .where('workerId', isEqualTo: uid)
+          .where('workerUid', isEqualTo: uid)
           .where('status', whereIn: ['completed', 'completed_pending'])
           .orderBy('updatedAt', descending: true);
     } else {
       return FirebaseFirestore.instance
           .collection('bookings')
-          .where('workerId', isEqualTo: uid)
+          .where('workerUid', isEqualTo: uid)
           .where('status', isEqualTo: status)
           .orderBy('createdAt', descending: true);
     }
