@@ -18,6 +18,146 @@ import 'Worker_Notifications.dart';
 import 'Workers_Earning_Detail_Screen.dart';
 import 'package:helper/Wallet/Wallet_Cancelled_screen.dart';
 
+// Countdown widget for next job
+class NextJobCountdownCard extends StatefulWidget {
+  final String workerUid;
+  const NextJobCountdownCard({Key? key, required this.workerUid})
+    : super(key: key);
+
+  @override
+  State<NextJobCountdownCard> createState() => _NextJobCountdownCardState();
+}
+
+class _NextJobCountdownCardState extends State<NextJobCountdownCard> {
+  Timer? _timer;
+  String _countdown = '00:00:00';
+  bool _started = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _startTimer();
+    _updateCountdown();
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  void _startTimer() {
+    _timer?.cancel();
+    _timer = Timer.periodic(
+      const Duration(seconds: 1),
+      (_) => _updateCountdown(),
+    );
+  }
+
+  Future<void> _updateCountdown() async {
+    try {
+      // If there is an active job, do not count down
+      final activeSnap = await FirebaseFirestore.instance
+          .collection('bookings')
+          .where('workerUid', isEqualTo: widget.workerUid)
+          .where('status', whereIn: const ['in_progress', 'started'])
+          .limit(1)
+          .get();
+      if (activeSnap.docs.isNotEmpty) {
+        setState(() {
+          _countdown = '00:00:00';
+          _started = false;
+        });
+        return;
+      }
+
+      final snap = await FirebaseFirestore.instance
+          .collection('bookings')
+          .where('workerUid', isEqualTo: widget.workerUid)
+          .where(
+            'status',
+            whereIn: const ['confirmed', 'in_progress', 'started'],
+          )
+          .orderBy('startDateTime')
+          .limit(1)
+          .get();
+
+      if (snap.docs.isEmpty) {
+        setState(() {
+          _countdown = '00:00:00';
+          _started = false;
+        });
+        return;
+      }
+
+      final nextJob = snap.docs.first.data();
+      final startDt = nextJob['startDateTime'];
+      if (startDt == null) return;
+      final startDateTime = (startDt is Timestamp)
+          ? startDt.toDate()
+          : (startDt as DateTime?);
+      if (startDateTime == null) return;
+      final now = DateTime.now();
+      if (now.isAfter(startDateTime)) {
+        setState(() {
+          _countdown = '00:00:00';
+          _started = true;
+        });
+      } else {
+        final remaining = startDateTime.difference(now);
+        final hours = remaining.inHours;
+        final minutes = (remaining.inMinutes % 60);
+        final seconds = (remaining.inSeconds % 60);
+        final formattedTime =
+            '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+        setState(() {
+          _countdown = formattedTime;
+          _started = false;
+        });
+      }
+    } catch (e) {
+      // ignore error
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    return Container(
+      height: 100,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              _started ? '🚀 Job has began!' : 'Time to Next Job',
+              style: const TextStyle(
+                color: Colors.black,
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              _countdown,
+              style: TextStyle(
+                color: _started ? Colors.green : Colors.black,
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Courier',
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class WorkersDashboardScreen extends StatefulWidget {
   const WorkersDashboardScreen({super.key});
 
@@ -36,11 +176,6 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
   bool _isCallDialogShowing = false;
   Map<String, dynamic>? activeJobData; // Store active job details for display
   String? _activeServiceProviderId;
-
-  // Next job countdown
-  Timer? _nextJobTimer;
-  String _nextJobCountdown = '00:00:00';
-  bool _nextJobStarted = false;
 
   @override
   void initState() {
@@ -114,9 +249,6 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
     }
 
     print('Setting up FCM listeners...');
-
-    // Start next job countdown timer
-    _startNextJobCountdownTimer();
 
     // Set up FCM listener for incoming calls
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
@@ -289,7 +421,6 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
 
   @override
   void dispose() {
-    _nextJobTimer?.cancel();
     // Set offline status
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid != null) {
@@ -299,86 +430,6 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
       });
     }
     super.dispose();
-  }
-
-  void _startNextJobCountdownTimer() {
-    _nextJobTimer?.cancel();
-    _nextJobTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      _updateNextJobCountdown();
-    });
-  }
-
-  void _updateNextJobCountdown() async {
-    final workerUid = FirebaseAuth.instance.currentUser?.uid;
-    if (workerUid == null) return;
-
-    try {
-      // If there is an active job, do not count down
-      final activeSnap = await FirebaseFirestore.instance
-          .collection('bookings')
-          .where('workerUid', isEqualTo: workerUid)
-          .where('status', whereIn: const ['in_progress', 'started'])
-          .limit(1)
-          .get();
-      if (activeSnap.docs.isNotEmpty) {
-        _setNextJobCountdown('00:00:00', false);
-        return;
-      }
-
-      final snap = await FirebaseFirestore.instance
-          .collection('bookings')
-          .where('workerUid', isEqualTo: workerUid)
-          .where(
-            'status',
-            whereIn: const ['confirmed', 'in_progress', 'started'],
-          )
-          .orderBy('startDateTime')
-          .limit(1)
-          .get();
-
-      if (snap.docs.isEmpty) {
-        _setNextJobCountdown('00:00:00', false);
-        return;
-      }
-
-      final nextJob = snap.docs.first.data();
-      final startDt = nextJob['startDateTime'];
-
-      if (startDt == null) return;
-
-      final startDateTime = (startDt is Timestamp)
-          ? startDt.toDate()
-          : (startDt as DateTime?);
-      if (startDateTime == null) return;
-
-      final now = DateTime.now();
-
-      if (now.isAfter(startDateTime)) {
-        // Job has started
-        _setNextJobCountdown('00:00:00', true);
-      } else {
-        // Still counting down
-        final remaining = startDateTime.difference(now);
-        final hours = remaining.inHours;
-        final minutes = (remaining.inMinutes % 60);
-        final seconds = (remaining.inSeconds % 60);
-        final formattedTime =
-            '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
-
-        _setNextJobCountdown(formattedTime, false);
-      }
-    } catch (e) {
-      print('Error updating next job countdown: $e');
-    }
-  }
-
-  void _setNextJobCountdown(String value, bool started) {
-    if (_nextJobCountdown == value && _nextJobStarted == started) return;
-    if (!mounted) return;
-    setState(() {
-      _nextJobCountdown = value;
-      _nextJobStarted = started;
-    });
   }
 
   Widget _buildActiveJobCard(Map<String, dynamic> data, double screenWidth) {
@@ -1561,42 +1612,18 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                           // Next Job Countdown Card
                           Padding(
                             padding: EdgeInsets.symmetric(horizontal: w * 0.05),
-                            child: Container(
-                              height: 100,
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Center(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      _nextJobStarted
-                                          ? '🚀 Job has began!'
-                                          : 'Time to Next Job',
-                                      style: const TextStyle(
-                                        color: Colors.black,
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.bold,
-                                      ),
+                            child: workerUid == null
+                                ? Container(
+                                    height: 100,
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(20),
                                     ),
-                                    const SizedBox(height: 6),
-                                    Text(
-                                      _nextJobCountdown,
-                                      style: TextStyle(
-                                        color: _nextJobStarted
-                                            ? Colors.green
-                                            : Colors.black,
-                                        fontSize: 24,
-                                        fontWeight: FontWeight.bold,
-                                        fontFamily: 'Courier',
-                                      ),
+                                    child: const Center(
+                                      child: Text('Not signed in'),
                                     ),
-                                  ],
-                                ),
-                              ),
-                            ),
+                                  )
+                                : NextJobCountdownCard(workerUid: workerUid),
                           ),
                           SizedBox(height: 20),
                           // Active Job

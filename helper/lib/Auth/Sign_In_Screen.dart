@@ -629,304 +629,298 @@ class _SignInScreenState extends State<SignInScreen> {
               fit: BoxFit.cover,
             ),
           ),
-          child: Stack(
-            children: [
-              SingleChildScrollView(
-                padding: EdgeInsets.symmetric(horizontal: sidePad),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    children: [
-                      SizedBox(height: h * 0.02),
-
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Image.asset(
-                            'assets/icons/logo.png',
-                            width: w * 0.09,
-                            height: w * 0.09,
-                          ),
-                          SizedBox(width: w * 0.02),
-                          Text(
-                            'Helper',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: w * 0.05,
-                              fontWeight: FontWeight.bold,
-                              fontFamily: 'Inter',
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      SizedBox(height: h * 0.05),
-
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          'Sign In',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: w * 0.09,
-                            fontFamily: 'AbrilFatface',
-                            height: 1.05,
-                          ),
-                        ),
-                      ),
-                      SizedBox(height: h * 0.03),
-                      _GlassPill(
-                        radius: 30,
-                        padding: EdgeInsets.symmetric(
-                          horizontal: w * 0.05,
-                          vertical: h * 0.006,
-                        ),
-                        child: Text(
-                          _mode == _AuthMode.phone
-                              ? 'Enter your Phone Number'
-                              : 'Enter your Email Address',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: w * 0.04,
-                            fontWeight: FontWeight.w600,
-                            fontFamily: 'Inter',
-                          ),
-                        ),
-                      ),
-
-                      SizedBox(height: h * 0.02),
-
-                      _SmoothAuthSwitch(
-                        height: h * 0.065,
-                        mode: _mode,
-                        onChanged: _switchMode,
-                      ),
-
-                      SizedBox(height: h * 0.02),
-
-                      AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 220),
-                        switchInCurve: Curves.easeOut,
-                        switchOutCurve: Curves.easeIn,
-                        transitionBuilder: (child, anim) {
-                          final slide =
-                              Tween<Offset>(
-                                begin: const Offset(0.02, 0),
-                                end: Offset.zero,
-                              ).animate(
-                                CurvedAnimation(
-                                  parent: anim,
-                                  curve: Curves.easeOut,
-                                ),
-                              );
-                          return FadeTransition(
-                            opacity: anim,
-                            child: SlideTransition(
-                              position: slide,
-                              child: child,
-                            ),
-                          );
-                        },
-                        child: _mode == _AuthMode.phone
-                            ? _PhoneBlock(
-                                key: const ValueKey('phoneBlock'),
-                                phoneCtrl: _phoneCtrl,
-                              )
-                            : _EmailBlock(
-                                key: const ValueKey('emailBlock'),
-                                emailCtrl: _emailCtrl,
-                                passwordCtrl: _passwordCtrl,
-                                obscure: _obscure,
-                                onToggleObscure: () =>
-                                    setState(() => _obscure = !_obscure),
-                                emailFocusNode: _emailFocusNode,
-                                passwordFocusNode: _passwordFocusNode,
-                              ),
-                      ),
-
-                      SizedBox(height: h * 0.025),
-
-                      SizedBox(
-                        width: double.infinity,
-                        height: h * 0.062,
-                        child: ElevatedButton(
-                          onPressed: _loading ? null : _onContinue,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: _pureWhite,
-                            disabledBackgroundColor: _pureWhite.withOpacity(
-                              0.6,
-                            ),
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(30),
-                            ),
-                          ),
-                          child: _loading
-                              ? SizedBox(
-                                  width: h * 0.03,
-                                  height: h * 0.03,
-                                  child: const CircularProgressIndicator(
-                                    strokeWidth: 3,
-                                    color: Colors.black,
-                                  ),
-                                )
-                              : Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      'Continue',
-                                      style: TextStyle(
-                                        fontSize: w * 0.045,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.black,
-                                        fontFamily: 'Inter',
-                                      ),
-                                    ),
-                                    SizedBox(width: w * 0.02),
-                                    Icon(
-                                      Icons.arrow_forward_rounded,
-                                      color: Colors.black,
-                                      size: h * 0.035,
-                                    ),
-                                  ],
-                                ),
-                        ),
-                      ),
-
-                      if (_mode == _AuthMode.email) ...[
-                        SizedBox(height: h * 0.02),
-                        _OrDivider(),
-                        SizedBox(height: h * 0.02),
-                        SizedBox(
-                          width: double.infinity,
-                          height: h * 0.062,
-                          child: ElevatedButton(
-                            onPressed: _loading ? null : _onGoogle,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: _pureWhite,
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(30),
-                              ),
-                            ),
-                            child: Row(
+          child: SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight: MediaQuery.of(context).size.height,
+              ),
+              child: IntrinsicHeight(
+                child: Stack(
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: sidePad),
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          children: [
+                            SizedBox(height: h * 0.02),
+                            Row(
                               mainAxisAlignment: MainAxisAlignment.center,
-                              mainAxisSize: MainAxisSize.min,
                               children: [
-                                _GoogleIconSlot(size: w * 0.065),
-                                SizedBox(width: w * 0.025),
+                                Image.asset(
+                                  'assets/icons/logo.png',
+                                  width: w * 0.09,
+                                  height: w * 0.09,
+                                ),
+                                SizedBox(width: w * 0.02),
                                 Text(
-                                  'Continue with Google',
+                                  'Helper',
                                   style: TextStyle(
-                                    fontSize: w * 0.042,
-                                    fontWeight: FontWeight.w800,
+                                    color: Colors.white,
+                                    fontSize: w * 0.05,
+                                    fontWeight: FontWeight.bold,
                                     fontFamily: 'Inter',
-                                    color: Colors.black,
                                   ),
                                 ),
                               ],
                             ),
-                          ),
-                        ),
-                      ],
-
-                      SizedBox(height: h * 0.07),
-
-                      if (_mode == _AuthMode.phone)
-                        Center(
-                          child: Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: w * 0.045,
-                              vertical: h * 0.01,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.12),
-                              borderRadius: BorderRadius.circular(22),
-                              border: Border.all(
-                                color: Colors.white.withOpacity(0.25),
-                              ),
-                            ),
-                            child: Text(
-                              'Your phone number is safe and will not be shared. Standard SMS charges may apply.',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: Colors.white.withOpacity(0.75),
-                                fontSize: w * 0.032,
-                                fontWeight: FontWeight.w600,
-                                fontFamily: 'Inter',
-                              ),
-                            ),
-                          ),
-                        ),
-
-                      SizedBox(height: h * 0.03),
-
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            'Don\'t have an account?',
-                            style: TextStyle(
-                              color: Colors.white.withOpacity(0.9),
-                              fontSize: w * 0.037,
-                              fontFamily: 'Poppins',
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          SizedBox(width: w * 0.02),
-                          GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      const PhoneNumberEmailAddressScreen(),
+                            SizedBox(height: h * 0.05),
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                'Sign In',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: w * 0.09,
+                                  fontFamily: 'AbrilFatface',
+                                  height: 1.05,
                                 ),
-                              );
-                            },
-                            child: Text(
-                              'Sign Up',
-                              style: TextStyle(
-                                color: _brandOrange,
-                                fontSize: w * 0.032,
-                                fontFamily: 'Montserrat',
-                                fontWeight: FontWeight.w800,
                               ),
                             ),
+                            SizedBox(height: h * 0.03),
+                            _GlassPill(
+                              radius: 30,
+                              padding: EdgeInsets.symmetric(
+                                horizontal: w * 0.05,
+                                vertical: h * 0.006,
+                              ),
+                              child: Text(
+                                _mode == _AuthMode.phone
+                                    ? 'Enter your Phone Number'
+                                    : 'Enter your Email Address',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: w * 0.04,
+                                  fontWeight: FontWeight.w600,
+                                  fontFamily: 'Inter',
+                                ),
+                              ),
+                            ),
+                            SizedBox(height: h * 0.02),
+                            _SmoothAuthSwitch(
+                              height: h * 0.065,
+                              mode: _mode,
+                              onChanged: _switchMode,
+                            ),
+                            SizedBox(height: h * 0.02),
+                            AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 220),
+                              switchInCurve: Curves.easeOut,
+                              switchOutCurve: Curves.easeIn,
+                              transitionBuilder: (child, anim) {
+                                final slide =
+                                    Tween<Offset>(
+                                      begin: const Offset(0.02, 0),
+                                      end: Offset.zero,
+                                    ).animate(
+                                      CurvedAnimation(
+                                        parent: anim,
+                                        curve: Curves.easeOut,
+                                      ),
+                                    );
+                                return FadeTransition(
+                                  opacity: anim,
+                                  child: SlideTransition(
+                                    position: slide,
+                                    child: child,
+                                  ),
+                                );
+                              },
+                              child: _mode == _AuthMode.phone
+                                  ? _PhoneBlock(
+                                      key: const ValueKey('phoneBlock'),
+                                      phoneCtrl: _phoneCtrl,
+                                    )
+                                  : _EmailBlock(
+                                      key: const ValueKey('emailBlock'),
+                                      emailCtrl: _emailCtrl,
+                                      passwordCtrl: _passwordCtrl,
+                                      obscure: _obscure,
+                                      onToggleObscure: () =>
+                                          setState(() => _obscure = !_obscure),
+                                      emailFocusNode: _emailFocusNode,
+                                      passwordFocusNode: _passwordFocusNode,
+                                    ),
+                            ),
+                            SizedBox(height: h * 0.025),
+                            SizedBox(
+                              width: double.infinity,
+                              height: h * 0.062,
+                              child: ElevatedButton(
+                                onPressed: _loading ? null : _onContinue,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: _pureWhite,
+                                  disabledBackgroundColor: _pureWhite
+                                      .withOpacity(0.6),
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(30),
+                                  ),
+                                ),
+                                child: _loading
+                                    ? SizedBox(
+                                        width: h * 0.03,
+                                        height: h * 0.03,
+                                        child: const CircularProgressIndicator(
+                                          strokeWidth: 3,
+                                          color: Colors.black,
+                                        ),
+                                      )
+                                    : Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text(
+                                            'Continue',
+                                            style: TextStyle(
+                                              fontSize: w * 0.045,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.black,
+                                              fontFamily: 'Inter',
+                                            ),
+                                          ),
+                                          SizedBox(width: w * 0.02),
+                                          Icon(
+                                            Icons.arrow_forward_rounded,
+                                            color: Colors.black,
+                                            size: h * 0.035,
+                                          ),
+                                        ],
+                                      ),
+                              ),
+                            ),
+                            if (_mode == _AuthMode.email) ...[
+                              SizedBox(height: h * 0.02),
+                              _OrDivider(),
+                              SizedBox(height: h * 0.02),
+                              SizedBox(
+                                width: double.infinity,
+                                height: h * 0.062,
+                                child: ElevatedButton(
+                                  onPressed: _loading ? null : _onGoogle,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: _pureWhite,
+                                    elevation: 0,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(30),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      _GoogleIconSlot(size: w * 0.065),
+                                      SizedBox(width: w * 0.025),
+                                      Text(
+                                        'Continue with Google',
+                                        style: TextStyle(
+                                          fontSize: w * 0.042,
+                                          fontWeight: FontWeight.w800,
+                                          fontFamily: 'Inter',
+                                          color: Colors.black,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                            SizedBox(height: h * 0.07),
+                            if (_mode == _AuthMode.phone)
+                              Center(
+                                child: Container(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: w * 0.045,
+                                    vertical: h * 0.01,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.12),
+                                    borderRadius: BorderRadius.circular(22),
+                                    border: Border.all(
+                                      color: Colors.white.withOpacity(0.25),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    'Your phone number is safe and will not be shared. Standard SMS charges may apply.',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      color: Colors.white.withOpacity(0.75),
+                                      fontSize: w * 0.032,
+                                      fontWeight: FontWeight.w600,
+                                      fontFamily: 'Inter',
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            SizedBox(height: h * 0.03),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  'Don\'t have an account?',
+                                  style: TextStyle(
+                                    color: Colors.white.withOpacity(0.9),
+                                    fontSize: w * 0.037,
+                                    fontFamily: 'Poppins',
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                SizedBox(width: w * 0.02),
+                                GestureDetector(
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            const PhoneNumberEmailAddressScreen(),
+                                      ),
+                                    );
+                                  },
+                                  child: Text(
+                                    'Sign Up',
+                                    style: TextStyle(
+                                      color: _brandOrange,
+                                      fontSize: w * 0.032,
+                                      fontFamily: 'Montserrat',
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: h * 0.03),
+                          ],
+                        ),
+                      ),
+                    ),
+                    // Back button
+                    Positioned(
+                      top: h * 0.04,
+                      left: w * 0.04,
+                      child: GestureDetector(
+                        onTap: () => Navigator.of(context).maybePop(),
+                        child: Container(
+                          width: w * 0.13,
+                          height: w * 0.13,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFFFFF),
+                            borderRadius: BorderRadius.circular(15),
                           ),
-                        ],
-                      ),
-
-                      SizedBox(height: h * 0.03),
-                    ],
-                  ),
-                ),
-              ),
-
-              Positioned(
-                top: h * 0.04,
-                left: w * 0.04,
-                child: GestureDetector(
-                  onTap: () => Navigator.of(context).maybePop(),
-                  child: Container(
-                    width: w * 0.13,
-                    height: w * 0.13,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFFFFFF),
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    child: Center(
-                      child: Icon(
-                        Icons.chevron_left,
-                        color: Colors.black,
-                        size: w * 0.10,
+                          child: Center(
+                            child: Icon(
+                              Icons.chevron_left,
+                              color: Colors.black,
+                              size: w * 0.10,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
-                  ),
+                  ],
                 ),
               ),
-            ],
+            ),
           ),
         ),
       ),
