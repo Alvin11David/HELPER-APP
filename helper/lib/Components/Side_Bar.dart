@@ -16,6 +16,7 @@ import '../Document Upload/Profile/Support_Screen.dart';
 import '../Intro/Role_Selection_Screen.dart';
 import '../Escrow/Finished_Job_Code_Screen.dart';
 import '../Escrow/Cancellation_Code_Screen.dart';
+import '../Document Upload/Privacy_Policy_Screen.dart';
 
 class SideBar extends StatefulWidget {
   const SideBar({super.key});
@@ -891,7 +892,7 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => const ProfileScreen(),
+                                    builder: (context) => const PrivacyPolicyScreen(),
                                   ),
                                 );
                               },
