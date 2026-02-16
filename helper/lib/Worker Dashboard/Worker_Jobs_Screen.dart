@@ -104,61 +104,87 @@ class _WorkerJobsScreenState extends State<WorkerJobsScreen> {
                       }
                       return ListView.separated(
                         itemCount: docs.length,
-                        separatorBuilder: (context, index) => const Divider(),
+                        separatorBuilder: (context, index) => const SizedBox(height: 12),
+                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
                         itemBuilder: (context, index) {
                           final data = docs[index].data();
-                          final employerName =
-                              data['employerName'] ?? 'Employer';
-                          final jobDescription =
-                              data['jobDescription'] ?? 'No description';
+                          final employerName = data['employerName'] ?? 'Employer';
+                          final jobDescription = data['jobDescription'] ?? 'No description';
                           final amount = data['amount'] ?? 0;
-                          final startDateTime =
-                              (data['startDateTime'] as Timestamp?)?.toDate();
-                          final updatedAt = (data['updatedAt'] as Timestamp?)
-                              ?.toDate();
+                          final startDateTime = (data['startDateTime'] as Timestamp?)?.toDate();
+                          final updatedAt = (data['updatedAt'] as Timestamp?)?.toDate();
                           final status = data['status'] ?? '';
                           final jobTitle = data['jobTitle'] ?? 'Job';
                           Widget trailing;
                           if (status == 'completed_pending') {
-                            trailing = const Chip(
-                              label: Text('Pending Code'),
-                              backgroundColor: Colors.amber,
-                            );
+                            trailing = const Chip(label: Text('Pending Code'), backgroundColor: Colors.amber);
                           } else if (status == 'completed') {
-                            trailing = const Chip(
-                              label: Text('Completed'),
-                              backgroundColor: Colors.green,
-                            );
+                            trailing = const Chip(label: Text('Completed'), backgroundColor: Colors.green);
                           } else if (status == 'pending') {
-                            trailing = const Chip(
-                              label: Text('Pending'),
-                              backgroundColor: Colors.orange,
-                            );
+                            trailing = const Chip(label: Text('Pending'), backgroundColor: Colors.orange);
                           } else if (status == 'confirmed') {
-                            trailing = const Chip(
-                              label: Text('Confirmed'),
-                              backgroundColor: Colors.blue,
-                            );
+                            trailing = const Chip(label: Text('Confirmed'), backgroundColor: Colors.blue);
                           } else if (status == 'cancelled') {
-                            trailing = const Chip(
-                              label: Text('Cancelled'),
-                              backgroundColor: Colors.red,
-                            );
+                            trailing = const Chip(label: Text('Cancelled'), backgroundColor: Colors.red);
                           } else {
                             trailing = const SizedBox.shrink();
                           }
-                          return ListTile(
-                            leading: const Icon(
-                              Icons.work,
-                              color: Colors.orange,
+                          return Card(
+                            elevation: 3,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            child: Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Icon(Icons.work, color: Colors.orange, size: 32),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(jobTitle, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                                            const SizedBox(height: 2),
+                                            Text('Employer: $employerName', style: const TextStyle(fontSize: 13, color: Colors.black87)),
+                                          ],
+                                        ),
+                                      ),
+                                      trailing,
+                                    ],
+                                  ),
+                                  const SizedBox(height: 10),
+                                  Text(jobDescription, style: const TextStyle(fontSize: 14)),
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.attach_money, size: 18, color: Colors.green),
+                                      Text('Amount: $amount', style: const TextStyle(fontWeight: FontWeight.w500)),
+                                      const Spacer(),
+                                      const Icon(Icons.calendar_today, size: 16, color: Colors.blueGrey),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        startDateTime != null ? 'Start: ${startDateTime.toString().split(".")[0]}' : 'Start: N/A',
+                                        style: const TextStyle(fontSize: 13),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.update, size: 16, color: Colors.blueGrey),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        updatedAt != null ? 'Updated: ${updatedAt.toString().split(".")[0]}' : 'Updated: N/A',
+                                        style: const TextStyle(fontSize: 13),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
                             ),
-                            title: Text(jobTitle),
-                            subtitle: Text(
-                              'Employer: $employerName\nDescription: $jobDescription\nAmount: $amount\nStart: '
-                              '${startDateTime != null ? startDateTime.toString().split(".")[0] : 'N/A'}\nUpdated: '
-                              '${updatedAt != null ? updatedAt.toString().split(".")[0] : 'N/A'}',
-                            ),
-                            trailing: trailing,
                           );
                         },
                       );
