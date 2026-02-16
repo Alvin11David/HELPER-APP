@@ -22,17 +22,14 @@ class UserEmailOrPhoneNumber extends StatelessWidget {
       if (signUpDoc.exists && signUpDoc.data() != null) {
         activeRole =
             (signUpDoc.data() as Map<String, dynamic>)['activeRole'] as String?;
-        if (activeRole == null) {
-          activeRole =
-              (signUpDoc.data() as Map<String, dynamic>)['role'] as String?;
-        }
+        activeRole ??= (signUpDoc.data() as Map<String, dynamic>)['role'] as String?;
       }
 
       // Try to fetch from "User Roles" first
       if (activeRole != null) {
         DocumentSnapshot roleDoc = await FirebaseFirestore.instance
             .collection('User Roles')
-            .doc('${user.uid}_${activeRole}')
+            .doc('${user.uid}_$activeRole')
             .get();
         if (roleDoc.exists && roleDoc.data() != null) {
           Map<String, dynamic> data = roleDoc.data() as Map<String, dynamic>;

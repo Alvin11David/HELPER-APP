@@ -14,7 +14,6 @@ import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:helper/Escrow/Cancellation_Code_Screen.dart';
-import 'package:helper/Escrow/Finished_Job_Code_Screen.dart';
 import 'package:helper/Chats/Chat_Screen.dart';
 import 'package:helper/Maps/Map_Screen.dart';
 
@@ -793,7 +792,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
         throw Exception('Escrow record not found.');
       }
 
-      final escrowData = escrowSnap.data() as Map<String, dynamic>? ?? {};
+      final escrowData = escrowSnap.data() ?? {};
       final alreadyPaid = escrowData['isPaid'] == true;
       if (alreadyPaid) return;
 

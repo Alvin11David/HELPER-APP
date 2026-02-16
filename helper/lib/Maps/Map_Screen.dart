@@ -946,9 +946,7 @@ class _MapScreenState extends State<MapScreen> {
     final dest = widget.destinationLatLng;
     if (dest == null) return;
     LatLng? origin = _currentPosition;
-    if (origin == null) {
-      origin = await _getCurrentLocation();
-    }
+    origin ??= await _getCurrentLocation();
     if (origin == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Location data not available')),

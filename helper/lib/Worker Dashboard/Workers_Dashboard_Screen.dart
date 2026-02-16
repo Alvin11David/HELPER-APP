@@ -406,20 +406,6 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
       return;
     }
 
-    // sort so active job is first, then confirmed
-    docs.sort((a, b) {
-      final pa = _bookingPriority(a.data());
-      final pb = _bookingPriority(b.data());
-      if (pa != pb) return pa.compareTo(pb);
-
-      final aStart = a.data()['startDateTime'];
-      final bStart = b.data()['startDateTime'];
-      DateTime? ad = aStart is Timestamp ? aStart.toDate() : aStart as DateTime?;
-      DateTime? bd = bStart is Timestamp ? bStart.toDate() : bStart as DateTime?;
-      if (ad == null || bd == null) return 0;
-      return ad.compareTo(bd);
-    });
-
     // if nothing selected yet OR selected not found anymore => pick first
     final stillExists =
         _selectedBookingId != null &&

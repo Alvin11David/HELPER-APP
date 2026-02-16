@@ -126,7 +126,7 @@ class _ChatScreenState extends State<ChatScreen> {
       return;
     }
 
-    final data = docSnapshot.data() as Map<String, dynamic>?;
+    final data = docSnapshot.data();
     final hasProviderUid =
         (data?['providerUid'] ?? '').toString().trim().isNotEmpty;
     final hasProviderId =

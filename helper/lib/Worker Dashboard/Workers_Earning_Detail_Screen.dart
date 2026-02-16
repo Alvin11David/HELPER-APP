@@ -52,7 +52,7 @@ class _WorkerEarningsScreenState extends State<WorkerEarningsScreen> {
           .doc(bookingId)
           .get();
       if (bookingSnap.exists) {
-        bookingData = bookingSnap.data() as Map<String, dynamic>? ?? {};
+        bookingData = bookingSnap.data() ?? {};
       }
     }
 
