@@ -14,6 +14,7 @@ import 'package:helper/Employer Dashboard/Employer_Dashboard_Screen.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 
+
 class JobDetailBookingScreen extends StatefulWidget {
   /// ✅ REQUIRED so we can read provider bookings + prevent overlaps
   final String serviceProviderId;
