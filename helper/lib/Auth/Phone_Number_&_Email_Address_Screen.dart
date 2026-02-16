@@ -628,14 +628,25 @@ class _PhoneNumberEmailAddressScreenState
                                 }
                               }
                             },
-                            child: Text(
-                              'Use Referral Code',
-                              style: TextStyle(
-                                color: Colors.white.withOpacity(0.85),
-                                fontSize: w * 0.035,
-                                fontWeight: FontWeight.w600,
-                                fontFamily: 'Inter',
-                              ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.card_giftcard,
+                                  color: Colors.white.withOpacity(0.85),
+                                  size: w * 0.045,
+                                ),
+                                SizedBox(width: w * 0.018),
+                                Text(
+                                  'Use Referral Code',
+                                  style: TextStyle(
+                                    color: Colors.white.withOpacity(0.85),
+                                    fontSize: w * 0.035,
+                                    fontWeight: FontWeight.w600,
+                                    fontFamily: 'Inter',
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                           const Spacer(),

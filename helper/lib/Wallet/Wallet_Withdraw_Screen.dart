@@ -480,7 +480,7 @@ class _WalletWithdrawScreenState extends State<WalletWithdrawScreen> {
                       ),
                     ),
                     const SizedBox(height: 10),
-                    _RuleRow('Minimum Amount: UGX 5,000'),
+                    _RuleRow('Minimum Amount: UGX 500'),
                     _RuleRow('Maximum Amount: Available Balance'),
                     SizedBox(height: screenHeight * 0.09),
                     // Continue (white)

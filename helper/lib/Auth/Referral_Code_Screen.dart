@@ -3,7 +3,6 @@ import 'dart:math' as math;
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
 import 'Sign_In_Screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'Phone_Number_&_Email_Address_Screen.dart';

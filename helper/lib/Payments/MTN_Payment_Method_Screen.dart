@@ -14,6 +14,7 @@ class MtnPaymentMethodScreen extends StatefulWidget {
 }
 
 class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
+  int? _registrationFee;
   final TextEditingController _cardNumberController = TextEditingController();
   final FocusNode _phoneNumberFocusNode = FocusNode();
   bool isChecked = false;
@@ -27,6 +28,7 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
   @override
   void initState() {
     super.initState();
+    _loadRegistrationFee();
     _loadSavedPhoneNumber();
     _checkExistingPaymentStatus();
     _phoneNumberFocusNode.addListener(() {
@@ -37,6 +39,25 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
         }
       }
     });
+  }
+
+  Future<void> _loadRegistrationFee() async {
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('System Settings')
+          .doc('default')
+          .get();
+      if (doc.exists && doc.data() != null) {
+        final data = doc.data() as Map<String, dynamic>;
+        setState(() {
+          _registrationFee = data['registrationFee'] is int
+              ? data['registrationFee']
+              : int.tryParse(data['registrationFee'].toString());
+        });
+      }
+    } catch (e) {
+      print('Error loading registration fee: $e');
+    }
   }
 
   @override
@@ -128,6 +149,19 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
     print('Starting payment process');
     final String phoneNumber = _cardNumberController.text.trim();
 
+    if (_registrationFee == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Registration fee not loaded'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      setState(() {
+        _isLoading = false;
+      });
+      return;
+    }
+
     // 1. FORMAT MSISDN (Force +256 format)
     String digits = phoneNumber.replaceAll(RegExp(r'\D'), '');
     if (digits.startsWith('0')) digits = '256${digits.substring(1)}';
@@ -168,7 +202,7 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
           "data": {
             'userId': currentUser.uid,
             'msisdn': finalMsisdn,
-            'amount': 500,
+            'amount': _registrationFee,
             'reference': finalReference,
             'description': 'Registration Fee',
             'originalPhoneNumber': phoneNumber,
@@ -258,6 +292,10 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // If registration fee is not loaded yet, show loading indicator
+    if (_registrationFee == null) {
+      return Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
     final double screenWidth = MediaQuery.of(context).size.width;
     final double screenHeight = MediaQuery.of(context).size.height;
 
@@ -382,7 +420,7 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
                                   ),
                                   SizedBox(height: screenHeight * 0.005),
                                   Text(
-                                    'UGX 500',
+                                    'UGX ${_registrationFee}',
                                     style: TextStyle(
                                       color: Colors.white,
                                       fontSize: screenWidth * 0.07,
@@ -748,7 +786,7 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
                           ),
                           child: Text(
                             _isPaymentSuccessful
-                                ? 'Your payment of UGX 500\nhas been successfully\nreceived.'
+                                ? 'Your payment of UGX ${_registrationFee}\nhas been successfully\nreceived.'
                                 : 'Please complete your payment\non your MTN mobile phone\nto continue.',
                             textAlign: TextAlign.center,
                             style: TextStyle(

@@ -53,11 +53,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
                 child: SingleChildScrollView(
                   child: Container(
                     width: double.infinity,
-                    padding: EdgeInsets.only(
-                      left: 0,
-                      right: 0,
-                      bottom: 20,
-                    ),
+                    padding: EdgeInsets.only(left: 0, right: 0, bottom: 20),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.only(
@@ -89,7 +85,9 @@ class _BottomNavBarState extends State<BottomNavBar> {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: List.generate(4, (index) {
                                   return Container(
-                                    margin: EdgeInsets.symmetric(horizontal: 10),
+                                    margin: EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                    ),
                                     width: 15,
                                     height: 15,
                                     decoration: BoxDecoration(
@@ -128,9 +126,12 @@ class _BottomNavBarState extends State<BottomNavBar> {
                                 });
                                 if (pin.length == 4) {
                                   try {
-                                    final user = FirebaseAuth.instance.currentUser;
+                                    final user =
+                                        FirebaseAuth.instance.currentUser;
                                     if (user == null) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
                                         SnackBar(
                                           content: Text('User not logged in'),
                                           backgroundColor: Colors.red,
@@ -148,7 +149,9 @@ class _BottomNavBarState extends State<BottomNavBar> {
                                         .get();
 
                                     if (!doc.exists || doc.data() == null) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
                                         SnackBar(
                                           content: Text('User data not found'),
                                           backgroundColor: Colors.red,
@@ -160,15 +163,18 @@ class _BottomNavBarState extends State<BottomNavBar> {
                                       return;
                                     }
 
-                                    final data = doc.data() as Map<String, dynamic>;
-                                    final savedPin = data['wallet_pin']?.toString();
+                                    final data =
+                                        doc.data() as Map<String, dynamic>;
+                                    final savedPin = data['wallet_pin']
+                                        ?.toString();
 
                                     if (savedPin == null || savedPin.isEmpty) {
                                       Navigator.pop(context);
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                          builder: (context) => CreateWalletPINScreen(),
+                                          builder: (context) =>
+                                              CreateWalletPINScreen(),
                                         ),
                                       );
                                       return;
@@ -179,11 +185,14 @@ class _BottomNavBarState extends State<BottomNavBar> {
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                          builder: (context) => WalletFlowScreen(),
+                                          builder: (context) =>
+                                              WalletFlowScreen(),
                                         ),
                                       );
                                     } else {
-                                      ScaffoldMessenger.of(context).showSnackBar(
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
                                         SnackBar(
                                           content: Text('Incorrect PIN'),
                                           backgroundColor: Colors.red,
@@ -196,7 +205,9 @@ class _BottomNavBarState extends State<BottomNavBar> {
                                   } catch (e) {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
-                                        content: Text('Error validating PIN: $e'),
+                                        content: Text(
+                                          'Error validating PIN: $e',
+                                        ),
                                         backgroundColor: Colors.red,
                                       ),
                                     );
@@ -210,12 +221,24 @@ class _BottomNavBarState extends State<BottomNavBar> {
                           ),
                         ),
                         SizedBox(height: 0),
-                        Text(
-                          'Forgot PIN?',
-                          style: TextStyle(
-                            color: Color(0xFFFFA10D),
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.pop(context);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => CreateWalletPINScreen(),
+                              ),
+                            );
+                          },
+                          child: Text(
+                            'Forgot PIN?',
+                            style: TextStyle(
+                              color: Color(0xFFFFA10D),
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              decoration: TextDecoration.underline,
+                            ),
                           ),
                         ),
                         SizedBox(height: 5),
