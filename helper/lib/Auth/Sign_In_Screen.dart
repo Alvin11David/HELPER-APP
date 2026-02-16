@@ -984,7 +984,7 @@ class _PhoneBlock extends StatelessWidget {
               state?._onReferralCodeTap();
             },
             child: Text(
-              'Referral Code?',
+              'See Your Referral Code?',
               style: TextStyle(
                 color: Colors.white.withOpacity(0.85),
                 fontSize: w * 0.035,
@@ -1094,7 +1094,7 @@ class _EmailBlock extends StatelessWidget {
                 state?._onReferralCodeTap();
               },
               child: Text(
-                'Referral Code?',
+                'See Your Referral Code?',
                 style: TextStyle(
                   color: Colors.white.withOpacity(0.85),
                   fontSize: w * 0.035,
