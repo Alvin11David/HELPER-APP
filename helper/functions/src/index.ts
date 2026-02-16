@@ -2523,7 +2523,7 @@ export const cancelBookingWithEscrow = onCall(async (request) => {
     // Calculate fee and refund amounts
     const escrowAmountRaw = escrowData.amount ?? booking.amount ?? 0;
     const escrowAmount = Math.max(0, Math.round(Number(escrowAmountRaw)));
-    const feeAmount = Math.round(escrowAmount * 0.005); // 0.5% penalty
+    const feeAmount = Math.round(escrowAmount * 0.05); // 5% penalty
     const refundAmount = Math.max(0, escrowAmount - feeAmount);
 
     // Check if cancellation already in progress
