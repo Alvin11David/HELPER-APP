@@ -9,10 +9,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text(
           'Privacy Policy',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         backgroundColor: const Color(0xFFFFA10D),
         iconTheme: const IconThemeData(color: Colors.white),
@@ -91,10 +88,16 @@ class PrivacyPolicyScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 15),
-                    _buildBulletPoint('Personal information (name, email, phone number)'),
-                    _buildBulletPoint('Profile information (skills, location, availability)'),
+                    _buildBulletPoint(
+                      'Personal information (name, email, phone number)',
+                    ),
+                    _buildBulletPoint(
+                      'Profile information (skills, location, availability)',
+                    ),
                     _buildBulletPoint('Payment information for transactions'),
-                    _buildBulletPoint('Communication data (messages, reviews, ratings)'),
+                    _buildBulletPoint(
+                      'Communication data (messages, reviews, ratings)',
+                    ),
                     const SizedBox(height: 30),
 
                     // How We Use Your Information
@@ -111,9 +114,13 @@ class PrivacyPolicyScreen extends StatelessWidget {
                     const SizedBox(height: 15),
                     _buildBulletPoint('Provide and maintain our services'),
                     _buildBulletPoint('Process payments and transactions'),
-                    _buildBulletPoint('Connect service providers with customers'),
+                    _buildBulletPoint(
+                      'Connect service providers with customers',
+                    ),
                     _buildBulletPoint('Send notifications and updates'),
-                    _buildBulletPoint('Improve our app and develop new features'),
+                    _buildBulletPoint(
+                      'Improve our app and develop new features',
+                    ),
                     const SizedBox(height: 30),
 
                     // Information Sharing
@@ -128,9 +135,15 @@ class PrivacyPolicyScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 15),
-                    _buildBulletPoint('With service providers to facilitate bookings'),
-                    _buildBulletPoint('With payment processors for transaction processing'),
-                    _buildBulletPoint('When required by law or to protect our rights'),
+                    _buildBulletPoint(
+                      'With service providers to facilitate bookings',
+                    ),
+                    _buildBulletPoint(
+                      'With payment processors for transaction processing',
+                    ),
+                    _buildBulletPoint(
+                      'When required by law or to protect our rights',
+                    ),
                     _buildBulletPoint('With your explicit consent'),
                     const SizedBox(height: 30),
 
@@ -159,10 +172,14 @@ class PrivacyPolicyScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 15),
-                    _buildBulletPoint('Access and update your personal information'),
+                    _buildBulletPoint(
+                      'Access and update your personal information',
+                    ),
                     _buildBulletPoint('Request deletion of your data'),
                     _buildBulletPoint('Opt out of marketing communications'),
-                    _buildBulletPoint('File a complaint with supervisory authorities'),
+                    _buildBulletPoint(
+                      'File a complaint with supervisory authorities',
+                    ),
                     const SizedBox(height: 30),
 
                     // Contact Us

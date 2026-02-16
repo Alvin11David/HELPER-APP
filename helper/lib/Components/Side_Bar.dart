@@ -851,10 +851,9 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                             ),
                             const SizedBox(height: 20),
                             GestureDetector(
-                              onTap: () async {
-                                setState(() => _selectedIndex = 6);
+                              onTap: () {
+                                setState(() => _selectedIndex = 4);
                                 toggleDrawer();
-                                await FirebaseAuth.instance.signOut();
                                 Navigator.of(context).push(
                                   MaterialPageRoute(
                                     builder: (context) => const ProfileScreen(),
@@ -892,7 +891,8 @@ class SideBarState extends State<SideBar> with SingleTickerProviderStateMixin {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => const PrivacyPolicyScreen(),
+                                    builder: (context) =>
+                                        const PrivacyPolicyScreen(),
                                   ),
                                 );
                               },
