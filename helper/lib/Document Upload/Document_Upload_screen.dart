@@ -510,198 +510,266 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                               },
                             ),
                             SizedBox(height: h * 0.03),
-                           StreamBuilder<bool>(
-  stream: _selfieVerificationStream(),
-  builder: (context, snapshot) {
-    final uploaded = snapshot.data ?? false;
+                            StreamBuilder<bool>(
+                              stream: _selfieVerificationStream(),
+                              builder: (context, snapshot) {
+                                final uploaded = snapshot.data ?? false;
 
-    // ─── One-time "verification detected" snackbar ───────────────────────
-    if (uploaded && !_hasShownSelfieVerifiedSnackbar) {
-      _hasShownSelfieVerifiedSnackbar = true;
+                                // ─── One-time "verification detected" snackbar ───────────────────────
+                                if (uploaded &&
+                                    !_hasShownSelfieVerifiedSnackbar) {
+                                  _hasShownSelfieVerifiedSnackbar = true;
 
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text("Selfie submitted successfully! Now under verification."),
-            backgroundColor: Colors.green[700],
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            duration: const Duration(seconds: 4),
-            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          ),
-        );
-      });
-    }
+                                  WidgetsBinding.instance.addPostFrameCallback((
+                                    _,
+                                  ) {
+                                    if (!mounted) return;
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: const Text(
+                                          "Selfie submitted successfully! Now under verification.",
+                                        ),
+                                        backgroundColor: Colors.green[700],
+                                        behavior: SnackBarBehavior.floating,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                        ),
+                                        duration: const Duration(seconds: 4),
+                                        margin: const EdgeInsets.symmetric(
+                                          horizontal: 16,
+                                          vertical: 12,
+                                        ),
+                                      ),
+                                    );
+                                  });
+                                }
 
-    return GestureDetector(
-      onTap: () async {
-        setState(() => _selectedIndex = 3);
+                                return GestureDetector(
+                                  onTap: () async {
+                                    setState(() => _selectedIndex = 3);
 
-        if (uploaded) {
-          // Show dialog with selfie image
-          final user = FirebaseAuth.instance.currentUser;
-          String? selfieUrl;
+                                    // Debug: Print Firestore document and selfie field
+                                    final user =
+                                        FirebaseAuth.instance.currentUser;
+                                    if (user != null) {
+                                      final doc = await FirebaseFirestore
+                                          .instance
+                                          .collection('users')
+                                          .doc(user.uid)
+                                          .collection('documents')
+                                          .doc('Professional Workers')
+                                          .get();
+                                      final data = doc.data();
+                                      final selfie = data != null
+                                          ? data['selfie']
+                                          : null;
+                                    }
 
-          if (user != null) {
-            final doc = await FirebaseFirestore.instance
-                .collection('users')
-                .doc(user.uid)
-                .collection('documents')
-                .doc('Professional Workers')
-                .get();
+                                    if (uploaded) {
+                                      // Show dialog with selfie image
+                                      String? selfieUrl;
 
-            if (doc.exists &&
-                doc.data() != null &&
-                doc.data()!.containsKey('selfie')) {
-              final selfieMap = doc.data()!['selfie'] as Map<String, dynamic>;
-              selfieUrl = selfieMap['url'] as String?;
-            }
-          }
+                                      if (user != null) {
+                                        final doc = await FirebaseFirestore
+                                            .instance
+                                            .collection('users')
+                                            .doc(user.uid)
+                                            .collection('documents')
+                                            .doc('Professional Workers')
+                                            .get();
 
-          if (!mounted) return;
+                                        if (doc.exists &&
+                                            doc.data() != null &&
+                                            doc.data()!.containsKey('selfie')) {
+                                          final selfieMap =
+                                              doc.data()!['selfie']
+                                                  as Map<String, dynamic>;
+                                          selfieUrl =
+                                              selfieMap['url'] as String?;
+                                        }
+                                      }
 
-          showDialog(
-            context: context,
-            builder: (context) => Dialog(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Text(
-                      'Uploaded Selfie',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
-                      ),
-                    ),
-                  ),
-                  if (selfieUrl != null)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16.0,
-                        vertical: 8.0,
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Image.network(
-                          selfieUrl,
-                          fit: BoxFit.cover,
-                          height: 260,
-                          width: 260,
-                          errorBuilder: (context, error, stackTrace) =>
-                              const Icon(
-                            Icons.broken_image,
-                            size: 80,
-                          ),
-                        ),
-                      ),
-                    ),
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('Close'),
-                  ),
-                ],
-              ),
-            ),
-          );
-        } else {
-          // ─── Go to upload screen ───────────────────────────────────────
-          final result = await Navigator.of(context).push<bool>(
-            MaterialPageRoute(
-              builder: (context) => const SelfieCaptureScreen(),
-            ),
-          );
+                                      if (!mounted) return;
 
-          // After returning from upload screen
-          if (result == true && mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: const Text('Selfie upload complete! Checking status...'),
-                backgroundColor: Colors.blue[800],
-                behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                duration: const Duration(seconds: 3),
-              ),
-            );
+                                      showDialog(
+                                        context: context,
+                                        builder: (context) => Dialog(
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              20,
+                                            ),
+                                          ),
+                                          child: Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Padding(
+                                                padding: const EdgeInsets.all(
+                                                  16.0,
+                                                ),
+                                                child: Text(
+                                                  'Uploaded Selfie',
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 18,
+                                                  ),
+                                                ),
+                                              ),
+                                              if (selfieUrl != null)
+                                                Padding(
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                        horizontal: 16.0,
+                                                        vertical: 8.0,
+                                                      ),
+                                                  child: ClipRRect(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          12,
+                                                        ),
+                                                    child: Image.network(
+                                                      selfieUrl,
+                                                      fit: BoxFit.cover,
+                                                      height: 260,
+                                                      width: 260,
+                                                      errorBuilder:
+                                                          (
+                                                            context,
+                                                            error,
+                                                            stackTrace,
+                                                          ) => const Icon(
+                                                            Icons.broken_image,
+                                                            size: 80,
+                                                          ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              TextButton(
+                                                onPressed: () =>
+                                                    Navigator.of(context).pop(),
+                                                child: const Text('Close'),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      );
+                                    } else {
+                                      // ─── Go to upload screen ───────────────────────────────────────
+                                      final result = await Navigator.of(context)
+                                          .push<bool>(
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  const SelfieCaptureScreen(),
+                                            ),
+                                          );
 
-            // Optional: force a small rebuild delay in case stream is lagging
-            Future.delayed(const Duration(milliseconds: 800), () {
-              if (mounted) setState(() {});
-            });
-          }
-        }
-      },
+                                      // After returning from upload screen
+                                      if (result == true && mounted) {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            content: const Text(
+                                              'Selfie upload complete! Checking status...',
+                                            ),
+                                            backgroundColor: Colors.blue[800],
+                                            behavior: SnackBarBehavior.floating,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
+                                            ),
+                                            duration: const Duration(
+                                              seconds: 3,
+                                            ),
+                                          ),
+                                        );
 
-      child: Row(
-        children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: uploaded
-                  ? const Color(0xFFFBBC04)
-                  : (_selectedIndex == 3
-                      ? const Color(0xFFFBBC04)
-                      : const Color(0xFFD9D9D9)),
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Icon(
-                Icons.camera,
-                color: uploaded ? Colors.white : Colors.black,
-                size: 20,
-              ),
-            ),
-          ),
-          SizedBox(width: w * 0.018),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Current Photo (Selfie)',
-                  style: TextStyle(
-                    color: uploaded
-                        ? Colors.orange
-                        : (_selectedIndex == 3
-                            ? const Color(0xFFFBBC04)
-                            : Colors.black),
-                    fontSize: screenWidth * 0.032,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                Text(
-                  uploaded ? 'Submitted For Verification' : 'Not Verified',
-                  style: TextStyle(
-                    color: uploaded
-                        ? Colors.orange
-                        : (_selectedIndex == 3
-                            ? const Color(0xFFFBBC04)
-                            : Colors.black54),
-                    fontSize: screenWidth * 0.035,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Icon(
-            Icons.chevron_right,
-            color: uploaded
-                ? Colors.orange
-                : (_selectedIndex == 3
-                    ? const Color(0xFFFBBC04)
-                    : Colors.black54),
-          ),
-        ],
-      ),
-    );
-  },
-),
+                                        // Optional: force a small rebuild delay in case stream is lagging
+                                        Future.delayed(
+                                          const Duration(milliseconds: 800),
+                                          () {
+                                            if (mounted) setState(() {});
+                                          },
+                                        );
+                                      }
+                                    }
+                                  },
+
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        width: 36,
+                                        height: 36,
+                                        decoration: BoxDecoration(
+                                          color: uploaded
+                                              ? const Color(0xFFFBBC04)
+                                              : (_selectedIndex == 3
+                                                    ? const Color(0xFFFBBC04)
+                                                    : const Color(0xFFD9D9D9)),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Center(
+                                          child: Icon(
+                                            Icons.camera,
+                                            color: uploaded
+                                                ? Colors.white
+                                                : Colors.black,
+                                            size: 20,
+                                          ),
+                                        ),
+                                      ),
+                                      SizedBox(width: w * 0.018),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              'Current Photo (Selfie)',
+                                              style: TextStyle(
+                                                color: uploaded
+                                                    ? Colors.orange
+                                                    : (_selectedIndex == 3
+                                                          ? const Color(
+                                                              0xFFFBBC04,
+                                                            )
+                                                          : Colors.black),
+                                                fontSize: screenWidth * 0.032,
+                                                fontWeight: FontWeight.w800,
+                                              ),
+                                            ),
+                                            Text(
+                                              uploaded
+                                                  ? 'Submitted For Verification'
+                                                  : 'Not Verified',
+                                              style: TextStyle(
+                                                color: uploaded
+                                                    ? Colors.orange
+                                                    : (_selectedIndex == 3
+                                                          ? const Color(
+                                                              0xFFFBBC04,
+                                                            )
+                                                          : Colors.black54),
+                                                fontSize: screenWidth * 0.035,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Icon(
+                                        Icons.chevron_right,
+                                        color: uploaded
+                                            ? Colors.orange
+                                            : (_selectedIndex == 3
+                                                  ? const Color(0xFFFBBC04)
+                                                  : Colors.black54),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                            ),
                           ],
                         ),
                       ),
@@ -1044,12 +1112,7 @@ Stream<bool> _selfieVerificationStream() {
       .collection('documents')
       .doc('Professional Workers')
       .snapshots()
-      .map(
-        (doc) =>
-            doc.exists &&
-            doc.data() != null &&
-            (doc.data() as Map<String, dynamic>)['selfie'] != null,
-      );
+      .map((doc) => doc.exists && doc.data()!.containsKey('selfie'));
 }
 
 // Helper: Combined stream to check if all required documents are uploaded
