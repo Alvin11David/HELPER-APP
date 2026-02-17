@@ -10,6 +10,7 @@ import '../Components/Side_Bar.dart';
 import 'package:helper/Components/user_avatar_circle.dart';
 import 'package:helper/Components/Bottom_Nav_Bar.dart';
 import 'Worker_Jobs_Hub_Screen.dart';
+import 'WorkerSearchBar.dart';
 import 'Active_Job_detail.dart';
 import 'Worker_Details_Screen.dart';
 import 'package:helper/Chats/Chat_Screen.dart';
@@ -26,10 +27,42 @@ class WorkersDashboardScreen extends StatefulWidget {
 }
 
 class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
+  Future<void> _fetchJobSuggestions(String input) async {
+    final workerUid = FirebaseAuth.instance.currentUser?.uid;
+    if (workerUid == null || input.trim().isEmpty) {
+      setState(() {
+        _jobSuggestions = [];
+        _showSuggestions = false;
+      });
+      return;
+    }
+    final snap = await FirebaseFirestore.instance
+        .collection('bookings')
+        .where('workerUid', isEqualTo: workerUid)
+        .get();
+    final jobs = <String>{};
+    for (final doc in snap.docs) {
+      final data = doc.data();
+      final jobName = (data['jobCategoryName'] ?? '').toString();
+      if (jobName.toLowerCase().contains(input.trim().toLowerCase()) &&
+          jobName.isNotEmpty) {
+        jobs.add(jobName);
+      }
+    }
+    setState(() {
+      _jobSuggestions = jobs.toList();
+      _showSuggestions = _jobSuggestions.isNotEmpty && _focusNode.hasFocus;
+    });
+  }
+
   final TextEditingController _controller = TextEditingController();
   final FocusNode _focusNode = FocusNode();
   final GlobalKey<SideBarState> _sidebarKey = GlobalKey();
   late final UserAvatarCircle _avatarWidget;
+
+  List<String> _jobSuggestions = [];
+  bool _showSuggestions = false;
+  Timer? _debounce;
 
   String workerStatus =
       'Available'; // Can be 'Available', 'On Job', 'Not Available'
@@ -48,6 +81,39 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
   void initState() {
     super.initState();
     _avatarWidget = UserAvatarCircle();
+    _focusNode.addListener(() {
+      if (!_focusNode.hasFocus) {
+        setState(() => _showSuggestions = false);
+      }
+    });
+    Future<void> _fetchJobSuggestions(String input) async {
+      final workerUid = FirebaseAuth.instance.currentUser?.uid;
+      if (workerUid == null || input.trim().isEmpty) {
+        setState(() {
+          _jobSuggestions = [];
+          _showSuggestions = false;
+        });
+        return;
+      }
+      final snap = await FirebaseFirestore.instance
+          .collection('bookings')
+          .where('workerUid', isEqualTo: workerUid)
+          .get();
+      final jobs = <String>{};
+      for (final doc in snap.docs) {
+        final data = doc.data();
+        final jobName = (data['jobCategoryName'] ?? '').toString();
+        if (jobName.toLowerCase().contains(input.trim().toLowerCase()) &&
+            jobName.isNotEmpty) {
+          jobs.add(jobName);
+        }
+      }
+      setState(() {
+        _jobSuggestions = jobs.toList();
+        _showSuggestions = _jobSuggestions.isNotEmpty && _focusNode.hasFocus;
+      });
+    }
+
     print('=== WORKER DASHBOARD INIT STATE ===');
 
     // Request notification permissions
@@ -620,7 +686,7 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
         children: [
           // --- selector chips ---
           SizedBox(
-            height: 38,
+            height: 49,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               itemCount: docs.length,
@@ -646,16 +712,14 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                       vertical: 8,
                     ),
                     decoration: BoxDecoration(
-                      color:
-                          isSelected
-                              ? const Color(0xFFFFA10D)
-                              : Colors.grey.shade200,
+                      color: isSelected
+                          ? const Color(0xFFFFA10D)
+                          : Colors.grey.shade200,
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color:
-                            isSelected
-                                ? const Color(0xFFFFA10D)
-                                : Colors.black12,
+                        color: isSelected
+                            ? const Color(0xFFFFA10D)
+                            : Colors.black12,
                       ),
                     ),
                     child: Row(
@@ -675,8 +739,7 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                         Text(
                           status,
                           style: TextStyle(
-                            color:
-                                isSelected ? Colors.white : Colors.black54,
+                            color: isSelected ? Colors.white : Colors.black54,
                             fontSize: 11,
                           ),
                         ),
@@ -1284,64 +1347,8 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                     child: SingleChildScrollView(
                       child: Column(
                         children: [
-                          // Search bar
-                          Padding(
-                            padding: EdgeInsets.only(
-                              top: 15,
-                              left: w * 0.05,
-                              right: w * 0.04,
-                            ),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: Container(
-                                    height: 40,
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(30),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        SizedBox(width: 10),
-                                        Icon(Icons.search, color: Colors.black),
-                                        SizedBox(width: 10),
-                                        Expanded(
-                                          child: TextField(
-                                            controller: _controller,
-                                            focusNode: _focusNode,
-                                            decoration: InputDecoration(
-                                              hintText:
-                                                  'Search for jobs here...',
-                                              border: InputBorder.none,
-                                              hintStyle: TextStyle(
-                                                color: Colors.black,
-                                              ),
-                                            ),
-                                            style: TextStyle(
-                                              color: Colors.black,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                                SizedBox(width: 10),
-                                Container(
-                                  width: 40,
-                                  height: 40,
-                                  decoration: const BoxDecoration(
-                                    color: Colors.white,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: const Icon(
-                                    Icons.tune,
-                                    color: Colors.black,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+                          // Search bar and suggestions (extracted)
+                          WorkerSearchBar(),
                           SizedBox(height: 20),
                           Padding(
                             padding: EdgeInsets.symmetric(horizontal: w * 0.05),
@@ -1819,28 +1826,27 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                                   StreamBuilder<
                                     QuerySnapshot<Map<String, dynamic>>
                                   >(
-                                    stream:
-                                        workerUid == null
-                                            ? null
-                                            : FirebaseFirestore.instance
-                                                .collection('bookings')
-                                                .where(
-                                                  'workerUid',
-                                                  isEqualTo: workerUid,
-                                                )
-                                                .where(
-                                                  'status',
-                                                  whereIn: [
-                                                    'confirmed',
-                                                    'in_progress',
-                                                    'started',
-                                                  ],
-                                                )
-                                                .orderBy(
-                                                  'updatedAt',
-                                                  descending: true,
-                                                )
-                                                .snapshots(),
+                                    stream: workerUid == null
+                                        ? null
+                                        : FirebaseFirestore.instance
+                                              .collection('bookings')
+                                              .where(
+                                                'workerUid',
+                                                isEqualTo: workerUid,
+                                              )
+                                              .where(
+                                                'status',
+                                                whereIn: [
+                                                  'confirmed',
+                                                  'in_progress',
+                                                  'started',
+                                                ],
+                                              )
+                                              .orderBy(
+                                                'updatedAt',
+                                                descending: true,
+                                              )
+                                              .snapshots(),
                                     builder: (ctx, snap) {
                                       if (snap.connectionState ==
                                           ConnectionState.waiting) {
