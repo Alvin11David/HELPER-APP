@@ -908,6 +908,56 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
                       ],
                     ),
                   ),
+                  // Suggestions dropdown below search bar
+                  if (_focusNode.hasFocus && _searchResults.isNotEmpty)
+                    Positioned(
+                      top: 115,
+                      right: w * 0.04,
+                      child: Container(
+                        width: w * 0.76,
+                        constraints: BoxConstraints(
+                          maxHeight: 250,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black26,
+                              blurRadius: 8,
+                              offset: Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: _searchResults.length,
+                          itemBuilder: (context, index) {
+                            final doc = _searchResults[index];
+                            final data = doc.data();
+                            final businessName = (data['businessName'] ?? '').toString();
+                            final jobCategoryName = (data['jobCategoryName'] ?? '').toString();
+                            return ListTile(
+                              title: Text(businessName, style: TextStyle(fontWeight: FontWeight.bold)),
+                              subtitle: Text(jobCategoryName),
+                              onTap: () {
+                                FocusScope.of(context).unfocus();
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => WorkerDetailsScreen(
+                                      providerId: doc.id,
+                                      data: data,
+                                      workerId: '',
+                                    ),
+                                  ),
+                                );
+                              },
+                            );
+                          },
+                        ),
+                      ),
+                    ),
                   AnimatedPositioned(
                     duration: const Duration(milliseconds: 300),
                     curve: Curves.easeInOut,
