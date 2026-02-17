@@ -14,6 +14,7 @@ import 'package:helper/Employer Dashboard/Employer_Dashboard_Screen.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 
+
 class JobDetailBookingScreen extends StatefulWidget {
   /// ✅ REQUIRED so we can read provider bookings + prevent overlaps
   final String serviceProviderId;
@@ -135,12 +136,18 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
     // Ensure UI shows computed amount when pricing/amount provided by caller
     _recalcAmount();
     _startWalletListener();
-    if (widget.pricingType == null || widget.amount == null) {
-      _fetchServiceProviderData();
-    }
     _initLocation();
-    _refreshMonthBookings(); // initial calendar availability
     _locationSearchCtrl.addListener(_onSearchChanged);
+    _initProviderAndCalendar();
+  }
+
+  Future<void> _initProviderAndCalendar() async {
+    // ensures workerUid is available before calendar queries
+    await _ensureWorkerUid();
+    if (widget.pricingType == null || widget.amount == null) {
+      await _fetchServiceProviderData();
+    }
+    await _refreshMonthBookings();
   }
 
   @override
@@ -168,7 +175,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
             _checkWalletBalance(forceFetch: false);
             return;
           }
-          final data = doc.data() as Map<String, dynamic>?;
+          final data = doc.data();
           final raw = data?['amount'];
           if (raw is int) {
             _walletBalance = raw;
@@ -211,7 +218,6 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
         });
 
         _recalcAmount();
-        _refreshMonthBookings();
       }
     } catch (e) {
       _toast("Failed to load pricing info: $e");
@@ -720,7 +726,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
         if (!employerSnap.exists) {
           throw Exception('Employer wallet not found.');
         }
-        final employerData = employerSnap.data() as Map<String, dynamic>?;
+        final employerData = employerSnap.data();
         final rawAmount = employerData?['amount'];
         final currentBalance = rawAmount is int
             ? rawAmount
@@ -1069,29 +1075,37 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
         59,
       ).add(const Duration(seconds: 1));
 
-      // Any booking that intersects this month window.
-      Query<Map<String, dynamic>> query = FirebaseFirestore.instance
-          .collection('bookings')
-          .where('status', whereIn: const ['pending', 'confirmed', 'accepted']);
-
-      if ((_workerUid ?? '').trim().isNotEmpty) {
-        query = query.where('workerUid', isEqualTo: _workerUid);
-      } else {
-        query = query.where(
-          'serviceProviderId',
-          isEqualTo: widget.serviceProviderId,
-        );
+      final workerUid = await _ensureWorkerUid();
+      if (workerUid == null || workerUid.isEmpty) {
+        setState(() => _monthBookingsError = "Unable to resolve workerUid.");
+        return;
       }
 
-      final qs = await query
-          .where(
-            'startDateTime',
-            isLessThan: Timestamp.fromDate(windowEndExclusive),
-          )
-          .where('endDateTime', isGreaterThan: Timestamp.fromDate(windowStart))
+      final qs = await FirebaseFirestore.instance
+          .collection('bookings')
+          .where('workerUid', isEqualTo: workerUid)
           .get();
 
-      final bookings = qs.docs.map((d) => d.data()).toList();
+      final allowedStatuses = <String>{
+        'pending',
+        'confirmed',
+        'started',
+        'in_progress',
+      };
+
+      final bookings = qs.docs
+          .map((d) => d.data())
+          .where((b) {
+            final status = (b['status'] ?? '').toString();
+            if (!allowedStatuses.contains(status)) return false;
+
+            final st = (b['startDateTime'] as Timestamp?)?.toDate();
+            final en = (b['endDateTime'] as Timestamp?)?.toDate();
+            if (st == null || en == null) return false;
+
+            return st.isBefore(windowEndExclusive) && en.isAfter(windowStart);
+          })
+          .toList();
 
       final Map<DateTime, _DayStatus> statusMap = {};
       for (final day in nonNullDays) {
@@ -1174,28 +1188,37 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
     }
 
     try {
-      // Overlap rule:
-      // existing.start < newEnd AND existing.end > newStart
-      Query<Map<String, dynamic>> query = FirebaseFirestore.instance
-          .collection('bookings')
-          .where('status', whereIn: const ['pending', 'confirmed', 'accepted']);
-
-      if ((_workerUid ?? '').trim().isNotEmpty) {
-        query = query.where('workerUid', isEqualTo: _workerUid);
-      } else {
-        query = query.where(
-          'serviceProviderId',
-          isEqualTo: widget.serviceProviderId,
-        );
+      final workerUid = await _ensureWorkerUid();
+      if (workerUid == null || workerUid.isEmpty) {
+        _toast("Unable to resolve worker availability.");
+        return false;
       }
 
-      final qs = await query
-          .where('startDateTime', isLessThan: Timestamp.fromDate(newEnd))
-          .where('endDateTime', isGreaterThan: Timestamp.fromDate(newStart))
-          .limit(1)
+      final qs = await FirebaseFirestore.instance
+          .collection('bookings')
+          .where('workerUid', isEqualTo: workerUid)
           .get();
 
-      if (qs.docs.isNotEmpty) {
+      final blockedStatuses = <String>{
+        'pending',
+        'confirmed',
+        'started',
+        'in_progress',
+      };
+
+      final hasOverlap = qs.docs.any((doc) {
+        final b = doc.data();
+        final status = (b['status'] ?? '').toString();
+        if (!blockedStatuses.contains(status)) return false;
+
+        final st = (b['startDateTime'] as Timestamp?)?.toDate();
+        final en = (b['endDateTime'] as Timestamp?)?.toDate();
+        if (st == null || en == null) return false;
+
+        return st.isBefore(newEnd) && en.isAfter(newStart);
+      });
+
+      if (hasOverlap) {
         _toast("That date/time range overlaps with an existing booking.");
         return false;
       }
@@ -1945,17 +1968,14 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
 
                   Color bg;
 
-                  // Past days (grey)
-                  if (isPast) {
+                  if (status == _DayStatus.booked) {
+                    bg = Colors.red.shade400;
+                  } else if (isPast) {
                     bg = Colors.grey.shade400;
+                  } else if (inRange) {
+                    bg = Colors.red.shade400;
                   } else {
-                    // Selected OR booked are red
-                    if (inRange || status == _DayStatus.booked) {
-                      bg = Colors.red.shade400;
-                    } else {
-                      // Available future is green
-                      bg = Colors.green.shade400;
-                    }
+                    bg = Colors.green.shade400;
                   }
 
                   return InkWell(

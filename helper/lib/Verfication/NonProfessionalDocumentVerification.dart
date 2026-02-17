@@ -5,7 +5,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:helper/Document%20Upload/Non%20Professional/Non_Professional_Selfie_Capture_Screen.dart';
 import 'package:helper/Worker%20Dashboard/Workers_Dashboard_Screen.dart';
-import 'package:helper/Worker%20Dashboard/Workers_skills_and_Job_Details.dart';
 
 
 class NonProfessionalDocumentUploadVerificationScreen extends StatefulWidget {

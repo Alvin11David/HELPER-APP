@@ -14,7 +14,6 @@ import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:helper/Escrow/Cancellation_Code_Screen.dart';
-import 'package:helper/Escrow/Finished_Job_Code_Screen.dart';
 import 'package:helper/Chats/Chat_Screen.dart';
 import 'package:helper/Maps/Map_Screen.dart';
 
@@ -345,10 +344,13 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
 
   /// Format Duration to HH:MM:SS
   String _formatDuration(Duration d) {
+    if (d.isNegative) d = Duration.zero;
     final hours = d.inHours;
     final minutes = d.inMinutes % 60;
     final seconds = d.inSeconds % 60;
-    return '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+    return '${hours.toString().padLeft(2, '0')}:'
+        '${minutes.toString().padLeft(2, '0')}:'
+        '${seconds.toString().padLeft(2, '0')}';
   }
 
   /// Calculate and update job timer
@@ -376,27 +378,24 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
 
     final now = DateTime.now();
 
-    // Total duration: endDateTime - startDateTime
+    // Total duration of job
     final totalDuration = endDateTime.difference(startDateTime);
-    final totalTimeStr = _formatDuration(totalDuration);
 
-    // Elapsed time: now - startedAt (or startDateTime if startedAt is null or hasn't started yet)
-    final elapsedStart = startedAt ?? startDateTime;
-    final elapsedDuration = now.difference(elapsedStart);
-    final elapsedTimeStr = _formatDuration(elapsedDuration);
+    // Elapsed time (never negative)
+    final effectiveStart = startedAt ?? startDateTime;
+    final rawElapsed = now.difference(effectiveStart);
+    final elapsedDuration =
+        rawElapsed.isNegative ? Duration.zero : rawElapsed;
 
-    // Countdown: endDateTime - startDateTime (same as total time, counts down as elapsed time increases)
-    // This aligns with total time so they always match
+    // Countdown from total time to zero
+    final rawRemaining = totalDuration - elapsedDuration;
     final remainingDuration =
-        totalDuration.inSeconds > elapsedDuration.inSeconds
-        ? totalDuration - elapsedDuration
-        : Duration.zero;
-    final remainingStr = _formatDuration(remainingDuration);
+        rawRemaining.isNegative ? Duration.zero : rawRemaining;
 
     setState(() {
-      totalTime = totalTimeStr;
-      elapsedTime = elapsedTimeStr;
-      jobCountdown = remainingStr;
+      totalTime = _formatDuration(totalDuration);
+      elapsedTime = _formatDuration(elapsedDuration);
+      jobCountdown = _formatDuration(remainingDuration);
     });
   }
 
@@ -793,7 +792,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
         throw Exception('Escrow record not found.');
       }
 
-      final escrowData = escrowSnap.data() as Map<String, dynamic>? ?? {};
+      final escrowData = escrowSnap.data() ?? {};
       final alreadyPaid = escrowData['isPaid'] == true;
       if (alreadyPaid) return;
 

@@ -139,8 +139,9 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
   }
 
   Future<void> _processPayment() async {
-    if (_isPaymentSuccessful)
+    if (_isPaymentSuccessful) {
       return; // Prevent re-payment if already successful
+    }
 
     setState(() {
       _isLoading = true;
