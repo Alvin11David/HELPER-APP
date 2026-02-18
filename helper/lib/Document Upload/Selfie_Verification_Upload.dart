@@ -290,31 +290,71 @@ class _SelfieCaptureScreenState extends State<SelfieCaptureScreen> {
                                 ),
                               ] else if (_selectedImage == null &&
                                   _existingImageUrl != null) ...[
-                                // White stroke rectangle with existing image
-                                Container(
-                                  width: double.infinity,
-                                  height: (h * 0.40).clamp(260.0, 360.0),
-                                  decoration: BoxDecoration(
-                                    color: Colors.transparent,
-                                    borderRadius: BorderRadius.circular(22),
-                                    border: Border.all(
-                                      color: Colors.white,
-                                      width: 2,
-                                    ),
-                                  ),
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(20),
-                                    child: Padding(
-                                      padding: EdgeInsets.symmetric(
-                                        horizontal: w * 0.06,
-                                        vertical: h * 0.02,
+                                // White stroke rectangle with existing image and delete button overlay
+                                Stack(
+                                  children: [
+                                    Container(
+                                      width: double.infinity,
+                                      height: (h * 0.40).clamp(260.0, 360.0),
+                                      decoration: BoxDecoration(
+                                        color: Colors.transparent,
+                                        borderRadius: BorderRadius.circular(22),
+                                        border: Border.all(
+                                          color: Colors.white,
+                                          width: 2,
+                                        ),
                                       ),
-                                      child: Image.network(
-                                        _existingImageUrl!,
-                                        fit: BoxFit.contain,
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(20),
+                                        child: Padding(
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: w * 0.06,
+                                            vertical: h * 0.02,
+                                          ),
+                                          child: Image.network(
+                                            _existingImageUrl!,
+                                            fit: BoxFit.contain,
+                                          ),
+                                        ),
                                       ),
                                     ),
-                                  ),
+                                    // Delete button overlay (top right)
+                                    Positioned(
+                                      top: 10,
+                                      right: 10,
+                                      child: GestureDetector(
+                                        onTap: () async {
+                                          final user = FirebaseAuth.instance.currentUser;
+                                          if (user != null) {
+                                            // Remove selfie field from Firestore
+                                            await FirebaseFirestore.instance
+                                                .collection('users')
+                                                .doc(user.uid)
+                                                .collection('documents')
+                                                .doc('Professional Workers')
+                                                .set({
+                                                  'selfie': FieldValue.delete(),
+                                                }, SetOptions(merge: true));
+                                          }
+                                          setState(() {
+                                            _existingImageUrl = null;
+                                          });
+                                        },
+                                        child: Container(
+                                          decoration: BoxDecoration(
+                                            color: Colors.black.withOpacity(0.7),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          padding: const EdgeInsets.all(8),
+                                          child: const Icon(
+                                            Icons.delete,
+                                            color: Colors.white,
+                                            size: 24,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
 
                                 SizedBox(height: h * 0.06),
@@ -339,6 +379,17 @@ class _SelfieCaptureScreenState extends State<SelfieCaptureScreen> {
                                   background: Colors.grey,
                                   textColor: Colors.black,
                                   iconColor: Colors.black,
+                                ),
+                                // Info text
+                                SizedBox(height: 10),
+                                Text(
+                                  'Tap the delete icon above to remove your current selfie and upload a new one.',
+                                  style: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 13,
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                  textAlign: TextAlign.center,
                                 ),
                               ] else ...[
                                 // White stroke rectangle with selected image
