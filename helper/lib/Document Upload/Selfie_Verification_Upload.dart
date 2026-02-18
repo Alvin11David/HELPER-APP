@@ -324,7 +324,8 @@ class _SelfieCaptureScreenState extends State<SelfieCaptureScreen> {
                                       right: 10,
                                       child: GestureDetector(
                                         onTap: () async {
-                                          final user = FirebaseAuth.instance.currentUser;
+                                          final user =
+                                              FirebaseAuth.instance.currentUser;
                                           if (user != null) {
                                             // Remove selfie field from Firestore
                                             await FirebaseFirestore.instance
@@ -342,7 +343,9 @@ class _SelfieCaptureScreenState extends State<SelfieCaptureScreen> {
                                         },
                                         child: Container(
                                           decoration: BoxDecoration(
-                                            color: Colors.black.withOpacity(0.7),
+                                            color: Colors.black.withOpacity(
+                                              0.7,
+                                            ),
                                             shape: BoxShape.circle,
                                           ),
                                           padding: const EdgeInsets.all(8),

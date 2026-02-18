@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:helper/Document%20Upload/Add_Profession_Screen.dart';
@@ -68,6 +67,40 @@ class _AcademicCertificateUploadScreenState
     setState(() {
       _selectedFile = null;
     });
+  }
+
+  Future<void> _removeUploadedFile() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+    try {
+      // Remove from Firebase Storage
+      if (_uploadedFileUrl != null) {
+        final ref = await FirebaseStorage.instance.refFromURL(_uploadedFileUrl!);
+        await ref.delete();
+      }
+      // Remove from Firestore
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('documents')
+          .doc('Professional Workers')
+          .set({
+            'Academic Certificate': FieldValue.delete(),
+          }, SetOptions(merge: true));
+      setState(() {
+        _isAlreadyUploaded = false;
+        _uploadedProfession = null;
+        _uploadedFileUrl = null;
+        _selectedFile = null;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Certificate deleted. You can upload a new one.')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to delete certificate: $e')),
+      );
+    }
   }
 
   Future<void> _uploadToFirebase() async {
@@ -728,48 +761,71 @@ class _AcademicCertificateUploadScreenState
               top: screenHeight * 0.33,
               left: (screenWidth - screenWidth * 0.9) / 2,
               child: _isAlreadyUploaded
-                  ? Container(
-                      width: screenWidth * 0.9,
-                      height: 180,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(25),
-                        border: Border.all(
-                          color: Colors.white.withOpacity(0.4),
-                          width: 2,
-                        ),
-                      ),
-                      child: Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.check_circle,
-                              color: Colors.green,
-                              size: 40,
+                  ? Stack(
+                      children: [
+                        Container(
+                          width: screenWidth * 0.9,
+                          height: 180,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(25),
+                            border: Border.all(
+                              color: Colors.white.withOpacity(0.4),
+                              width: 2,
                             ),
-                            const SizedBox(height: 10),
-                            Text(
-                              'Certificate Uploaded',
-                              style: TextStyle(
+                          ),
+                          child: Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.check_circle,
+                                  color: Colors.green,
+                                  size: 40,
+                                ),
+                                const SizedBox(height: 10),
+                                Text(
+                                  'Certificate Uploaded',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    fontFamily: 'Inter',
+                                  ),
+                                ),
+                                const SizedBox(height: 5),
+                                Text(
+                                  'File: Academic Certificate',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    fontFamily: 'Inter',
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          top: 8,
+                          right: 8,
+                          child: GestureDetector(
+                            onTap: _removeUploadedFile,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.black.withOpacity(0.5),
+                                shape: BoxShape.circle,
+                              ),
+                              padding: const EdgeInsets.all(6),
+                              child: const Icon(
+                                Icons.delete,
                                 color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                fontFamily: 'Inter',
+                                size: 24,
                               ),
                             ),
-                            const SizedBox(height: 5),
-                            Text(
-                              'File: Academic Certificate',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontFamily: 'Inter',
-                              ),
-                            ),
-                          ],
+                          ),
                         ),
-                      ),
+                      ],
                     )
                   : GestureDetector(
                       onTap: _pickFile,
