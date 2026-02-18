@@ -69,7 +69,6 @@ class _WorkerSearchBarState extends State<WorkerSearchBar> {
   Widget build(BuildContext context) {
     final w = MediaQuery.of(context).size.width;
     return Column(
-      mainAxisSize: MainAxisSize.min,
       children: [
         Padding(
           padding: EdgeInsets.only(top: 15, left: w * 0.05, right: w * 0.04),

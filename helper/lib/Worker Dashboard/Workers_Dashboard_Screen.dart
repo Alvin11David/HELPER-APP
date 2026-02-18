@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:helper/Document%20Upload/Selfie_Verification_Upload.dart';
 import 'package:intl/intl.dart';
 import 'package:helper/Components/User_Name.dart';
 import 'package:helper/Components/IncomingCallDialog.dart';
@@ -686,7 +687,7 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
         children: [
           // --- selector chips ---
           SizedBox(
-            height: 49,
+            height: 60,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               itemCount: docs.length,
@@ -1788,10 +1789,7 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (_) => ActiveJobScreen(
-                                          bookingId: id,
-                                          bookingData: data,
-                                        ),
+                                        builder: (_) => SelfieCaptureScreen(),
                                       ),
                                     );
                                   },
@@ -1817,7 +1815,7 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                           Padding(
                             padding: EdgeInsets.symmetric(horizontal: w * 0.05),
                             child: Container(
-                              height: 190,
+                              height: 280,
                               decoration: BoxDecoration(
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(25),
