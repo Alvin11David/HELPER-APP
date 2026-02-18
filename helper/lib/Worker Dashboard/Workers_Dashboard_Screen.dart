@@ -686,7 +686,7 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
         children: [
           // --- selector chips ---
           SizedBox(
-            height: 49,
+            height: 60,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               itemCount: docs.length,

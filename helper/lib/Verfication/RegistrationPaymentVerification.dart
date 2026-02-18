@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:helper/Document Upload/Select_Worker_Type_Screen.dart';
 import 'package:helper/Verfication/AirtelPaymentVerification.dart';
 import 'package:helper/Verfication/MtnPaymentVerification.dart';
+import 'package:helper/Verfication/SelectWorkerTypeVerification.dart';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 
@@ -127,7 +128,7 @@ class _RegistrationPaymentVerificationScreenState extends State<RegistrationPaym
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
-                builder: (context) => const SelectWorkerTypeScreen(),
+                builder: (context) => const SelectWorkerTypeVerificationScreen(),
               ),
             );
           }
