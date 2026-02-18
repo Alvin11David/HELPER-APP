@@ -1817,7 +1817,7 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                           Padding(
                             padding: EdgeInsets.symmetric(horizontal: w * 0.05),
                             child: Container(
-                              height: 190,
+                              height: 280,
                               decoration: BoxDecoration(
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(25),
