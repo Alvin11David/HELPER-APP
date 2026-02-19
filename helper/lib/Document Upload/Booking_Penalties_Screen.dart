@@ -71,53 +71,55 @@ class _BookingPenaltiesScreenState extends State<BookingPenaltiesScreen> {
               fit: BoxFit.cover,
             ),
           ),
-
-          child: Stack(
-            children: [
-              // Header with chevron and title
-              Positioned(
-                top: screenHeight * 0.04,
-                left: screenWidth * 0.04,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    GestureDetector(
-                      onTap: () => Navigator.of(context).maybePop(),
-                      child: Container(
-                        width: screenWidth * 0.13,
-                        height: screenWidth * 0.13,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFFFFFF),
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                        child: Center(
-                          child: Icon(
-                            Icons.chevron_left,
-                            color: Colors.black,
-                            size: screenWidth * 0.10,
+          child: SingleChildScrollView(
+            child: SizedBox(
+              height: screenHeight,
+              child: Stack(
+                children: [
+                  // Header with chevron and title
+                  Positioned(
+                    top: screenHeight * 0.04,
+                    left: screenWidth * 0.04,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        GestureDetector(
+                          onTap: () => Navigator.of(context).maybePop(),
+                          child: Container(
+                            width: screenWidth * 0.13,
+                            height: screenWidth * 0.13,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFFFFFF),
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                            child: Center(
+                              child: Icon(
+                                Icons.chevron_left,
+                                color: Colors.black,
+                                size: screenWidth * 0.10,
+                              ),
+                            ),
                           ),
                         ),
-                      ),
+                        SizedBox(width: screenWidth * 0.06),
+                        Text(
+                          'Booking Penalties',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: screenWidth * 0.06,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'Montserrat',
+                          ),
+                        ),
+                      ],
                     ),
-                    SizedBox(width: screenWidth * 0.06),
-                    Text(
-                      'Booking Penalties',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: screenWidth * 0.06,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'Montserrat',
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              // Glassmorphic info box
-              Positioned(
-                top: screenHeight * 0.13,
-                left: screenWidth * 0.10,
-                right: screenWidth * 0.10,
-                child: ClipRRect(
+                  ),
+                  // Glassmorphic info box
+                  Positioned(
+                    top: screenHeight * 0.13,
+                    left: screenWidth * 0.10,
+                    right: screenWidth * 0.10,
+                    child: ClipRRect(
                   borderRadius: BorderRadius.circular(30),
                   child: BackdropFilter(
                     filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
@@ -408,6 +410,8 @@ class _BookingPenaltiesScreenState extends State<BookingPenaltiesScreen> {
               ),
             ],
           ),
+        ),
+      ),
         ),
       ),
     );
