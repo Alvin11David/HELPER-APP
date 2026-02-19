@@ -60,7 +60,7 @@ class BookingPenaltiesScreen extends StatelessWidget {
               ),
               // Glassmorphic info box
               Positioned(
-                top: screenHeight * 0.18,
+                top: screenHeight * 0.13,
                 left: screenWidth * 0.10,
                 right: screenWidth * 0.10,
                 child: ClipRRect(
@@ -70,7 +70,7 @@ class BookingPenaltiesScreen extends StatelessWidget {
                     child: Container(
                       padding: EdgeInsets.symmetric(
                         horizontal: screenWidth * 0.04,
-                        vertical: screenHeight * 0.03,
+                        vertical: screenHeight * 0.005,
                       ),
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
@@ -105,6 +105,38 @@ class BookingPenaltiesScreen extends StatelessWidget {
                           ),
                           textAlign: TextAlign.center,
                         ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+              // White rectangle with Total Amount
+              Positioned(
+                top: screenHeight * 0.13 + 80, // further below the info box
+                left: screenWidth * 0.08,
+                right: screenWidth * 0.08,
+                child: Container(
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(30),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black12,
+                        blurRadius: 8,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Center(
+                    child: Text(
+                      'Total Amount:',
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: screenWidth * 0.038,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Montserrat',
                       ),
                     ),
                   ),
