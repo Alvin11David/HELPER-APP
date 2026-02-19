@@ -221,7 +221,12 @@ class _BookingPenaltiesScreenState extends State<BookingPenaltiesScreen> {
                       ),
                       // ...existing code...
                       // Row of buttons below the white rectangle
-                      Positioned(
+                     
+                    ],
+                  ),
+                ),
+              ),
+               Positioned(
                         top:
                             screenHeight * 0.13 +
                             80 +
@@ -233,8 +238,92 @@ class _BookingPenaltiesScreenState extends State<BookingPenaltiesScreen> {
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
                             ElevatedButton(
-                              onPressed: () {
-                                // TODO: Implement Penalties button action
+                              onPressed: () async {
+                                showDialog(
+                                  context: context,
+                                  builder: (context) {
+                                    return AlertDialog(
+                                      title: const Text('Penalties'),
+                                      content: FutureBuilder<QuerySnapshot>(
+                                        future: FirebaseFirestore.instance
+                                            .collection('Penalties')
+                                            .get(),
+                                        builder: (context, snapshot) {
+                                          if (snapshot.connectionState ==
+                                              ConnectionState.waiting) {
+                                            return const SizedBox(
+                                              height: 60,
+                                              child: Center(
+                                                child:
+                                                    CircularProgressIndicator(),
+                                              ),
+                                            );
+                                          }
+                                          if (snapshot.hasError) {
+                                            return const Text(
+                                              'Error loading penalties',
+                                            );
+                                          }
+                                          final docs =
+                                              snapshot.data?.docs ?? [];
+                                          if (docs.isEmpty) {
+                                            return const Text(
+                                              'No penalties found.',
+                                            );
+                                          }
+                                          return SizedBox(
+                                            width: 300,
+                                            child: SingleChildScrollView(
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: docs.map((doc) {
+                                                  final data =
+                                                      doc.data()
+                                                          as Map<
+                                                            String,
+                                                            dynamic
+                                                          >;
+                                                  return Card(
+                                                    margin:
+                                                        const EdgeInsets.symmetric(
+                                                          vertical: 6,
+                                                        ),
+                                                    child: ListTile(
+                                                      title: Text(
+                                                        data['title']
+                                                                ?.toString() ??
+                                                            'No Title',
+                                                      ),
+                                                      subtitle: Text(
+                                                        data['description']
+                                                                ?.toString() ??
+                                                            '',
+                                                      ),
+                                                      trailing:
+                                                          data['amount'] != null
+                                                          ? Text(
+                                                              'UGX ${data['amount']}',
+                                                            )
+                                                          : null,
+                                                    ),
+                                                  );
+                                                }).toList(),
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.of(context).pop(),
+                                          child: const Text('Close'),
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                );
                               },
                               child: const Text('Penalties'),
                             ),
@@ -247,10 +336,6 @@ class _BookingPenaltiesScreenState extends State<BookingPenaltiesScreen> {
                           ],
                         ),
                       ),
-                    ],
-                  ),
-                ),
-              ),
             ],
           ),
         ),
