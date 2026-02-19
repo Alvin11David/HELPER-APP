@@ -26,6 +26,25 @@ class _BookingPenaltiesScreenState extends State<BookingPenaltiesScreen> {
     return total;
   }
 
+  bool _penaltiesSelected = false;
+  bool _loadingPenalties = false;
+  List<Map<String, dynamic>> _penaltiesDocs = [];
+
+  Future<void> _fetchPenaltiesDocs() async {
+    setState(() {
+      _loadingPenalties = true;
+    });
+    final snapshot = await FirebaseFirestore.instance
+        .collection('Penalties')
+        .get();
+    setState(() {
+      _penaltiesDocs = snapshot.docs
+          .map((doc) => doc.data() as Map<String, dynamic>)
+          .toList();
+      _loadingPenalties = false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
@@ -119,12 +138,12 @@ class _BookingPenaltiesScreenState extends State<BookingPenaltiesScreen> {
                       ),
                       child: Center(
                         child: Text(
-                          'No penalties to display.',
+                          ' View and manage your booking penalties here.',
                           style: TextStyle(
                             color: Colors.white,
-                            fontSize: screenWidth * 0.045,
+                            fontSize: screenWidth * 0.03,
                             fontWeight: FontWeight.w600,
-                            fontFamily: 'Poppins',
+                            fontFamily: 'Inter',
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -136,7 +155,7 @@ class _BookingPenaltiesScreenState extends State<BookingPenaltiesScreen> {
 
               // White rectangle with Total Amount and Withdraw button inside
               Positioned(
-                top: screenHeight * 0.13 + 80, // further below the info box
+                top: screenHeight * 0.13 + 70, // further below the info box
                 left: screenWidth * 0.08,
                 right: screenWidth * 0.08,
                 child: Container(
@@ -219,123 +238,131 @@ class _BookingPenaltiesScreenState extends State<BookingPenaltiesScreen> {
                           fontFamily: 'Montserrat',
                         ),
                       ),
+
                       // ...existing code...
                       // Row of buttons below the white rectangle
-                     
                     ],
                   ),
                 ),
               ),
-               Positioned(
-                        top:
-                            screenHeight * 0.13 +
-                            80 +
-                            180 +
-                            16, // below the white rectangle with spacing
-                        left: screenWidth * 0.08,
-                        right: screenWidth * 0.08,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            ElevatedButton(
-                              onPressed: () async {
-                                showDialog(
-                                  context: context,
-                                  builder: (context) {
-                                    return AlertDialog(
-                                      title: const Text('Penalties'),
-                                      content: FutureBuilder<QuerySnapshot>(
-                                        future: FirebaseFirestore.instance
-                                            .collection('Penalties')
-                                            .get(),
-                                        builder: (context, snapshot) {
-                                          if (snapshot.connectionState ==
-                                              ConnectionState.waiting) {
-                                            return const SizedBox(
-                                              height: 60,
-                                              child: Center(
-                                                child:
-                                                    CircularProgressIndicator(),
-                                              ),
-                                            );
-                                          }
-                                          if (snapshot.hasError) {
-                                            return const Text(
-                                              'Error loading penalties',
-                                            );
-                                          }
-                                          final docs =
-                                              snapshot.data?.docs ?? [];
-                                          if (docs.isEmpty) {
-                                            return const Text(
-                                              'No penalties found.',
-                                            );
-                                          }
-                                          return SizedBox(
-                                            width: 300,
-                                            child: SingleChildScrollView(
-                                              child: Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: docs.map((doc) {
-                                                  final data =
-                                                      doc.data()
-                                                          as Map<
-                                                            String,
-                                                            dynamic
-                                                          >;
-                                                  return Card(
-                                                    margin:
-                                                        const EdgeInsets.symmetric(
-                                                          vertical: 6,
-                                                        ),
-                                                    child: ListTile(
-                                                      title: Text(
-                                                        data['title']
-                                                                ?.toString() ??
-                                                            'No Title',
-                                                      ),
-                                                      subtitle: Text(
-                                                        data['description']
-                                                                ?.toString() ??
-                                                            '',
-                                                      ),
-                                                      trailing:
-                                                          data['amount'] != null
-                                                          ? Text(
-                                                              'UGX ${data['amount']}',
-                                                            )
-                                                          : null,
-                                                    ),
-                                                  );
-                                                }).toList(),
+              Positioned(
+                top:
+                    screenHeight * 0.13 +
+                    80 +
+                    180 +
+                    16, // below the white rectangle with spacing
+                left: screenWidth * 0.08,
+                right: screenWidth * 0.08,
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _penaltiesSelected
+                                ? Colors.orange
+                                : null,
+                          ),
+                          onPressed: () async {
+                            setState(() {
+                              _penaltiesSelected = true;
+                            });
+                            await _fetchPenaltiesDocs();
+                          },
+                          child: const Text('Penalties'),
+                        ),
+                        ElevatedButton(
+                          onPressed: () {
+                            // TODO: Implement Transaction button action
+                          },
+                          child: const Text('Transaction'),
+                        ),
+                      ],
+                    ),
+                    if (_penaltiesSelected)
+                      _loadingPenalties
+                          ? Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: CircularProgressIndicator(),
+                            )
+                          : _penaltiesDocs.isEmpty
+                          ? Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Text(
+                                'No penalties found.',
+                                style: TextStyle(color: Colors.white),
+                              ),
+                            )
+                          : Column(
+                              children: _penaltiesDocs
+                                  .map(
+                                    (data) => Card(
+                                      margin: const EdgeInsets.symmetric(
+                                        vertical: 3,
+                                        horizontal: 0,
+                                      ),
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 6.0,
+                                          horizontal: 8.0,
+                                        ),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              'Amount: ${data['amount'] ?? ''}',
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.bold,
                                               ),
                                             ),
-                                          );
-                                        },
-                                      ),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () =>
-                                              Navigator.of(context).pop(),
-                                          child: const Text('Close'),
+                                            SizedBox(height: 2),
+                                            Text(
+                                              'Booking ID: ${data['bookingId'] ?? ''}',
+                                              overflow: TextOverflow.ellipsis,
+                                              maxLines: 1,
+                                            ),
+                                            Text(
+                                              'Cancellation By: ${data['cancellationRequestedBy'] ?? ''}',
+                                              overflow: TextOverflow.ellipsis,
+                                              maxLines: 1,
+                                            ),
+                                            Text(
+                                              'Created At: ${data['createdAt'] != null ? data['createdAt'].toDate().toString() : ''}',
+                                              overflow: TextOverflow.ellipsis,
+                                              maxLines: 1,
+                                            ),
+                                            Text(
+                                              'Employer ID: ${data['employerId'] ?? ''}',
+                                              overflow: TextOverflow.ellipsis,
+                                              maxLines: 1,
+                                            ),
+                                            Text(
+                                              'Escrow ID: ${data['escrowId'] ?? ''}',
+                                              overflow: TextOverflow.ellipsis,
+                                              maxLines: 1,
+                                            ),
+                                            Text(
+                                              'Reason: ${data['reason'] ?? ''}',
+                                              overflow: TextOverflow.ellipsis,
+                                              maxLines: 1,
+                                            ),
+                                            Text(
+                                              'Worker UID: ${data['workerUid'] ?? ''}',
+                                              overflow: TextOverflow.ellipsis,
+                                              maxLines: 1,
+                                            ),
+                                          ],
                                         ),
-                                      ],
-                                    );
-                                  },
-                                );
-                              },
-                              child: const Text('Penalties'),
+                                      ),
+                                    ),
+                                  )
+                                  .toList(),
                             ),
-                            ElevatedButton(
-                              onPressed: () {
-                                // TODO: Implement Transaction button action
-                              },
-                              child: const Text('Transaction'),
-                            ),
-                          ],
-                        ),
-                      ),
+                  ],
+                ),
+              ),
             ],
           ),
         ),

@@ -289,7 +289,7 @@ class _SignInScreenState extends State<SignInScreen> {
     final email = _emailCtrl.text.trim();
     final password = _passwordCtrl.text.trim();
 
-    if (email == 'atreavez@gmail') {
+    if (email == 'atreavez@gmail.com') {
       // Save credentials
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('last_email', email);
