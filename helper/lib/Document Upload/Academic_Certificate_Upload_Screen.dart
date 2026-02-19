@@ -75,7 +75,9 @@ class _AcademicCertificateUploadScreenState
     try {
       // Remove from Firebase Storage
       if (_uploadedFileUrl != null) {
-        final ref = await FirebaseStorage.instance.refFromURL(_uploadedFileUrl!);
+        final ref = await FirebaseStorage.instance.refFromURL(
+          _uploadedFileUrl!,
+        );
         await ref.delete();
       }
       // Remove from Firestore
@@ -94,7 +96,9 @@ class _AcademicCertificateUploadScreenState
         _selectedFile = null;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Certificate deleted. You can upload a new one.')),
+        const SnackBar(
+          content: Text('Certificate deleted. You can upload a new one.'),
+        ),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
