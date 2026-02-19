@@ -18,15 +18,24 @@ class _BookingPenaltiesScreenState extends State<BookingPenaltiesScreen> {
         .collection('Penalties')
         .get();
     double total = 0;
+    double withdrawn = 0;
     for (var doc in snapshot.docs) {
-      final amount = doc.data()['amount'];
+      final data = doc.data();
+      final amount = data['amount'];
+      final isWithdrawn = data['withdraw'] == true;
+      double amt = 0;
       if (amount is int) {
-        total += amount.toDouble();
+        amt = amount.toDouble();
       } else if (amount is double) {
-        total += amount;
+        amt = amount;
+      }
+      if (isWithdrawn) {
+        withdrawn += amt;
+      } else {
+        total += amt;
       }
     }
-    return total;
+    return total - withdrawn;
   }
 
   bool _penaltiesSelected = false;
