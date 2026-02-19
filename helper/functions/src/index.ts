@@ -149,7 +149,7 @@ export const sendForgotPasswordOTPEmail = onCall(async (request) => {
 
     logger.info("Creating mail options...");
     const mailOptions = {
-      from: "alvin69david@gmail.com", // 🔴 REPLACE WITH YOUR GMAIL ADDRESS
+      from: "helpers.atreavez@gmail.com", // 🔴 REPLACE WITH YOUR GMAIL ADDRESS
       to: email,
       subject: "Your Helper App Password Reset Code",
       html: `
@@ -502,7 +502,7 @@ export const resetPasswordAfterOTP = onCall(async (request) => {
     // In production, implement server-side password update with Admin SDK
 
     await transporter.sendMail({
-      from: "alvin69david@gmail.com",
+      from: "helpers.atreavez@gmail.com",
       to: email,
       subject: "Your Helper App Password Has Been Reset",
       html: `
