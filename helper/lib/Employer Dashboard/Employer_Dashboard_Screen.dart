@@ -9,7 +9,6 @@ import 'package:geolocator/geolocator.dart';
 import 'package:helper/Components/user_avatar_circle.dart';
 import 'package:helper/Employer%20Dashboard/Employer_Notifications.dart';
 import 'package:helper/Employer%20Dashboard/ForYouProvidersScreen.dart';
-import 'package:helper/Payments/Registration_Payment_Screen.dart';
 import 'package:intl/intl.dart';
 import 'package:helper/Components/User_Name.dart';
 import 'package:helper/Components/Side_Bar.dart';

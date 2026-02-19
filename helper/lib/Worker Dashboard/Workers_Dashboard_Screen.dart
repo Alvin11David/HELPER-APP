@@ -87,7 +87,7 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
         setState(() => _showSuggestions = false);
       }
     });
-    Future<void> _fetchJobSuggestions(String input) async {
+    Future<void> fetchJobSuggestions(String input) async {
       final workerUid = FirebaseAuth.instance.currentUser?.uid;
       if (workerUid == null || input.trim().isEmpty) {
         setState(() {

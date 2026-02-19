@@ -475,7 +475,7 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
                                       ),
                                       SizedBox(height: screenHeight * 0.005),
                                       Text(
-                                        'UGX ${_registrationFee}',
+                                        'UGX $_registrationFee',
                                         style: TextStyle(
                                           color: Colors.white,
                                           fontSize: screenWidth * 0.07,
@@ -847,7 +847,7 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
                           ),
                           child: Text(
                             _isPaymentSuccessful
-                                ? 'Your payment of UGX ${_registrationFee}\nhas been successfully\nreceived.'
+                                ? 'Your payment of UGX $_registrationFee\nhas been successfully\nreceived.'
                                 : 'Please complete your payment\non your Airtel mobile phone\nto continue.',
                             textAlign: TextAlign.center,
                             style: TextStyle(

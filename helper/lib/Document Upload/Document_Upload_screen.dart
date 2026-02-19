@@ -77,7 +77,7 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
     double screenHeight = MediaQuery.of(context).size.height;
     const brandOrange = Color(0xFFFFA10D);
     bool loading = false;
-    bool _hasShownSelfieVerifiedSnackbar = false;
+    bool hasShownSelfieVerifiedSnackbar = false;
     final formKey = GlobalKey<FormState>();
 
     Future<void> onContinue() async {
@@ -517,8 +517,8 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
 
                                 // ─── One-time "verification detected" snackbar ───────────────────────
                                 if (uploaded &&
-                                    !_hasShownSelfieVerifiedSnackbar) {
-                                  _hasShownSelfieVerifiedSnackbar = true;
+                                    !hasShownSelfieVerifiedSnackbar) {
+                                  hasShownSelfieVerifiedSnackbar = true;
 
                                   WidgetsBinding.instance.addPostFrameCallback((
                                     _,
