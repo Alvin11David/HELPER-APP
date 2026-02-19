@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:helper/Wallet/Wallet_Withdraw_Screen.dart';
 
 class BookingPenaltiesScreen extends StatefulWidget {
   const BookingPenaltiesScreen({Key? key}) : super(key: key);
@@ -213,18 +215,28 @@ class _BookingPenaltiesScreenState extends State<BookingPenaltiesScreen> {
                         },
                       ),
                       const SizedBox(height: 18),
-                      Container(
-                        width: 50,
-                        height: 50,
-                        decoration: const BoxDecoration(
-                          color: Colors.black,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Center(
-                          child: Icon(
-                            Icons.arrow_downward,
-                            color: Colors.white,
-                            size: 36,
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  const PenaltiesWalletScreen(),
+                            ),
+                          );
+                        },
+                        child: Container(
+                          width: 50,
+                          height: 50,
+                          decoration: const BoxDecoration(
+                            color: Colors.black,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Center(
+                            child: Icon(
+                              Icons.arrow_downward,
+                              color: Colors.white,
+                              size: 36,
+                            ),
                           ),
                         ),
                       ),
