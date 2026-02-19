@@ -551,10 +551,11 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                                     setState(() => _selectedIndex = 3);
                                     Navigator.of(context).push(
                                       MaterialPageRoute(
-                                        builder: (context) => const SelfieCaptureScreen(),
+                                        builder: (context) =>
+                                            const SelfieCaptureScreen(),
                                       ),
                                     );
-                                  }, 
+                                  },
 
                                   child: Row(
                                     children: [
