@@ -624,8 +624,27 @@ class _ProfessionalLicenseUploadScreenState
                                     _existingDocument == null
                                 ? _uploadFile
                                 : null,
-                            onRemove: () =>
-                                setState(() => _selectedFile = null),
+                            onRemove: () async {
+                              if (_existingDocument != null) {
+                                final user = FirebaseAuth.instance.currentUser;
+                                if (user != null) {
+                                  await FirebaseFirestore.instance
+                                      .collection('users')
+                                      .doc(user.uid)
+                                      .collection('documents')
+                                      .doc('Professional Workers')
+                                      .set({
+                                        'Professional License':
+                                            FieldValue.delete(),
+                                      }, SetOptions(merge: true));
+                                }
+                                setState(() {
+                                  _existingDocument = null;
+                                });
+                              } else {
+                                setState(() => _selectedFile = null);
+                              }
+                            },
                           ),
                           const SizedBox(height: 16),
                           Text(
@@ -990,6 +1009,10 @@ class _DashedUploadBox extends StatelessWidget {
                             ),
                             overflow: TextOverflow.ellipsis,
                           ),
+                        ),
+                        IconButton(
+                          onPressed: onRemove,
+                          icon: const Icon(Icons.delete, color: Colors.white),
                         ),
                       ],
                     ),

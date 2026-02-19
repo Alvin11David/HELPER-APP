@@ -3,6 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:helper/Document%20Upload/Booking_Penalties_Screen.dart';
+import 'package:helper/Document%20Upload/Document_Upload_screen.dart';
+import 'package:helper/Document%20Upload/National_ID_Passport_Front_Upload_Screen.dart';
+import 'package:helper/Document%20Upload/Professional_License_Upload.dart';
 import 'package:helper/Document%20Upload/Selfie_Verification_Upload.dart';
 import 'package:intl/intl.dart';
 import 'package:helper/Components/User_Name.dart';
@@ -1789,7 +1793,7 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (_) => SelfieCaptureScreen(),
+                                        builder: (_) => BookingPenaltiesScreen(),
                                       ),
                                     );
                                   },
