@@ -1,8 +1,30 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
-class BookingPenaltiesScreen extends StatelessWidget {
+class BookingPenaltiesScreen extends StatefulWidget {
   const BookingPenaltiesScreen({Key? key}) : super(key: key);
+
+  @override
+  State<BookingPenaltiesScreen> createState() => _BookingPenaltiesScreenState();
+}
+
+class _BookingPenaltiesScreenState extends State<BookingPenaltiesScreen> {
+  Future<double> _fetchTotalAmount() async {
+    final snapshot = await FirebaseFirestore.instance
+        .collection('Penalties')
+        .get();
+    double total = 0;
+    for (var doc in snapshot.docs) {
+      final amount = doc.data()['amount'];
+      if (amount is int) {
+        total += amount.toDouble();
+      } else if (amount is double) {
+        total += amount;
+      }
+    }
+    return total;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -129,16 +151,48 @@ class BookingPenaltiesScreen extends StatelessWidget {
                       ),
                     ],
                   ),
-                  child: Center(
-                    child: Text(
-                      'Total Amount:',
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontSize: screenWidth * 0.038,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'Montserrat',
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Total Amount:',
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: screenWidth * 0.038,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'Montserrat',
+                        ),
                       ),
-                    ),
+                      const SizedBox(height: 6),
+                      FutureBuilder<double>(
+                        future: _fetchTotalAmount(),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return const SizedBox(
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            );
+                          } else if (snapshot.hasError) {
+                            return const Text(
+                              'Error',
+                              style: TextStyle(color: Colors.red),
+                            );
+                          }
+                          return Text(
+                            snapshot.data != null
+                                ? snapshot.data!.toStringAsFixed(2)
+                                : '0.00',
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontSize: screenWidth * 0.032,
+                              fontWeight: FontWeight.w900,
+                              fontFamily: 'Montserrat',
+                            ),
+                          );
+                        },
+                      ),
+                    ],
                   ),
                 ),
               ),
