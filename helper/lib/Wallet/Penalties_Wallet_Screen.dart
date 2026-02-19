@@ -39,6 +39,7 @@ class _PenaltiesWalletScreenState extends State<PenaltiesWalletScreen> {
   bool loading = false;
   String? selectedAmount;
   int _balance = 0;
+  bool _penaltiesLoaded = false;
 
   Future<int> _fetchPenaltiesSum() async {
     final querySnapshot = await FirebaseFirestore.instance.collection('Penalties').get();
@@ -149,123 +150,142 @@ class _PenaltiesWalletScreenState extends State<PenaltiesWalletScreen> {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
 
-    return Scaffold(
-      body: SingleChildScrollView(
-        child: SizedBox(
-          height: screenHeight * 1.2,
-          child: Stack(
-            children: [
-              Container(
-                constraints: const BoxConstraints.expand(),
-                decoration: const BoxDecoration(
-                  image: DecorationImage(
-                    image: AssetImage('assets/background/normalscreenbg.png'),
-                    fit: BoxFit.cover,
+    return FutureBuilder<int>(
+      future: _fetchPenaltiesSum(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Scaffold(
+            body: Center(
+              child: CircularProgressIndicator(),
+            ),
+          );
+        }
+        if (snapshot.hasError) {
+          return Scaffold(
+            body: Center(child: Text('Error loading penalties balance')),
+          );
+        }
+        if (!_penaltiesLoaded) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            setState(() {
+              _balance = snapshot.data ?? 0;
+              _penaltiesLoaded = true;
+            });
+          });
+        }
+        return Scaffold(
+          body: SingleChildScrollView(
+            child: SizedBox(
+              height: screenHeight * 1.2,
+              child: Stack(
+                children: [
+                  Container(
+                    constraints: const BoxConstraints.expand(),
+                    decoration: const BoxDecoration(
+                      image: DecorationImage(
+                        image: AssetImage('assets/background/normalscreenbg.png'),
+                        fit: BoxFit.cover,
+                      ),
+                    ),
                   ),
-                ),
-              ),
-              Positioned(
-                top: screenHeight * 0.04,
-                left: 0,
-                right: 0,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Padding(
-                        padding: EdgeInsets.only(left: screenWidth * 0.04),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            GestureDetector(
-                              onTap: () => Navigator.of(context).maybePop(),
-                              child: Container(
-                                width: screenWidth * 0.13,
-                                height: screenWidth * 0.13,
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFFFFFFF),
-                                  borderRadius: BorderRadius.circular(15),
+                  Positioned(
+                    top: screenHeight * 0.04,
+                    left: 0,
+                    right: 0,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Padding(
+                            padding: EdgeInsets.only(left: screenWidth * 0.04),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                GestureDetector(
+                                  onTap: () => Navigator.of(context).maybePop(),
+                                  child: Container(
+                                    width: screenWidth * 0.13,
+                                    height: screenWidth * 0.13,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFFFFFFF),
+                                      borderRadius: BorderRadius.circular(15),
+                                    ),
+                                    child: Center(
+                                      child: Icon(
+                                        Icons.chevron_left,
+                                        color: Colors.black,
+                                        size: screenWidth * 0.10,
+                                      ),
+                                    ),
+                                  ),
                                 ),
-                                child: Center(
-                                  child: Icon(
-                                    Icons.chevron_left,
-                                    color: Colors.black,
-                                    size: screenWidth * 0.10,
+                                SizedBox(width: screenWidth * 0.06),
+                                Text(
+                                  'Withdraw',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: screenWidth * 0.08,
+                                    fontWeight: FontWeight.bold,
+                                    fontFamily: 'Montserrat',
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: screenHeight * 0.03),
+                        Center(
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(30),
+                            child: BackdropFilter(
+                              filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                              child: Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: screenWidth * 0.06,
+                                  vertical: screenHeight * 0.004,
+                                ),
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [
+                                      Colors.white.withOpacity(0.25),
+                                      Colors.white.withOpacity(0.15),
+                                    ],
+                                  ),
+                                  borderRadius: BorderRadius.circular(30),
+                                  border: Border.all(
+                                    color: Colors.white.withOpacity(0.4),
+                                    width: 2,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.white.withOpacity(0.1),
+                                      blurRadius: 15,
+                                      spreadRadius: 2,
+                                    ),
+                                  ],
+                                ),
+                                child: Text(
+                                  'Enter the Amount of Money',
+                                  maxLines: 1,
+                                  softWrap: false,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    color: const Color.fromRGBO(255, 255, 255, 1),
+                                    fontSize: screenWidth * 0.045,
+                                    fontWeight: FontWeight.w500,
+                                    fontFamily: 'Poppins',
                                   ),
                                 ),
                               ),
                             ),
-                            SizedBox(width: screenWidth * 0.06),
-                            Text(
-                              'Withdraw',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: screenWidth * 0.08,
-                                fontWeight: FontWeight.bold,
-                                fontFamily: 'Montserrat',
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: screenHeight * 0.03),
-                    Center(
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(30),
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                          child: Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: screenWidth * 0.06,
-                              vertical: screenHeight * 0.004,
-                            ),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                colors: [
-                                  Colors.white.withOpacity(0.25),
-                                  Colors.white.withOpacity(0.15),
-                                ],
-                              ),
-                              borderRadius: BorderRadius.circular(30),
-                              border: Border.all(
-                                color: Colors.white.withOpacity(0.4),
-                                width: 2,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.white.withOpacity(0.1),
-                                  blurRadius: 15,
-                                  spreadRadius: 2,
-                                ),
-                              ],
-                            ),
-                            child: Text(
-                              'Enter the Amount of Money',
-                              maxLines: 1,
-                              softWrap: false,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                color: const Color.fromRGBO(255, 255, 255, 1),
-                                fontSize: screenWidth * 0.045,
-                                fontWeight: FontWeight.w500,
-                                fontFamily: 'Poppins',
-                              ),
-                            ),
                           ),
                         ),
-                      ),
-                    ),
-                    SizedBox(height: screenHeight * 0.04),
-                    FutureBuilder<int>(
-                      future: _fetchPenaltiesSum(),
-                      builder: (context, snapshot) {
-                        int penaltiesSum = snapshot.data ?? 0;
-                        return Center(
+                        SizedBox(height: screenHeight * 0.04),
+                        Center(
                           child: Container(
                             width: screenWidth * 0.9,
                             height: screenHeight * 0.05,
@@ -292,27 +312,30 @@ class _PenaltiesWalletScreenState extends State<PenaltiesWalletScreen> {
                                   ),
                                 ),
                                 SizedBox(width: screenWidth * 0.02),
-                                snapshot.connectionState == ConnectionState.waiting
-                                    ? SizedBox(
-                                        width: screenWidth * 0.04,
-                                        height: screenWidth * 0.04,
-                                        child: const CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
-                                      )
-                                    : Text(
-                                        'UGX ${NumberFormat('#,###').format(penaltiesSum)}',
-                                        style: TextStyle(
-                                          color: Colors.black,
-                                          fontSize: screenWidth * 0.035,
-                                          fontWeight: FontWeight.w600,
-                                          fontFamily: 'Poppins',
-                                        ),
-                                      ),
+                                Text(
+                                  'UGX ${NumberFormat('#,###').format(_balance)}',
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                    fontSize: screenWidth * 0.035,
+                                    fontWeight: FontWeight.w600,
+                                    fontFamily: 'Poppins',
+                                  ),
+                                ),
                               ],
                             ),
                           ),
-                        );
-                      },
+                        ),
+                        // ...existing code...
+                      ],
                     ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
                     SizedBox(height: screenHeight * 0.04),
                     Center(
                       child: Container(
