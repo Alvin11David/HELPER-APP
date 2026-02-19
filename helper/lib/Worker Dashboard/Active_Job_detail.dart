@@ -1273,34 +1273,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
 
           SizedBox(height: h * 0.015),
 
-          // Terminate job (big red)
-          SizedBox(
-            width: double.infinity,
-            height: h * 0.078,
-            child: ElevatedButton(
-              onPressed: () {
-                // TODO: confirm dialog -> terminate
-                _showTerminateDialog();
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFE80B0B),
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(35),
-                ),
-              ),
-              child: Text(
-                'Terminate Job',
-                style: TextStyle(
-                  color: Colors.black,
-                  fontSize: w * 0.045,
-                  fontWeight: FontWeight.w900,
-                  fontFamily: 'Inter',
-                ),
-              ),
-            ),
-          ),
-
+          
           SizedBox(height: h * 0.015),
 
           // Enter cancellation code

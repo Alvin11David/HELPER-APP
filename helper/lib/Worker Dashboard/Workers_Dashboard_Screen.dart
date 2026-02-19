@@ -1779,21 +1779,13 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                                     final id = _selectedBookingId;
                                     final data = _selectedBookingData;
 
-                                    if (id == null || data == null) {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (_) =>
-                                              const ActiveJobScreen(),
-                                        ),
-                                      );
-                                      return;
-                                    }
-
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (_) => BookingPenaltiesScreen(),
+                                        builder: (_) => ActiveJobScreen(
+                                          bookingId: id,
+                                          bookingData: data,
+                                        ),
                                       ),
                                     );
                                   },
