@@ -199,6 +199,41 @@ export const sendForgotPasswordOTPEmail = onCall(async (request) => {
   }
 });
 
+// Update Firebase Auth password after custom OTP verification
+export const updateUserPassword = onCall(async (request) => {
+  try {
+    const { email, newPassword } = request.data;
+
+    if (!email || !newPassword) {
+      throw new HttpsError(
+        "invalid-argument",
+        "Email and newPassword are required",
+      );
+    }
+
+    if (typeof newPassword !== "string" || newPassword.length < 6) {
+      throw new HttpsError(
+        "invalid-argument",
+        "Password must be at least 6 characters",
+      );
+    }
+
+    const user = await admin.auth().getUserByEmail(email);
+    await admin.auth().updateUser(user.uid, { password: newPassword });
+
+    logger.info(`Password updated for ${email}`);
+    return { success: true };
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Unknown error";
+    logger.error("Error updating password:", message);
+    if (error instanceof HttpsError) {
+      throw error;
+    }
+    throw new HttpsError("internal", message);
+  }
+});
+
 // RELWORX Payment Webhook Handler
 export const relworxWebhook = onRequest(
   {

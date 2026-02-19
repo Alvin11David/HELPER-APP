@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
+import 'dart:math' as math;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:helper/Wallet/Penalties_Wallet_Screen.dart';
@@ -13,6 +14,30 @@ class BookingPenaltiesScreen extends StatefulWidget {
 }
 
 class _BookingPenaltiesScreenState extends State<BookingPenaltiesScreen> {
+  double _contentHeight(double screenHeight) {
+    const double listItemHeight = 120.0;
+    const double listFallbackHeight = 80.0;
+    final double listHeight;
+
+    if (_penaltiesSelected) {
+      if (_loadingPenalties) {
+        listHeight = listFallbackHeight;
+      } else if (_penaltiesDocs.isEmpty) {
+        listHeight = listFallbackHeight;
+      } else {
+        listHeight = _penaltiesDocs.length * listItemHeight;
+      }
+    } else {
+      listHeight = 0;
+    }
+
+    final double baseTop =
+        screenHeight * 0.13 + 80 + 180 + 16 + 60; // buttons + spacing
+    final double contentHeight = baseTop + listHeight;
+
+    return math.max(screenHeight, contentHeight);
+  }
+
   Future<double> _fetchTotalAmount() async {
     final snapshot = await FirebaseFirestore.instance
         .collection('Penalties')
@@ -73,7 +98,7 @@ class _BookingPenaltiesScreenState extends State<BookingPenaltiesScreen> {
           ),
           child: SingleChildScrollView(
             child: SizedBox(
-              height: screenHeight,
+              height: _contentHeight(screenHeight),
               child: Stack(
                 children: [
                   // Header with chevron and title

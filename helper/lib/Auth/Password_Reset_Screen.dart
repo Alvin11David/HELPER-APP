@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'Sign_In_Screen.dart';
 
 class PasswordResetScreen extends StatefulWidget {
@@ -52,6 +53,14 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
 
     try {
       if (widget.email != null) {
+        // Update Firebase Auth password via Cloud Function
+        await FirebaseFunctions.instance
+            .httpsCallable('updateUserPassword')
+            .call({
+          'email': widget.email!,
+          'newPassword': password,
+        });
+
         // Update the password in Firestore Sign Up collection
         final userQuery = await FirebaseFirestore.instance
             .collection('Sign Up')
