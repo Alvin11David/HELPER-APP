@@ -40,7 +40,7 @@ class _BookingPenaltiesScreenState extends State<BookingPenaltiesScreen> {
               fit: BoxFit.cover,
             ),
           ),
-           
+
           child: Stack(
             children: [
               // Header with chevron and title
@@ -219,28 +219,38 @@ class _BookingPenaltiesScreenState extends State<BookingPenaltiesScreen> {
                           fontFamily: 'Montserrat',
                         ),
                       ),
-                      const SizedBox(height: 16),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          ElevatedButton(
-                            onPressed: () {
-                              // TODO: Implement Penalties button action
-                            },
-                            child: const Text('Penalties'),
-                          ),
-                          ElevatedButton(
-                            onPressed: () {
-                              // TODO: Implement Transaction button action
-                            },
-                            child: const Text('Transaction'),
-                          ),
-                        ],
+                      // ...existing code...
+                      // Row of buttons below the white rectangle
+                      Positioned(
+                        top:
+                            screenHeight * 0.13 +
+                            80 +
+                            180 +
+                            16, // below the white rectangle with spacing
+                        left: screenWidth * 0.08,
+                        right: screenWidth * 0.08,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            ElevatedButton(
+                              onPressed: () {
+                                // TODO: Implement Penalties button action
+                              },
+                              child: const Text('Penalties'),
+                            ),
+                            ElevatedButton(
+                              onPressed: () {
+                                // TODO: Implement Transaction button action
+                              },
+                              child: const Text('Transaction'),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
                 ),
-              ), 
+              ),
             ],
           ),
         ),
