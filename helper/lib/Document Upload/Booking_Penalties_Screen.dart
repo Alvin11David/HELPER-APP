@@ -5,6 +5,7 @@ import 'dart:math' as math;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:helper/Wallet/Penalties_Wallet_Screen.dart';
 import 'package:helper/Wallet/Wallet_Withdraw_Screen.dart';
+import 'package:helper/Document Upload/Penalty_Detail_Screen.dart';
 
 class BookingPenaltiesScreen extends StatefulWidget {
   const BookingPenaltiesScreen({Key? key}) : super(key: key);
@@ -90,6 +91,7 @@ class _BookingPenaltiesScreenState extends State<BookingPenaltiesScreen> {
     return Scaffold(
       body: SafeArea(
         child: Container(
+          constraints: const BoxConstraints.expand(),
           decoration: const BoxDecoration(
             image: DecorationImage(
               image: AssetImage('assets/background/normalscreenbg.png'),
@@ -323,12 +325,6 @@ class _BookingPenaltiesScreenState extends State<BookingPenaltiesScreen> {
                               },
                               child: const Text('Penalties'),
                             ),
-                            ElevatedButton(
-                              onPressed: () {
-                                // TODO: Implement Transaction button action
-                              },
-                              child: const Text('Transaction'),
-                            ),
                           ],
                         ),
                         if (_penaltiesSelected)
@@ -353,86 +349,100 @@ class _BookingPenaltiesScreenState extends State<BookingPenaltiesScreen> {
                                             vertical: 1,
                                             horizontal: 0,
                                           ),
-                                          child: Padding(
-                                            padding: const EdgeInsets.symmetric(
-                                              vertical: 2.0,
-                                              horizontal: 6.0,
-                                            ),
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  'Amount: ${data['amount'] ?? ''}',
-                                                  style: const TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 13,
+                                          child: InkWell(
+                                            onTap: () {
+                                              Navigator.of(context).push(
+                                                MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      PenaltyDetailScreen(
+                                                    penalty: data,
                                                   ),
                                                 ),
-                                                Text(
-                                                  'Booking ID: ${data['bookingId'] ?? ''}',
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                  maxLines: 1,
-                                                  style: const TextStyle(
-                                                    fontSize: 12,
+                                              );
+                                            },
+                                            child: Padding(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                vertical: 2.0,
+                                                horizontal: 6.0,
+                                              ),
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    'Amount: ${data['amount'] ?? ''}',
+                                                    style: const TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      fontSize: 13,
+                                                    ),
                                                   ),
-                                                ),
-                                                Text(
-                                                  'Cancellation By: ${data['cancellationRequestedBy'] ?? ''}',
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                  maxLines: 1,
-                                                  style: const TextStyle(
-                                                    fontSize: 12,
+                                                  Text(
+                                                    'Booking ID: ${data['bookingId'] ?? ''}',
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                    maxLines: 1,
+                                                    style: const TextStyle(
+                                                      fontSize: 12,
+                                                    ),
                                                   ),
-                                                ),
-                                                Text(
-                                                  'Created At: ${data['createdAt'] != null ? data['createdAt'].toDate().toString() : ''}',
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                  maxLines: 1,
-                                                  style: const TextStyle(
-                                                    fontSize: 12,
+                                                  Text(
+                                                    'Cancellation By: ${data['cancellationRequestedBy'] ?? ''}',
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                    maxLines: 1,
+                                                    style: const TextStyle(
+                                                      fontSize: 12,
+                                                    ),
                                                   ),
-                                                ),
-                                                Text(
-                                                  'Employer ID: ${data['employerId'] ?? ''}',
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                  maxLines: 1,
-                                                  style: const TextStyle(
-                                                    fontSize: 12,
+                                                  Text(
+                                                    'Created At: ${data['createdAt'] != null ? data['createdAt'].toDate().toString() : ''}',
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                    maxLines: 1,
+                                                    style: const TextStyle(
+                                                      fontSize: 12,
+                                                    ),
                                                   ),
-                                                ),
-                                                Text(
-                                                  'Escrow ID: ${data['escrowId'] ?? ''}',
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                  maxLines: 1,
-                                                  style: const TextStyle(
-                                                    fontSize: 12,
+                                                  Text(
+                                                    'Employer ID: ${data['employerId'] ?? ''}',
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                    maxLines: 1,
+                                                    style: const TextStyle(
+                                                      fontSize: 12,
+                                                    ),
                                                   ),
-                                                ),
-                                                Text(
-                                                  'Reason: ${data['reason'] ?? ''}',
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                  maxLines: 1,
-                                                  style: const TextStyle(
-                                                    fontSize: 12,
+                                                  Text(
+                                                    'Escrow ID: ${data['escrowId'] ?? ''}',
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                    maxLines: 1,
+                                                    style: const TextStyle(
+                                                      fontSize: 12,
+                                                    ),
                                                   ),
-                                                ),
-                                                Text(
-                                                  'Worker UID: ${data['workerUid'] ?? ''}',
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                  maxLines: 1,
-                                                  style: const TextStyle(
-                                                    fontSize: 12,
+                                                  Text(
+                                                    'Reason: ${data['reason'] ?? ''}',
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                    maxLines: 1,
+                                                    style: const TextStyle(
+                                                      fontSize: 12,
+                                                    ),
                                                   ),
-                                                ),
-                                              ],
+                                                  Text(
+                                                    'Worker UID: ${data['workerUid'] ?? ''}',
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                    maxLines: 1,
+                                                    style: const TextStyle(
+                                                      fontSize: 12,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
                                             ),
                                           ),
                                         ),
