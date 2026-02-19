@@ -21,32 +21,36 @@ class PenaltiesMtnAirtelWithdrawScreen extends StatefulWidget {
       _PenaltiesMtnAirtelWithdrawScreenState();
 }
 
-class _PenaltiesMtnAirtelWithdrawScreenState extends State<PenaltiesMtnAirtelWithdrawScreen> {
-    /// Deducts the withdrawn amount from the oldest Penalties documents (FIFO)
-    Future<void> _deductFromPenalties(int withdrawAmount) async {
-      final penaltiesRef = FirebaseFirestore.instance.collection('Penalties');
-      final querySnapshot = await penaltiesRef.orderBy('createdAt', descending: true).get();
-      int remaining = withdrawAmount;
-      for (final doc in querySnapshot.docs) {
-        if (remaining <= 0) break;
-        final data = doc.data();
-        int amount = 0;
-        final rawAmount = data['amount'];
-        if (rawAmount is int) {
-          amount = rawAmount;
-        } else if (rawAmount is String) {
-          amount = int.tryParse(rawAmount.replaceAll(',', '')) ?? 0;
-        }
-        if (amount <= 0) continue;
-        if (amount > remaining) {
-          await doc.reference.update({'amount': amount - remaining});
-          remaining = 0;
-        } else {
-          await doc.reference.update({'amount': 0});
-          remaining -= amount;
-        }
+class _PenaltiesMtnAirtelWithdrawScreenState
+    extends State<PenaltiesMtnAirtelWithdrawScreen> {
+  /// Deducts the withdrawn amount from the oldest Penalties documents (FIFO)
+  Future<void> _deductFromPenalties(int withdrawAmount) async {
+    final penaltiesRef = FirebaseFirestore.instance.collection('Penalties');
+    final querySnapshot = await penaltiesRef
+        .orderBy('createdAt', descending: true)
+        .get();
+    int remaining = withdrawAmount;
+    for (final doc in querySnapshot.docs) {
+      if (remaining <= 0) break;
+      final data = doc.data();
+      int amount = 0;
+      final rawAmount = data['amount'];
+      if (rawAmount is int) {
+        amount = rawAmount;
+      } else if (rawAmount is String) {
+        amount = int.tryParse(rawAmount.replaceAll(',', '')) ?? 0;
+      }
+      if (amount <= 0) continue;
+      if (amount > remaining) {
+        await doc.reference.update({'amount': amount - remaining});
+        remaining = 0;
+      } else {
+        await doc.reference.update({'amount': 0});
+        remaining -= amount;
       }
     }
+  }
+
   final TextEditingController _cardNumberController = TextEditingController();
   bool isChecked = false;
   bool _isDimming = false;
@@ -247,7 +251,8 @@ class _PenaltiesMtnAirtelWithdrawScreenState extends State<PenaltiesMtnAirtelWit
                 _isPaymentSuccessful = true;
               });
               // Deduct from Penalties FIFO
-              final withdrawAmount = int.tryParse(widget.amount.replaceAll(',', '')) ?? 0;
+              final withdrawAmount =
+                  int.tryParse(widget.amount.replaceAll(',', '')) ?? 0;
               _deductFromPenalties(withdrawAmount).then((_) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
