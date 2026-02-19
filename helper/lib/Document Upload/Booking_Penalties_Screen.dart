@@ -325,12 +325,6 @@ class _BookingPenaltiesScreenState extends State<BookingPenaltiesScreen> {
                               },
                               child: const Text('Penalties'),
                             ),
-                            ElevatedButton(
-                              onPressed: () {
-                                // TODO: Implement Transaction button action
-                              },
-                              child: const Text('Transaction'),
-                            ),
                           ],
                         ),
                         if (_penaltiesSelected)
