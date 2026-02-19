@@ -39,6 +39,21 @@ class _PenaltiesWalletScreenState extends State<PenaltiesWalletScreen> {
   bool loading = false;
   String? selectedAmount;
   int _balance = 0;
+
+  Future<int> _fetchPenaltiesSum() async {
+    final querySnapshot = await FirebaseFirestore.instance.collection('Penalties').get();
+    int sum = 0;
+    for (var doc in querySnapshot.docs) {
+      final data = doc.data();
+      final amount = data['amount'];
+      if (amount is int) {
+        sum += amount;
+      } else if (amount is String) {
+        sum += int.tryParse(amount.replaceAll(',', '')) ?? 0;
+      }
+    }
+    return sum;
+  }
   final double screenWidth =
       WidgetsBinding.instance.window.physicalSize.width /
       WidgetsBinding.instance.window.devicePixelRatio;
@@ -246,21 +261,10 @@ class _PenaltiesWalletScreenState extends State<PenaltiesWalletScreen> {
                       ),
                     ),
                     SizedBox(height: screenHeight * 0.04),
-                    StreamBuilder<DocumentSnapshot>(
-                      stream: FirebaseAuth.instance.currentUser != null
-                          ? FirebaseFirestore.instance
-                                .collection('Sign Up')
-                                .doc(FirebaseAuth.instance.currentUser!.uid)
-                                .snapshots()
-                          : null,
+                    FutureBuilder<int>(
+                      future: _fetchPenaltiesSum(),
                       builder: (context, snapshot) {
-                        if (snapshot.hasData && snapshot.data!.exists) {
-                          final data =
-                              snapshot.data!.data() as Map<String, dynamic>?;
-                          _balance = data?['amount'] ?? 0;
-                        } else {
-                          _balance = 0;
-                        }
+                        int penaltiesSum = snapshot.data ?? 0;
                         return Center(
                           child: Container(
                             width: screenWidth * 0.9,
@@ -279,7 +283,7 @@ class _PenaltiesWalletScreenState extends State<PenaltiesWalletScreen> {
                                 ),
                                 SizedBox(width: screenWidth * 0.02),
                                 Text(
-                                  'Available Balance:',
+                                  'Available Penalties:',
                                   style: TextStyle(
                                     color: Colors.black,
                                     fontSize: screenWidth * 0.035,
@@ -288,15 +292,21 @@ class _PenaltiesWalletScreenState extends State<PenaltiesWalletScreen> {
                                   ),
                                 ),
                                 SizedBox(width: screenWidth * 0.02),
-                                Text(
-                                  'UGX ${NumberFormat('#,###').format(_balance)}',
-                                  style: TextStyle(
-                                    color: Colors.black,
-                                    fontSize: screenWidth * 0.035,
-                                    fontWeight: FontWeight.w600,
-                                    fontFamily: 'Poppins',
-                                  ),
-                                ),
+                                snapshot.connectionState == ConnectionState.waiting
+                                    ? SizedBox(
+                                        width: screenWidth * 0.04,
+                                        height: screenWidth * 0.04,
+                                        child: const CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
+                                      )
+                                    : Text(
+                                        'UGX ${NumberFormat('#,###').format(penaltiesSum)}',
+                                        style: TextStyle(
+                                          color: Colors.black,
+                                          fontSize: screenWidth * 0.035,
+                                          fontWeight: FontWeight.w600,
+                                          fontFamily: 'Poppins',
+                                        ),
+                                      ),
                               ],
                             ),
                           ),

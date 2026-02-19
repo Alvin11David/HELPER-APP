@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:ui';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:helper/Wallet/Penalties_Wallet_Screen.dart';
 import 'package:helper/Wallet/Wallet_Withdraw_Screen.dart';
 
 class BookingPenaltiesScreen extends StatefulWidget {
