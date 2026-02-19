@@ -420,7 +420,7 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
                                   ),
                                   SizedBox(height: screenHeight * 0.005),
                                   Text(
-                                    'UGX ${_registrationFee}',
+                                    'UGX $_registrationFee',
                                     style: TextStyle(
                                       color: Colors.white,
                                       fontSize: screenWidth * 0.07,
@@ -786,7 +786,7 @@ class _MtnPaymentMethodScreenState extends State<MtnPaymentMethodScreen> {
                           ),
                           child: Text(
                             _isPaymentSuccessful
-                                ? 'Your payment of UGX ${_registrationFee}\nhas been successfully\nreceived.'
+                                ? 'Your payment of UGX $_registrationFee\nhas been successfully\nreceived.'
                                 : 'Please complete your payment\non your MTN mobile phone\nto continue.',
                             textAlign: TextAlign.center,
                             style: TextStyle(

@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class WorkerJobsScreen extends StatefulWidget {
-  const WorkerJobsScreen({Key? key}) : super(key: key);
+  const WorkerJobsScreen({super.key});
 
   @override
   State<WorkerJobsScreen> createState() => _WorkerJobsScreenState();

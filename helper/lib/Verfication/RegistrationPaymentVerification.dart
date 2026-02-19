@@ -4,7 +4,6 @@ import 'dart:ui';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:helper/Document Upload/Select_Worker_Type_Screen.dart';
 import 'package:helper/Verfication/AirtelPaymentVerification.dart';
 import 'package:helper/Verfication/MtnPaymentVerification.dart';
 import 'package:helper/Verfication/SelectWorkerTypeVerification.dart';
