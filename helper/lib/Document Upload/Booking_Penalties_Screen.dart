@@ -40,6 +40,7 @@ class _BookingPenaltiesScreenState extends State<BookingPenaltiesScreen> {
               fit: BoxFit.cover,
             ),
           ),
+           
           child: Stack(
             children: [
               // Header with chevron and title
@@ -218,10 +219,28 @@ class _BookingPenaltiesScreenState extends State<BookingPenaltiesScreen> {
                           fontFamily: 'Montserrat',
                         ),
                       ),
+                      const SizedBox(height: 16),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          ElevatedButton(
+                            onPressed: () {
+                              // TODO: Implement Penalties button action
+                            },
+                            child: const Text('Penalties'),
+                          ),
+                          ElevatedButton(
+                            onPressed: () {
+                              // TODO: Implement Transaction button action
+                            },
+                            child: const Text('Transaction'),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 ),
-              ),
+              ), 
             ],
           ),
         ),
