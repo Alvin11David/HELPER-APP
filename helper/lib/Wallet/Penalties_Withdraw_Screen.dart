@@ -28,36 +28,18 @@ class NumberInputFormatter extends TextInputFormatter {
   }
 }
 
-class PenaltiesWalletScreen extends StatefulWidget {
-  const PenaltiesWalletScreen({super.key});
+class PenaltiesWithdrawScreen extends StatefulWidget {
+  const PenaltiesWithdrawScreen({super.key});
 
   @override
-  State<PenaltiesWalletScreen> createState() => _PenaltiesWalletScreenState();
+  State<PenaltiesWithdrawScreen> createState() => _PenaltiesWithdrawScreenState();
 }
 
-class _PenaltiesWalletScreenState extends State<PenaltiesWalletScreen> {
+class _PenaltiesWithdrawScreenState extends State<PenaltiesWithdrawScreen> {
   final TextEditingController _amountController = TextEditingController();
   bool loading = false;
   String? selectedAmount;
   int _balance = 0;
-
-  Future<int> _fetchPenaltiesSum() async {
-    final querySnapshot = await FirebaseFirestore.instance
-        .collection('Penalties')
-        .get();
-    int sum = 0;
-    for (var doc in querySnapshot.docs) {
-      final data = doc.data();
-      final amount = data['amount'];
-      if (amount is int) {
-        sum += amount;
-      } else if (amount is String) {
-        sum += int.tryParse(amount.replaceAll(',', '')) ?? 0;
-      }
-    }
-    return sum;
-  }
-
   final double screenWidth =
       WidgetsBinding.instance.window.physicalSize.width /
       WidgetsBinding.instance.window.devicePixelRatio;
@@ -110,7 +92,7 @@ class _PenaltiesWalletScreenState extends State<PenaltiesWalletScreen> {
       context,
       MaterialPageRoute(
         builder: (context) =>
-            PenaltiestWithdrawPaymentMethodScreen(amount: amountToPass),
+           PenaltiestWithdrawPaymentMethodScreen(amount: amountToPass),
       ),
     );
   }
@@ -265,31 +247,21 @@ class _PenaltiesWalletScreenState extends State<PenaltiesWalletScreen> {
                       ),
                     ),
                     SizedBox(height: screenHeight * 0.04),
-                    FutureBuilder<int>(
-                      future: _fetchPenaltiesSum(),
+                    StreamBuilder<DocumentSnapshot>(
+                      stream: FirebaseAuth.instance.currentUser != null
+                          ? FirebaseFirestore.instance
+                                .collection('Sign Up')
+                                .doc(FirebaseAuth.instance.currentUser!.uid)
+                                .snapshots()
+                          : null,
                       builder: (context, snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return Center(
-                            child: Container(
-                              width: screenWidth * 0.9,
-                              height: screenHeight * 0.05,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFFBBC04),
-                                borderRadius: BorderRadius.circular(25),
-                              ),
-                              child: const Center(
-                                child: CircularProgressIndicator(),
-                              ),
-                            ),
-                          );
+                        if (snapshot.hasData && snapshot.data!.exists) {
+                          final data =
+                              snapshot.data!.data() as Map<String, dynamic>?;
+                          _balance = data?['amount'] ?? 0;
+                        } else {
+                          _balance = 0;
                         }
-                        if (snapshot.hasError) {
-                          return Center(
-                            child: Text('Error loading penalties balance'),
-                          );
-                        }
-                        _balance = snapshot.data ?? 0;
                         return Center(
                           child: Container(
                             width: screenWidth * 0.9,
@@ -308,7 +280,7 @@ class _PenaltiesWalletScreenState extends State<PenaltiesWalletScreen> {
                                 ),
                                 SizedBox(width: screenWidth * 0.02),
                                 Text(
-                                  'Available Penalties:',
+                                  'Available Balance:',
                                   style: TextStyle(
                                     color: Colors.black,
                                     fontSize: screenWidth * 0.035,
