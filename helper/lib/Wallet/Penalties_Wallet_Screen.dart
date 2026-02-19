@@ -45,17 +45,25 @@ class _PenaltiesWalletScreenState extends State<PenaltiesWalletScreen> {
     final querySnapshot = await FirebaseFirestore.instance
         .collection('Penalties')
         .get();
-    int sum = 0;
+    int total = 0;
+    int withdrawn = 0;
     for (var doc in querySnapshot.docs) {
       final data = doc.data();
       final amount = data['amount'];
+      final isWithdrawn = data['withdraw'] == true;
+      int amt = 0;
       if (amount is int) {
-        sum += amount;
+        amt = amount;
       } else if (amount is String) {
-        sum += int.tryParse(amount.replaceAll(',', '')) ?? 0;
+        amt = int.tryParse(amount.replaceAll(',', '')) ?? 0;
+      }
+      if (isWithdrawn) {
+        withdrawn += amt;
+      } else {
+        total += amt;
       }
     }
-    return sum;
+    return total - withdrawn;
   }
 
   final double screenWidth =

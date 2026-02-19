@@ -45,8 +45,8 @@ setGlobalOptions({ maxInstances: 10 });
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
-    user: "alvin69david@gmail.com", // 🔴 REPLACE WITH YOUR GMAIL ADDRESS
-    pass: "yorq gwob ucua cpwt", // 🔴 REPLACE WITH YOUR GMAIL APP PASSWORD
+    user: "helpers.atreavez@gmail.com", // 🔴 REPLACE WITH YOUR GMAIL ADDRESS
+    pass: "nlyi bggi dafr zoym", // 🔴 REPLACE WITH YOUR GMAIL APP PASSWORD
   },
 });
 
@@ -60,7 +60,7 @@ export const sendOTPEmail = onCall(async (request) => {
     }
 
     const mailOptions = {
-      from: "alvin69david@gmail.com", // 🔴 REPLACE WITH YOUR GMAIL ADDRESS
+      from: "helpers.atreavez@gmail.com", // 🔴 REPLACE WITH YOUR GMAIL ADDRESS
       to: email,
       subject: "Your Helper App Verification Code",
       html: `

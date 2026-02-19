@@ -24,6 +24,7 @@ class PenaltiesMtnAirtelWithdrawScreen extends StatefulWidget {
 class _PenaltiesMtnAirtelWithdrawScreenState
     extends State<PenaltiesMtnAirtelWithdrawScreen> {
   /// Deducts the withdrawn amount from the oldest Penalties documents (FIFO)
+  /// and sets 'withdraw': true on each document where money is withdrawn.
   Future<void> _deductFromPenalties(int withdrawAmount) async {
     final penaltiesRef = FirebaseFirestore.instance.collection('Penalties');
     final querySnapshot = await penaltiesRef
@@ -42,10 +43,13 @@ class _PenaltiesMtnAirtelWithdrawScreenState
       }
       if (amount <= 0) continue;
       if (amount > remaining) {
-        await doc.reference.update({'amount': amount - remaining});
+        await doc.reference.update({
+          'amount': amount - remaining,
+          'withdraw': true,
+        });
         remaining = 0;
       } else {
-        await doc.reference.update({'amount': 0});
+        await doc.reference.update({'amount': 0, 'withdraw': true});
         remaining -= amount;
       }
     }
