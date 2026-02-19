@@ -133,13 +133,13 @@ class _BookingPenaltiesScreenState extends State<BookingPenaltiesScreen> {
                 ),
               ),
 
-              // White rectangle with Total Amount
+              // White rectangle with Total Amount and Withdraw button inside
               Positioned(
                 top: screenHeight * 0.13 + 80, // further below the info box
                 left: screenWidth * 0.08,
                 right: screenWidth * 0.08,
                 child: Container(
-                  height: 80,
+                  height: 180,
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(30),
@@ -191,6 +191,32 @@ class _BookingPenaltiesScreenState extends State<BookingPenaltiesScreen> {
                             ),
                           );
                         },
+                      ),
+                      const SizedBox(height: 18),
+                      Container(
+                        width: 50,
+                        height: 50,
+                        decoration: const BoxDecoration(
+                          color: Colors.black,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Center(
+                          child: Icon(
+                            Icons.arrow_downward,
+                            color: Colors.white,
+                            size: 36,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Withdraw',
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: screenWidth * 0.04,
+                          fontWeight: FontWeight.w600,
+                          fontFamily: 'Montserrat',
+                        ),
                       ),
                     ],
                   ),
