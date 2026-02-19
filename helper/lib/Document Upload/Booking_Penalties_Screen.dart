@@ -299,13 +299,13 @@ class _BookingPenaltiesScreenState extends State<BookingPenaltiesScreen> {
                                   .map(
                                     (data) => Card(
                                       margin: const EdgeInsets.symmetric(
-                                        vertical: 3,
+                                        vertical: 1,
                                         horizontal: 0,
                                       ),
                                       child: Padding(
                                         padding: const EdgeInsets.symmetric(
-                                          vertical: 6.0,
-                                          horizontal: 8.0,
+                                          vertical: 2.0,
+                                          horizontal: 6.0,
                                         ),
                                         child: Column(
                                           crossAxisAlignment:
@@ -315,43 +315,64 @@ class _BookingPenaltiesScreenState extends State<BookingPenaltiesScreen> {
                                               'Amount: ${data['amount'] ?? ''}',
                                               style: const TextStyle(
                                                 fontWeight: FontWeight.bold,
+                                                fontSize: 13,
                                               ),
                                             ),
-                                            SizedBox(height: 2),
                                             Text(
                                               'Booking ID: ${data['bookingId'] ?? ''}',
                                               overflow: TextOverflow.ellipsis,
                                               maxLines: 1,
+                                              style: const TextStyle(
+                                                fontSize: 12,
+                                              ),
                                             ),
                                             Text(
                                               'Cancellation By: ${data['cancellationRequestedBy'] ?? ''}',
                                               overflow: TextOverflow.ellipsis,
                                               maxLines: 1,
+                                              style: const TextStyle(
+                                                fontSize: 12,
+                                              ),
                                             ),
                                             Text(
                                               'Created At: ${data['createdAt'] != null ? data['createdAt'].toDate().toString() : ''}',
                                               overflow: TextOverflow.ellipsis,
                                               maxLines: 1,
+                                              style: const TextStyle(
+                                                fontSize: 12,
+                                              ),
                                             ),
                                             Text(
                                               'Employer ID: ${data['employerId'] ?? ''}',
                                               overflow: TextOverflow.ellipsis,
                                               maxLines: 1,
+                                              style: const TextStyle(
+                                                fontSize: 12,
+                                              ),
                                             ),
                                             Text(
                                               'Escrow ID: ${data['escrowId'] ?? ''}',
                                               overflow: TextOverflow.ellipsis,
                                               maxLines: 1,
+                                              style: const TextStyle(
+                                                fontSize: 12,
+                                              ),
                                             ),
                                             Text(
                                               'Reason: ${data['reason'] ?? ''}',
                                               overflow: TextOverflow.ellipsis,
                                               maxLines: 1,
+                                              style: const TextStyle(
+                                                fontSize: 12,
+                                              ),
                                             ),
                                             Text(
                                               'Worker UID: ${data['workerUid'] ?? ''}',
                                               overflow: TextOverflow.ellipsis,
                                               maxLines: 1,
+                                              style: const TextStyle(
+                                                fontSize: 12,
+                                              ),
                                             ),
                                           ],
                                         ),
