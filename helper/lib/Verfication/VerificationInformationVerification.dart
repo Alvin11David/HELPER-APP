@@ -172,7 +172,7 @@ class _VerificationInformationVerificationScreenState
                         ),
                         SizedBox(width: w * 0.03),
                         Text(
-                          'Helper\'s App',
+                          'C-Helper\'s App',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: w * 0.055,
@@ -384,7 +384,7 @@ Widget _buildGlassyRectangle(
                     right: 0,
                     child: Center(
                       child: Text(
-                        'Helpers App',
+                        'C-Helper\'s App',
                         style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,

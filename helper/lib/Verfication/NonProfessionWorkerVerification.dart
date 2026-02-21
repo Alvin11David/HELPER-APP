@@ -172,7 +172,7 @@ class _NonProfessionalWorkerVerificationScreenState
                         ),
                         SizedBox(width: w * 0.03),
                         Text(
-                          'Helper\'s App',
+                          'C-Helper\'s App',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: w * 0.055,

@@ -172,7 +172,7 @@ class _ForgotYourPasswordScreenState extends State<ForgotYourPasswordScreen> {
                           ),
                           SizedBox(width: w * 0.03),
                           Text(
-                            'Helper',
+                            'C-Helper',
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: w * 0.055,

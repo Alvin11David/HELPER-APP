@@ -769,7 +769,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
                         ),
                         SizedBox(width: screenWidth * 0.03),
                         Text(
-                          'Helper',
+                          'C-Helper',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: screenWidth * 0.055,

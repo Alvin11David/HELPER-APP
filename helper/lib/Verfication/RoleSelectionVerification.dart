@@ -48,7 +48,7 @@ class _RoleSelectionVerificationScreenState
                     ),
                     SizedBox(width: screenWidth * 0.03),
                     Text(
-                      'Helper\'s App',
+                      'C-Helper\'s App',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: screenWidth * 0.055,

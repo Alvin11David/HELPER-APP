@@ -959,7 +959,7 @@ class _VisaPaymentMethodScreenState extends State<VisaPaymentMethodScreen> {
                         ),
                         SizedBox(height: screenHeight * 0.04),
                         Text(
-                          'Welcome to Helper!',
+                          'Welcome to C-Helper!',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: Colors.black,
