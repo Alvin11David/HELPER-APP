@@ -762,7 +762,7 @@ class _MtnPaymentMethodVerificationScreenState extends State<MtnPaymentMethodVer
                         ),
                         SizedBox(height: screenHeight * 0.01),
                         Text(
-                          'Welcome to Helper!',
+                          'Welcome to C-Helper!',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: Colors.black,

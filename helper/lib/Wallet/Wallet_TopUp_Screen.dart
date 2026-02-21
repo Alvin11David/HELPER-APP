@@ -234,7 +234,7 @@ class _WalletTopUpScreenState extends State<WalletTopUpScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    "How much money would you like to add to \nyour Helper's App Wallet?",
+                                    "How much money would you like to add to \nyour C-Helper's App Wallet?",
                                     textAlign: TextAlign.left,
                                     style: TextStyle(
                                       color: Colors.black,

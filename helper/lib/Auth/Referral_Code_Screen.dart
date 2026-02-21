@@ -304,7 +304,7 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
                         ),
                         SizedBox(width: screenWidth * 0.03),
                         Text(
-                          'Helper',
+                          'C-Helper',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: screenWidth * 0.055,
@@ -656,7 +656,7 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
                           ),
                           SizedBox(height: 12),
                           Text(
-                            '• Every Helpers App user has a referral code that can be found on the top of the sidebar and app settings.\n\n• Enter a valid referral code given to you by another Helpers App user.\n\n• The code must be exactly 10 characters.\n\n• After successful registration with a referral code, both you and the referrer receive a reward in your wallet.\n\n• You can share your referral code with others to continue earning rewards.',
+                            '• Every C-Helper App user has a referral code that can be found on the top of the sidebar and app settings.\n\n• Enter a valid referral code given to you by another C-Helper App user.\n\n• The code must be exactly 10 characters.\n\n• After successful registration with a referral code, both you and the referrer receive a reward in your wallet.\n\n• You can share your referral code with others to continue earning rewards.',
                             style: TextStyle(
                               color: Colors.black,
                               fontSize: screenWidth * 0.042,

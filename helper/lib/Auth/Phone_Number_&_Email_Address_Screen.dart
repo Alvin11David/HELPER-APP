@@ -484,7 +484,7 @@ class _PhoneNumberEmailAddressScreenState
                           ),
                           SizedBox(width: w * 0.02),
                           Text(
-                            'Helper',
+                            'C-Helper',
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: w * 0.05,

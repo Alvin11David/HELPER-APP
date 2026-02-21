@@ -861,7 +861,7 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
                         ),
                         SizedBox(height: screenHeight * 0.04),
                         Text(
-                          'Welcome to Helper!',
+                          'Welcome to C-Helper!',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: Colors.black,

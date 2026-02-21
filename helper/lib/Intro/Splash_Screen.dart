@@ -15,7 +15,7 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen> {
   String _displayedText = '';
-  final String _fullText = 'Helper\'s';
+  final String _fullText = 'C-Helper\'s';
   Timer? _timer;
   int _currentIndex = 0;
   bool _isTyping = true;
@@ -192,16 +192,22 @@ class _SplashScreenState extends State<SplashScreen> {
                 left: 0,
                 right: 0,
                 child: Center(
-                  child: Text(
-                    'Helper',
-                    style: TextStyle(
-                      fontSize: screenWidth * 0.17,
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'Sekuya',
-                      foreground: Paint()
-                        ..style = PaintingStyle.stroke
-                        ..strokeWidth = 1
-                        ..color = Colors.white,
+                  child: SizedBox(
+                    width: screenWidth * 0.9,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        'C-Helper',
+                        style: TextStyle(
+                          fontSize: screenWidth * 0.2,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'Sekuya',
+                          foreground: Paint()
+                            ..style = PaintingStyle.stroke
+                            ..strokeWidth = 1
+                            ..color = Colors.white,
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -212,16 +218,22 @@ class _SplashScreenState extends State<SplashScreen> {
                 left: 0,
                 right: 0,
                 child: Center(
-                  child: Text(
-                    'Helper',
-                    style: TextStyle(
-                      fontSize: screenWidth * 0.17,
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'Sekuya',
-                      foreground: Paint()
-                        ..style = PaintingStyle.stroke
-                        ..strokeWidth = 0.6
-                        ..color = Colors.white.withOpacity(0.6),
+                  child: SizedBox(
+                    width: screenWidth * 0.9,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        'C-Helper',
+                        style: TextStyle(
+                          fontSize: screenWidth * 0.2,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'Sekuya',
+                          foreground: Paint()
+                            ..style = PaintingStyle.stroke
+                            ..strokeWidth = 0.6
+                            ..color = Colors.white.withOpacity(0.6),
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -232,16 +244,22 @@ class _SplashScreenState extends State<SplashScreen> {
                 left: 0,
                 right: 0,
                 child: Center(
-                  child: Text(
-                    'Helper',
-                    style: TextStyle(
-                      fontSize: screenWidth * 0.17,
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'Sekuya',
-                      foreground: Paint()
-                        ..style = PaintingStyle.stroke
-                        ..strokeWidth = 0.3
-                        ..color = Colors.white.withOpacity(0.3),
+                  child: SizedBox(
+                    width: screenWidth * 0.9,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        'C-Helper',
+                        style: TextStyle(
+                          fontSize: screenWidth * 0.2,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'Sekuya',
+                          foreground: Paint()
+                            ..style = PaintingStyle.stroke
+                            ..strokeWidth = 0.3
+                            ..color = Colors.white.withOpacity(0.3),
+                        ),
+                      ),
                     ),
                   ),
                 ),

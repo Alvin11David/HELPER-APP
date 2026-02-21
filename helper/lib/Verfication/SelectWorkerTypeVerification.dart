@@ -75,7 +75,7 @@ class _SelectWorkerTypeVerificationScreenState extends State<SelectWorkerTypeVer
                         ),
                         SizedBox(width: w * 0.03),
                         Text(
-                          'Helper',
+                          'C-Helper',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: w * 0.055,
