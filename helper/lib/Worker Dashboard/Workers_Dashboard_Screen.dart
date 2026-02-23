@@ -256,13 +256,6 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
         try {
           if (!_isCallDialogShowing) {
             _isCallDialogShowing = true;
-            showDialog(
-              context: context,
-              builder: (context) => IncomingCallDialog(
-                callId: message.data['callId']!,
-                callerName: message.data['callerName']!,
-              ),
-            ).then((_) => _isCallDialogShowing = false);
           }
           print('IncomingCallDialog shown from opened app');
         } catch (e) {
@@ -283,13 +276,7 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
           try {
             if (!_isCallDialogShowing) {
               _isCallDialogShowing = true;
-              showDialog(
-                context: context,
-                builder: (context) => IncomingCallDialog(
-                  callId: message.data['callId']!,
-                  callerName: message.data['callerName']!,
-                ),
-              ).then((_) => _isCallDialogShowing = false);
+             
             }
             print('IncomingCallDialog shown from initial message');
           } catch (e) {
@@ -326,14 +313,7 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
               if (!_isCallDialogShowing) {
                 _isCallDialogShowing = true;
                 WidgetsBinding.instance.addPostFrameCallback((_) {
-                  showDialog(
-                    context: context,
-                    barrierDismissible: false,
-                    builder: (context) => IncomingCallDialog(
-                      callId: callId,
-                      callerName: callerName,
-                    ),
-                  ).then((_) => _isCallDialogShowing = false);
+                  
                 });
               }
             }
