@@ -4,11 +4,10 @@ import 'dart:math' as math;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:helper/Wallet/Penalties_Wallet_Screen.dart';
-import 'package:helper/Wallet/Wallet_Withdraw_Screen.dart';
 import 'package:helper/Document Upload/Penalty_Detail_Screen.dart';
 
 class BookingPenaltiesScreen extends StatefulWidget {
-  const BookingPenaltiesScreen({Key? key}) : super(key: key);
+  const BookingPenaltiesScreen({super.key});
 
   @override
   State<BookingPenaltiesScreen> createState() => _BookingPenaltiesScreenState();
@@ -77,7 +76,7 @@ class _BookingPenaltiesScreenState extends State<BookingPenaltiesScreen> {
         .get();
     setState(() {
       _penaltiesDocs = snapshot.docs
-          .map((doc) => doc.data() as Map<String, dynamic>)
+          .map((doc) => doc.data())
           .toList();
       _loadingPenalties = false;
     });
