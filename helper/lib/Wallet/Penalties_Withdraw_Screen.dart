@@ -5,7 +5,6 @@ import 'package:helper/Wallet/Penalities_Withdraw_Payment_Method_Screen.dart';
 import 'package:intl/intl.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'Wallet_Withdraw_Payment_Method_Screen.dart';
 
 class NumberInputFormatter extends TextInputFormatter {
   @override

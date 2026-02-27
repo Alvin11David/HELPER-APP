@@ -75,7 +75,7 @@ class _AcademicCertificateUploadScreenState
     try {
       // Remove from Firebase Storage
       if (_uploadedFileUrl != null) {
-        final ref = await FirebaseStorage.instance.refFromURL(
+        final ref = FirebaseStorage.instance.refFromURL(
           _uploadedFileUrl!,
         );
         await ref.delete();
