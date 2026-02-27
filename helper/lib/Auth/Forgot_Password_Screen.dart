@@ -210,7 +210,7 @@ class _ForgotYourPasswordScreenState extends State<ForgotYourPasswordScreen> {
                       Padding(
                         padding: EdgeInsets.symmetric(horizontal: w * 0.06),
                         child: Text(
-                          'Please enter your email address or\nphone number below to receive an OTP code.',
+                          'Please enter your email address below to receive an OTP code.',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: Colors.white.withOpacity(0.9),
