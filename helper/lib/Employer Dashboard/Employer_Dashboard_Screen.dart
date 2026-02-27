@@ -32,6 +32,9 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
   final GlobalKey<SideBarState> _sidebarKey = GlobalKey();
   Map<String, String>? _headers;
   late Widget _avatarWidget;
+  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>?
+      _completionCodeSub;
+  final Set<String> _shownCompletionCodes = {};
 
   void _onItemTapped(int index) async {
     setState(() {
@@ -112,6 +115,7 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
     _initLocation(); // ✅ start GPS
     _getUserPosition();
     _getTopRatedCategories();
+    _listenForCompletionCodeSnack();
     _getCategoryRatings().then((map) {
       setState(() {
         categoryRatings = map;
@@ -123,9 +127,55 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
   @override
   void dispose() {
     _debounce?.cancel();
+    _completionCodeSub?.cancel();
     _focusNode.dispose();
     _controller.dispose();
     super.dispose();
+  }
+
+  void _listenForCompletionCodeSnack() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    _completionCodeSub = FirebaseFirestore.instance
+        .collection('Escrow')
+        .where('employerId', isEqualTo: user.uid)
+        .where('completionStatus', isEqualTo: 'pending')
+        .snapshots()
+        .listen((snap) {
+      for (final doc in snap.docs) {
+        final data = doc.data();
+        final code = (data['completionCode'] ?? '').toString();
+        if (code.isEmpty) continue;
+        if (_shownCompletionCodes.contains(doc.id)) continue;
+
+        _shownCompletionCodes.add(doc.id);
+        if (!mounted) return;
+
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Completion code received. Verify finished job using code: $code',
+              ),
+              duration: const Duration(seconds: 6),
+              action: SnackBarAction(
+                label: 'View',
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const EmployerNotifications(),
+                    ),
+                  );
+                },
+              ),
+            ),
+          );
+        });
+      }
+    });
   }
 
   void _listenForRescheduleNotifications() {
