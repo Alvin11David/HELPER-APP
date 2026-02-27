@@ -11,6 +11,69 @@ class EmployerNotifications extends StatefulWidget {
 }
 
 class _EmployerNotificationsState extends State<EmployerNotifications> {
+  int _unreadCount = 0;
+  bool _loadingUnread = true;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _fetchUnreadCount();
+  }
+
+  Future<void> _fetchUnreadCount() async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) return;
+    int count = 0;
+    // Support Issues
+    final query = await FirebaseFirestore.instance
+        .collection('Support Issues')
+        .where('userId', isEqualTo: currentUser.uid)
+        .get();
+    for (var doc in query.docs) {
+      final data = doc.data();
+      final messages = List<Map<String, dynamic>>.from(data['messages'] ?? []);
+      for (final msg in messages) {
+        if ((msg['sender'] == 'admin' || msg['sender'] == 'system') &&
+            msg['read'] != true) {
+          count++;
+        }
+      }
+    }
+    // Notifications
+    final notifQuery = await FirebaseFirestore.instance
+        .collection('Notifications')
+        .where('audience', whereIn: ['all', 'employers'])
+        .get();
+    for (var doc in notifQuery.docs) {
+      final data = doc.data();
+      if (data['read'] != true) count++;
+    }
+    // Employer notifications
+    final employerNotifQuery = await FirebaseFirestore.instance
+        .collection('notifications')
+        .where('toUserId', isEqualTo: currentUser.uid)
+        .get();
+    for (var doc in employerNotifQuery.docs) {
+      final data = doc.data();
+      if (data['read'] != true) count++;
+    }
+    // Role notifications
+    final roleNotifQuery = await FirebaseFirestore.instance
+        .collection('EmployerNotifications')
+        .where('employerId', isEqualTo: currentUser.uid)
+        .get();
+    for (var doc in roleNotifQuery.docs) {
+      final data = doc.data();
+      if (data['read'] != true) count++;
+    }
+    if (mounted) {
+      setState(() {
+        _unreadCount = count;
+        _loadingUnread = false;
+      });
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -94,7 +157,35 @@ class _EmployerNotificationsState extends State<EmployerNotifications> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Notifications'),
+        title: Row(
+          children: [
+            const Text('Notifications'),
+            const SizedBox(width: 8),
+            if (_loadingUnread)
+              const SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            else if (_unreadCount > 0)
+              Container(
+                margin: const EdgeInsets.only(left: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.red,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '$_unreadCount',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+          ],
+        ),
         backgroundColor: const Color(0xFFFFA10D),
       ),
       body: StreamBuilder<QuerySnapshot>(
