@@ -32,7 +32,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              '👤 Current User: ${currentUser.uid.substring(0, 15)}...',
+              'Current User: ${currentUser.uid.substring(0, 15)}...',
             ),
             duration: const Duration(seconds: 2),
           ),
@@ -40,7 +40,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('❌ No user logged in!'),
+            content: Text('No user logged in!'),
             backgroundColor: Colors.red,
           ),
         );
@@ -62,7 +62,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
       print('No current user');
       WidgetsBinding.instance.addPostFrameCallback((_) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('❌ No current user logged in')),
+          const SnackBar(content: Text('No current user logged in')),
         );
       });
       return;
@@ -73,7 +73,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            '🔍 Fetching chats for: ${user.uid.substring(0, 10)}...',
+            'Fetching chats for: ${user.uid.substring(0, 10)}...',
           ),
         ),
       );
@@ -117,7 +117,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            '📊 Found: ${chatSnapshot.docs.length} as employer, ${providerChats.docs.length} as provider',
+            'Found: ${chatSnapshot.docs.length} as employer, ${providerChats.docs.length} as provider',
           ),
           duration: const Duration(seconds: 3),
         ),
@@ -137,7 +137,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('💬 Checking chat: ${chatId.substring(0, 15)}...'),
+            content: Text('Checking chat: ${chatId.substring(0, 15)}...'),
           ),
         );
       });
@@ -159,7 +159,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                '✅ Found ${messagesSnapshot.docs.length} messages in chat',
+                'Found ${messagesSnapshot.docs.length} messages in chat',
               ),
               backgroundColor: Colors.green,
             ),
@@ -169,7 +169,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('❌ No messages in chat ${chatId.substring(0, 15)}'),
+              content: Text('No messages in chat ${chatId.substring(0, 15)}'),
               backgroundColor: Colors.orange,
             ),
           );
@@ -294,7 +294,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              '🎉 Success! Found ${chats.length} chats with messages',
+              'Success! Found ${chats.length} chats with messages',
             ),
             backgroundColor: Colors.green,
             duration: const Duration(seconds: 4),
@@ -303,7 +303,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('⚠️ No chats with messages found'),
+            content: Text('No chats with messages found'),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 4),
           ),
