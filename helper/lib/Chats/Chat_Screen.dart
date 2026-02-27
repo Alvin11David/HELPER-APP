@@ -237,12 +237,7 @@ class _ChatScreenState extends State<ChatScreen> {
               _showRecordingUI = false;
               _showPlaybackUI = true;
             });
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Recording stopped'),
-                backgroundColor: Colors.green,
-              ),
-            );
+            
           },
           child: Center(
             child: Row(
@@ -387,12 +382,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       _showRecordingUI = false;
                       _showPlaybackUI = true;
                     });
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Recording stopped'),
-                        backgroundColor: Colors.green,
-                      ),
-                    );
+                    
                   } else {
                     final micStatus = await Permission.microphone.request();
                     if (!micStatus.isGranted) {
@@ -415,12 +405,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       _recordedFilePath = null;
                       _showRecordingUI = true;
                     });
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Recording started...'),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
+                    
                   }
                 },
                 child: Icon(

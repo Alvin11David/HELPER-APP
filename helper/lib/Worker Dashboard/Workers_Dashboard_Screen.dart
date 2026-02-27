@@ -147,12 +147,7 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
               print('FCM token saved to Firestore successfully');
 
               WidgetsBinding.instance.addPostFrameCallback((_) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('✅ FCM token saved'),
-                    duration: Duration(seconds: 2),
-                  ),
-                );
+               
               });
             } else {
               print('FCM token is null, cannot save to Firestore');
@@ -160,7 +155,7 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text('❌ FCM token is null'),
+                    content: Text('FCM token is null'),
                     duration: Duration(seconds: 3),
                   ),
                 );
@@ -234,7 +229,7 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
         // Only show snackbar for truly unknown message types
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('❓ Unknown message type: ${message.data['type']}'),
+            content: Text('Message type: ${message.data['type']}'),
             duration: const Duration(seconds: 3),
           ),
         );
@@ -315,13 +310,7 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
           });
 
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('🔄 Firestore call listener active'),
-            backgroundColor: Colors.blue,
-            duration: Duration(seconds: 2),
-          ),
-        );
+        
       });
     }
 

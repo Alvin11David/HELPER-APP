@@ -88,25 +88,15 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
     });
 
     // Show current user info on screen
-    final uid = FirebaseAuth.instance.currentUser?.uid;
+    
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('👤 Current User UID: $uid'),
-          duration: const Duration(seconds: 3),
-        ),
-      );
+      
       // Show user email if available
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
         Future.delayed(const Duration(seconds: 1), () {
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('📧 User Email: ${user.email ?? "No email"}'),
-                duration: const Duration(seconds: 3),
-              ),
-            );
+            
           }
         });
       }
