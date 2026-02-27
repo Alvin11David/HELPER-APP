@@ -10,6 +10,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:helper/Intro/Role_Selection_Screen.dart';
 import 'package:helper/Amount.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'OTP_Verification_Screen.dart';
 import 'Sign_In_Screen.dart';
 import 'Referral_Code_Screen.dart';
@@ -855,6 +856,60 @@ class _PhoneNumberEmailAddressScreenState
                   ),
                 ),
               ),
+
+              // --- Download App Button (Visible on Web) ---
+              if (kIsWeb)
+                Positioned(
+                  top: 50,
+                  right: 15,
+                  child: MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: GestureDetector(
+                      onTap: () async {
+                        // Pointing to the file you will place in the 'web' folder
+                        const url = 'https://helperapp-46849.web.app/app-release.apk'; 
+                        final uri = Uri.parse(url);
+                        if (await canLaunchUrl(uri)) {
+                          await launchUrl(uri,
+                              mode: LaunchMode.externalApplication);
+                        } else {
+                          _toast('Could not launch download link');
+                        }
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: _brandOrange,
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.2),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.android, color: Colors.white, size: 14),
+                            SizedBox(width: 3),
+                            Text(
+                              'Download the App',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 9.5,
+                                fontFamily: 'Inter',
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
