@@ -3,7 +3,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:helper/Intro/Splash_Screen.dart';
 import 'firebase_options.dart';
-import 'package:helper/Components/IncomingCallDialog.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 final GlobalKey<NavigatorState> appNavKey = GlobalKey<NavigatorState>();
@@ -92,16 +91,8 @@ void main() async {
       if (context != null && !_isCallDialogShowing) {
         _isCallDialogShowing = true;
 
-        showDialog(
-          context: context,
-          barrierDismissible: false, // Prevent dismissing by tapping outside
-          builder: (context) => IncomingCallDialog(
-            callId: message.data['callId']!,
-            callerName: message.data['callerName']!,
-          ),
-        ).then((_) => _isCallDialogShowing = false);
+        
       } else {
-        print('Call dialog already showing or context is null');
 
         // Show error snackbar
         WidgetsBinding.instance.addPostFrameCallback((_) {

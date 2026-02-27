@@ -5,7 +5,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:intl/intl.dart';
 import 'package:helper/Components/User_Name.dart';
-import 'package:helper/Components/IncomingCallDialog.dart';
 import '../Components/Side_Bar.dart';
 import 'package:helper/Components/user_avatar_circle.dart';
 import 'package:helper/Components/Bottom_Nav_Bar.dart';
@@ -204,13 +203,6 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
         try {
           if (!_isCallDialogShowing) {
             _isCallDialogShowing = true;
-            showDialog(
-              context: context,
-              builder: (context) => IncomingCallDialog(
-                callId: message.data['callId']!,
-                callerName: message.data['callerName']!,
-              ),
-            ).then((_) => _isCallDialogShowing = false);
           }
           print('IncomingCallDialog showDialog called successfully');
 
@@ -259,13 +251,6 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
         try {
           if (!_isCallDialogShowing) {
             _isCallDialogShowing = true;
-            showDialog(
-              context: context,
-              builder: (context) => IncomingCallDialog(
-                callId: message.data['callId']!,
-                callerName: message.data['callerName']!,
-              ),
-            ).then((_) => _isCallDialogShowing = false);
           }
           print('IncomingCallDialog shown from opened app');
         } catch (e) {
@@ -286,13 +271,7 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
           try {
             if (!_isCallDialogShowing) {
               _isCallDialogShowing = true;
-              showDialog(
-                context: context,
-                builder: (context) => IncomingCallDialog(
-                  callId: message.data['callId']!,
-                  callerName: message.data['callerName']!,
-                ),
-              ).then((_) => _isCallDialogShowing = false);
+             
             }
             print('IncomingCallDialog shown from initial message');
           } catch (e) {
@@ -329,14 +308,7 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
               if (!_isCallDialogShowing) {
                 _isCallDialogShowing = true;
                 WidgetsBinding.instance.addPostFrameCallback((_) {
-                  showDialog(
-                    context: context,
-                    barrierDismissible: false,
-                    builder: (context) => IncomingCallDialog(
-                      callId: callId,
-                      callerName: callerName,
-                    ),
-                  ).then((_) => _isCallDialogShowing = false);
+                  
                 });
               }
             }
