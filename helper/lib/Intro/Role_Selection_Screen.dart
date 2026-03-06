@@ -272,7 +272,8 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                       }
                       Navigator.of(context).push(
                         MaterialPageRoute(
-                          builder: (context) => const EmployerDashboardScreen(),
+                          builder: (context) =>
+                              const RegistrationPaymentScreen(),
                         ),
                       );
                     },

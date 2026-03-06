@@ -5,6 +5,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
 import 'package:helper/Document%20Upload/Select_Worker_Type_Screen.dart';
+import 'package:helper/Employer%20Dashboard/Employer_Dashboard_Screen.dart';
+import 'package:helper/Amount.dart';
 
 class AirtelPaymentMethodScreen extends StatefulWidget {
   const AirtelPaymentMethodScreen({super.key});
@@ -125,24 +127,24 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
         .where('userId', isEqualTo: currentUser.uid)
         .where('status', isEqualTo: 'SUCCESS')
         .snapshots()
-        .listen((querySnapshot) {
+        .listen((querySnapshot) async {
           if (querySnapshot.docs.isNotEmpty) {
             setState(() {
               _isPaymentSuccessful = true;
             });
+
+            // Apply referral rewards if not already applied
+            await _applyReferralRewardsAfterPayment();
+
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Payment already completed successfully!'),
                 backgroundColor: Colors.green,
               ),
             );
-            // Navigate to role selection after a short delay
+            // Navigate based on role after a short delay
             Future.delayed(const Duration(seconds: 2), () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => const SelectWorkerTypeScreen(),
-                ),
-              );
+              _navigateBasedOnRole();
             });
           }
         });
@@ -253,7 +255,7 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
         .collection('Payment Data')
         .where('reference', isEqualTo: reference)
         .snapshots()
-        .listen((querySnapshot) {
+        .listen((querySnapshot) async {
           if (querySnapshot.docs.isNotEmpty) {
             final doc = querySnapshot.docs.first;
             final data = doc.data();
@@ -263,19 +265,19 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
               setState(() {
                 _isPaymentSuccessful = true;
               });
+
+              // Apply referral rewards after successful payment
+              await _applyReferralRewardsAfterPayment();
+
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('Payment completed successfully!'),
                   backgroundColor: Colors.green,
                 ),
               );
-              // Navigate to role selection after a short delay to show success
+              // Navigate based on role after a short delay to show success
               Future.delayed(const Duration(seconds: 2), () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => const SelectWorkerTypeScreen(),
-                  ),
-                );
+                _navigateBasedOnRole();
               });
             } else if (status == 'FAILED') {
               setState(() {
@@ -294,6 +296,95 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
             }
           }
         });
+  }
+
+  Future<void> _applyReferralRewardsAfterPayment() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return;
+
+      // Get user's sign-up data
+      final userDoc = await FirebaseFirestore.instance
+          .collection('Sign Up')
+          .doc(user.uid)
+          .get();
+
+      if (!userDoc.exists) return;
+
+      final userData = userDoc.data();
+      if (userData == null) return;
+
+      // Check if referral reward has already been applied
+      final bool rewardApplied = userData['referralRewardApplied'] ?? false;
+      if (rewardApplied) return; // Already applied
+
+      // Get the referral code they used during signup
+      final String usedReferralCode = userData['usedReferralCode'] ?? '';
+
+      if (usedReferralCode.isEmpty) return; // No referral code was used
+
+      // Apply referral rewards
+      final result = await AmountService.applyReferralRewards(
+        referredUserId: user.uid,
+        referralCode: usedReferralCode,
+      );
+
+      // Mark reward as applied to prevent duplicates
+      if (result['success'] == true) {
+        await FirebaseFirestore.instance
+            .collection('Sign Up')
+            .doc(user.uid)
+            .update({'referralRewardApplied': true});
+      }
+    } catch (e) {
+      // Silently fail - don't block user flow if referral rewards fail
+      print('Error applying referral rewards: $e');
+    }
+  }
+
+  Future<void> _navigateBasedOnRole() async {
+    try {
+      final User? currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser == null) return;
+
+      final userDoc = await FirebaseFirestore.instance
+          .collection('Sign Up')
+          .doc(currentUser.uid)
+          .get();
+
+      if (!userDoc.exists) return;
+
+      final userData = userDoc.data();
+      if (userData == null) return;
+
+      final String? role = userData['role'];
+
+      if (!mounted) return;
+
+      if (role == 'employer') {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => const EmployerDashboardScreen(),
+          ),
+        );
+      } else {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => const SelectWorkerTypeScreen(),
+          ),
+        );
+      }
+    } catch (e) {
+      print('Error navigating based on role: $e');
+      // Fallback to worker type screen on error
+      if (mounted) {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => const SelectWorkerTypeScreen(),
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -877,12 +968,7 @@ class _AirtelPaymentMethodScreenState extends State<AirtelPaymentMethodScreen> {
                           child: ElevatedButton(
                             onPressed: _isPaymentSuccessful
                                 ? () {
-                                    Navigator.of(context).push(
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            const SelectWorkerTypeScreen(),
-                                      ),
-                                    );
+                                    _navigateBasedOnRole();
                                   }
                                 : null,
                             style: ElevatedButton.styleFrom(

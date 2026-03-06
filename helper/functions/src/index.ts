@@ -224,8 +224,7 @@ export const updateUserPassword = onCall(async (request) => {
     logger.info(`Password updated for ${email}`);
     return { success: true };
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Unknown error";
+    const message = error instanceof Error ? error.message : "Unknown error";
     logger.error("Error updating password:", message);
     if (error instanceof HttpsError) {
       throw error;
@@ -1097,7 +1096,16 @@ export const verifyEscrowCancellationCode = onCall(async (request) => {
 
     const escrowAmountRaw = escrowData.amount ?? booking.amount ?? 0;
     const escrowAmount = Math.max(0, Math.round(Number(escrowAmountRaw)));
-    const feeAmount = Math.round(escrowAmount * 0.005);
+
+    // Fetch penalty percentage from System Settings
+    const systemSettingsRef = db.collection("System Settings").doc("default");
+    const systemSettingsSnap = await systemSettingsRef.get();
+    const penaltyPercentage = systemSettingsSnap.exists
+      ? (systemSettingsSnap.data()?.penaltyPercentage ?? 5)
+      : 5;
+    const penaltyRate = penaltyPercentage / 100;
+
+    const feeAmount = Math.round(escrowAmount * penaltyRate);
     const refundAmount = Math.max(0, escrowAmount - feeAmount);
 
     const employerRef = db.collection("Sign Up").doc(employerId);
@@ -1739,6 +1747,9 @@ export const requestPayment = onCall(async (request) => {
       amount: amount,
       reference: finalReference, // Save the actual reference sent to Relworx
       description: description || "Service Payment",
+      paymentPurpose: (description || "").toLowerCase().includes("registration")
+        ? "REGISTRATION_FEE"
+        : "WALLET_DEPOSIT",
       status: "PENDING_USER_CONFIRMATION",
       relworx_internal_ref: responseData.internal_reference || null,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -2031,8 +2042,18 @@ export const paymentWebhook = onRequest(async (req, res) => {
       const paymentData = doc.data();
       logger.info(`Finalizing value for User: ${paymentData?.userId}`);
 
+      const purpose = String(paymentData?.paymentPurpose || "").toUpperCase();
+      const desc = String(paymentData?.description || "").toLowerCase();
+      const ref = String(paymentData?.reference || "").toUpperCase();
+      const isRegistrationFee =
+        purpose === "REGISTRATION_FEE" ||
+        desc.includes("registration") ||
+        ref.startsWith("MC_") ||
+        ref.startsWith("VISA_") ||
+        ref.startsWith("REG_FEE_");
+
       // Update user's balance in Sign Up collection
-      if (paymentData?.userId && paymentData?.amount) {
+      if (!isRegistrationFee && paymentData?.userId && paymentData?.amount) {
         const depositAmount = Math.round(Number(paymentData.amount));
         await admin
           .firestore()
@@ -2131,17 +2152,29 @@ export const masterWebhook = onRequest({ cors: true }, async (req, res) => {
 
     // 4. LOGIC: Handle DEPOSIT Success (Add money to user balance)
     if (foundIn === "Payment Data" && normalizedStatus === "success") {
-      const depositAmount = Math.round(Number(transData.amount));
-      await admin
-        .firestore()
-        .collection("Sign Up")
-        .doc(transData.userId)
-        .update({
-          amount: admin.firestore.FieldValue.increment(depositAmount),
-        });
-      logger.info(
-        `DEPOSIT SUCCESS: Added ${depositAmount} to user ${transData.userId}`,
-      );
+      const purpose = String(transData.paymentPurpose || "").toUpperCase();
+      const desc = String(transData.description || "").toLowerCase();
+      const ref = String(transData.reference || "").toUpperCase();
+      const isRegistrationFee =
+        purpose === "REGISTRATION_FEE" ||
+        desc.includes("registration") ||
+        ref.startsWith("MC_") ||
+        ref.startsWith("VISA_") ||
+        ref.startsWith("REG_FEE_");
+
+      if (!isRegistrationFee) {
+        const depositAmount = Math.round(Number(transData.amount));
+        await admin
+          .firestore()
+          .collection("Sign Up")
+          .doc(transData.userId)
+          .update({
+            amount: admin.firestore.FieldValue.increment(depositAmount),
+          });
+        logger.info(
+          `DEPOSIT SUCCESS: Added ${depositAmount} to user ${transData.userId}`,
+        );
+      }
     }
 
     // 5. LOGIC: Handle WITHDRAWAL Failure (Refund money back to user)
@@ -2223,6 +2256,8 @@ export const requestCardSession = onRequest(async (req, res) => {
       userId: userId,
       amount: requestData.amount,
       reference: finalReference,
+      description: requestData.description,
+      paymentPurpose: "REGISTRATION_FEE",
       status: "PENDING",
       type: "CARD",
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -2548,17 +2583,79 @@ export const cancelBookingWithEscrow = onCall(async (request) => {
       }
     }
 
+    // If no escrow record exists (pending booking), just cancel the booking
     if (!escrowRef || !escrowData) {
-      throw new HttpsError(
-        "failed-precondition",
-        "Escrow record not found for this booking",
-      );
+      await db.collection("bookings").doc(bookingId).update({
+        status: "cancelled",
+        cancelledAt: admin.firestore.FieldValue.serverTimestamp(),
+        cancelledBy: callerId,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      // Send notification to the other party
+      const notifyCancellation = async () => {
+        const userId = receiverId;
+        if (!userId) return;
+
+        const userDoc = await db.collection("Sign Up").doc(userId).get();
+        let fcmToken = userDoc.data()?.fcmToken as string | undefined;
+
+        if (!fcmToken) {
+          const usersDoc = await db.collection("users").doc(userId).get();
+          fcmToken = usersDoc.data()?.fcmToken as string | undefined;
+        }
+
+        const message = "Your booking has been cancelled by the other party.";
+
+        if (fcmToken) {
+          await admin.messaging().send({
+            token: fcmToken,
+            notification: {
+              title: "Booking Cancelled",
+              body: message,
+            },
+            data: {
+              type: "booking_cancelled",
+              bookingId,
+            },
+          });
+        }
+
+        // Save notification to appropriate collection
+        const roleCollection =
+          userId === workerUid
+            ? "WorkerNotifications"
+            : "EmployerNotifications";
+        const userKey = userId === workerUid ? "workerId" : "employerId";
+
+        await db.collection(roleCollection).add({
+          [userKey]: userId,
+          title: "Booking Cancelled",
+          message: message,
+          type: "booking_cancelled",
+          bookingId,
+          read: false,
+          timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        });
+      };
+
+      await notifyCancellation();
+
+      return { success: true, message: "Booking cancelled successfully" };
     }
+
+    // Fetch penalty percentage from System Settings
+    const systemSettingsRef = db.collection("System Settings").doc("default");
+    const systemSettingsSnap = await systemSettingsRef.get();
+    const penaltyPercentage = systemSettingsSnap.exists
+      ? (systemSettingsSnap.data()?.penaltyPercentage ?? 5)
+      : 5;
+    const penaltyRate = penaltyPercentage / 100;
 
     // Calculate fee and refund amounts
     const escrowAmountRaw = escrowData.amount ?? booking.amount ?? 0;
     const escrowAmount = Math.max(0, Math.round(Number(escrowAmountRaw)));
-    const feeAmount = Math.round(escrowAmount * 0.05); // 5% penalty
+    const feeAmount = Math.round(escrowAmount * penaltyRate);
     const refundAmount = Math.max(0, escrowAmount - feeAmount);
 
     // Check if cancellation already in progress
@@ -2636,6 +2733,473 @@ export const cancelBookingWithEscrow = onCall(async (request) => {
     throw new HttpsError(
       "internal",
       `Failed to cancel booking: ${errorMessage}`,
+    );
+  }
+});
+
+// ========== JOB COMPLETION FUNCTIONS ==========
+
+/**
+ * Called when worker presses "Finish job" button.
+ * Generates a 6-digit completion code and sends it to the employer.
+ */
+export const finishJobWithEscrow = onCall(async (request) => {
+  logger.info("DEBUG: finishJobWithEscrow called", {
+    data: request.data,
+    uid: request.auth?.uid,
+  });
+
+  try {
+    const { bookingId } = request.data;
+    if (!bookingId) {
+      throw new HttpsError("invalid-argument", "bookingId is required");
+    }
+
+    const callerId = request.auth?.uid as string | undefined;
+    if (!callerId) {
+      throw new HttpsError("unauthenticated", "User must be authenticated");
+    }
+
+    const db = admin.firestore();
+    const bookingRef = db.collection("bookings").doc(bookingId);
+    const bookingSnap = await bookingRef.get();
+    if (!bookingSnap.exists) {
+      throw new HttpsError("not-found", "Booking not found");
+    }
+
+    const booking = bookingSnap.data() as {
+      amount: any;
+      employerId?: string;
+      workerUid?: string;
+      escrowId?: string;
+    };
+
+    const employerId = (booking.employerId ?? "").toString();
+    const workerUid = (booking.workerUid ?? "").toString();
+
+    if (!employerId || !workerUid) {
+      throw new HttpsError(
+        "failed-precondition",
+        "Booking missing employer or worker",
+      );
+    }
+
+    // Only worker can finish the job
+    if (callerId !== workerUid) {
+      throw new HttpsError(
+        "permission-denied",
+        "Only the worker can finish this job",
+      );
+    }
+
+    // Helper function to send completion code notification to employer
+    const notifyCompletionCode = async (code: string) => {
+      const userDoc = await db.collection("Sign Up").doc(employerId).get();
+      let fcmToken = userDoc.data()?.fcmToken as string | undefined;
+
+      if (!fcmToken) {
+        const usersDoc = await db.collection("users").doc(employerId).get();
+        fcmToken = usersDoc.data()?.fcmToken as string | undefined;
+      }
+
+      const message =
+        "Job finished by worker. Enter the 6-digit code to verify and release payment: " +
+        code;
+
+      if (fcmToken) {
+        await admin.messaging().send({
+          token: fcmToken,
+          notification: {
+            title: "Job Completed",
+            body: message,
+          },
+          data: {
+            type: "job_completion_code",
+            bookingId,
+            completionCode: code,
+          },
+        });
+      }
+
+      // Save notification to employer notifications
+      await db.collection("EmployerNotifications").add({
+        employerId: employerId,
+        title: "Job Completed",
+        message: message,
+        type: "job_completion_code",
+        bookingId,
+        completionCode: code,
+        read: false,
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      });
+    };
+
+    // Find escrow record
+    let escrowRef: admin.firestore.DocumentReference | null = null;
+    let escrowData: admin.firestore.DocumentData | undefined;
+
+    const escrowId = (booking.escrowId ?? "").toString();
+    if (escrowId.trim()) {
+      escrowRef = db.collection("Escrow").doc(escrowId);
+      const escrowSnap = await escrowRef.get();
+      if (escrowSnap.exists) {
+        escrowData = escrowSnap.data();
+      }
+    }
+
+    if (!escrowData) {
+      const escrowQuery = await db
+        .collection("Escrow")
+        .where("bookingId", "==", bookingId)
+        .limit(1)
+        .get();
+      if (!escrowQuery.empty) {
+        escrowRef = escrowQuery.docs[0].ref;
+        escrowData = escrowQuery.docs[0].data();
+      }
+    }
+
+    if (!escrowRef || !escrowData) {
+      throw new HttpsError(
+        "failed-precondition",
+        "Escrow record not found for this booking",
+      );
+    }
+
+    // Check if completion already in progress
+    const existingStatus = (escrowData.completionStatus ?? "").toString();
+    const existingCode = (escrowData.completionCode ?? "").toString();
+
+    if (existingStatus === "pending" && existingCode) {
+      // Resend notification with existing code
+      await notifyCompletionCode(existingCode);
+      return {
+        success: true,
+        message: "Completion already pending",
+        completionCode: existingCode,
+      };
+    }
+
+    if (existingStatus === "verified") {
+      return { success: true, message: "Job already completed and verified" };
+    }
+
+    // Generate 6-digit completion code
+    const completionCode = Math.floor(
+      100000 + Math.random() * 900000,
+    ).toString();
+
+    // Update escrow with completion details
+    await db.runTransaction(async (tx) => {
+      const escrowSnap = await tx.get(escrowRef!);
+      if (!escrowSnap.exists) {
+        throw new HttpsError("failed-precondition", "Escrow record not found");
+      }
+
+      const currentEscrow = escrowSnap.data();
+      if (currentEscrow?.inEscrow === false) {
+        throw new HttpsError("failed-precondition", "Escrow already released");
+      }
+
+      // Update escrow with completion code
+      tx.update(escrowRef!, {
+        completionCode: completionCode,
+        completionStatus: "pending",
+        confirmationRequestedBy: callerId,
+        completionRequestedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+    });
+
+    // Send notification to employer
+    await notifyCompletionCode(completionCode);
+
+    return { success: true, completionCode };
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+    logger.error("finishJobWithEscrow error:", errorMessage);
+
+    if (error instanceof HttpsError) {
+      throw error;
+    }
+
+    throw new HttpsError("internal", `Failed to finish job: ${errorMessage}`);
+  }
+});
+
+/**
+ * Called when employer enters the completion code.
+ * Deducts 5% commission fee and releases 95% to the worker.
+ */
+export const verifyJobCompletionCode = onCall(async (request) => {
+  try {
+    const { bookingId, code } = request.data;
+    if (!bookingId || !code) {
+      throw new HttpsError(
+        "invalid-argument",
+        "bookingId and code are required",
+      );
+    }
+
+    const callerId = request.auth?.uid as string | undefined;
+    if (!callerId) {
+      throw new HttpsError("unauthenticated", "User must be authenticated");
+    }
+
+    const db = admin.firestore();
+    const bookingRef = db.collection("bookings").doc(bookingId);
+    const bookingSnap = await bookingRef.get();
+    if (!bookingSnap.exists) {
+      throw new HttpsError("not-found", "Booking not found");
+    }
+
+    const booking = bookingSnap.data() as {
+      amount: any;
+      employerId?: string;
+      workerUid?: string;
+      escrowId?: string;
+    };
+
+    const employerId = (booking.employerId ?? "").toString();
+    const workerUid = (booking.workerUid ?? "").toString();
+
+    // Only employer can verify the completion code
+    if (callerId !== employerId) {
+      throw new HttpsError(
+        "permission-denied",
+        "Only the employer can verify this code",
+      );
+    }
+
+    let escrowRef: admin.firestore.DocumentReference | null = null;
+    let escrowData: admin.firestore.DocumentData | undefined;
+
+    const escrowId = (booking.escrowId ?? "").toString();
+    if (escrowId.trim()) {
+      escrowRef = db.collection("Escrow").doc(escrowId);
+      const escrowSnap = await escrowRef.get();
+      if (escrowSnap.exists) {
+        escrowData = escrowSnap.data();
+      }
+    }
+
+    if (!escrowData) {
+      const escrowQuery = await db
+        .collection("Escrow")
+        .where("bookingId", "==", bookingId)
+        .limit(1)
+        .get();
+      if (!escrowQuery.empty) {
+        escrowRef = escrowQuery.docs[0].ref;
+        escrowData = escrowQuery.docs[0].data();
+      }
+    }
+
+    if (!escrowRef || !escrowData) {
+      throw new HttpsError(
+        "failed-precondition",
+        "Escrow record not found for this booking",
+      );
+    }
+
+    const storedCode = (escrowData.completionCode ?? "").toString();
+    const status = (escrowData.completionStatus ?? "").toString();
+    const confirmationRequestedBy = (
+      escrowData.confirmationRequestedBy ?? ""
+    ).toString();
+
+    if (status === "verified") {
+      return { success: true, message: "Job already completed and verified" };
+    }
+
+    if (!storedCode || storedCode !== String(code)) {
+      throw new HttpsError("invalid-argument", "Invalid completion code");
+    }
+
+    const escrowAmountRaw = escrowData.amount ?? booking.amount ?? 0;
+    const escrowAmount = Math.max(0, Math.round(Number(escrowAmountRaw)));
+
+    // Fetch commission rate from System Settings
+    const systemSettingsRef = db.collection("System Settings").doc("default");
+    const systemSettingsSnap = await systemSettingsRef.get();
+    const commissionRate = systemSettingsSnap.exists
+      ? (systemSettingsSnap.data()?.commissionRate ?? 5)
+      : 5;
+    const commissionPercentage = commissionRate / 100;
+
+    // Calculate commission fee
+    const commissionAmount = Math.round(escrowAmount * commissionPercentage);
+    // Worker receives remaining amount
+    const workerPayment = Math.max(0, escrowAmount - commissionAmount);
+
+    const workerRef = db.collection("Sign Up").doc(workerUid);
+    const penaltiesRef = db.collection("Penalties").doc();
+
+    await db.runTransaction(async (tx) => {
+      const snap = await tx.get(escrowRef as admin.firestore.DocumentReference);
+      if (!snap.exists) {
+        throw new HttpsError("failed-precondition", "Escrow record not found");
+      }
+
+      // Update escrow - mark as paid and released
+      tx.update(escrowRef as admin.firestore.DocumentReference, {
+        inEscrow: false,
+        isPaid: true,
+        completionStatus: "verified",
+        completionVerifiedBy: callerId,
+        completionVerifiedAt: admin.firestore.FieldValue.serverTimestamp(),
+        completionCode: admin.firestore.FieldValue.delete(),
+        commissionAmount: commissionAmount,
+        workerPayment: workerPayment,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      // Update booking status to completed
+      tx.update(bookingRef, {
+        status: "completed",
+        completedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        inEscrow: false,
+      });
+
+      // Credit worker with 95% of the escrow amount
+      tx.update(workerRef, {
+        amount: admin.firestore.FieldValue.increment(workerPayment),
+      });
+
+      // Record 5% commission fee in Penalties collection
+      tx.set(penaltiesRef, {
+        bookingId: bookingId,
+        escrowId: escrowRef?.id ?? "",
+        employerId: employerId,
+        workerUid: workerUid,
+        amount: commissionAmount,
+        reason: "commission_fee",
+        confirmationRequestedBy: confirmationRequestedBy,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+    });
+
+    const addRoleNotification = async (
+      role: "employer" | "worker",
+      userId: string,
+      title: string,
+      message: string,
+      type: string,
+    ) => {
+      const collectionName =
+        role === "employer" ? "EmployerNotifications" : "WorkerNotifications";
+      const userKey = role === "employer" ? "employerId" : "workerId";
+      await db.collection(collectionName).add({
+        [userKey]: userId,
+        title,
+        message,
+        type,
+        bookingId,
+        read: false,
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      });
+    };
+
+    // Send push notifications to both employer and worker
+    const sendPushNotification = async (
+      userId: string,
+      title: string,
+      body: string,
+    ) => {
+      try {
+        // Try Sign Up collection first
+        const signUpDoc = await db.collection("Sign Up").doc(userId).get();
+        let fcmToken = signUpDoc.data()?.fcmToken as string | undefined;
+
+        // Fallback to users collection if not found
+        if (!fcmToken) {
+          const usersDoc = await db.collection("users").doc(userId).get();
+          fcmToken = usersDoc.data()?.fcmToken as string | undefined;
+        }
+
+        if (fcmToken) {
+          await admin.messaging().send({
+            token: fcmToken,
+            notification: {
+              title: title,
+              body: body,
+            },
+            data: {
+              type: "job_completion_verified",
+              bookingId: bookingId,
+            },
+            android: {
+              priority: "high",
+              notification: {
+                channelId: "bookings",
+                priority: "high",
+                sound: "default",
+              },
+            },
+            apns: {
+              payload: {
+                aps: {
+                  sound: "default",
+                  badge: 1,
+                },
+              },
+            },
+          });
+          logger.info(`Push notification sent to ${userId}`);
+        } else {
+          logger.warn(`No FCM token found for user ${userId}`);
+        }
+      } catch (error) {
+        logger.error(`Error sending push notification to ${userId}:`, error);
+      }
+    };
+
+    await addRoleNotification(
+      "employer",
+      employerId,
+      "Job Completed",
+      "Job completed successfully. Payment released to worker.",
+      "job_completion_verified",
+    );
+    await addRoleNotification(
+      "worker",
+      workerUid,
+      "Payment Received",
+      `Job completed successfully! UGX ${workerPayment} has been added to your wallet.`,
+      "job_completion_verified",
+    );
+
+    // Send push notifications
+    await sendPushNotification(
+      employerId,
+      "Job Completed",
+      "Job has been marked as complete. Payment released to worker.",
+    );
+    await sendPushNotification(
+      workerUid,
+      "Payment Received",
+      `Congratulations! You received UGX ${workerPayment} for completing the job.`,
+    );
+
+    return {
+      success: true,
+      workerPayment: workerPayment,
+      commissionAmount: commissionAmount,
+    };
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+    logger.error("verifyJobCompletionCode error:", errorMessage);
+
+    if (error instanceof HttpsError) {
+      throw error;
+    }
+
+    throw new HttpsError(
+      "internal",
+      `Failed to verify completion code: ${errorMessage}`,
     );
   }
 });
