@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
@@ -9,11 +10,13 @@ import 'package:intl/intl.dart';
 class PenaltiesMtnAirtelWithdrawScreen extends StatefulWidget {
   final String amount;
   final String type;
+  final String fundType;
 
   const PenaltiesMtnAirtelWithdrawScreen({
     super.key,
     required this.amount,
     required this.type,
+    this.fundType = 'penalties',
   });
 
   @override
@@ -23,6 +26,9 @@ class PenaltiesMtnAirtelWithdrawScreen extends StatefulWidget {
 
 class _PenaltiesMtnAirtelWithdrawScreenState
     extends State<PenaltiesMtnAirtelWithdrawScreen> {
+  StreamSubscription<User?>? _authStateSubscription;
+  User? _currentUser;
+
   /// Deducts the withdrawn amount from the oldest Penalties documents (FIFO)
   /// and sets 'withdraw': true on each document where money is withdrawn.
   Future<void> _deductFromPenalties(int withdrawAmount) async {
@@ -55,6 +61,41 @@ class _PenaltiesMtnAirtelWithdrawScreenState
     }
   }
 
+  /// Deducts the withdrawn amount from the oldest Registration Fee documents (FIFO)
+  /// and sets 'withdrawn': true on each document where money is withdrawn.
+  Future<void> _deductFromRegistrationFees(int withdrawAmount) async {
+    final registrationFeesRef = FirebaseFirestore.instance.collection(
+      'Payment Data',
+    );
+    final querySnapshot = await registrationFeesRef
+        .where('paymentPurpose', isEqualTo: 'REGISTRATION_FEE')
+        .orderBy('createdAt', descending: true)
+        .get();
+    int remaining = withdrawAmount;
+    for (final doc in querySnapshot.docs) {
+      if (remaining <= 0) break;
+      final data = doc.data();
+      int amount = 0;
+      final rawAmount = data['amount'];
+      if (rawAmount is int) {
+        amount = rawAmount;
+      } else if (rawAmount is String) {
+        amount = int.tryParse(rawAmount.replaceAll(',', '')) ?? 0;
+      }
+      if (amount <= 0) continue;
+      if (amount > remaining) {
+        await doc.reference.update({
+          'amount': amount - remaining,
+          'withdrawn': true,
+        });
+        remaining = 0;
+      } else {
+        await doc.reference.update({'amount': 0, 'withdrawn': true});
+        remaining -= amount;
+      }
+    }
+  }
+
   final TextEditingController _cardNumberController = TextEditingController();
   bool isChecked = false;
   bool _isDimming = false;
@@ -67,18 +108,33 @@ class _PenaltiesMtnAirtelWithdrawScreenState
   @override
   void initState() {
     super.initState();
-    _loadSavedPhoneNumber();
+    // Listen to auth state changes
+    _authStateSubscription = FirebaseAuth.instance.authStateChanges().listen((
+      User? user,
+    ) {
+      print('Auth state changed: ${user?.uid ?? "NULL"}');
+      print('UI will show auth message: ${user == null}');
+      print('Button will be disabled: ${user == null}');
+      setState(() {
+        _currentUser = user;
+      });
+      // Load saved phone number when user becomes available
+      if (user != null) {
+        _loadSavedPhoneNumber();
+      }
+    });
   }
 
   @override
   void dispose() {
+    _authStateSubscription?.cancel();
     _cardNumberController.dispose();
     super.dispose();
   }
 
   Future<void> _loadSavedPhoneNumber() async {
     try {
-      final User? currentUser = FirebaseAuth.instance.currentUser;
+      final User? currentUser = _currentUser;
       if (currentUser != null) {
         final DocumentSnapshot doc = await FirebaseFirestore.instance
             .collection('Saved Payment Methods')
@@ -106,7 +162,7 @@ class _PenaltiesMtnAirtelWithdrawScreenState
 
   Future<void> _savePhoneNumber(String phoneNumber) async {
     try {
-      final User? currentUser = FirebaseAuth.instance.currentUser;
+      final User? currentUser = _currentUser;
       if (currentUser != null) {
         await FirebaseFirestore.instance
             .collection('Saved Payment Methods')
@@ -125,12 +181,16 @@ class _PenaltiesMtnAirtelWithdrawScreenState
   }
 
   Future<void> _processPayment() async {
+    print('=== _processPayment called ===');
     final String phoneNumber = _cardNumberController.text.trim();
+    print('Phone number entered: "$phoneNumber"');
 
     // Basic validation
     final String cleanPhone = phoneNumber
         .replaceAll(' ', '')
         .replaceAll('+', '');
+    print('Clean phone: "$cleanPhone"');
+
     final RegExp regex = widget.type == 'MTN'
         ? RegExp(
             r'^(256(77|78|76|79|31|39)\d{7}|0(77|78|76|79|31|39)\d{7}|(77|78|76|79|31|39)\d{7})$',
@@ -138,7 +198,12 @@ class _PenaltiesMtnAirtelWithdrawScreenState
         : RegExp(
             r'^(256(70|74|75|20)\d{7}|0(70|74|75|20)\d{7}|(70|74|75|20)\d{7})$',
           );
+
+    print('Regex pattern for ${widget.type}: ${regex.pattern}');
+    print('Regex match result: ${regex.hasMatch(cleanPhone)}');
+
     if (phoneNumber.isEmpty || !regex.hasMatch(cleanPhone)) {
+      print('Phone validation FAILED');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -150,6 +215,7 @@ class _PenaltiesMtnAirtelWithdrawScreenState
       return;
     }
 
+    print('Phone validation PASSED');
     setState(() {
       _isLoading = true;
     });
@@ -173,9 +239,18 @@ class _PenaltiesMtnAirtelWithdrawScreenState
 
     print('DEBUG: Sending Reference: $finalReference');
 
-    final User? currentUser = FirebaseAuth.instance.currentUser;
+    final User? currentUser = _currentUser;
+    print('Current user from state: ${currentUser?.uid ?? "NULL"}');
     if (currentUser == null) {
       print('DEBUG: No user authenticated');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'You must be logged in to withdraw. Please log in again.',
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
       setState(() => _isLoading = false);
       return;
     }
@@ -254,21 +329,36 @@ class _PenaltiesMtnAirtelWithdrawScreenState
               setState(() {
                 _isPaymentSuccessful = true;
               });
-              // Deduct from Penalties FIFO
+              // Deduct from appropriate fund type FIFO
               final withdrawAmount =
                   int.tryParse(widget.amount.replaceAll(',', '')) ?? 0;
-              _deductFromPenalties(withdrawAmount).then((_) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Withdrawal completed successfully!'),
-                    backgroundColor: Colors.green,
-                  ),
-                );
-                // Navigate back after a short delay
-                Future.delayed(const Duration(seconds: 2), () {
-                  Navigator.of(context).pop();
+              if (widget.fundType == 'registration_fees') {
+                _deductFromRegistrationFees(withdrawAmount).then((_) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Withdrawal completed successfully!'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                  // Navigate back after a short delay
+                  Future.delayed(const Duration(seconds: 2), () {
+                    Navigator.of(context).pop();
+                  });
                 });
-              });
+              } else {
+                _deductFromPenalties(withdrawAmount).then((_) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Withdrawal completed successfully!'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                  // Navigate back after a short delay
+                  Future.delayed(const Duration(seconds: 2), () {
+                    Navigator.of(context).pop();
+                  });
+                });
+              }
             } else if (status == 'FAILED') {
               setState(() {
                 _isPaymentSuccessful = false;
@@ -600,12 +690,28 @@ class _PenaltiesMtnAirtelWithdrawScreenState
                             ),
                             SizedBox(height: screenHeight * 0.05),
                             GestureDetector(
-                              onTap: _isLoading ? null : _processPayment,
+                              onTap: _isLoading || _currentUser == null
+                                  ? () {
+                                      print(
+                                        'Button tapped but disabled - _isLoading: $_isLoading, _currentUser: ${_currentUser?.uid ?? "NULL"}',
+                                      );
+                                    }
+                                  : () {
+                                      print('Withdraw button tapped');
+                                      print('_isLoading: $_isLoading');
+                                      print(
+                                        '_currentUser: ${_currentUser?.uid ?? "NULL"}',
+                                      );
+                                      print(
+                                        'Phone number: ${_cardNumberController.text}',
+                                      );
+                                      _processPayment();
+                                    },
                               child: Container(
                                 width: screenWidth * 0.93,
                                 height: screenHeight * 0.07,
                                 decoration: BoxDecoration(
-                                  color: _isLoading
+                                  color: _isLoading || _currentUser == null
                                       ? Colors.grey
                                       : Colors.white,
                                   borderRadius: BorderRadius.circular(30),
@@ -623,7 +729,7 @@ class _PenaltiesMtnAirtelWithdrawScreenState
                                         ]
                                       : [
                                           Text(
-                                            'Pay',
+                                            'Withdraw',
                                             style: TextStyle(
                                               color: Colors.black,
                                               fontSize: screenWidth * 0.06,
@@ -642,6 +748,26 @@ class _PenaltiesMtnAirtelWithdrawScreenState
                               ),
                             ),
                             SizedBox(height: screenHeight * 0.01),
+                            if (_currentUser == null)
+                              Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: screenWidth * 0.04,
+                                  vertical: screenHeight * 0.01,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.red.withOpacity(0.8),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Text(
+                                  'Please log in to withdraw funds',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: screenWidth * 0.035,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
                           ],
                         ),
                       ),

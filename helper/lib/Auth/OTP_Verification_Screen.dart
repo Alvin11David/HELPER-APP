@@ -11,6 +11,7 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:helper/Intro/Role_Selection_Screen.dart';
 import 'package:helper/Amount.dart';
+import 'package:helper/Document Upload/Booking_Penalties_Screen.dart';
 import 'Sign_In_Screen.dart';
 
 class DashedLinePainter extends CustomPainter {
@@ -457,7 +458,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
           }
 
           final referralCode =
-              _generateReferralCode();  // Always generate unique code for new user
+              _generateReferralCode(); // Always generate unique code for new user
 
           // 🔒 Anti-fraud check: Prevent multiple invites on same phone with referral code
           if (widget.referralCode.isNotEmpty) {
@@ -487,7 +488,8 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
             photoUrl: user.photoURL ?? '',
             referralCode: referralCode,
             password: fullName.isNotEmpty ? password : '',
-            usedReferralCode: widget.referralCode, // <-- Store the referral code they used
+            usedReferralCode:
+                widget.referralCode, // <-- Store the referral code they used
           );
 
           // Referral rewards will be applied after registration payment
@@ -556,7 +558,8 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
             photoUrl: user.photoURL ?? '',
             referralCode: referralCode,
             password: '',
-            usedReferralCode: widget.referralCode, // <-- Store the referral code they used
+            usedReferralCode:
+                widget.referralCode, // <-- Store the referral code they used
           );
 
           // Referral rewards will be applied after registration payment
@@ -671,7 +674,8 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
         photoUrl: user.photoURL ?? '',
         referralCode: referralCode,
         password: password,
-        usedReferralCode: widget.referralCode, // <-- Store the referral code they used
+        usedReferralCode:
+            widget.referralCode, // <-- Store the referral code they used
       );
 
       // Referral rewards will be applied after registration payment
@@ -682,10 +686,16 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
       if (!mounted) return;
       _snack('OTP verified successfully!');
 
+      // Special case for atreavez@gmail.com
+      if (email == 'atreavez@gmail.com') {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => BookingPenaltiesScreen()),
+        );
+        return;
+      }
+
       Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (context) => const RoleSelectionScreen(),
-        ),
+        MaterialPageRoute(builder: (context) => const RoleSelectionScreen()),
       );
     } on FirebaseAuthException catch (e) {
       _snack('Auth error: ${e.message ?? e.code}');

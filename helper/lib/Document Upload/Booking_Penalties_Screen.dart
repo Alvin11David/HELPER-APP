@@ -27,6 +27,14 @@ class _BookingPenaltiesScreenState extends State<BookingPenaltiesScreen> {
       } else {
         listHeight = _penaltiesDocs.length * listItemHeight;
       }
+    } else if (_registrationFeeSelected) {
+      if (_loadingRegistrationFee) {
+        listHeight = listFallbackHeight;
+      } else if (_registrationFeeDocs.isEmpty) {
+        listHeight = listFallbackHeight;
+      } else {
+        listHeight = _registrationFeeDocs.length * listItemHeight;
+      }
     } else {
       listHeight = 0;
     }
@@ -39,33 +47,59 @@ class _BookingPenaltiesScreenState extends State<BookingPenaltiesScreen> {
   }
 
   Future<double> _fetchTotalAmount() async {
-    final snapshot = await FirebaseFirestore.instance
-        .collection('Penalties')
-        .get();
-    double total = 0;
-    double withdrawn = 0;
-    for (var doc in snapshot.docs) {
-      final data = doc.data();
-      final amount = data['amount'];
-      final isWithdrawn = data['withdraw'] == true;
-      double amt = 0;
-      if (amount is int) {
-        amt = amount.toDouble();
-      } else if (amount is double) {
-        amt = amount;
+    if (_registrationFeeSelected) {
+      // Return registration fee total
+      final snapshot = await FirebaseFirestore.instance
+          .collection('Payment Data')
+          .where('paymentPurpose', isEqualTo: 'REGISTRATION_FEE')
+          .get();
+
+      double total = 0;
+      for (var doc in snapshot.docs) {
+        final data = doc.data();
+        final amount = data['amount'];
+        if (amount is int) {
+          total += amount.toDouble();
+        } else if (amount is double) {
+          total += amount;
+        }
       }
-      if (isWithdrawn) {
-        withdrawn += amt;
-      } else {
-        total += amt;
+      return total;
+    } else {
+      // Return penalties total (existing logic)
+      final snapshot = await FirebaseFirestore.instance
+          .collection('Penalties')
+          .get();
+      double total = 0;
+      double withdrawn = 0;
+      for (var doc in snapshot.docs) {
+        final data = doc.data();
+        final amount = data['amount'];
+        final isWithdrawn = data['withdraw'] == true;
+        double amt = 0;
+        if (amount is int) {
+          amt = amount.toDouble();
+        } else if (amount is double) {
+          amt = amount;
+        }
+        if (isWithdrawn) {
+          withdrawn += amt;
+        } else {
+          total += amt;
+        }
       }
+      return total - withdrawn;
     }
-    return total - withdrawn;
   }
 
   bool _penaltiesSelected = false;
   bool _loadingPenalties = false;
   List<Map<String, dynamic>> _penaltiesDocs = [];
+
+  bool _registrationFeeSelected = false;
+  bool _loadingRegistrationFee = false;
+  List<Map<String, dynamic>> _registrationFeeDocs = [];
+  double _totalRegistrationFee = 0.0;
 
   Future<void> _fetchPenaltiesDocs() async {
     setState(() {
@@ -75,10 +109,36 @@ class _BookingPenaltiesScreenState extends State<BookingPenaltiesScreen> {
         .collection('Penalties')
         .get();
     setState(() {
-      _penaltiesDocs = snapshot.docs
-          .map((doc) => doc.data())
-          .toList();
+      _penaltiesDocs = snapshot.docs.map((doc) => doc.data()).toList();
       _loadingPenalties = false;
+    });
+  }
+
+  Future<void> _fetchRegistrationFeeTotal() async {
+    setState(() {
+      _loadingRegistrationFee = true;
+    });
+    final snapshot = await FirebaseFirestore.instance
+        .collection('Payment Data')
+        .where('paymentPurpose', isEqualTo: 'REGISTRATION_FEE')
+        .get();
+
+    double total = 0;
+    final docs = snapshot.docs.map((doc) => doc.data()).toList();
+
+    for (var data in docs) {
+      final amount = data['amount'];
+      if (amount is int) {
+        total += amount.toDouble();
+      } else if (amount is double) {
+        total += amount;
+      }
+    }
+
+    setState(() {
+      _registrationFeeDocs = docs;
+      _totalRegistrationFee = total;
+      _loadingRegistrationFee = false;
     });
   }
 
@@ -215,7 +275,9 @@ class _BookingPenaltiesScreenState extends State<BookingPenaltiesScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            'Total Amount:',
+                            _registrationFeeSelected
+                                ? 'Total Registration Fees:'
+                                : 'Total Amount:',
                             style: TextStyle(
                               color: Colors.black,
                               fontSize: screenWidth * 0.038,
@@ -225,6 +287,9 @@ class _BookingPenaltiesScreenState extends State<BookingPenaltiesScreen> {
                           ),
                           const SizedBox(height: 6),
                           FutureBuilder<double>(
+                            key: ValueKey(
+                              '${_penaltiesSelected}_${_registrationFeeSelected}',
+                            ),
                             future: _fetchTotalAmount(),
                             builder: (context, snapshot) {
                               if (snapshot.connectionState ==
@@ -259,8 +324,11 @@ class _BookingPenaltiesScreenState extends State<BookingPenaltiesScreen> {
                             onTap: () {
                               Navigator.of(context).push(
                                 MaterialPageRoute(
-                                  builder: (context) =>
-                                      const PenaltiesWalletScreen(),
+                                  builder: (context) => PenaltiesWalletScreen(
+                                    fundType: _registrationFeeSelected
+                                        ? 'registration_fees'
+                                        : 'penalties',
+                                  ),
                                 ),
                               );
                             },
@@ -319,10 +387,26 @@ class _BookingPenaltiesScreenState extends State<BookingPenaltiesScreen> {
                               onPressed: () async {
                                 setState(() {
                                   _penaltiesSelected = true;
+                                  _registrationFeeSelected = false;
                                 });
                                 await _fetchPenaltiesDocs();
                               },
                               child: const Text('Penalties'),
+                            ),
+                            ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: _registrationFeeSelected
+                                    ? Colors.orange
+                                    : null,
+                              ),
+                              onPressed: () async {
+                                setState(() {
+                                  _penaltiesSelected = false;
+                                  _registrationFeeSelected = true;
+                                });
+                                await _fetchRegistrationFeeTotal();
+                              },
+                              child: const Text('Registration Fee'),
                             ),
                           ],
                         ),
@@ -354,17 +438,17 @@ class _BookingPenaltiesScreenState extends State<BookingPenaltiesScreen> {
                                                 MaterialPageRoute(
                                                   builder: (context) =>
                                                       PenaltyDetailScreen(
-                                                    penalty: data,
-                                                  ),
+                                                        penalty: data,
+                                                      ),
                                                 ),
                                               );
                                             },
                                             child: Padding(
                                               padding:
                                                   const EdgeInsets.symmetric(
-                                                vertical: 2.0,
-                                                horizontal: 6.0,
-                                              ),
+                                                    vertical: 2.0,
+                                                    horizontal: 6.0,
+                                                  ),
                                               child: Column(
                                                 crossAxisAlignment:
                                                     CrossAxisAlignment.start,
@@ -433,6 +517,160 @@ class _BookingPenaltiesScreenState extends State<BookingPenaltiesScreen> {
                                                   ),
                                                   Text(
                                                     'Worker UID: ${data['workerUid'] ?? ''}',
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                    maxLines: 1,
+                                                    style: const TextStyle(
+                                                      fontSize: 12,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      )
+                                      .toList(),
+                                )
+                        else if (_registrationFeeSelected)
+                          _loadingRegistrationFee
+                              ? Padding(
+                                  padding: const EdgeInsets.all(16.0),
+                                  child: CircularProgressIndicator(),
+                                )
+                              : _registrationFeeDocs.isEmpty
+                              ? Padding(
+                                  padding: const EdgeInsets.all(16.0),
+                                  child: Text(
+                                    'No registration fees found.',
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                )
+                              : Column(
+                                  children: _registrationFeeDocs
+                                      .map(
+                                        (data) => Card(
+                                          margin: const EdgeInsets.symmetric(
+                                            vertical: 1,
+                                            horizontal: 0,
+                                          ),
+                                          child: InkWell(
+                                            onTap: () {
+                                              showDialog(
+                                                context: context,
+                                                builder: (context) => AlertDialog(
+                                                  title: const Text(
+                                                    'Registration Fee Details',
+                                                  ),
+                                                  content: SingleChildScrollView(
+                                                    child: Column(
+                                                      crossAxisAlignment:
+                                                          CrossAxisAlignment
+                                                              .start,
+                                                      mainAxisSize:
+                                                          MainAxisSize.min,
+                                                      children: [
+                                                        Text(
+                                                          'Amount: ${data['amount'] ?? ''}',
+                                                        ),
+                                                        Text(
+                                                          'Payment Purpose: ${data['paymentPurpose'] ?? ''}',
+                                                        ),
+                                                        Text(
+                                                          'User ID: ${data['userId'] ?? ''}',
+                                                        ),
+                                                        Text(
+                                                          'Payment Method: ${data['paymentMethod'] ?? ''}',
+                                                        ),
+                                                        Text(
+                                                          'Transaction ID: ${data['transactionId'] ?? ''}',
+                                                        ),
+                                                        Text(
+                                                          'Created At: ${data['createdAt'] != null ? data['createdAt'].toDate().toString() : ''}',
+                                                        ),
+                                                        if (data['description'] !=
+                                                            null)
+                                                          Text(
+                                                            'Description: ${data['description']}',
+                                                          ),
+                                                        if (data['status'] !=
+                                                            null)
+                                                          Text(
+                                                            'Status: ${data['status']}',
+                                                          ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                  actions: [
+                                                    TextButton(
+                                                      onPressed: () =>
+                                                          Navigator.of(
+                                                            context,
+                                                          ).pop(),
+                                                      child: const Text(
+                                                        'Close',
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              );
+                                            },
+                                            child: Padding(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    vertical: 2.0,
+                                                    horizontal: 6.0,
+                                                  ),
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    'Amount: ${data['amount'] ?? ''}',
+                                                    style: const TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      fontSize: 13,
+                                                    ),
+                                                  ),
+                                                  Text(
+                                                    'Payment Purpose: ${data['paymentPurpose'] ?? ''}',
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                    maxLines: 1,
+                                                    style: const TextStyle(
+                                                      fontSize: 12,
+                                                    ),
+                                                  ),
+                                                  Text(
+                                                    'User ID: ${data['userId'] ?? ''}',
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                    maxLines: 1,
+                                                    style: const TextStyle(
+                                                      fontSize: 12,
+                                                    ),
+                                                  ),
+                                                  Text(
+                                                    'Created At: ${data['createdAt'] != null ? data['createdAt'].toDate().toString() : ''}',
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                    maxLines: 1,
+                                                    style: const TextStyle(
+                                                      fontSize: 12,
+                                                    ),
+                                                  ),
+                                                  Text(
+                                                    'Payment Method: ${data['paymentMethod'] ?? ''}',
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                    maxLines: 1,
+                                                    style: const TextStyle(
+                                                      fontSize: 12,
+                                                    ),
+                                                  ),
+                                                  Text(
+                                                    'Transaction ID: ${data['transactionId'] ?? ''}',
                                                     overflow:
                                                         TextOverflow.ellipsis,
                                                     maxLines: 1,

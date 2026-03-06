@@ -5,8 +5,13 @@ import 'package:intl/intl.dart';
 
 class PenaltiestWithdrawPaymentMethodScreen extends StatefulWidget {
   final String amount;
+  final String fundType;
 
-  const PenaltiestWithdrawPaymentMethodScreen({super.key, required this.amount});
+  const PenaltiestWithdrawPaymentMethodScreen({
+    super.key,
+    required this.amount,
+    this.fundType = 'penalties',
+  });
 
   @override
   State<PenaltiestWithdrawPaymentMethodScreen> createState() =>
@@ -174,10 +179,12 @@ class _PenaltiestWithdrawPaymentMethodScreenState
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => PenaltiesMtnAirtelWithdrawScreen(
-                                  amount: widget.amount,
-                                  type: 'MTN',
-                                ),
+                                builder: (context) =>
+                                    PenaltiesMtnAirtelWithdrawScreen(
+                                      amount: widget.amount,
+                                      type: 'MTN',
+                                      fundType: widget.fundType,
+                                    ),
                               ),
                             );
                           },
@@ -243,10 +250,12 @@ class _PenaltiestWithdrawPaymentMethodScreenState
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => PenaltiesMtnAirtelWithdrawScreen(
-                                  amount: widget.amount,
-                                  type: 'AIRTEL',
-                                ),
+                                builder: (context) =>
+                                    PenaltiesMtnAirtelWithdrawScreen(
+                                      amount: widget.amount,
+                                      type: 'AIRTEL',
+                                      fundType: widget.fundType,
+                                    ),
                               ),
                             );
                           },
