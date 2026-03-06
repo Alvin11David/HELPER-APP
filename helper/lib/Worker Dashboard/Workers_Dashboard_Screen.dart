@@ -73,12 +73,14 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
 
   // Next job countdown
   Timer? _nextJobTimer;
-  String _nextJobCountdown = '00:00:00';
-  bool _nextJobStarted = false;
+  late ValueNotifier<String> _nextJobCountdownNotifier;
+  late ValueNotifier<bool> _nextJobStartedNotifier;
 
   @override
   void initState() {
     super.initState();
+    _nextJobCountdownNotifier = ValueNotifier('00:00:00');
+    _nextJobStartedNotifier = ValueNotifier(false);
     _avatarWidget = UserAvatarCircle();
     _focusNode.addListener(() {
       if (!_focusNode.hasFocus) {
@@ -146,9 +148,7 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
               });
               print('FCM token saved to Firestore successfully');
 
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-               
-              });
+              WidgetsBinding.instance.addPostFrameCallback((_) {});
             } else {
               print('FCM token is null, cannot save to Firestore');
 
@@ -266,7 +266,6 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
           try {
             if (!_isCallDialogShowing) {
               _isCallDialogShowing = true;
-             
             }
             print('IncomingCallDialog shown from initial message');
           } catch (e) {
@@ -302,16 +301,12 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
               // Show dialog if not already showing
               if (!_isCallDialogShowing) {
                 _isCallDialogShowing = true;
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  
-                });
+                WidgetsBinding.instance.addPostFrameCallback((_) {});
               }
             }
           });
 
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        
-      });
+      WidgetsBinding.instance.addPostFrameCallback((_) {});
     }
 
     print('=== WORKER DASHBOARD INIT STATE COMPLETE ===');
@@ -320,6 +315,8 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
   @override
   void dispose() {
     _nextJobTimer?.cancel();
+    _nextJobCountdownNotifier.dispose();
+    _nextJobStartedNotifier.dispose();
     // Set offline status
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid != null) {
@@ -403,12 +400,13 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
   }
 
   void _setNextJobCountdown(String value, bool started) {
-    if (_nextJobCountdown == value && _nextJobStarted == started) return;
+    if (_nextJobCountdownNotifier.value == value &&
+        _nextJobStartedNotifier.value == started) {
+      return;
+    }
     if (!mounted) return;
-    setState(() {
-      _nextJobCountdown = value;
-      _nextJobStarted = started;
-    });
+    _nextJobCountdownNotifier.value = value;
+    _nextJobStartedNotifier.value = started;
   }
 
   bool _isSelectableBookingStatus(String s) {
@@ -1678,41 +1676,52 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
                           // Next Job Countdown Card
                           Padding(
                             padding: EdgeInsets.symmetric(horizontal: w * 0.05),
-                            child: Container(
-                              height: 100,
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Center(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      _nextJobStarted
-                                          ? '🚀 Job has began!'
-                                          : 'Time to Next Job',
-                                      style: const TextStyle(
-                                        color: Colors.black,
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.bold,
+                            child: ValueListenableBuilder<String>(
+                              valueListenable: _nextJobCountdownNotifier,
+                              builder: (context, countdown, _) {
+                                return ValueListenableBuilder<bool>(
+                                  valueListenable: _nextJobStartedNotifier,
+                                  builder: (context, started, __) {
+                                    return Container(
+                                      height: 100,
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(20),
                                       ),
-                                    ),
-                                    const SizedBox(height: 6),
-                                    Text(
-                                      _nextJobCountdown,
-                                      style: TextStyle(
-                                        color: _nextJobStarted
-                                            ? Colors.green
-                                            : Colors.black,
-                                        fontSize: 24,
-                                        fontWeight: FontWeight.bold,
-                                        fontFamily: 'Courier',
+                                      child: Center(
+                                        child: Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Text(
+                                              started
+                                                  ? '🚀 Job has began!'
+                                                  : 'Time to Next Job',
+                                              style: const TextStyle(
+                                                color: Colors.black,
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 6),
+                                            Text(
+                                              countdown,
+                                              style: TextStyle(
+                                                color: started
+                                                    ? Colors.green
+                                                    : Colors.black,
+                                                fontSize: 24,
+                                                fontWeight: FontWeight.bold,
+                                                fontFamily: 'Courier',
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ),
-                                    ),
-                                  ],
-                                ),
-                              ),
+                                    );
+                                  },
+                                );
+                              },
                             ),
                           ),
                           SizedBox(height: 20),

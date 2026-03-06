@@ -5,6 +5,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:helper/Document Upload/Select_Worker_Type_Screen.dart';
+import 'package:helper/Employer Dashboard/Employer_Dashboard_Screen.dart';
+import 'package:helper/Amount.dart';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 import 'MTN_Payment_Method_Screen.dart';
@@ -174,16 +176,106 @@ class _RegistrationPaymentScreenState extends State<RegistrationPaymentScreen> {
         .collection('Payment Data')
         .doc(reference)
         .snapshots()
-        .listen((snapshot) {
+        .listen((snapshot) async {
           if (snapshot.exists && snapshot.data()?['status'] == 'COMPLETED') {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const SelectWorkerTypeScreen(),
-              ),
-            );
+            // Apply referral rewards after successful payment
+            await _applyReferralRewardsAfterPayment();
+
+            _navigateBasedOnRole();
           }
         });
+  }
+
+  Future<void> _applyReferralRewardsAfterPayment() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return;
+
+      // Get user's sign-up data
+      final userDoc = await FirebaseFirestore.instance
+          .collection('Sign Up')
+          .doc(user.uid)
+          .get();
+
+      if (!userDoc.exists) return;
+
+      final userData = userDoc.data();
+      if (userData == null) return;
+
+      // Check if referral reward has already been applied
+      final bool rewardApplied = userData['referralRewardApplied'] ?? false;
+      if (rewardApplied) return; // Already applied
+
+      // Get the referral code they used during signup
+      final String usedReferralCode = userData['usedReferralCode'] ?? '';
+
+      if (usedReferralCode.isEmpty) return; // No referral code was used
+
+      // Apply referral rewards
+      final result = await AmountService.applyReferralRewards(
+        referredUserId: user.uid,
+        referralCode: usedReferralCode,
+      );
+
+      // Mark reward as applied to prevent duplicates
+      if (result['success'] == true) {
+        await FirebaseFirestore.instance
+            .collection('Sign Up')
+            .doc(user.uid)
+            .update({'referralRewardApplied': true});
+      }
+    } catch (e) {
+      // Silently fail - don't block user flow if referral rewards fail
+      print('Error applying referral rewards: $e');
+    }
+  }
+
+  Future<void> _navigateBasedOnRole() async {
+    try {
+      final User? currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser == null) return;
+
+      final userDoc = await FirebaseFirestore.instance
+          .collection('Sign Up')
+          .doc(currentUser.uid)
+          .get();
+
+      if (!userDoc.exists) return;
+
+      final userData = userDoc.data();
+      if (userData == null) return;
+
+      final String? role = userData['role'];
+
+      if (!mounted) return;
+
+      if (role == 'employer') {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const EmployerDashboardScreen(),
+          ),
+        );
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const SelectWorkerTypeScreen(),
+          ),
+        );
+      }
+    } catch (e) {
+      print('Error navigating based on role: $e');
+      // Fallback to worker type screen on error
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const SelectWorkerTypeScreen(),
+          ),
+        );
+      }
+    }
   }
 
   @override

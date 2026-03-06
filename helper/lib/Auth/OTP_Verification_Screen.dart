@@ -245,6 +245,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
     String photoUrl = '',
     required String referralCode,
     String password = '',
+    String usedReferralCode = '', // <-- Code the user entered during signup
   }) async {
     final doc = FirebaseFirestore.instance.collection('Sign Up').doc(user.uid);
     final snap = await doc.get();
@@ -266,7 +267,9 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
       'phoneNumber': phoneNumber,
       'photoUrl': photoUrl,
       'password': password,
-      'referralCode': referralCode, // <-- Use the passed referralCode
+      'referralCode': referralCode, // <-- User's own code to share
+      'usedReferralCode': usedReferralCode, // <-- Code they used during signup
+      'referralRewardApplied': false, // <-- Track if reward has been applied
       'role': '',
       'verified': true,
       'updatedAt': FieldValue.serverTimestamp(),
@@ -484,12 +487,10 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
             photoUrl: user.photoURL ?? '',
             referralCode: referralCode,
             password: fullName.isNotEmpty ? password : '',
+            usedReferralCode: widget.referralCode, // <-- Store the referral code they used
           );
 
-          // Apply referral rewards if referral code is provided
-          if (widget.referralCode.isNotEmpty) {
-            await _applyReferralRewards(user.uid, widget.referralCode);
-          }
+          // Referral rewards will be applied after registration payment
 
           await _cleanupOTPDoc(key);
 
@@ -555,12 +556,10 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
             photoUrl: user.photoURL ?? '',
             referralCode: referralCode,
             password: '',
+            usedReferralCode: widget.referralCode, // <-- Store the referral code they used
           );
 
-          // Apply referral rewards if referral code is provided
-          if (widget.referralCode.isNotEmpty) {
-            await _applyReferralRewards(user.uid, widget.referralCode);
-          }
+          // Referral rewards will be applied after registration payment
 
           if (!mounted) return;
           _snack('Phone number verified successfully!');
@@ -672,12 +671,10 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
         photoUrl: user.photoURL ?? '',
         referralCode: referralCode,
         password: password,
+        usedReferralCode: widget.referralCode, // <-- Store the referral code they used
       );
 
-      // Apply referral rewards if referral code is provided
-      if (widget.referralCode.isNotEmpty) {
-        await _applyReferralRewards(user.uid, widget.referralCode);
-      }
+      // Referral rewards will be applied after registration payment
 
       await _cleanupOTPDoc(email);
 

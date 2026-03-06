@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'Sign_In_Screen.dart';
@@ -159,6 +160,33 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
     }
     setState(() => _isLoading = true);
     try {
+      // Get current user's own referral code to prevent self-referral
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser != null) {
+        final userDoc = await FirebaseFirestore.instance
+            .collection('Sign Up')
+            .doc(currentUser.uid)
+            .get();
+
+        if (userDoc.exists) {
+          final userData = userDoc.data();
+          final ownReferralCode = userData?['referralCode'] as String? ?? '';
+
+          // Check if user is trying to use their own referral code
+          if (code == ownReferralCode) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                  'You cannot use your own referral code. Please use someone else\'s code.',
+                ),
+              ),
+            );
+            setState(() => _isLoading = false);
+            return;
+          }
+        }
+      }
+
       // Find a user in 'Sign Up' with this referral code
       final query = await FirebaseFirestore.instance
           .collection('Sign Up')
