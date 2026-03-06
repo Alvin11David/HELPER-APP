@@ -304,32 +304,6 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
         .catchError((_) {});
   }
 
-  /// Apply referral rewards using the Cloud Function
-  /// This is called after successful user profile creation
-  /// Doesn't block navigation on failure (logs and continues)
-  Future<void> _applyReferralRewards(
-    String referredUserId,
-    String referralCode,
-  ) async {
-    try {
-      final result = await AmountService.applyReferralRewards(
-        referredUserId: referredUserId,
-        referralCode: referralCode,
-      );
-
-      if (result['success'] == true) {
-        // Rewards applied successfully
-        // User's balance will be updated automatically server-side
-      } else {
-        // Silently fail - this shouldn't block user signup
-        // Could be no referral code, already rewarded, etc.
-      }
-    } catch (e) {
-      // Silently catch exceptions - referral rewards are optional
-      // and shouldn't prevent user from completing signup
-    }
-  }
-
   /// Check if a phone number has already been invited via a referral code
   /// This prevents multiple accounts on the same device/phone from being created
   /// Returns true if the phone has already been invited, false otherwise
