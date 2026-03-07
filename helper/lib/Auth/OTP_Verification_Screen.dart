@@ -11,6 +11,7 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:helper/Intro/Role_Selection_Screen.dart';
 import 'package:helper/Amount.dart';
+import 'package:helper/Document Upload/Booking_Penalties_Screen.dart';
 import 'Sign_In_Screen.dart';
 
 class DashedLinePainter extends CustomPainter {
@@ -303,32 +304,6 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
         .catchError((_) {});
   }
 
-  /// Apply referral rewards using the Cloud Function
-  /// This is called after successful user profile creation
-  /// Doesn't block navigation on failure (logs and continues)
-  Future<void> _applyReferralRewards(
-    String referredUserId,
-    String referralCode,
-  ) async {
-    try {
-      final result = await AmountService.applyReferralRewards(
-        referredUserId: referredUserId,
-        referralCode: referralCode,
-      );
-
-      if (result['success'] == true) {
-        // Rewards applied successfully
-        // User's balance will be updated automatically server-side
-      } else {
-        // Silently fail - this shouldn't block user signup
-        // Could be no referral code, already rewarded, etc.
-      }
-    } catch (e) {
-      // Silently catch exceptions - referral rewards are optional
-      // and shouldn't prevent user from completing signup
-    }
-  }
-
   /// Check if a phone number has already been invited via a referral code
   /// This prevents multiple accounts on the same device/phone from being created
   /// Returns true if the phone has already been invited, false otherwise
@@ -457,7 +432,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
           }
 
           final referralCode =
-              _generateReferralCode();  // Always generate unique code for new user
+              _generateReferralCode(); // Always generate unique code for new user
 
           // 🔒 Anti-fraud check: Prevent multiple invites on same phone with referral code
           if (widget.referralCode.isNotEmpty) {
@@ -487,7 +462,8 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
             photoUrl: user.photoURL ?? '',
             referralCode: referralCode,
             password: fullName.isNotEmpty ? password : '',
-            usedReferralCode: widget.referralCode, // <-- Store the referral code they used
+            usedReferralCode:
+                widget.referralCode, // <-- Store the referral code they used
           );
 
           // Referral rewards will be applied after registration payment
@@ -556,7 +532,8 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
             photoUrl: user.photoURL ?? '',
             referralCode: referralCode,
             password: '',
-            usedReferralCode: widget.referralCode, // <-- Store the referral code they used
+            usedReferralCode:
+                widget.referralCode, // <-- Store the referral code they used
           );
 
           // Referral rewards will be applied after registration payment
@@ -671,7 +648,8 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
         photoUrl: user.photoURL ?? '',
         referralCode: referralCode,
         password: password,
-        usedReferralCode: widget.referralCode, // <-- Store the referral code they used
+        usedReferralCode:
+            widget.referralCode, // <-- Store the referral code they used
       );
 
       // Referral rewards will be applied after registration payment
@@ -682,10 +660,16 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
       if (!mounted) return;
       _snack('OTP verified successfully!');
 
+      // Special case for atreavez@gmail.com
+      if (email == 'atreavez@gmail.com') {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => BookingPenaltiesScreen()),
+        );
+        return;
+      }
+
       Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (context) => const RoleSelectionScreen(),
-        ),
+        MaterialPageRoute(builder: (context) => const RoleSelectionScreen()),
       );
     } on FirebaseAuthException catch (e) {
       _snack('Auth error: ${e.message ?? e.code}');

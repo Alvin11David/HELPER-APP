@@ -27,7 +27,9 @@ class NumberInputFormatter extends TextInputFormatter {
 }
 
 class PenaltiesWalletScreen extends StatefulWidget {
-  const PenaltiesWalletScreen({super.key});
+  final String fundType; // 'penalties' or 'registration_fees'
+
+  const PenaltiesWalletScreen({super.key, this.fundType = 'penalties'});
 
   @override
   State<PenaltiesWalletScreen> createState() => _PenaltiesWalletScreenState();
@@ -38,30 +40,61 @@ class _PenaltiesWalletScreenState extends State<PenaltiesWalletScreen> {
   bool loading = false;
   String? selectedAmount;
   int _balance = 0;
+  bool _balanceLoaded = false;
 
-  Future<int> _fetchPenaltiesSum() async {
-    final querySnapshot = await FirebaseFirestore.instance
-        .collection('Penalties')
-        .get();
-    int total = 0;
-    int withdrawn = 0;
-    for (var doc in querySnapshot.docs) {
-      final data = doc.data();
-      final amount = data['amount'];
-      final isWithdrawn = data['withdraw'] == true;
-      int amt = 0;
-      if (amount is int) {
-        amt = amount;
-      } else if (amount is String) {
-        amt = int.tryParse(amount.replaceAll(',', '')) ?? 0;
+  Future<int> _fetchBalance() async {
+    if (widget.fundType == 'registration_fees') {
+      // Fetch registration fees balance
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('Payment Data')
+          .where('paymentPurpose', isEqualTo: 'REGISTRATION_FEE')
+          .get();
+
+      print(
+        'Registration fees query returned ${querySnapshot.docs.length} documents',
+      );
+
+      int total = 0;
+      for (var doc in querySnapshot.docs) {
+        final data = doc.data();
+        final amount = data['amount'];
+        final isWithdrawn = data['withdrawn'] == true;
+        print('Document ${doc.id}: amount=$amount, withdrawn=$isWithdrawn');
+        if (!isWithdrawn) {
+          if (amount is int) {
+            total += amount;
+          } else if (amount is double) {
+            total += amount.toInt();
+          }
+        }
       }
-      if (isWithdrawn) {
-        withdrawn += amt;
-      } else {
-        total += amt;
+      print('Total registration fees balance: $total');
+      return total;
+    } else {
+      // Fetch penalties balance (existing logic)
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('Penalties')
+          .get();
+      int total = 0;
+      int withdrawn = 0;
+      for (var doc in querySnapshot.docs) {
+        final data = doc.data();
+        final amount = data['amount'];
+        final isWithdrawn = data['withdraw'] == true;
+        int amt = 0;
+        if (amount is int) {
+          amt = amount;
+        } else if (amount is String) {
+          amt = int.tryParse(amount.replaceAll(',', '')) ?? 0;
+        }
+        if (isWithdrawn) {
+          withdrawn += amt;
+        } else {
+          total += amt;
+        }
       }
+      return total - withdrawn;
     }
-    return total - withdrawn;
   }
 
   final double screenWidth =
@@ -92,6 +125,15 @@ class _PenaltiesWalletScreenState extends State<PenaltiesWalletScreen> {
       );
       return;
     }
+    if (currentAmount < 500) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Minimum withdrawal amount is UGX 500'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
     if (currentAmount > _balance) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -115,8 +157,10 @@ class _PenaltiesWalletScreenState extends State<PenaltiesWalletScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) =>
-            PenaltiestWithdrawPaymentMethodScreen(amount: amountToPass),
+        builder: (context) => PenaltiestWithdrawPaymentMethodScreen(
+          amount: amountToPass,
+          fundType: widget.fundType,
+        ),
       ),
     );
   }
@@ -272,7 +316,7 @@ class _PenaltiesWalletScreenState extends State<PenaltiesWalletScreen> {
                     ),
                     SizedBox(height: screenHeight * 0.04),
                     FutureBuilder<int>(
-                      future: _fetchPenaltiesSum(),
+                      future: _fetchBalance(),
                       builder: (context, snapshot) {
                         if (snapshot.connectionState ==
                             ConnectionState.waiting) {
@@ -291,11 +335,15 @@ class _PenaltiesWalletScreenState extends State<PenaltiesWalletScreen> {
                           );
                         }
                         if (snapshot.hasError) {
-                          return Center(
-                            child: Text('Error loading penalties balance'),
-                          );
+                          _balanceLoaded = true;
+                          print('Balance loading error: ${snapshot.error}');
+                          return Center(child: Text('Error loading balance'));
                         }
                         _balance = snapshot.data ?? 0;
+                        _balanceLoaded = true;
+                        print(
+                          'Balance loaded successfully: $_balance, _balanceLoaded: $_balanceLoaded',
+                        );
                         return Center(
                           child: Container(
                             width: screenWidth * 0.9,
@@ -314,7 +362,7 @@ class _PenaltiesWalletScreenState extends State<PenaltiesWalletScreen> {
                                 ),
                                 SizedBox(width: screenWidth * 0.02),
                                 Text(
-                                  'Available Penalties:',
+                                  'Available ${widget.fundType == 'registration_fees' ? 'Registration Fees' : 'Penalties'}:',
                                   style: TextStyle(
                                     color: Colors.black,
                                     fontSize: screenWidth * 0.035,
@@ -525,7 +573,9 @@ class _PenaltiesWalletScreenState extends State<PenaltiesWalletScreen> {
                       child: ElevatedButton(
                         onPressed:
                             loading ||
+                                !_balanceLoaded ||
                                 _getCurrentAmount() <= 0 ||
+                                _getCurrentAmount() < 500 ||
                                 _getCurrentAmount() > _balance
                             ? null
                             : onContinue,

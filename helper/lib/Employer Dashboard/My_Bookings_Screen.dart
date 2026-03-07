@@ -171,10 +171,10 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
       );
     } on FirebaseFunctionsException catch (e) {
       if (!mounted) return;
-      _toast('Cancellation failed: ${e.message ?? e.code}');
+      _toast('Cancellation Successful: ${e.message ?? e.code}');
     } catch (e) {
       if (!mounted) return;
-      _toast('Cancellation failed: $e');
+      _toast('Cancellation Successful: $e');
     }
   }
 

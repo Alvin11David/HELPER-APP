@@ -26,6 +26,9 @@ class WorkersDashboardScreen extends StatefulWidget {
 }
 
 class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
+  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>?
+      _cancellationCodeSub;
+  final Set<String> _shownCancellationCodes = {};
   Future<void> _fetchJobSuggestions(String input) async {
     final workerUid = FirebaseAuth.instance.currentUser?.uid;
     if (workerUid == null || input.trim().isEmpty) {
@@ -181,6 +184,8 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
     // Start next job countdown timer
     _startNextJobCountdownTimer();
 
+    _listenForCancellationCodeSnack();
+
     // Set up FCM listener for incoming calls
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       print('=== FCM onMessage RECEIVED ===');
@@ -317,6 +322,7 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
     _nextJobTimer?.cancel();
     _nextJobCountdownNotifier.dispose();
     _nextJobStartedNotifier.dispose();
+    _cancellationCodeSub?.cancel();
     // Set offline status
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid != null) {
@@ -326,6 +332,51 @@ class _WorkersDashboardScreenState extends State<WorkersDashboardScreen> {
       });
     }
     super.dispose();
+  }
+
+  void _listenForCancellationCodeSnack() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    _cancellationCodeSub = FirebaseFirestore.instance
+        .collection('Escrow')
+        .where('workerUid', isEqualTo: user.uid)
+        .where('cancellationStatus', isEqualTo: 'pending')
+        .snapshots()
+        .listen((snap) {
+      for (final doc in snap.docs) {
+        final data = doc.data();
+        final code = (data['cancellationCode'] ?? '').toString();
+        if (code.isEmpty) continue;
+        if (_shownCancellationCodes.contains(doc.id)) continue;
+
+        _shownCancellationCodes.add(doc.id);
+        if (!mounted) return;
+
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Cancellation code received. Verify cancellation using code: $code',
+              ),
+              duration: const Duration(seconds: 6),
+              action: SnackBarAction(
+                label: 'View',
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const WorkerNotifications(),
+                    ),
+                  );
+                },
+              ),
+            ),
+          );
+        });
+      }
+    });
   }
 
   void _startNextJobCountdownTimer() {
