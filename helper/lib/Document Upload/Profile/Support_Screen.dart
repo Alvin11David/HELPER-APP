@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'dart:ui'; 
-import 'package:flutter/services.dart'; 
+import 'dart:ui';
+import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:helper/Components/Bottom_Nav_Bar.dart';
-import 'package:url_launcher/url_launcher.dart'; 
+import 'package:url_launcher/url_launcher.dart';
 
 class SupportScreen extends StatefulWidget {
   const SupportScreen({super.key});
@@ -112,9 +112,7 @@ class _SupportScreenState extends State<SupportScreen> {
             builder: (context, constraints) {
               return SingleChildScrollView(
                 child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    minHeight: constraints.maxHeight,
-                  ),
+                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
                   child: Padding(
                     padding: EdgeInsets.symmetric(
                       horizontal: screenWidth * 0.04,
@@ -314,8 +312,9 @@ class _SupportScreenState extends State<SupportScreen> {
                                     if (await canLaunch(phoneNumber)) {
                                       await launch(phoneNumber);
                                     } else {
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
                                         const SnackBar(
                                           content: Text(
                                             'Could not launch phone app',
@@ -342,6 +341,61 @@ class _SupportScreenState extends State<SupportScreen> {
                                       SizedBox(width: screenWidth * 0.03),
                                       Text(
                                         'Call Now',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontFamily: 'Inter',
+                                          fontWeight: FontWeight.w900,
+                                          fontSize: screenWidth * 0.040,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: screenHeight * 0.02),
+                        Row(
+                          children: [
+                            SizedBox(width: screenWidth * 0.06),
+                            Expanded(
+                              child: SizedBox(
+                                height: screenHeight * 0.060,
+                                child: ElevatedButton(
+                                  onPressed: () async {
+                                    const url =
+                                        'https://c-helper-support.lovable.app';
+                                    if (await canLaunch(url)) {
+                                      await launch(url);
+                                    } else {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        const SnackBar(
+                                          content: Text('Could not launch URL'),
+                                        ),
+                                      );
+                                    }
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: _brandOrange,
+                                    elevation: 0,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(30),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.web,
+                                        color: Colors.white,
+                                        size: screenWidth * 0.05,
+                                      ),
+                                      SizedBox(width: screenWidth * 0.03),
+                                      Text(
+                                        'Visit Support Website',
                                         style: TextStyle(
                                           color: Colors.white,
                                           fontFamily: 'Inter',
@@ -390,7 +444,10 @@ class _PillInput extends StatelessWidget {
     required this.keyboardType,
     required this.contentFontSize,
     this.validator,
-    this.maxLines = 1, required this.obscure, this.suffix, this.inputFormatters,
+    this.maxLines = 1,
+    required this.obscure,
+    this.suffix,
+    this.inputFormatters,
   });
 
   @override
