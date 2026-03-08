@@ -18,7 +18,8 @@ class RegistrationPaymentVerificationScreen extends StatefulWidget {
       _RegistrationPaymentVerificationScreenState();
 }
 
-class _RegistrationPaymentVerificationScreenState extends State<RegistrationPaymentVerificationScreen> {
+class _RegistrationPaymentVerificationScreenState
+    extends State<RegistrationPaymentVerificationScreen> {
   final bool _isMasterCardSelected = false;
   final bool _isVisaCardSelected = false;
   final bool _isMtnCardSelected = false;
@@ -127,7 +128,8 @@ class _RegistrationPaymentVerificationScreenState extends State<RegistrationPaym
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
-                builder: (context) => const SelectWorkerTypeVerificationScreen(),
+                builder: (context) =>
+                    const SelectWorkerTypeVerificationScreen(),
               ),
             );
           }
@@ -334,6 +336,7 @@ class _RegistrationPaymentVerificationScreenState extends State<RegistrationPaym
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
+                        /*
                         GestureDetector(
                           onTap: _isLoading ? null : _handleMasterCardPayment,
                           child: Container(
@@ -392,7 +395,9 @@ class _RegistrationPaymentVerificationScreenState extends State<RegistrationPaym
                             ),
                           ),
                         ),
+                        */
                         SizedBox(height: screenHeight * 0.02),
+                        /*
                         GestureDetector(
                           onTap: _isLoading ? null : _handleVisaPayment,
                           child: Container(
@@ -451,6 +456,7 @@ class _RegistrationPaymentVerificationScreenState extends State<RegistrationPaym
                             ),
                           ),
                         ),
+                        */
                         SizedBox(height: screenHeight * 0.02),
                         GestureDetector(
                           onTap: () {
