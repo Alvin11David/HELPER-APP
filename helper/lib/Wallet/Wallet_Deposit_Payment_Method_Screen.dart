@@ -423,6 +423,7 @@ class _WalletDepositPaymentMethodScreenState
                           ),
                         ),
                         SizedBox(height: screenHeight * 0.03),
+                        /*
                         GestureDetector(
                           onTap: _isLoading ? null : _handleMasterCardPayment,
                           child: Container(
@@ -481,7 +482,9 @@ class _WalletDepositPaymentMethodScreenState
                             ),
                           ),
                         ),
+                        */
                         SizedBox(height: screenHeight * 0.03),
+                        /*
                         GestureDetector(
                           onTap: _isLoading ? null : _handleVisaPayment,
                           child: Container(
@@ -540,6 +543,7 @@ class _WalletDepositPaymentMethodScreenState
                             ),
                           ),
                         ),
+                        */
                       ],
                     ),
                   ),

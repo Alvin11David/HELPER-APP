@@ -504,7 +504,7 @@ class _PhoneNumberEmailAddressScreenState
                           'Get Started Now',
                           style: TextStyle(
                             color: Colors.white,
-                            fontSize: w * 0.09,
+                            fontSize: w * 0.05,
                             fontFamily: 'AbrilFatface',
                             height: 1.05,
                           ),

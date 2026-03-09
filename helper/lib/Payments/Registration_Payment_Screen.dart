@@ -481,7 +481,7 @@ class _RegistrationPaymentScreenState extends State<RegistrationPaymentScreen> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        GestureDetector(
+                        /*GestureDetector(
                           onTap: _isLoading ? null : _handleMasterCardPayment,
                           child: Container(
                             width: screenWidth * 0.91,
@@ -538,9 +538,9 @@ class _RegistrationPaymentScreenState extends State<RegistrationPaymentScreen> {
                               ),
                             ),
                           ),
-                        ),
+                        ),*/
                         SizedBox(height: screenHeight * 0.02),
-                        GestureDetector(
+                        /*GestureDetector(
                           onTap: _isLoading ? null : _handleVisaPayment,
                           child: Container(
                             width: screenWidth * 0.91,
@@ -597,7 +597,7 @@ class _RegistrationPaymentScreenState extends State<RegistrationPaymentScreen> {
                               ),
                             ),
                           ),
-                        ),
+                        ),*/
                         SizedBox(height: screenHeight * 0.02),
                         GestureDetector(
                           onTap: () {
