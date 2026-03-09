@@ -1,4 +1,4 @@
-HELPER-APP1
+HELPER-APP
 
 A modern helper application designed to provide users with quick assistance, useful tools, and intelligent support for everyday tasks. The application aims to simplify problem-solving and improve productivity through an easy-to-use interface.
 
