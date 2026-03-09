@@ -133,7 +133,14 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
     if (widget.amount != null) {
       _amount = widget.amount.toString();
     }
-    // Ensure UI shows computed amount when pricing/amount provided by caller
+
+    if (_isPerDay || _isPerHour || _isPerWeek || _isPerMonth) {
+      _workingDays ??= '1';
+    }
+    if (_isPerHour) {
+      _workingHours ??= '1';
+    }
+
     _recalcAmount();
     _startWalletListener();
     _initLocation();
@@ -215,6 +222,10 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
             _workingDays ??= '1';
             _workingHours ??= '1';
           }
+          if ((_pricingType == 'Per Week' || _pricingType == 'Per Month') &&
+              _workingDays == null) {
+            _workingDays = '1';
+          }
         });
 
         _recalcAmount();
@@ -270,13 +281,35 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
   bool get _isPerMonth => (_pricingType ?? '').trim() == 'Per Month';
   bool get _isPerYear => (_pricingType ?? '').trim() == 'Per Year';
 
+  int get _quantitySelected => int.tryParse(_workingDays ?? '1') ?? 1;
+
+  String get _workQtyLabel {
+    if (_isPerMonth) return 'Number of Working Months';
+    if (_isPerWeek) return 'Number of Working Weeks';
+    return 'Number of Working Days';
+  }
+
+  String get _workQtyHint {
+    if (_isPerMonth) return 'Select number of working months';
+    if (_isPerWeek) return 'Select number of working weeks';
+    return 'Select the number of working days';
+  }
+
+  List<String> get _workQtyItems {
+    if (_isPerMonth) return List.generate(24, (i) => '${i + 1}');
+    if (_isPerWeek) return List.generate(52, (i) => '${i + 1}');
+    return List.generate(30, (i) => '${i + 1}');
+  }
+
   int _computeTotal() {
     final base = _baseAmount;
     if (base <= 0) return 0;
 
     if (_isPerJob) return base;
-    if (_isPerDay) return base * _daysSelected;
-    if (_isPerHour) return base * _hoursSelected;
+    if (_isPerDay) return base * _quantitySelected;
+    if (_isPerHour) return base * _quantitySelected * _hoursSelected;
+    if (_isPerWeek) return base * _quantitySelected;
+    if (_isPerMonth) return base * _quantitySelected;
 
     return base;
   }
@@ -288,16 +321,16 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
 
     if (_isPerJob) return "Per job = ($baseFmt)";
     if (_isPerDay) {
-      return "$baseFmt per day × $_daysSelected day(s) = ($totalFmt)";
+      return "$baseFmt per day × $_quantitySelected day(s) = ($totalFmt)";
     }
     if (_isPerHour) {
-      return "$baseFmt per hour × $_hoursSelected hour(s) = ($totalFmt)";
+      return "$baseFmt per hour × $_quantitySelected day(s) × $_hoursSelected hour(s) = ($totalFmt)";
     }
     if (_isPerWeek) {
-      return "$baseFmt per week = ($totalFmt)";
+      return "$baseFmt per week × $_quantitySelected week(s) = ($totalFmt)";
     }
     if (_isPerMonth) {
-      return "$baseFmt per month = ($totalFmt)";
+      return "$baseFmt per month × $_quantitySelected month(s) = ($totalFmt)";
     }
     if (_isPerYear) {
       return "$baseFmt per year = ($totalFmt)";
@@ -310,20 +343,21 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
     final base = int.tryParse((_amount ?? "0").toString()) ?? 0;
     final type = (_pricingType ?? "").trim();
 
-    final days = int.tryParse(_workingDays ?? "1") ?? 1;
+    final qty = int.tryParse(_workingDays ?? "1") ?? 1;
     final hours = int.tryParse(_workingHours ?? "1") ?? 1;
 
     int total;
     if (type == "Per Job") {
       total = base;
     } else if (type == "Per Day") {
-      total = base * days;
+      total = base * qty;
     } else if (type == "Per Hour") {
-      total = base * hours;
-    } else if (type == "Per Week" ||
-        type == "Per Month" ||
-        type == "Per Year") {
-      // For Per Week, Per Month, Per Year: just use base amount (no multiplier)
+      total = base * qty * hours;
+    } else if (type == "Per Week") {
+      total = base * qty;
+    } else if (type == "Per Month") {
+      total = base * qty;
+    } else if (type == "Per Year") {
       total = base;
     } else {
       total = base;
@@ -390,23 +424,17 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
     final okPricing = (_pricingType != null && _pricingType!.trim().isNotEmpty);
     if (!okPricing) return false;
 
-    // Per Job: no need for days/hours
     if (_isPerJob) return _computeTotal() > 0;
-
-    // Per Day needs days
     if (_isPerDay) return _workingDays != null && _computeTotal() > 0;
-
-    // Per Hour needs days + hours
     if (_isPerHour) {
       return _workingDays != null &&
           _workingHours != null &&
           _computeTotal() > 0;
     }
-
-    // Per Week, Per Month, Per Year: no additional requirements
-    if (_isPerWeek || _isPerMonth || _isPerYear) {
-      return _computeTotal() > 0;
+    if (_isPerWeek || _isPerMonth) {
+      return _workingDays != null && _computeTotal() > 0;
     }
+    if (_isPerYear) return _computeTotal() > 0;
 
     return _computeTotal() > 0;
   }
@@ -697,12 +725,11 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
         'baseAmount': baseAmount, // base price from provider
         'amount': totalAmount, // ✅ total payable saved in amount
         'workingDays':
-            (pricingType == 'Per Job' ||
-                pricingType == 'Per Week' ||
-                pricingType == 'Per Month' ||
-                pricingType == 'Per Year')
-            ? 1
-            : workingDays,
+          (pricingType == 'Per Day' || pricingType == 'Per Hour')
+          ? workingDays
+          : 0,
+        'workingWeeks': pricingType == 'Per Week' ? workingDays : 0,
+        'workingMonths': pricingType == 'Per Month' ? workingDays : 0,
         'workingHours': pricingType == 'Per Hour' ? workingHours : 0,
 
         // booking flow state
@@ -1597,15 +1624,15 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
       key: const ValueKey('phase2'),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (_isPerDay || _isPerHour) ...[
-          _label("Number of Working Days", w),
+        if (_isPerDay || _isPerHour || _isPerWeek || _isPerMonth) ...[
+          _label(_workQtyLabel, w),
           SizedBox(height: h * 0.010),
           _pillDropdown(
             w: w,
             h: h,
-            hint: "Select the number of working days",
+            hint: _workQtyHint,
             value: _workingDays,
-            items: List.generate(30, (i) => "${i + 1}"),
+            items: _workQtyItems,
             onChanged: (v) {
               setState(() => _workingDays = v);
               _recalcAmount();
@@ -2144,7 +2171,7 @@ class _JobDetailBookingScreenState extends State<JobDetailBookingScreen> {
             row("Business", _businessName),
             row("Profession", _profession),
             row("Job Description", _descCtrl.text.trim()),
-            row("Working Days", _workingDays ?? ""),
+            row(_workQtyLabel, _workingDays ?? ""),
             row("Duration", _jobDuration ?? ""),
             row("Amount", _amountCtrl.text.trim()),
             row("Job Location", _jobLocationText ?? ""),
